@@ -1,40 +1,49 @@
 # cabin-visits-kotlin
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
+Kotlin app using Ktor server application with GraalVM to create HTTP endpoints to receive data from different sources to
+collect all data belonging to a visit at Slomic Smarthytte and store it to a database.
 
-Here are some useful links to get you started:
+### Install GraalVM (for Mac)
 
-- [Ktor Documentation](https://ktor.io/docs/home.html)
-- [Ktor GitHub page](https://github.com/ktorio/ktor)
-- The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need
-  to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
+You can follow [official installation](https://www.graalvm.org/latest/docs/getting-started/macos/) steps or by using
+Homebrew and [jenv](https://www.jenv.be) bellow.
 
-## Features
+```bash
+brew install --cask graalvm-jdk
+jenv add 23.0.1-graal /Library/Java/JavaVirtualMachines/graalvm-23.jdk/Contents/Home/
+```
 
-Here's a list of features included in this project:
+To check whether the installation was successful, run
 
-| Name                                       | Description                       |
-|--------------------------------------------|-----------------------------------|
-| [Routing](https://start.ktor.io/p/routing) | Provides a structured routing DSL |
+```bash
+$ java -version
+java version "23.0.1" 2024-10-15
+Java(TM) SE Runtime Environment Oracle GraalVM 23.0.1+11.1 (build 23.0.1+11-jvmci-b01)
+Java HotSpot(TM) 64-Bit Server VM Oracle GraalVM 23.0.1+11.1 (build 23.0.1+11-jvmci-b01, mixed mode, sharing)
+```
+
+Note! jenv will report a deprecation warning, but you can ignore it.
 
 ## Building & Running
 
 To build or run the project, use one of the following tasks:
 
-| Task                          | Description                                                          |
-|-------------------------------|----------------------------------------------------------------------|
-| `./gradlew test`              | Run the tests                                                        |
-| `./gradlew build`             | Build everything                                                     |
-| `buildFatJar`                 | Build an executable JAR of the server with all dependencies included |
-| `buildImage`                  | Build the docker image to use with the fat JAR                       |
-| `publishImageToLocalRegistry` | Publish the docker image locally                                     |
-| `run`                         | Run the server                                                       |
-| `runDocker`                   | Run using the local docker image                                     |
+| Task                                                   | Description                                                 |
+|--------------------------------------------------------|-------------------------------------------------------------|
+| `./gradlew test`                                       | Run the tests                                               |
+| `./gradlew nativeCompile`                              | Build the GraalVm native image as executable file           |
+| `./build/native/nativeCompile/graalvm-server`          | Run the executable file                                     |
+| `./gradlew nativeTestCompile`                          | Build the GraalVm native image as executable file for tests |
+| `./build/native/nativeTestCompile/graalvm-test-server` | Run the tests in native image                               |
 
-If the server starts successfully, you'll see the following output:
+## HTTP API
 
-```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
+```bash
+curl http://localhost:8079
 ```
 
+## Metrics
+
+```bash
+curl http://localhost:8079/metrics
+```

@@ -34,3 +34,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Test results
+test-results-native/
