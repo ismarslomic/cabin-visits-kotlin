@@ -75,6 +75,9 @@ graalvmNative {
                 "-H:IncludeResources=application-development.yml",
                 "-H:ReflectionConfigurationFiles=$resourcePath/reflect-config.json",
                 "-H:ResourceConfigurationFiles=$resourcePath/resource-config.json",
+                // Define additional arguments for the native-image tool
+                "--static",
+                "-H:+StaticExecutableWithDynamicLibC",
             )
         }
 
