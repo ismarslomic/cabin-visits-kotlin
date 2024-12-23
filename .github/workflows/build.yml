@@ -26,7 +26,7 @@ jobs:
 
       # Set up GraalVM (see https://github.com/graalvm/setup-graalvm)
       - name: Set up GraalVM
-        uses: graalvm/setup-graalvm@v2
+        uses: graalvm/setup-graalvm@v1
         with:
           version: "23.0.1" # Adjust to your required GraalVM version
           distribution: "graalvm" # GraalVM distribution
