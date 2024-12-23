@@ -28,6 +28,7 @@ jobs:
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
+          native-image-musl: true # sets up musl to build static binaries with GraalVM Native Image
           version: "23.0.1" # Adjust to your required GraalVM version
           distribution: "graalvm" # GraalVM distribution
           java-version: "23" # Or the appropriate Java version
