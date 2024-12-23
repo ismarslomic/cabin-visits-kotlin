@@ -43,6 +43,7 @@ jobs:
           mkdir -p output
           cp ./build/native/nativeCompile/graalvm-server output/graalvm-server
           cp ./Dockerfile output/Dockerfile
+          cp ./README.md output/README.md 
 
       # Upload complied GraalVM native image as artifact for accessing in the 'containerize' job
       - name: Upload native image as artifact
