@@ -1,0 +1,119 @@
+name: Build and publish
+
+on:
+  push:
+    branches: [ 'main' ]
+    # Publish semver tags as releases.
+    tags: [ 'v*.*.*' ]
+
+  pull_request:
+    branches: [ 'main' ]
+
+env:
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build & Publish
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up GraalVM (see https://github.com/graalvm/setup-graalvm)
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v2
+        with:
+          version: "23.0.1" # Adjust to your required GraalVM version
+          distribution: "graalvm" # GraalVM distribution
+          java-version: "23" # Or the appropriate Java version
+
+      # Set up Gradle
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Build the GraalVM native image with gradle
+      - name: Build GraalVM native image
+        run: ./gradlew nativeCompile
+
+  docker:
+    name: Push Docker image to Docker Hub
+
+    # Run only if build completes successfully
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Extract metadata (tags, labels, image name) from GIT to use in Docker Build Push step
+      # https://github.com/docker/metadata-action
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          # tag = 'main' when push event to 'main' branch
+          # tag = 'pr-X' when push event to pull request
+          # tag = 'major.minor.patch' when push event of new tag
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+          labels: |
+            maintainer=Ismar Slomic
+            org.opencontainers.image.documentation=https://github.com/ismarslomic/cabin-visits-kotlin
+            org.opencontainers.image.vendor=ismarslomic
+            org.opencontainers.image.description=HTTP endpoints to receive data from different sources to collect all data belonging to a visit at Slomic Smarthytte and store it to a database.
+
+      # Setup QEMU for building various versions of container
+      # https://github.com/docker/setup-qemu-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # Setup Buildx before building container
+      # https://github.com/docker/setup-buildx-action
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login to DockerHub
+      # https://github.com/docker/login-action
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Build and Push image if release tag (in format v1.0.0),
+      # tag the image with 'git tag' and along with 'latest'
+      # https://github.com/docker/build-push-action
+      - name: Build & Push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Show image digest from docker build
+      - name: Image Digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
+
+      # Update Docker Hub repo with description from README.md
+      # https://github.com/peter-evans/dockerhub-description
+      - name: Update image description in Docker Hub
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: ${{ env.IMAGE_NAME }}
+          short-description: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
