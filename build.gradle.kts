@@ -77,7 +77,7 @@ graalvmNative {
                 "-H:ResourceConfigurationFiles=$resourcePath/resource-config.json",
                 // Define additional arguments for the native-image tool
                 "--static",
-                "-H:+StaticExecutableWithDynamicLibC",
+                "--libc=musl",
             )
         }
 
