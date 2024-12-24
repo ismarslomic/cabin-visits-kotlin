@@ -1,6 +1,6 @@
 # This image is based on Oracle GraalVM Native Image, which is licensed under
 # the Oracle GraalVM Free Terms and Conditions (GFTC).
-# See: https://www.oracle.com/downloads/licenses/graalvm-free-license.html
+# See: https://www.oracle.com/downloads/licenses/graal-free-license.html
 
 # Stage 1: Build GraalVM Native Image (note! native image is platform specific)
 FROM container-registry.oracle.com/graalvm/native-image:23.0.1 AS builder
