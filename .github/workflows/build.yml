@@ -57,23 +57,14 @@ jobs:
           overwrite: true # If true, an artifact with a matching name will be deleted before a new one is uploaded
 
   containerize:
-    name: Containerize & push Docker Hub
-
-    # Run only if build-native-image completes successfully
-    needs: build-native-image
+    name: Build native image & Containerize
 
     runs-on: ubuntu-latest
 
     steps:
-      # Download the GraalVM native image compiled in the 'build-native-image' job
-      - name: Download native image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: graalvm-native-image # Name of the artifact to download
-          path: native-image/ # Destination path. Supports basic tilde expansion.
-
-      - name: Log downloaded files
-        run: ls -R native-image/
+      # Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       # Extract metadata (tags, labels, image name) from GIT to use in Docker Build Push step
       # https://github.com/docker/metadata-action
@@ -119,8 +110,8 @@ jobs:
       - name: Build & Push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: native-image/
-          file: native-image/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
           tags: ${{ steps.meta.outputs.tags }}
@@ -135,7 +126,7 @@ jobs:
       - name: Update image description in Docker Hub
         uses: peter-evans/dockerhub-description@v4
         with:
-          readme-filepath: native-image/README.md # Path to the repository readme.
+          readme-filepath: ./README.md # Path to the repository readme.
           username: ${{ secrets.DOCKER_HUB_USERNAME }} # Docker Hub username
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} # Docker Hub password
           repository: ${{ env.IMAGE_NAME }} # Docker Hub repository
