@@ -3,6 +3,11 @@
 Kotlin app using Ktor server application with GraalVM to create HTTP endpoints to receive data from different sources to
 collect all data belonging to a visit at Slomic Smarthytte and store it to a database.
 
+## Licensing Information
+
+This project uses Oracle GraalVM Native Image, which is subject to
+the [Oracle GraalVM Free Terms and Conditions (GFTC)](https://www.oracle.com/downloads/licenses/graal-free-license.html).
+
 ### Install GraalVM (for Mac)
 
 You can follow [official installation](https://www.graalvm.org/latest/docs/getting-started/macos/) steps or by using

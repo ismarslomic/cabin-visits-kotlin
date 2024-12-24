@@ -1,0 +1,3 @@
+This project uses Oracle GraalVM Native Image during the build process. Oracle GraalVM Native Image is licensed under the Oracle GraalVM Free Terms and Conditions (GFTC).
+
+For more details, see the [Oracle GraalVM Free Terms and Conditions](https://www.oracle.com/downloads/licenses/graal-free-license.html).
