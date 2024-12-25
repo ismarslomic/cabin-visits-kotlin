@@ -3,4 +3,6 @@ FROM gcr.io/distroless/base:nonroot
 
 COPY graalvm-server /graalvm-server
 
+EXPOSE 8079
+
 ENTRYPOINT ["/graalvm-server"]

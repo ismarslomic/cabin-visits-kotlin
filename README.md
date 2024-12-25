@@ -41,6 +41,15 @@ To build or run the project, use one of the following tasks:
 | `./gradlew nativeTestCompile`                          | Build the GraalVm native image as executable file for tests. Optional argument `-PnativeBuildArgs=""` to add additional build arguments to the native image compilation. Use comma to separate arguments. |
 | `./build/native/nativeTestCompile/graalvm-test-server` | Run the tests in native image                                                                                                                                                                             |
 
+## Run in Docker
+
+The changes to this app is automatically published to the Docker Hub and you can always find the latest release at
+[ismarslomic/cabin-visits-kotlin](https://hub.docker.com/r/ismarslomic/cabin-visits-kotlin)
+
+```bash
+docker run --rm -p 8079:8079 ismarslomic/cabin-visits-kotlin:main
+```
+
 ## HTTP API
 
 ```bash
