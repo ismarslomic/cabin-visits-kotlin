@@ -43,6 +43,7 @@ jobs:
           ./gradlew nativeCompile -PnativeBuildArgs="--static,--libc=musl" --no-daemon
           mkdir -p output
           cp ./build/native/nativeCompile/graalvm-server output/graalvm-server
+          chmod +x output/graalvm-server
           cp ./Dockerfile output/Dockerfile
           cp ./README.md output/README.md 
 
