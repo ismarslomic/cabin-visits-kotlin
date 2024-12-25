@@ -81,3 +81,14 @@ Automatically correct linting warnings
 ```bash
 ./gradlew formatKotlin
 ```
+
+### Static code analysis with Detekt
+
+Run a detekt analysis and complexity report the source files with use
+of [Detekt Gradle plugin](https://detekt.dev/docs/gettingstarted/gradle/).
+
+Reports are generated in the folder `./build/reports/detekt`.
+
+```bash
+./gradlew detekt
+```

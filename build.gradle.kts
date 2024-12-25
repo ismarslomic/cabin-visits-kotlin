@@ -1,4 +1,6 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 
 val logbackVersion: String by project
 val hopliteVersion: String by project
@@ -12,6 +14,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.51.0" // plugin for checking outdated deps
     id("org.graalvm.buildtools.native") version "0.10.4"
     id("org.jmailen.kotlinter") version "5.0.1"
+    id("io.gitlab.arturbosch.detekt") version "1.23.7"
 }
 
 group = "no.slomic.smarthytte"
@@ -123,6 +126,23 @@ graalvmNative {
         testLogging {
             events("passed", "skipped", "failed")
         }
+    }
+}
+
+// Detekt
+tasks.withType<Detekt>().configureEach {
+    jvmTarget = "21" // Currently max supported java version in Detekt
+}
+tasks.withType<DetektCreateBaselineTask>().configureEach {
+    jvmTarget = "21" // Currently max supported java version in Detekt
+}
+
+tasks.withType<Detekt>().configureEach {
+    reports {
+        html.required.set(true) // observe findings in your browser with structure and code snippets
+        xml.required.set(true) // checkstyle like format mainly for integrations like Jenkins
+        sarif.required.set(true) // standardized SARIF format (https://sarifweb.azurewebsites.net/) to support integrations with GitHub Code Scanning
+        md.required.set(true) // simple Markdown format
     }
 }
 
