@@ -3,6 +3,7 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 val logbackVersion: String by project
 val hopliteVersion: String by project
 val prometheusVersion: String by project
+val kotlinVersion: String by project
 
 plugins {
     application
@@ -38,7 +39,7 @@ dependencies {
     implementation("com.sksamuel.hoplite:hoplite-yaml:$hopliteVersion")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
 }
 
 // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html

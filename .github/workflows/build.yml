@@ -41,6 +41,10 @@ jobs:
       - name: Run Ktlint
         run: ./gradlew lintKotlin
 
+      # Run Tests
+      - name: Run Tests
+        run: ./gradlew test
+
       # Build the GraalVM native image with Gradle
       - name: Build GraalVM native image
         run: |
