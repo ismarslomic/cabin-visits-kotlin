@@ -9,13 +9,12 @@ import kotlin.test.assertEquals
 
 class ConfigureRoutingTest {
     @Test
-    fun testGetHi() =
-        testApplication {
-            application {
-                configureRouting()
-            }
-            client.get("/").apply {
-                assertEquals("Hello GraalVM!", bodyAsText())
-            }
+    fun testGetHi() = testApplication {
+        application {
+            configureRouting()
         }
+        client.get("/").apply {
+            assertEquals("Hello GraalVM!", bodyAsText())
+        }
+    }
 }

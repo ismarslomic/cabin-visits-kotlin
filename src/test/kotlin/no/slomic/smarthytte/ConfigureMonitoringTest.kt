@@ -9,13 +9,12 @@ import kotlin.test.Test
 
 class ConfigureMonitoringTest {
     @Test
-    fun testGetMetrics() =
-        testApplication {
-            application {
-                configureMonitoring()
-            }
-            client.get("/metrics").apply {
-                assertNotNull("metrics", bodyAsText())
-            }
+    fun testGetMetrics() = testApplication {
+        application {
+            configureMonitoring()
         }
+        client.get("/metrics").apply {
+            assertNotNull("metrics", bodyAsText())
+        }
+    }
 }

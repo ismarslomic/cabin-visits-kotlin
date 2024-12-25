@@ -37,6 +37,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      # Run Kotlin linter checks
+      - name: Run Ktlint
+        run: ./gradlew lintKotlin
+
       # Build the GraalVM native image with Gradle
       - name: Build GraalVM native image
         run: |

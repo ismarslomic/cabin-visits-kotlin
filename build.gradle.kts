@@ -10,6 +10,7 @@ plugins {
     id("io.ktor.plugin") version "3.0.3"
     id("com.github.ben-manes.versions") version "0.51.0" // plugin for checking outdated deps
     id("org.graalvm.buildtools.native") version "0.10.4"
+    id("org.jmailen.kotlinter") version "5.0.1"
 }
 
 group = "no.slomic.smarthytte"
@@ -122,6 +123,11 @@ graalvmNative {
             events("passed", "skipped", "failed")
         }
     }
+}
+
+// Kotlinter - install the hook automatically when someone runs the build
+tasks.check {
+    dependsOn("installKotlinterPrePushHook")
 }
 
 fun isNonStable(version: String): Boolean {
