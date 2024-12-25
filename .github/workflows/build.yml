@@ -17,7 +17,7 @@ jobs:
   build-native-image:
     name: Build GraalVM native image
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       # Checkout the code
@@ -63,7 +63,7 @@ jobs:
     # Run only if build-native-image completes successfully
     needs: build-native-image
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       # Download the GraalVM native image compiled in the 'build-native-image' job
