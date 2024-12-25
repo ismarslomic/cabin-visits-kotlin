@@ -40,7 +40,7 @@ jobs:
       # Build the GraalVM native image with Gradle
       - name: Build GraalVM native image
         run: |
-          ./gradlew nativeCompile -PnativeBuildArgs="--static,--libc=musl" --no-daemon
+          ./gradlew nativeCompile -PnativeBuildArgs="--static,--libc=musl,-march=compatibility" --no-daemon
           mkdir -p output
           cp ./build/native/nativeCompile/graalvm-server output/graalvm-server
           cp ./Dockerfile output/Dockerfile
