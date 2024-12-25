@@ -33,13 +33,13 @@ Note! jenv will report a deprecation warning, but you can ignore it.
 
 To build or run the project, use one of the following tasks:
 
-| Task                                                   | Description                                                 |
-|--------------------------------------------------------|-------------------------------------------------------------|
-| `./gradlew test`                                       | Run the tests                                               |
-| `./gradlew nativeCompile`                              | Build the GraalVm native image as executable file           |
-| `./build/native/nativeCompile/graalvm-server`          | Run the executable file                                     |
-| `./gradlew nativeTestCompile`                          | Build the GraalVm native image as executable file for tests |
-| `./build/native/nativeTestCompile/graalvm-test-server` | Run the tests in native image                               |
+| Task                                                   | Description                                                                                                                                                                                               |
+|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `./gradlew test`                                       | Run the tests                                                                                                                                                                                             |
+| `./gradlew nativeCompile`                              | Build the GraalVm native image as executable file. Optional argument `-PnativeBuildArgs=""` to add additional build arguments to the native image compilation. Use comma to separate arguments.           |
+| `./build/native/nativeCompile/graalvm-server`          | Run the executable file                                                                                                                                                                                   |
+| `./gradlew nativeTestCompile`                          | Build the GraalVm native image as executable file for tests. Optional argument `-PnativeBuildArgs=""` to add additional build arguments to the native image compilation. Use comma to separate arguments. |
+| `./build/native/nativeTestCompile/graalvm-test-server` | Run the tests in native image                                                                                                                                                                             |
 
 ## HTTP API
 

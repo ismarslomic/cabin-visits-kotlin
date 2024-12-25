@@ -51,6 +51,9 @@ graalvmNative {
             verbose = true // Add verbose output, defaults to false
             imageName.set("graalvm-server")
 
+            // Support adding additional build arguments as CLI argument -PnativeBuildArgs
+            val additionalArgs: List<String> = project.findProperty("nativeBuildArgs")?.toString()?.split(",") ?: emptyList()
+            buildArgs.addAll(additionalArgs)
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.ktor,kotlin",
@@ -84,6 +87,9 @@ graalvmNative {
             verbose.set(true)
             imageName.set("graalvm-test-server")
 
+            // Support adding additional build arguments as CLI argument -PnativeBuildArgs
+            val additionalArgs: List<String> = project.findProperty("nativeBuildArgs")?.toString()?.split(",") ?: emptyList()
+            buildArgs.addAll(additionalArgs)
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.ktor,kotlin",
