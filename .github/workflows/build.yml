@@ -43,7 +43,6 @@ jobs:
           ./gradlew nativeCompile -PnativeBuildArgs="--static,--libc=musl" --no-daemon
           mkdir -p output
           cp ./build/native/nativeCompile/graalvm-server output/graalvm-server
-          chmod +x output/graalvm-server
           cp ./Dockerfile output/Dockerfile
           cp ./README.md output/README.md 
 
@@ -72,6 +71,10 @@ jobs:
         with:
           name: graalvm-native-image # Name of the artifact to download
           path: native-image/ # Destination path. Supports basic tilde expansion.
+
+      # Build the GraalVM native image with Gradle
+      - name: Make the native image executable
+        run: chmod +x native-image/graalvm-server
 
       - name: Log downloaded files
         run: ls -R native-image/
