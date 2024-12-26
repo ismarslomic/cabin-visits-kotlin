@@ -39,15 +39,15 @@ jobs:
 
       # Run Kotlin linter checks
       - name: Run Ktlint
-        run: ./gradlew lintKotlin
+        run: ./gradlew lintKotlin --no-daemon
 
       # Run Tests
       - name: Run Tests
-        run: ./gradlew test
+        run: ./gradlew test --no-daemon
 
       # Run Detekt
       - name: Run Detekt analysis
-        run: ./gradlew detekt
+        run: ./gradlew detekt --no-daemon
 
       # Uploads Detekt results to GitHub repository using the upload-sarif action
       - name: Upload SARIF file
