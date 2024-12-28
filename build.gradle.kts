@@ -6,6 +6,7 @@ val logbackVersion: String by project
 val hopliteVersion: String by project
 val prometheusVersion: String by project
 val kotlinVersion: String by project
+val kotestVersion: String by project
 
 plugins {
     application
@@ -42,7 +43,8 @@ dependencies {
     implementation("com.sksamuel.hoplite:hoplite-yaml:$hopliteVersion")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
+    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
 }
 
 // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html
@@ -57,7 +59,8 @@ graalvmNative {
             imageName.set("graalvm-server")
 
             // Support adding additional build arguments as CLI argument -PnativeBuildArgs
-            val additionalArgs: List<String> = project.findProperty("nativeBuildArgs")?.toString()?.split(",") ?: emptyList()
+            val additionalArgs: List<String> =
+                project.findProperty("nativeBuildArgs")?.toString()?.split(",") ?: emptyList()
             buildArgs.addAll(additionalArgs)
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
@@ -93,7 +96,8 @@ graalvmNative {
             imageName.set("graalvm-test-server")
 
             // Support adding additional build arguments as CLI argument -PnativeBuildArgs
-            val additionalArgs: List<String> = project.findProperty("nativeBuildArgs")?.toString()?.split(",") ?: emptyList()
+            val additionalArgs: List<String> =
+                project.findProperty("nativeBuildArgs")?.toString()?.split(",") ?: emptyList()
             buildArgs.addAll(additionalArgs)
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
@@ -126,7 +130,19 @@ graalvmNative {
         testLogging {
             events("passed", "skipped", "failed")
         }
+        /*
+           - To use withEnvironment (kotest) with JDK17+ we need to add arguments for the JVM that runs the tests
+         */
+        jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED")
     }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    /*
+       - To use withEnvironment (kotest) with JDK17+ we need to add arguments for the JVM that runs the tests
+     */
+    jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED")
 }
 
 // Detekt
