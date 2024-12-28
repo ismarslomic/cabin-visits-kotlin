@@ -37,3 +37,6 @@ out/
 
 ### Test results
 test-results-native/
+
+### Secrets
+secrets

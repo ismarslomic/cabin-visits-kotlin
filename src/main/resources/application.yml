@@ -7,3 +7,7 @@ ktor:
   deployment:
     port: 8079
     host: 0.0.0.0
+
+google:
+  credentials-file-path: ${GOOGLE_CREDENTIALS_FILE_PATH}
+  tokens-directory-path: ${GOOGLE_TOKENS_DIRECTORY_PATH:-/data}
