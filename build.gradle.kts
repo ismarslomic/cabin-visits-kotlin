@@ -7,6 +7,9 @@ val hopliteVersion: String by project
 val prometheusVersion: String by project
 val kotlinVersion: String by project
 val kotestVersion: String by project
+val googleOauthClientVersion: String by project
+val googleCalendarServiceVersion: String by project
+val mockkVersion: String by project
 
 plugins {
     application
@@ -41,10 +44,13 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
 
     implementation("com.sksamuel.hoplite:hoplite-yaml:$hopliteVersion")
+    implementation("com.google.auth:google-auth-library-oauth2-http:$googleOauthClientVersion")
+    implementation("com.google.apis:google-api-services-calendar:$googleCalendarServiceVersion")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+    testImplementation("io.mockk:mockk:$mockkVersion")
 }
 
 // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html

@@ -7,6 +7,8 @@ import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.services.createGoogleCalendarService
+import no.slomic.smarthytte.tasks.startPeriodicGoogleCalendarSync
 
 fun main() {
     val ktorProperties = loadProperties<KtorPropertiesHolder>().ktor
@@ -22,6 +24,8 @@ fun main() {
 }
 
 fun Application.module() {
+    val googleCalendarService = createGoogleCalendarService()
     configureMonitoring()
     configureRouting()
+    startPeriodicGoogleCalendarSync(googleCalendarService)
 }

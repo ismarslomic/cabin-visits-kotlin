@@ -56,10 +56,6 @@ The native image will be compiled to `./build/native/nativeTestCompile/graalvm-t
 ./gradlew nativeTestCompile
 ```
 
-```bash
-./gradlew nativeCompile
-```
-
 ### Check for available dependency updates
 
 Overview of dependencies with version updates available:

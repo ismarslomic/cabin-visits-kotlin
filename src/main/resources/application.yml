@@ -8,6 +8,6 @@ ktor:
     port: 8079
     host: 0.0.0.0
 
-google:
+google-calendar:
   credentials-file-path: ${GOOGLE_CREDENTIALS_FILE_PATH}
-  tokens-directory-path: ${GOOGLE_TOKENS_DIRECTORY_PATH:-/data}
+  calendar-id: ${GOOGLE_CALENDAR_ID}

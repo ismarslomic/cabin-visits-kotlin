@@ -1,6 +1,5 @@
 package no.slomic.smarthytte.properties
 
-import com.sksamuel.hoplite.ConfigException
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.addResourceSource
@@ -18,17 +17,13 @@ fun currentEnvironment(): Environment {
 inline fun <reified T : Any> loadProperties(): T {
     val environment = currentEnvironment()
 
-    try {
-        val properties: T = ConfigLoaderBuilder
-            .default()
-            .withExplicitSealedTypes()
-            .addResourceSource("/application.yml")
-            .addResourceSource("/application-${environment.name}.yml")
-            .build()
-            .loadConfigOrThrow<T>()
+    val properties: T = ConfigLoaderBuilder
+        .default()
+        .withExplicitSealedTypes()
+        .addResourceSource("/application.yml")
+        .addResourceSource("/application-${environment.name}.yml")
+        .build()
+        .loadConfigOrThrow<T>()
 
-        return properties
-    } catch (e: ConfigException) {
-        throw RuntimeException("Failed reading application properties", e)
-    }
+    return properties
 }
