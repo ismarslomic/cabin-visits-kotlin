@@ -11,6 +11,7 @@ class GoogleCalendarService(
     private val calendarApiClient: Calendar,
     private val logger: Logger,
     private val calendarId: String,
+    private val syncFromDateTime: DateTime,
 ) {
     private var syncTokenKey: String? = null
 
@@ -18,15 +19,15 @@ class GoogleCalendarService(
         private const val STATUS_CODE_GONE = 410
     }
 
-    fun synchronizeCalendarEvents(fromDate: String) {
+    fun synchronizeCalendarEvents() {
         val request: Calendar.Events.List
 
         // Load the sync token stored from the last execution, if any.
         if (syncTokenKey == null) {
-            logger.info("Performing full sync.")
-            request = createFullSyncRequest(fromDate)
+            logger.info("Performing full sync for calendar $calendarId from date $syncFromDateTime.")
+            request = createFullSyncRequest()
         } else {
-            logger.info("Performing incremental sync.")
+            logger.info("Performing incremental sync for calendar $calendarId.")
             request = createIncrementalSyncRequest()
         }
 
@@ -43,7 +44,7 @@ class GoogleCalendarService(
                     // A 410 status code, "Gone", indicates that the sync token is invalid.
                     logger.info("Invalid sync token, clearing event store and re-syncing.")
                     syncTokenKey = null
-                    synchronizeCalendarEvents(fromDate)
+                    synchronizeCalendarEvents()
                 } else {
                     throw e
                 }
@@ -81,10 +82,10 @@ class GoogleCalendarService(
         }
     }
 
-    private fun createFullSyncRequest(fromDateTime: String) = calendarApiClient
+    private fun createFullSyncRequest() = calendarApiClient
         .events()
         .list(calendarId)
-        .setTimeMin(DateTime(fromDateTime))
+        .setTimeMin(syncFromDateTime)
 
     private fun createIncrementalSyncRequest() = calendarApiClient
         .events()

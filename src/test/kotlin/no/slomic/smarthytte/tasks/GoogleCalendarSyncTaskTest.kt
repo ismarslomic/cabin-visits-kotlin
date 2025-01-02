@@ -1,6 +1,7 @@
 package no.slomic.smarthytte.tasks
 
 import com.google.api.client.util.DateTime
+import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventDateTime
 import com.google.api.services.calendar.model.Events
@@ -15,14 +16,16 @@ import no.slomic.smarthytte.services.GoogleCalendarService
 class GoogleCalendarSyncTaskTest :
     StringSpec({
 
-        val mockCalendarApiClient = mockk<com.google.api.services.calendar.Calendar>(relaxed = true)
-        val mockEventsList = mockk<com.google.api.services.calendar.Calendar.Events.List>(relaxed = true)
+        val mockCalendarApiClient = mockk<Calendar>(relaxed = true)
+        val mockEventsList = mockk<Calendar.Events.List>(relaxed = true)
         val logger = mockk<Logger>(relaxed = true)
+        val syncFromDateTime = DateTime("2024-12-29T00:00:00Z")
 
         val googleCalendarService = GoogleCalendarService(
             calendarApiClient = mockCalendarApiClient,
             logger = logger,
             calendarId = "test-calendar",
+            syncFromDateTime = syncFromDateTime,
         )
 
         // Set up generic mocking for Calendar.Events.List no matter if its full or incremental sync
@@ -34,7 +37,7 @@ class GoogleCalendarSyncTaskTest :
             every { mockEventsList.execute() } returns Events().apply { items = emptyList() }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents("2024-12-29T00:00:00.000Z")
+                googleCalendarService.synchronizeCalendarEvents()
             }
 
             verify { logger.info("No new events to sync.") }
@@ -52,7 +55,7 @@ class GoogleCalendarSyncTaskTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(newEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents("2024-12-29T00:00:00.000Z")
+                googleCalendarService.synchronizeCalendarEvents()
             }
 
             verify {
@@ -78,7 +81,7 @@ class GoogleCalendarSyncTaskTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(changedEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents("2024-12-29T00:00:00.000Z")
+                googleCalendarService.synchronizeCalendarEvents()
             }
 
             verify {
@@ -101,7 +104,7 @@ class GoogleCalendarSyncTaskTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(deletedEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents("2024-12-29T00:00:00.000Z")
+                googleCalendarService.synchronizeCalendarEvents()
             }
 
             verify { logger.info("Event with id 3 was deleted.") }

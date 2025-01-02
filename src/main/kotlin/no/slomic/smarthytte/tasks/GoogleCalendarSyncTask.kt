@@ -29,7 +29,7 @@ fun Application.performPeriodicGoogleCalendarRequest(googleCalendarService: Goog
     // Launch custom code in a coroutine
     launch {
         log.info("Subscribing to Google Calendar events...")
-        googleCalendarService.synchronizeCalendarEvents(fromDate = "2024-12-29T00:00:00.000Z")
+        googleCalendarService.synchronizeCalendarEvents()
         log.info("Successfully subscribed")
     }
 }

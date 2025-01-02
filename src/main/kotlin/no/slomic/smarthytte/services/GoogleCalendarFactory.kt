@@ -2,6 +2,7 @@ package no.slomic.smarthytte.services
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
+import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.CalendarScopes
 import com.google.auth.http.HttpCredentialsAdapter
@@ -18,10 +19,12 @@ fun createGoogleCalendarService(): GoogleCalendarService {
     val calendarApiClient = createCalendarApiClient()
     val googleCalendarLogger: Logger = KtorSimpleLogger(GoogleCalendarService::class.java.simpleName)
     val calendarId: String = googleProperties.calendarId
+    val syncFromDateTime = DateTime(googleProperties.syncFromDateTime)
     return GoogleCalendarService(
         calendarApiClient = calendarApiClient,
         logger = googleCalendarLogger,
         calendarId = calendarId,
+        syncFromDateTime = syncFromDateTime,
     )
 }
 

@@ -11,15 +11,16 @@ class GoogleCalendarPropertiesTest :
     BehaviorSpec({
         val envVarCredentialsFilePath = "/data/google-service-account-credentials.json"
         val envVarCalendarId = "abcdefghijkl"
-        Given("required environment variable set") {
-            val envVars = mapOf(
+
+        Given("required and optional environment variables are set") {
+            val requiredEnvVars = mapOf(
                 "GOOGLE_CREDENTIALS_FILE_PATH" to envVarCredentialsFilePath,
                 "GOOGLE_CALENDAR_ID" to envVarCalendarId,
             )
-            withEnvironment(envVars) {
+            withEnvironment(requiredEnvVars) {
                 When("reading google properties") {
                     val googleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
-                    val (credentialsFilePath, calendarId) = googleCalendarProperties
+                    val (credentialsFilePath, calendarId, syncFromDateTime) = googleCalendarProperties
 
                     Then("credentialsFilePath should be set to the environment variable value") {
                         credentialsFilePath shouldBe envVarCredentialsFilePath
@@ -27,11 +28,31 @@ class GoogleCalendarPropertiesTest :
                     Then("calendarId should be set to the environment variable value") {
                         calendarId shouldBe envVarCalendarId
                     }
+                    Then("syncFromDateTime should be set to the default value") {
+                        val defaultSyntFromDateTime = "2024-01-01T00:00:00Z"
+                        syncFromDateTime shouldBe defaultSyntFromDateTime
+                    }
+                }
+            }
+            And("optional environment variables are set") {
+                val envVarSyncFromDateTime = "2020-05-07T00:00:00Z"
+                val requiredAndOptionalEnvVars =
+                    requiredEnvVars + ("GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME" to envVarSyncFromDateTime)
+
+                withEnvironment(requiredAndOptionalEnvVars) {
+                    When("reading google properties") {
+                        val googleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
+                        val syncFromDateTime = googleCalendarProperties.syncFromDateTime
+
+                        Then("syncFromDateTime should be set to the environment variable value") {
+                            syncFromDateTime shouldBe envVarSyncFromDateTime
+                        }
+                    }
                 }
             }
         }
 
-        Given("required environment variable for credentials file path not set") {
+        Given("required environment variable for credentials file path is not set") {
             val envVars = mapOf(
                 "GOOGLE_CALENDAR_ID" to envVarCalendarId,
             )

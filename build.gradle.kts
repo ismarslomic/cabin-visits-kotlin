@@ -55,7 +55,8 @@ dependencies {
 
 // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html
 graalvmNative {
-    val resourcePath = "$projectDir/META-INF/native-image"
+    val mainConfigurationFilesPath = "$projectDir/META-INF/native-image/main"
+    val testConfigurationFilesPath = "$projectDir/META-INF/native-image/test"
 
     binaries {
 
@@ -74,24 +75,23 @@ graalvmNative {
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
                 "--initialize-at-build-time=kotlinx.io.Buffer",
-                "--initialize-at-build-time=org.xml.sax.helpers.LocatorImpl",
                 "--initialize-at-build-time=kotlinx.io.Segment",
                 "--initialize-at-build-time=kotlinx.io.bytestring.ByteString",
                 "--initialize-at-build-time=kotlinx.io.bytestring.ByteString\$Companion",
-                "--initialize-at-build-time=org.slf4j.helpers.SubstituteServiceProvider",
-                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLoggerFactory",
-                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLogger",
-                "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
-                "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
                 "--initialize-at-build-time=org.slf4j.LoggerFactory",
+                "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
+                "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
+                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLogger",
+                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLoggerFactory",
+                "--initialize-at-build-time=org.slf4j.helpers.SubstituteServiceProvider",
                 "--initialize-at-build-time=org.xml.sax.helpers.AttributesImpl",
+                "--initialize-at-build-time=org.xml.sax.helpers.LocatorImpl",
                 "-H:+InstallExitHandlers",
                 "-H:+ReportUnsupportedElementsAtRuntime",
                 "-H:+ReportExceptionStackTraces",
                 "-H:IncludeResources=application.yml",
                 "-H:IncludeResources=application-development.yml",
-                "-H:ReflectionConfigurationFiles=$resourcePath/reflect-config.json",
-                "-H:ResourceConfigurationFiles=$resourcePath/resource-config.json",
+                "-H:ConfigurationFileDirectories=$mainConfigurationFilesPath",
             )
         }
 
@@ -107,26 +107,31 @@ graalvmNative {
             buildArgs.addAll(additionalArgs)
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
+                "--initialize-at-build-time=io.kotest",
                 "--initialize-at-build-time=io.ktor,kotlin",
+                "--initialize-at-build-time=kotlinx.coroutines.CoroutineDispatcher\$Key",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
+                "--initialize-at-build-time=kotlinx.coroutines.ExecutorCoroutineDispatcherImpl",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.Symbol",
+                "--initialize-at-build-time=kotlinx.coroutines.sync.MutexImpl",
+                "--initialize-at-build-time=kotlinx.coroutines.sync.SemaphoreSegment",
                 "--initialize-at-build-time=kotlinx.io.Buffer",
-                "--initialize-at-build-time=org.xml.sax.helpers.LocatorImpl",
                 "--initialize-at-build-time=kotlinx.io.Segment",
                 "--initialize-at-build-time=kotlinx.io.bytestring.ByteString",
                 "--initialize-at-build-time=kotlinx.io.bytestring.ByteString\$Companion",
-                "--initialize-at-build-time=org.slf4j.helpers.SubstituteServiceProvider",
-                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLoggerFactory",
-                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLogger",
-                "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
-                "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
                 "--initialize-at-build-time=org.slf4j.LoggerFactory",
+                "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
+                "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
+                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLogger",
+                "--initialize-at-build-time=org.slf4j.helpers.SubstituteLoggerFactory",
+                "--initialize-at-build-time=org.slf4j.helpers.SubstituteServiceProvider",
                 "--initialize-at-build-time=org.xml.sax.helpers.AttributesImpl",
+                "--initialize-at-build-time=org.xml.sax.helpers.LocatorImpl",
                 "-H:+InstallExitHandlers",
                 "-H:+ReportUnsupportedElementsAtRuntime",
                 "-H:+ReportExceptionStackTraces",
-                "-H:ReflectionConfigurationFiles=$resourcePath/reflect-config.json",
-                "-H:ResourceConfigurationFiles=$resourcePath/resource-config.json",
+                "-H:ConfigurationFileDirectories=$testConfigurationFilesPath/",
             )
         }
     }
@@ -139,7 +144,10 @@ graalvmNative {
         /*
            - To use withEnvironment (kotest) with JDK17+ we need to add arguments for the JVM that runs the tests
          */
-        jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED")
+        jvmArgs(
+            "--add-opens=java.base/java.util=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        )
     }
 }
 
@@ -148,7 +156,14 @@ tasks.withType<Test>().configureEach {
     /*
        - To use withEnvironment (kotest) with JDK17+ we need to add arguments for the JVM that runs the tests
      */
-    jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED")
+    jvmArgs(
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        // Run the Native Image Agent as part of the test task in Gradle to collect the metadata for native test image,
+        // However, there is a known issue with the JvmMockKGateway and bytebuddy that is currently unresolved,
+        // see https://github.com/mockk/mockk/issues/1022
+        // "-agentlib:native-image-agent=config-merge-dir=META-INF/native-image/test/",
+    )
 }
 
 // Detekt

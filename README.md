@@ -13,14 +13,17 @@ the [Oracle GraalVM Free Terms and Conditions (GFTC)](https://www.oracle.com/dow
 The changes to this app is automatically published to the Docker Hub and you can always find the latest release at
 [ismarslomic/cabin-visits-kotlin](https://hub.docker.com/r/ismarslomic/cabin-visits-kotlin)
 
-Set following environment variables, either by using the `.env` file and the `--env-file` option or by setting them
+Set the following environment variables, either by using the `.env` file and the `--env-file` option or by setting them
 with the `-e` option:
 
-- `GOOGLE_CREDENTIALS_FILE_PATH` - the path to the Google Service Account credentials internally in the docker container
-- `GOOGLE_CALENDAR_ID` - The id of the Google Calendar which you want to synchronize continuously
+| Variable                              | Required | Default                | Description                                                                                                                                               |
+|---------------------------------------|----------|------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `GOOGLE_CREDENTIALS_FILE_PATH `       | Yes      | N/A                    | The path to the Google Service Account credentials internally in the docker container                                                                     |
+| `GOOGLE_CALENDAR_ID`                  | Yes      | N/A                    | The id of the Google Calendar which you want to synchronize continuously                                                                                  |
+| `GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME` | No       | `2024-01-01T00:00:00Z` | Lower bound (exclusive) for an event's end time to filter by when doing full calendar sync. Must be an RFC3339 timestamp with mandatory time zone offset. |
 
 ```bash
-docker run --rm -p 8079:8079 ismarslomic/cabin-visits-kotlin:main
+docker run --rm -p 8079:8079 --env-file .env ismarslomic/cabin-visits-kotlin:main
 ```
 
 ## HTTP API

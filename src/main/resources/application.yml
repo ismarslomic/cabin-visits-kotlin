@@ -11,3 +11,4 @@ ktor:
 google-calendar:
   credentials-file-path: ${GOOGLE_CREDENTIALS_FILE_PATH}
   calendar-id: ${GOOGLE_CALENDAR_ID}
+  sync-from-date-time: ${GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME:-2024-01-01T00:00:00Z}

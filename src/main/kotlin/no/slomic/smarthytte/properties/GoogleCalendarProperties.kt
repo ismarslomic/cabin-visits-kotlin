@@ -7,4 +7,5 @@ data class GoogleCalendarPropertiesHolder(
 data class GoogleCalendarProperties(
     val credentialsFilePath: String,
     val calendarId: String,
+    val syncFromDateTime: String,
 )
