@@ -7,3 +7,18 @@ ktor:
   deployment:
     port: 8079
     host: 0.0.0.0
+
+folders:
+  data: ${DATA_FOLDER:-/data}
+
+google-calendar:
+  credentials-file-path: ${GOOGLE_CREDENTIALS_FILE_PATH}
+  calendar-id: ${GOOGLE_CALENDAR_ID}
+  sync-from-date-time: ${GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME:-2024-01-01T00:00:00Z}
+  summary-to-guest-file-path: ${GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH}
+
+database:
+  file-path: ${folders.data}/app.db
+
+guest:
+  file-path: ${GUEST_FILE_PATH}

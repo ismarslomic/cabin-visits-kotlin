@@ -16,11 +16,14 @@ fun currentEnvironment(): Environment {
 @OptIn(ExperimentalHoplite::class)
 inline fun <reified T : Any> loadProperties(): T {
     val environment = currentEnvironment()
-    return ConfigLoaderBuilder
+
+    val properties: T = ConfigLoaderBuilder
         .default()
         .withExplicitSealedTypes()
         .addResourceSource("/application.yml")
         .addResourceSource("/application-${environment.name}.yml")
         .build()
         .loadConfigOrThrow<T>()
+
+    return properties
 }
