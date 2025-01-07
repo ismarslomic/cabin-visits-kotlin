@@ -38,6 +38,7 @@ at [Collect Metadata with the Tracing Agent](https://www.graalvm.org/latest/refe
 gradlew clean build
 export GOOGLE_CREDENTIALS_FILE_PATH=""
 export GOOGLE_CALENDAR_ID=""
+.....
 java -agentlib:native-image-agent=config-output-dir=META-INF/native-image/main -jar ./build/libs/cabin-visits-kotlin-all.jar
 ```
 

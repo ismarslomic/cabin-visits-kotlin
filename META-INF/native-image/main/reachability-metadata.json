@@ -133,6 +133,12 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setAuthorization",
+          "parameterTypes": [
             "java.util.List"
           ]
         },
@@ -325,6 +331,12 @@
           ]
         },
         {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
           "name": "setEnd",
           "parameterTypes": [
             "com.google.api.services.calendar.model.EventDateTime"
@@ -340,6 +352,24 @@
           "name": "setEventType",
           "parameterTypes": [
             "java.lang.String"
+          ]
+        },
+        {
+          "name": "setExtendedProperties",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$ExtendedProperties"
+          ]
+        },
+        {
+          "name": "setGuestsCanInviteOthers",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        },
+        {
+          "name": "setGuestsCanSeeOtherGuests",
+          "parameterTypes": [
+            "java.lang.Boolean"
           ]
         },
         {
@@ -409,9 +439,21 @@
           ]
         },
         {
+          "name": "setTransparency",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
           "name": "setUpdated",
           "parameterTypes": [
             "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setVisibility",
+          "parameterTypes": [
+            "java.lang.String"
           ]
         }
       ]
@@ -429,6 +471,16 @@
           "parameterTypes": [
             "java.lang.String"
           ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$ExtendedProperties",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
         }
       ]
     },
@@ -898,6 +950,17 @@
       "type": "com.sun.management.GarbageCollectionNotificationInfo"
     },
     {
+      "type": "com.sun.management.GcInfo",
+      "fields": [
+        {
+          "name": "builder"
+        },
+        {
+          "name": "extAttributes"
+        }
+      ]
+    },
+    {
       "type": "com.sun.management.OperatingSystemMXBean"
     },
     {
@@ -1003,6 +1066,14 @@
       ]
     },
     {
+      "type": "io.micrometer.core.instrument.distribution.TimeWindowMax",
+      "fields": [
+        {
+          "name": "rotating"
+        }
+      ]
+    },
+    {
       "type": "io.opencensus.impl.trace.TraceComponentImpl"
     },
     {
@@ -1030,7 +1101,31 @@
       "type": "java.lang.AbstractStringBuilder"
     },
     {
+      "type": "java.lang.Boolean",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Byte",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
+    },
+    {
       "type": "java.lang.CharSequence"
+    },
+    {
+      "type": "java.lang.Character",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
     },
     {
       "type": "java.lang.Class",
@@ -1065,7 +1160,36 @@
       ]
     },
     {
-      "type": "java.lang.Integer"
+      "type": "java.lang.Double",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Float",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Integer",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Long",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
     },
     {
       "type": "java.lang.Number"
@@ -1078,7 +1202,20 @@
       "type": "java.lang.RuntimePermission"
     },
     {
-      "type": "java.lang.String"
+      "type": "java.lang.Short",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.String",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
     },
     {
       "type": "java.lang.StringBuffer"
@@ -1095,7 +1232,12 @@
       ]
     },
     {
-      "type": "java.lang.Void"
+      "type": "java.lang.Void",
+      "fields": [
+        {
+          "name": "TYPE"
+        }
+      ]
     },
     {
       "type": "java.lang.annotation.Retention",
@@ -1112,6 +1254,17 @@
         {
           "name": "value",
           "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.management.MemoryUsage",
+      "methods": [
+        {
+          "name": "from",
+          "parameterTypes": [
+            "javax.management.openmbean.CompositeData"
+          ]
         }
       ]
     },
@@ -1135,6 +1288,12 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "java.math.BigDecimal"
+    },
+    {
+      "type": "java.math.BigInteger"
     },
     {
       "type": "java.net.NetPermission"
@@ -1188,6 +1347,9 @@
       "type": "java.sql.Date"
     },
     {
+      "type": "java.sql.ResultSet"
+    },
+    {
       "type": "java.sql.Timestamp"
     },
     {
@@ -1195,7 +1357,14 @@
       "allDeclaredFields": true
     },
     {
+      "type": "java.util.Date"
+    },
+    {
       "type": "java.util.LinkedHashMap"
+    },
+    {
+      "type": "java.util.Map",
+      "allDeclaredFields": true
     },
     {
       "type": "java.util.PropertyPermission"
@@ -1221,6 +1390,9 @@
           "name": "cellsBusy"
         }
       ]
+    },
+    {
+      "type": "javax.management.ObjectName"
     },
     {
       "type": "javax.smartcardio.CardPermission"
@@ -1577,6 +1749,50 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.calendar.CalendarEventEntity",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.jetbrains.exposed.dao.id.EntityID"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.guest.GuestEntity",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.jetbrains.exposed.dao.id.EntityID"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.DatabaseProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.DatabasePropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.DatabaseProperties"
+          ]
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.DeploymentProperties",
       "methods": [
         {
@@ -1596,6 +1812,7 @@
           "parameterTypes": [
             "java.lang.String",
             "java.lang.String",
+            "java.lang.String",
             "java.lang.String"
           ]
         }
@@ -1608,6 +1825,28 @@
           "name": "<init>",
           "parameterTypes": [
             "no.slomic.smarthytte.properties.GoogleCalendarProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.GuestProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.GuestPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.GuestProperties"
           ]
         }
       ]
@@ -1631,6 +1870,76 @@
           "parameterTypes": [
             "no.slomic.smarthytte.properties.KtorProperties"
           ]
+        }
+      ]
+    },
+    {
+      "type": "org.jetbrains.exposed.dao.DaoEntityIDFactory"
+    },
+    {
+      "type": "org.jetbrains.exposed.dao.EntityLifecycleInterceptor"
+    },
+    {
+      "type": "org.jetbrains.exposed.dao.id.EntityID"
+    },
+    {
+      "type": "org.jetbrains.exposed.jdbc.ExposedConnectionImpl"
+    },
+    {
+      "type": "org.jetbrains.exposed.sql.ColumnType",
+      "methods": [
+        {
+          "name": "getNullable",
+          "parameterTypes": []
+        },
+        {
+          "name": "setNullable",
+          "parameterTypes": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.jetbrains.exposed.sql.IColumnType"
+    },
+    {
+      "type": "org.jetbrains.exposed.sql.StringColumnType",
+      "methods": [
+        {
+          "name": "getCollate",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.jetbrains.exposed.sql.VarCharColumnType",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "int",
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "getColLength",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.jetbrains.exposed.sql.statements.api.PreparedStatementApi"
+    },
+    {
+      "type": "org.slf4j.Logger"
+    },
+    {
+      "type": "org.sqlite.JDBC",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
         }
       ]
     },
@@ -1994,6 +2303,9 @@
   ],
   "resources": [
     {
+      "glob": "META-INF/maven/org.xerial/sqlite-jdbc/pom.properties"
+    },
+    {
       "glob": "META-INF/services/ch.qos.logback.classic.spi.Configurator"
     },
     {
@@ -2018,6 +2330,9 @@
       "glob": "META-INF/services/java.nio.channels.spi.SelectorProvider"
     },
     {
+      "glob": "META-INF/services/java.sql.Driver"
+    },
+    {
       "glob": "META-INF/services/java.time.zone.ZoneRulesProvider"
     },
     {
@@ -2031,6 +2346,15 @@
     },
     {
       "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper"
+    },
+    {
+      "glob": "META-INF/services/org.jetbrains.exposed.dao.id.EntityIDFactory"
+    },
+    {
+      "glob": "META-INF/services/org.jetbrains.exposed.sql.DatabaseConnectionAutoRegistration"
+    },
+    {
+      "glob": "META-INF/services/org.jetbrains.exposed.sql.statements.GlobalStatementInterceptor"
     },
     {
       "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
@@ -2087,7 +2411,13 @@
       "glob": "logback.xml"
     },
     {
+      "glob": "org/sqlite/native/Mac/aarch64/libsqlitejdbc.dylib"
+    },
+    {
       "glob": "prometheus.properties"
+    },
+    {
+      "glob": "sqlite-jdbc.properties"
     },
     {
       "module": "java.base",
@@ -2113,10 +2443,180 @@
   "bundles": [],
   "jni": [
     {
+      "type": "[Z"
+    },
+    {
       "type": "java.lang.Boolean",
       "methods": [
         {
           "name": "getBoolean",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Throwable",
+      "methods": [
+        {
+          "name": "toString",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.BusyHandler",
+      "methods": [
+        {
+          "name": "callback",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Collation",
+      "methods": [
+        {
+          "name": "xCompare",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Function",
+      "fields": [
+        {
+          "name": "args"
+        },
+        {
+          "name": "context"
+        },
+        {
+          "name": "value"
+        }
+      ],
+      "methods": [
+        {
+          "name": "xFunc",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Function$Aggregate",
+      "methods": [
+        {
+          "name": "clone",
+          "parameterTypes": []
+        },
+        {
+          "name": "xFinal",
+          "parameterTypes": []
+        },
+        {
+          "name": "xStep",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Function$Window",
+      "methods": [
+        {
+          "name": "xInverse",
+          "parameterTypes": []
+        },
+        {
+          "name": "xValue",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.ProgressHandler",
+      "methods": [
+        {
+          "name": "progress",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.core.DB",
+      "methods": [
+        {
+          "name": "onCommit",
+          "parameterTypes": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "onUpdate",
+          "parameterTypes": [
+            "int",
+            "java.lang.String",
+            "java.lang.String",
+            "long"
+          ]
+        },
+        {
+          "name": "throwex",
+          "parameterTypes": []
+        },
+        {
+          "name": "throwex",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.core.DB$ProgressObserver",
+      "methods": [
+        {
+          "name": "progress",
+          "parameterTypes": [
+            "int",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.core.NativeDB",
+      "fields": [
+        {
+          "name": "busyHandler"
+        },
+        {
+          "name": "commitListener"
+        },
+        {
+          "name": "pointer"
+        },
+        {
+          "name": "progressHandler"
+        },
+        {
+          "name": "updateListener"
+        }
+      ],
+      "methods": [
+        {
+          "name": "stringToUtf8ByteArray",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "throwex",
           "parameterTypes": [
             "java.lang.String"
           ]

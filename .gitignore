@@ -40,4 +40,9 @@ test-results-native/
 
 ### Secrets
 secrets
+
+### Environment variables
 .env
+
+### Local data folder
+data

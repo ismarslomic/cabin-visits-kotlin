@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.tasks
+package no.slomic.smarthytte.calendar
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
@@ -6,7 +6,6 @@ import io.ktor.server.application.log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import no.slomic.smarthytte.services.GoogleCalendarService
 import kotlin.time.Duration.Companion.seconds
 
 fun Application.startPeriodicGoogleCalendarSync(googleCalendarService: GoogleCalendarService) {
@@ -25,7 +24,7 @@ fun Application.startPeriodicGoogleCalendarSync(googleCalendarService: GoogleCal
     }
 }
 
-fun Application.performPeriodicGoogleCalendarRequest(googleCalendarService: GoogleCalendarService) {
+private fun Application.performPeriodicGoogleCalendarRequest(googleCalendarService: GoogleCalendarService) {
     // Launch custom code in a coroutine
     launch {
         log.info("Subscribing to Google Calendar events...")
