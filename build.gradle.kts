@@ -175,6 +175,12 @@ tasks.check {
     dependsOn("installKotlinterPrePushHook")
 }
 
+// Activate locking for all configurations
+// See https://docs.gradle.org/current/userguide/dependency_locking.html
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 fun isNonStable(version: String): Boolean {
     val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
     val regex = "^[0-9,.v-]+(-r)?$".toRegex()
