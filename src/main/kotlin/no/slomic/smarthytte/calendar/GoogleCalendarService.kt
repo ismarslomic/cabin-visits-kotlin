@@ -7,12 +7,9 @@ import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import no.slomic.smarthytte.common.readSummaryToGuestFromJsonFile
-import no.slomic.smarthytte.common.truncatedToMillis
-import kotlin.time.Duration.Companion.nanoseconds
+import no.slomic.smarthytte.common.toInstant
 
 class GoogleCalendarService(
     private val calendarApiClient: Calendar,
@@ -23,7 +20,7 @@ class GoogleCalendarService(
     summaryToGuestFilePath: String,
 ) {
     private var syncTokenKey: String? = null
-    private val calendarTimezone: TimeZone = TimeZone.of("CET")
+    private val osloTimeZone = TimeZone.of("Europe/Oslo")
     private val mapping: Map<String, List<String>> = readSummaryToGuestFromJsonFile(summaryToGuestFilePath)
 
     companion object {
@@ -117,7 +114,7 @@ class GoogleCalendarService(
         require(date != null || dateTime != null) { "Both start date and start datetime cannot be null" }
 
         return if (date != null) {
-            LocalDate.parse(date.toStringRfc3339()).atStartOfDayIn(calendarTimezone).truncatedToMillis()
+            toInstant(date = date, hour = 18, timeZone = osloTimeZone)
         } else {
             Instant.parse(dateTime!!.toStringRfc3339())
         }
@@ -130,8 +127,7 @@ class GoogleCalendarService(
         require(date != null || dateTime != null) { "Both end date and end datetime cannot be null" }
 
         return if (date != null) {
-            LocalDate.parse(date.toStringRfc3339()).atStartOfDayIn(calendarTimezone).minus(1.nanoseconds)
-                .truncatedToMillis()
+            toInstant(date = date, hour = 15, timeZone = osloTimeZone, minusDays = 1)
         } else {
             Instant.parse(dateTime!!.toStringRfc3339())
         }

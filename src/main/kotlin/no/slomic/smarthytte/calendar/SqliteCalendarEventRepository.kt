@@ -12,7 +12,7 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteCalendarEventRepository::class.java.name)
 
     override suspend fun allEvents(): List<CalendarEvent> = suspendTransaction {
-        CalendarEventEntity.all().map(::daoToModel)
+        CalendarEventEntity.all().sortedBy { it.start }.map(::daoToModel)
     }
 
     override suspend fun eventById(id: String): CalendarEvent? = suspendTransaction {
@@ -61,6 +61,7 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
             guests = SizedCollection(eventGuests)
             sourceCreated = event.sourceCreated
             sourceUpdated = event.sourceUpdated
+            created = Clock.System.now()
         }
 
         logger.info("Added event with id: ${event.id} and summary: ${event.summary}")

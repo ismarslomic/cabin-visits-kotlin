@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.bundles.ktor)
     implementation(libs.bundles.metrics)
     implementation(libs.hoplite.yaml)
+    implementation(libs.influxdb.client)
     implementation(libs.logback.classic)
 
     testImplementation(libs.bundles.kotest)

@@ -20,8 +20,8 @@ inline fun <reified T : Any> loadProperties(): T {
     val properties: T = ConfigLoaderBuilder
         .default()
         .withExplicitSealedTypes()
-        .addResourceSource("/application.yml")
-        .addResourceSource("/application-${environment.name}.yml")
+        .addResourceSource(resource = "/application.yml")
+        .addResourceSource(resource = "/application-${environment.name}.yml")
         .build()
         .loadConfigOrThrow<T>()
 

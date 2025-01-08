@@ -13,6 +13,14 @@ class AppPropertiesTest :
         val envVarCalendarId = "abcdefghijkl"
         val envVarSummaryToGuestFilePath = "/data/summaryToGuestIds.json"
         val envVarGuestFilePath = "/data/guests.json"
+        val envVarInfluxDbUrl = "http://localhost:8086"
+        val envVarInfluxDbToken = "foobar"
+        val envVarInfluxDbOrg = "my.org"
+        val envVarInfluxDbBucket = "my_bucket"
+        val envVarInfluxDbCheckInMeasurement = "my_measurement"
+        val envVarInfluxDbCheckInRangeStart = "2019-01-01T00:00:00Z"
+        val envVarInfluxDbCheckInRangeStop = "2025-01-09T00:00:00Z"
+        val envVarVehicleTripFilePath = "/data/vehicle-trips.json"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -20,6 +28,13 @@ class AppPropertiesTest :
                 "GOOGLE_CALENDAR_ID" to envVarCalendarId,
                 "GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH" to envVarSummaryToGuestFilePath,
                 "GUEST_FILE_PATH" to envVarGuestFilePath,
+                "INFLUXDB_URL" to envVarInfluxDbUrl,
+                "INFLUXDB_TOKEN" to envVarInfluxDbToken,
+                "INFLUXDB_ORG" to envVarInfluxDbOrg,
+                "INFLUXDB_BUCKET" to envVarInfluxDbBucket,
+                "INFLUXDB_CHECK_IN_MEASUREMENT" to envVarInfluxDbCheckInMeasurement,
+                "INFLUXDB_CHECK_IN_RANGE_START" to envVarInfluxDbCheckInRangeStart,
+                "VEHICLE_TRIP_FILE_PATH" to envVarVehicleTripFilePath,
             )
             withEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -60,6 +75,46 @@ class AppPropertiesTest :
                         guestFilePath shouldBe envVarGuestFilePath
                     }
                 }
+
+                When("reading influxdb properties") {
+                    val influxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
+
+                    Then("url should be set to the environment variable value") {
+                        influxDbProperties.url shouldBe envVarInfluxDbUrl
+                    }
+
+                    Then("url should be set to the environment variable value") {
+                        influxDbProperties.url shouldBe envVarInfluxDbUrl
+                    }
+
+                    Then("token should be set to the environment variable value") {
+                        influxDbProperties.token shouldBe envVarInfluxDbToken
+                    }
+
+                    Then("org should be set to the environment variable value") {
+                        influxDbProperties.org shouldBe envVarInfluxDbOrg
+                    }
+
+                    Then("bucket should be set to the environment variable value") {
+                        influxDbProperties.bucket shouldBe envVarInfluxDbBucket
+                    }
+
+                    Then("checkIn.measurement should be set to the environment variable value") {
+                        influxDbProperties.checkIn.measurement shouldBe envVarInfluxDbCheckInMeasurement
+                    }
+
+                    Then("checkIn.rangeStart should be set to the environment variable value") {
+                        influxDbProperties.checkIn.rangeStart shouldBe envVarInfluxDbCheckInRangeStart
+                    }
+                }
+
+                When("reading vehicle trip properties") {
+                    val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
+
+                    Then("filePath should be set to the environment variable value") {
+                        vehicleTripProperties.filePath shouldBe envVarVehicleTripFilePath
+                    }
+                }
             }
             And("optional environment variables are set") {
                 val envVarSyncFromDateTime = "2020-05-07T00:00:00Z"
@@ -67,6 +122,7 @@ class AppPropertiesTest :
                 val optionalEnvVars = mapOf(
                     "GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME" to envVarSyncFromDateTime,
                     "DATA_FOLDER" to envVarDataFolder,
+                    "INFLUXDB_CHECK_IN_RANGE_STOP" to envVarInfluxDbCheckInRangeStop,
                 )
                 val requiredAndOptionalEnvVars = requiredEnvVars + optionalEnvVars
 
@@ -88,6 +144,14 @@ class AppPropertiesTest :
 
                         Then("database.filePath should use the data folder set from the environment variable value") {
                             databaseFilePath shouldBe expectedDatabaseFilePath
+                        }
+                    }
+
+                    When("reading influxdb properties") {
+                        val influxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
+
+                        Then("checkIn.rangeStop should be set to the environment variable value") {
+                            influxDbProperties.checkIn.rangeStop shouldBe envVarInfluxDbCheckInRangeStop
                         }
                     }
                 }

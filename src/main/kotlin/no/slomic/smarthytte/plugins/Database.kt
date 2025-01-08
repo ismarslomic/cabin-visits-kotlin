@@ -7,6 +7,7 @@ import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
 import no.slomic.smarthytte.guest.GuestTable
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.vehicletrip.VehicleTripTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -31,10 +32,20 @@ fun Application.configureDatabases() {
     // Initialize schemas
     transaction {
         // Create tables that do not exist
-        SchemaUtils.create(CalendarEventTable, GuestTable, CalenderEventGuestTable)
+        SchemaUtils.create(
+            CalendarEventTable,
+            GuestTable,
+            CalenderEventGuestTable,
+            VehicleTripTable,
+        )
 
         // Create missing columns to existing tables if changed from a previous app version
-        SchemaUtils.createMissingTablesAndColumns(CalendarEventTable, GuestTable, CalenderEventGuestTable)
+        SchemaUtils.createMissingTablesAndColumns(
+            CalendarEventTable,
+            GuestTable,
+            CalenderEventGuestTable,
+            VehicleTripTable,
+        )
 
         // Removing already created columns is not supported directly by Exposed. We need to execute the raw sql or use
         // db migration library such as Flyway or Liquibase.
