@@ -2,27 +2,15 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 
-val logbackVersion: String by project
-val hopliteVersion: String by project
-val prometheusVersion: String by project
-val kotlinVersion: String by project
-val kotestVersion: String by project
-val googleOauthClientVersion: String by project
-val googleCalendarServiceVersion: String by project
-val mockkVersion: String by project
-val ktorVersion: String by project
-val exposedVersion: String by project
-val sqliteVersion: String by project
-
 plugins {
     application
-    kotlin("jvm") version "2.1.0"
-    kotlin("plugin.serialization") version "2.1.0"
-    id("io.ktor.plugin") version "3.0.3"
-    id("com.github.ben-manes.versions") version "0.51.0" // plugin for checking outdated deps
-    id("org.graalvm.buildtools.native") version "0.10.4"
-    id("org.jmailen.kotlinter") version "5.0.1"
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.graalvm)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinter)
+    alias(libs.plugins.ktor)
+    alias(libs.plugins.versions)
 }
 
 group = "no.slomic.smarthytte"
@@ -40,33 +28,16 @@ repositories {
 }
 
 dependencies {
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-cio-jvm")
+    implementation(libs.bundles.database)
+    implementation(libs.bundles.google.calendar)
+    implementation(libs.bundles.ktor)
+    implementation(libs.bundles.metrics)
+    implementation(libs.hoplite.yaml)
+    implementation(libs.logback.classic)
 
-    // Database
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
-    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
-    implementation("org.xerial:sqlite-jdbc:$sqliteVersion")
-
-    // Metrics
-    implementation("io.ktor:ktor-server-metrics-micrometer-jvm")
-    implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
-
-    // Configuration
-    implementation("com.sksamuel.hoplite:hoplite-yaml:$hopliteVersion")
-
-    // Google calendar API
-    implementation("com.google.auth:google-auth-library-oauth2-http:$googleOauthClientVersion")
-    implementation("com.google.apis:google-api-services-calendar:$googleCalendarServiceVersion")
-
-    testImplementation("io.ktor:ktor-server-test-host-jvm")
-    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
-    testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation(libs.bundles.kotest)
+    testImplementation(libs.ktor.server.test)
+    testImplementation(libs.mockk)
 }
 
 // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html
