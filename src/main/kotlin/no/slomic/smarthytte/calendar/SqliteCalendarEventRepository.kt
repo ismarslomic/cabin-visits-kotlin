@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.SizedCollection
 
 class SqliteCalendarEventRepository : CalendarEventRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteCalendarEventRepository::class.java.name)
+    private val synckTokenId: Int = 1
 
     override suspend fun allEvents(): List<CalendarEvent> = suspendTransaction {
         CalendarEventEntity.all().sortedBy { it.start }.map(::daoToModel)
@@ -46,6 +47,38 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
         logger.info("Deleted event with id: $id and summary: $summary was successful: $wasDeleted")
 
         wasDeleted
+    }
+
+    override suspend fun syncToken(): String? =
+        suspendTransaction { CalendarSyncEntity.findById(synckTokenId)?.syncToken }
+
+    override suspend fun addOrUpdate(newSyncToken: String) {
+        suspendTransaction {
+            logger.info("Updating calendar sync token")
+
+            val storedCalendarSync: CalendarSyncEntity? = CalendarSyncEntity.findById(synckTokenId)
+
+            if (storedCalendarSync == null) {
+                CalendarSyncEntity.new(synckTokenId) {
+                    syncToken = newSyncToken
+                    updated = Clock.System.now()
+                }
+            } else {
+                storedCalendarSync.syncToken = newSyncToken
+                storedCalendarSync.updated = Clock.System.now()
+            }
+
+            logger.info("Calendar sync token updated")
+        }
+    }
+
+    override suspend fun deleteSyncToken() {
+        suspendTransaction {
+            logger.info("Deleting calendar sync token")
+            val storedCalendarSync: CalendarSyncEntity? = CalendarSyncEntity.findById(synckTokenId)
+            storedCalendarSync?.delete()
+            logger.info("Calendar sync token deleted")
+        }
     }
 
     private fun addEvent(event: CalendarEvent): CalendarEvent {

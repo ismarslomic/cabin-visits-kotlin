@@ -2,6 +2,7 @@ package no.slomic.smarthytte
 
 import io.kotest.core.spec.style.StringSpec
 import no.slomic.smarthytte.calendar.CalendarEventTable
+import no.slomic.smarthytte.calendar.CalendarSyncTable
 import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
 import no.slomic.smarthytte.guest.GuestTable
 import no.slomic.smarthytte.vehicletrip.VehicleTripTable
@@ -26,13 +27,25 @@ abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
             keepAliveConnection = DriverManager.getConnection(sqlitePath)
             Database.connect(sqlitePath)
             transaction {
-                SchemaUtils.create(CalendarEventTable, GuestTable, CalenderEventGuestTable, VehicleTripTable)
+                SchemaUtils.create(
+                    CalendarSyncTable,
+                    CalendarEventTable,
+                    GuestTable,
+                    CalenderEventGuestTable,
+                    VehicleTripTable,
+                )
             }
         }
 
         afterTest {
             transaction {
-                SchemaUtils.drop(CalendarEventTable, GuestTable, CalenderEventGuestTable, VehicleTripTable)
+                SchemaUtils.drop(
+                    CalendarSyncTable,
+                    CalendarEventTable,
+                    GuestTable,
+                    CalenderEventGuestTable,
+                    VehicleTripTable,
+                )
             }
 
             keepAliveConnection.close()

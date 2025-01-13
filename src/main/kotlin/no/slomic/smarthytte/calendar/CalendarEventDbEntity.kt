@@ -6,7 +6,10 @@ import no.slomic.smarthytte.common.BaseIdTable
 import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
 import no.slomic.smarthytte.guest.GuestEntity
 import org.jetbrains.exposed.dao.EntityClass
+import org.jetbrains.exposed.dao.IntEntity
+import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
@@ -43,3 +46,15 @@ fun daoToModel(dao: CalendarEventEntity) = CalendarEvent(
     sourceCreated = dao.sourceCreated,
     sourceUpdated = dao.sourceUpdated,
 )
+
+object CalendarSyncTable : IntIdTable(name = "calendar_sync") {
+    val syncToken: Column<String> = varchar(name = "sync_token", length = 100)
+    val updated: Column<Instant> = timestamp("updated")
+}
+
+class CalendarSyncEntity(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<CalendarSyncEntity>(CalendarSyncTable)
+
+    var syncToken: String by CalendarSyncTable.syncToken
+    var updated: Instant by CalendarSyncTable.updated
+}

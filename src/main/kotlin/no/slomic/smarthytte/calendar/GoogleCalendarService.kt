@@ -19,7 +19,6 @@ class GoogleCalendarService(
     private val syncFromDateTime: DateTime,
     summaryToGuestFilePath: String,
 ) {
-    private var syncTokenKey: String? = null
     private val osloTimeZone = TimeZone.of("Europe/Oslo")
     private val mapping: Map<String, List<String>> = readSummaryToGuestFromJsonFile(summaryToGuestFilePath)
 
@@ -31,12 +30,13 @@ class GoogleCalendarService(
         val request: Calendar.Events.List
 
         // Load the sync token stored from the last execution, if any.
+        val syncTokenKey = calendarRepository.syncToken()
         if (syncTokenKey == null) {
             logger.info("Performing full sync for calendar $calendarId from date $syncFromDateTime.")
             request = createFullSyncRequest()
         } else {
             logger.info("Performing incremental sync for calendar $calendarId.")
-            request = createIncrementalSyncRequest()
+            request = createIncrementalSyncRequest(syncTokenKey)
         }
 
         // Retrieve the events, one page at a time.
@@ -51,7 +51,7 @@ class GoogleCalendarService(
                 if (e.statusCode == STATUS_CODE_GONE) {
                     // A 410 status code, "Gone", indicates that the sync token is invalid.
                     logger.info("Invalid sync token, clearing event store and re-syncing.")
-                    syncTokenKey = null
+                    calendarRepository.deleteSyncToken()
                     synchronizeCalendarEvents()
                 } else {
                     throw e
@@ -69,7 +69,9 @@ class GoogleCalendarService(
         } while (pageToken != null)
 
         // Store the sync token from the last request to be used during the next execution.
-        syncTokenKey = events?.nextSyncToken
+        if (events?.nextSyncToken != null) {
+            calendarRepository.addOrUpdate(events.nextSyncToken)
+        }
 
         logger.info("Sync complete.")
     }
@@ -102,7 +104,7 @@ class GoogleCalendarService(
         .list(calendarId)
         .setTimeMin(syncFromDateTime)
 
-    private fun createIncrementalSyncRequest() = calendarApiClient
+    private fun createIncrementalSyncRequest(syncTokenKey: String) = calendarApiClient
         .events()
         .list(calendarId)
         .setSyncToken(syncTokenKey)

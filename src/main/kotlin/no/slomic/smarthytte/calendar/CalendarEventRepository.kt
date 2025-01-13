@@ -5,4 +5,7 @@ interface CalendarEventRepository {
     suspend fun eventById(id: String): CalendarEvent?
     suspend fun addOrUpdate(calendarEvent: CalendarEvent): CalendarEvent
     suspend fun deleteEvent(id: String): Boolean
+    suspend fun syncToken(): String?
+    suspend fun addOrUpdate(newSyncToken: String)
+    suspend fun deleteSyncToken()
 }
