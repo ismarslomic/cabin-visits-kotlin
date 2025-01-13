@@ -26,3 +26,9 @@ suspend fun <T> suspendTransaction(block: Transaction.() -> T): T = newSuspended
     context = Dispatchers.IO,
     statement = block,
 )
+
+enum class UpsertStatus {
+    UPDATED,
+    ADDED,
+    NO_ACTION,
+}

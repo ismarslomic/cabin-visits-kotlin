@@ -1,8 +1,6 @@
 package no.slomic.smarthytte.properties
 
-data class InfluxDbPropertiesHolder(
-    val influxDb: InfluxDbProperties,
-)
+data class InfluxDbPropertiesHolder(val influxDb: InfluxDbProperties)
 
 data class InfluxDbProperties(
     val url: String,
@@ -12,8 +10,4 @@ data class InfluxDbProperties(
     val checkIn: CheckInProperties,
 )
 
-data class CheckInProperties(
-    val measurement: String,
-    val rangeStart: String,
-    val rangeStop: String? = null,
-)
+data class CheckInProperties(val measurement: String, val rangeStart: String, val rangeStop: String? = null)

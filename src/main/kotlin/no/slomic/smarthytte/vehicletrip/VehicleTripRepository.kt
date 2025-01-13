@@ -1,5 +1,8 @@
 package no.slomic.smarthytte.vehicletrip
 
+import no.slomic.smarthytte.common.UpsertStatus
+
 interface VehicleTripRepository {
-    suspend fun addOrUpdate(vehicleTrip: VehicleTrip)
+    suspend fun allVehicleTrips(): List<VehicleTrip>
+    suspend fun addOrUpdate(vehicleTrip: VehicleTrip): UpsertStatus
 }

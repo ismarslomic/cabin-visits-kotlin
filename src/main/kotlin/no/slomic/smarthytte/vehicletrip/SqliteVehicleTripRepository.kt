@@ -3,14 +3,19 @@ package no.slomic.smarthytte.vehicletrip
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
+import no.slomic.smarthytte.common.UpsertStatus
 import no.slomic.smarthytte.common.suspendTransaction
 import org.jetbrains.exposed.dao.id.EntityID
 
 class SqliteVehicleTripRepository : VehicleTripRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteVehicleTripRepository::class.java.name)
 
-    override suspend fun addOrUpdate(vehicleTrip: VehicleTrip) = suspendTransaction {
-        val entityId: EntityID<String> = EntityID(vehicleTrip.journeyId.toString(), VehicleTripTable)
+    override suspend fun allVehicleTrips(): List<VehicleTrip> = suspendTransaction {
+        VehicleTripEntity.all().sortedBy { it.startTimestamp }.map(::daoToModel)
+    }
+
+    override suspend fun addOrUpdate(vehicleTrip: VehicleTrip): UpsertStatus = suspendTransaction {
+        val entityId: EntityID<String> = EntityID(vehicleTrip.id, VehicleTripTable)
         val storedVehicleTrip: VehicleTripEntity? = VehicleTripEntity.findById(entityId)
 
         if (storedVehicleTrip == null) {
@@ -20,33 +25,34 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         }
     }
 
-    private fun addVehicleTrip(vehicleTrip: VehicleTrip) {
-        logger.info("Adding vehicle trip with id: ${vehicleTrip.journeyId}")
+    @Suppress("DuplicatedCode")
+    private fun addVehicleTrip(vehicleTrip: VehicleTrip): UpsertStatus {
+        logger.trace("Adding vehicle trip with id: ${vehicleTrip.id}")
 
-        VehicleTripEntity.new(vehicleTrip.journeyId.toString()) {
+        VehicleTripEntity.new(vehicleTrip.id) {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
-            averageSpeed = vehicleTrip.tripAverageSpeed
-            distance = vehicleTrip.tripDistance
+            averageSpeed = vehicleTrip.averageSpeed
+            created = Clock.System.now()
+            distance = vehicleTrip.distance
             distanceUnit = vehicleTrip.distanceUnit
-            duration = vehicleTrip.tripDuration
-            durationUnit = vehicleTrip.distanceUnit
+            duration = vehicleTrip.duration
+            durationUnit = vehicleTrip.durationUnit
             endAddress = vehicleTrip.endAddress
             endCity = vehicleTrip.endCity
-            endDate = vehicleTrip.endDateInUserFormat
-            endTime = vehicleTrip.endTimeInUserFormat
+            endTimestamp = vehicleTrip.endTimestamp
             energyRegenerated = vehicleTrip.energyRegenerated
             energyRegeneratedUnit = vehicleTrip.energyRegeneratedUnit
             speedUnit = vehicleTrip.speedUnit
             startAddress = vehicleTrip.startAddress
             startCity = vehicleTrip.startCity
-            startDate = vehicleTrip.startDateInUserFormat
-            startTime = vehicleTrip.startTimeInUserFormat
+            startTimestamp = vehicleTrip.startTimestamp
             totalDistance = vehicleTrip.totalDistance
-            created = Clock.System.now()
         }
 
-        logger.info("Added vehicle trip with id: ${vehicleTrip.journeyId}")
+        logger.trace("Added vehicle trip with id: ${vehicleTrip.id}")
+
+        return UpsertStatus.ADDED
     }
 
     /**
@@ -54,31 +60,32 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * guest.
      */
-    private fun updateVehicleTrip(vehicleTrip: VehicleTrip) {
-        logger.info("Updating vehicle trip with id: ${vehicleTrip.journeyId}")
+    @Suppress("DuplicatedCode")
+    private fun updateVehicleTrip(vehicleTrip: VehicleTrip): UpsertStatus {
+        logger.trace("Updating vehicle trip with id: ${vehicleTrip.id}")
 
         val updatedVehicleTrip: VehicleTripEntity =
-            VehicleTripEntity.findById(vehicleTrip.journeyId.toString()) ?: return
+            VehicleTripEntity.findById(vehicleTrip.id) ?: return UpsertStatus.NO_ACTION
 
+        val status: UpsertStatus
         with(updatedVehicleTrip) {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
-            averageSpeed = vehicleTrip.tripAverageSpeed
-            distance = vehicleTrip.tripDistance
+            averageSpeed = vehicleTrip.averageSpeed
+            created = Clock.System.now()
+            distance = vehicleTrip.distance
             distanceUnit = vehicleTrip.distanceUnit
-            duration = vehicleTrip.tripDuration
-            durationUnit = vehicleTrip.distanceUnit
+            duration = vehicleTrip.duration
+            durationUnit = vehicleTrip.durationUnit
             endAddress = vehicleTrip.endAddress
             endCity = vehicleTrip.endCity
-            endDate = vehicleTrip.endDateInUserFormat
-            endTime = vehicleTrip.endTimeInUserFormat
+            endTimestamp = vehicleTrip.endTimestamp
             energyRegenerated = vehicleTrip.energyRegenerated
             energyRegeneratedUnit = vehicleTrip.energyRegeneratedUnit
             speedUnit = vehicleTrip.speedUnit
             startAddress = vehicleTrip.startAddress
             startCity = vehicleTrip.startCity
-            startDate = vehicleTrip.startDateInUserFormat
-            startTime = vehicleTrip.startTimeInUserFormat
+            startTimestamp = vehicleTrip.startTimestamp
             totalDistance = vehicleTrip.totalDistance
         }
 
@@ -88,9 +95,15 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             updatedVehicleTrip.version = updatedVehicleTrip.version.inc()
             updatedVehicleTrip.updated = Clock.System.now()
 
-            logger.info("Updated vehicle trip with id: ${vehicleTrip.journeyId}")
+            logger.trace("Updated vehicle trip with id: ${vehicleTrip.id}")
+
+            status = UpsertStatus.UPDATED
         } else {
-            logger.info("No changes detected for vehicle trip with id: ${vehicleTrip.journeyId}")
+            logger.trace("No changes detected for vehicle trip with id: ${vehicleTrip.id}")
+
+            status = UpsertStatus.NO_ACTION
         }
+
+        return status
     }
 }

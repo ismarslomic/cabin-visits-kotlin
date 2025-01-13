@@ -18,6 +18,7 @@ import no.slomic.smarthytte.properties.KtorPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.vehicletrip.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrip.VehicleTripRepository
+import no.slomic.smarthytte.vehicletrip.analyzeVehicleTrips
 import no.slomic.smarthytte.vehicletrip.insertVehicleTripsFromFile
 
 fun main() {
@@ -46,4 +47,5 @@ fun Application.module() {
     insertVehicleTripsFromFile(vehicleTripRepository)
     startPeriodicGoogleCalendarSync(googleCalendarService = googleCalendarService)
     analyzeInfluxDB(calendarRepository)
+    analyzeVehicleTrips(vehicleTripRepository = vehicleTripRepository, calendarEventRepository = calendarRepository)
 }

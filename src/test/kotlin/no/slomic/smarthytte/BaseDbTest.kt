@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import no.slomic.smarthytte.calendar.CalendarEventTable
 import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
 import no.slomic.smarthytte.guest.GuestTable
+import no.slomic.smarthytte.vehicletrip.VehicleTripTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -16,28 +17,27 @@ import java.sql.DriverManager
  * workaround to keep the database connection open between the beforeTest and the Test cases.
  * Read more at https://github.com/JetBrains/Exposed/issues/454
  */
-abstract class BaseDbTest(
-    body: BaseDbTest.() -> Unit = {},
-) : StringSpec({
-    val sqlitePath = "jdbc:sqlite:file:test?mode=memory&cache=shared&foreign_keys=on"
-    lateinit var keepAliveConnection: Connection
+abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
+    StringSpec({
+        val sqlitePath = "jdbc:sqlite:file:test?mode=memory&cache=shared&foreign_keys=on"
+        lateinit var keepAliveConnection: Connection
 
-    beforeTest {
-        keepAliveConnection = DriverManager.getConnection(sqlitePath)
-        Database.connect(sqlitePath)
-        transaction {
-            SchemaUtils.create(CalendarEventTable, GuestTable, CalenderEventGuestTable)
-        }
-    }
-
-    afterTest {
-        transaction {
-            SchemaUtils.drop(CalendarEventTable, GuestTable, CalenderEventGuestTable)
+        beforeTest {
+            keepAliveConnection = DriverManager.getConnection(sqlitePath)
+            Database.connect(sqlitePath)
+            transaction {
+                SchemaUtils.create(CalendarEventTable, GuestTable, CalenderEventGuestTable, VehicleTripTable)
+            }
         }
 
-        keepAliveConnection.close()
-    }
-}) {
+        afterTest {
+            transaction {
+                SchemaUtils.drop(CalendarEventTable, GuestTable, CalenderEventGuestTable, VehicleTripTable)
+            }
+
+            keepAliveConnection.close()
+        }
+    }) {
     init {
         body()
     }
