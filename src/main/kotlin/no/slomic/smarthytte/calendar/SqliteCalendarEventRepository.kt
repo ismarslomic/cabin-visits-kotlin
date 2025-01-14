@@ -54,21 +54,31 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
 
     override suspend fun addOrUpdate(newSyncToken: String) {
         suspendTransaction {
-            logger.info("Updating calendar sync token")
-
             val storedCalendarSync: CalendarSyncEntity? = CalendarSyncEntity.findById(synckTokenId)
 
+            var isUpdated = false
             if (storedCalendarSync == null) {
                 CalendarSyncEntity.new(synckTokenId) {
                     syncToken = newSyncToken
                     updated = Clock.System.now()
+                    isUpdated = true
                 }
             } else {
                 storedCalendarSync.syncToken = newSyncToken
-                storedCalendarSync.updated = Clock.System.now()
+
+                val isDirty: Boolean = storedCalendarSync.writeValues.isNotEmpty()
+
+                if (isDirty) {
+                    storedCalendarSync.updated = Clock.System.now()
+                    isUpdated = true
+                }
             }
 
-            logger.info("Calendar sync token updated")
+            if (isUpdated) {
+                logger.info("Calendar sync token updated.")
+            } else {
+                logger.info("No need to update the calendar sync token.")
+            }
         }
     }
 
