@@ -14,7 +14,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.slomic.smarthytte.BaseDbTest
 
-class GoogleCalendarSyncTaskTest :
+class GoogleCalendarServiceTest :
     BaseDbTest({
         fun getResourceFilePath(fileName: String) = this::class.java.classLoader.getResource(fileName)!!.toURI().path
 

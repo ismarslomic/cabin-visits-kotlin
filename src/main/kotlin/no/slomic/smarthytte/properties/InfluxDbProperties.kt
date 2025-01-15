@@ -10,4 +10,9 @@ data class InfluxDbProperties(
     val checkIn: CheckInProperties,
 )
 
-data class CheckInProperties(val measurement: String, val rangeStart: String, val rangeStop: String? = null)
+data class CheckInProperties(
+    val syncFrequencyMinutes: Int,
+    val measurement: String,
+    val rangeStart: String,
+    val rangeStop: String? = null,
+)

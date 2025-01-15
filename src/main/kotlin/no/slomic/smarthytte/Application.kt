@@ -7,7 +7,10 @@ import no.slomic.smarthytte.calendar.CalendarEventRepository
 import no.slomic.smarthytte.calendar.SqliteCalendarEventRepository
 import no.slomic.smarthytte.calendar.createGoogleCalendarService
 import no.slomic.smarthytte.calendar.startPeriodicGoogleCalendarSync
-import no.slomic.smarthytte.checkin.analyzeInfluxDB
+import no.slomic.smarthytte.checkin.CheckInRepository
+import no.slomic.smarthytte.checkin.SqliteCheckInRepository
+import no.slomic.smarthytte.checkin.createCheckInService
+import no.slomic.smarthytte.checkin.startPeriodicCheckInSync
 import no.slomic.smarthytte.guest.GuestRepository
 import no.slomic.smarthytte.guest.SqliteGuestRepository
 import no.slomic.smarthytte.guest.insertGuestsFromFile
@@ -39,13 +42,15 @@ fun Application.module() {
     val guestRepository: GuestRepository = SqliteGuestRepository()
     val googleCalendarService = createGoogleCalendarService(calendarRepository = calendarRepository)
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
+    val checkInRepository: CheckInRepository = SqliteCheckInRepository()
+    val checkInService = createCheckInService(checkInRepository)
 
     configureMonitoring()
     configureRouting()
     configureDatabases()
     insertGuestsFromFile(guestRepository)
     insertVehicleTripsFromFile(vehicleTripRepository)
-    startPeriodicGoogleCalendarSync(googleCalendarService = googleCalendarService)
-    analyzeInfluxDB(calendarRepository)
+    startPeriodicGoogleCalendarSync(googleCalendarService)
+    startPeriodicCheckInSync(checkInService)
     analyzeVehicleTrips(vehicleTripRepository = vehicleTripRepository, calendarEventRepository = calendarRepository)
 }

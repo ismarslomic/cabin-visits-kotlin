@@ -7,7 +7,7 @@ import no.slomic.smarthytte.BaseDbTest
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
-class VehicleTripServiceTest :
+class CabinVehicleTripTest :
     BaseDbTest({
         val osloCity = "Oslo"
         val ullsakCity = "Ullsåk"

@@ -7,4 +7,5 @@ data class GoogleCalendarProperties(
     val calendarId: String,
     val syncFromDateTime: String,
     val summaryToGuestFilePath: String,
+    val syncFrequencyMinutes: Int,
 )

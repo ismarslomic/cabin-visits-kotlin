@@ -3,6 +3,8 @@ package no.slomic.smarthytte
 import io.kotest.core.spec.style.StringSpec
 import no.slomic.smarthytte.calendar.CalendarEventTable
 import no.slomic.smarthytte.calendar.CalendarSyncTable
+import no.slomic.smarthytte.checkin.CheckInSyncTable
+import no.slomic.smarthytte.checkin.CheckInTable
 import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
 import no.slomic.smarthytte.guest.GuestTable
 import no.slomic.smarthytte.vehicletrip.VehicleTripTable
@@ -33,6 +35,8 @@ abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
                     GuestTable,
                     CalenderEventGuestTable,
                     VehicleTripTable,
+                    CheckInSyncTable,
+                    CheckInTable,
                 )
             }
         }
@@ -45,6 +49,8 @@ abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
                     GuestTable,
                     CalenderEventGuestTable,
                     VehicleTripTable,
+                    CheckInSyncTable,
+                    CheckInTable,
                 )
             }
 

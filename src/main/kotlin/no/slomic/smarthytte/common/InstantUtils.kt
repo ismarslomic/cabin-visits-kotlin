@@ -42,10 +42,18 @@ fun toInstant(date: DateTime, hour: Int, timeZone: TimeZone, minusDays: Int = 0)
 /**
  * Returns now as String in format yyyy-MM-ddTHH:mm:ssX
  */
-fun nowInUtc(): String {
+fun nowIsoUtcString(): String {
     val now = Clock.System.now()
     val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX").withZone(UTC)
     return formatter.format(now.toJavaInstant())
+}
+
+/**
+ * Returns Instant as String in ISO format yyyy-MM-ddTHH:mm:ssX
+ */
+fun Instant.toIsoUtcString(): String {
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX").withZone(UTC)
+    return formatter.format(this.toJavaInstant())
 }
 
 fun toInstant(date: LocalDate, time: LocalTime, timeZone: TimeZone) = LocalDateTime(date, time).toInstant(timeZone)

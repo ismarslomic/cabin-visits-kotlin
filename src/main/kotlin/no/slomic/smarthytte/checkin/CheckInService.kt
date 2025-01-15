@@ -1,87 +1,105 @@
 package no.slomic.smarthytte.checkin
 
-import com.influxdb.client.kotlin.InfluxDBClientKotlinFactory
+import com.influxdb.client.kotlin.InfluxDBClientKotlin
 import com.influxdb.query.FluxRecord
+import io.ktor.util.logging.KtorSimpleLogger
+import io.ktor.util.logging.Logger
 import kotlinx.coroutines.channels.toList
-import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toKotlinInstant
-import kotlinx.datetime.toLocalDateTime
-import no.slomic.smarthytte.calendar.CalendarEventRepository
-import no.slomic.smarthytte.common.nowInUtc
-import no.slomic.smarthytte.properties.CheckInProperties
-import no.slomic.smarthytte.properties.InfluxDbProperties
-import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
-import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.common.nowIsoUtcString
+import no.slomic.smarthytte.common.toIsoUtcString
+import no.slomic.smarthytte.common.truncatedToMillis
+import kotlin.time.Duration.Companion.seconds
 
-fun analyzeInfluxDB(calendarRepository: CalendarEventRepository) {
-    val checkIns: Map<LocalDate, List<CheckIn>> = readCheckInFromInfluxDb()
-    runBlocking {
-        val events = calendarRepository.allEvents()
+class CheckInService(
+    val checkInRepository: CheckInRepository,
+    val bucketName: String,
+    val measurement: String,
+    val fullSyncStart: Instant,
+    val fullSyncStop: Instant?,
+) {
+    private val logger: Logger = KtorSimpleLogger(CheckInService::class.java.name)
 
-        println("start;end;check_in;check_out")
-        events.forEach { event ->
-            val startDate = event.start.toLocalDateTime(TimeZone.UTC).date
-            val startCheckIns: List<CheckIn>? = checkIns[startDate]
-            val checkInTimestamp: Instant? =
-                startCheckIns?.firstOrNull { it.status == CheckInStatus.CHECKED_IN }?.timestamp
+    suspend fun synchronizeCheckIns() {
+        val filterTimeRange = filterTimeRange()
 
-            val endDate = event.end.toLocalDateTime(TimeZone.UTC).date
-            val endCheckIns: List<CheckIn>? = checkIns[endDate]
-            val checkOutTimestamp: Instant? =
-                endCheckIns?.firstOrNull { it.status == CheckInStatus.CHECKED_OUT }?.timestamp
-            println("${event.start};${event.end};$checkInTimestamp;$checkOutTimestamp")
-        }
-    }
-}
-
-private fun readCheckInFromInfluxDb(): Map<LocalDate, List<CheckIn>> = runBlocking {
-    val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
-    val checkInProperties: CheckInProperties = influxdbProperties.checkIn
-
-    val influxDBClient = InfluxDBClientKotlinFactory.create(
-        url = influxdbProperties.url,
-        token = influxdbProperties.token.toCharArray(),
-        org = influxdbProperties.org,
-    )
-
-    val rangeStop: String = if (checkInProperties.rangeStop.isNullOrEmpty()) {
-        nowInUtc()
-    } else {
-        checkInProperties.rangeStop
-    }
-
-    val fluxQuery = (
-        """
-            from(bucket: "${influxdbProperties.bucket}")
-              |> range(start: ${checkInProperties.rangeStart}, stop: $rangeStop)
-              |> filter(fn: (r) => r["_measurement"] == "${checkInProperties.measurement}")
+        val fluxQuery = (
+            """
+            from(bucket: "$bucketName")
+              |> range(start: ${filterTimeRange.start}, stop: ${filterTimeRange.stop})
+              |> filter(fn: (r) => r["_measurement"] == "$measurement")
               |> filter(fn: (r) => r["_field"] == "state")
               |> keep(columns: ["_time", "_value"])
               |> sort(columns: ["_time"], desc: false)
               |> group(columns: [])
         """
-        )
+            )
 
-    // Reads check ins from InfluxDB and maps to the CheckIn class
-    val receivedCheckIns: Map<LocalDate, List<CheckIn>> = influxDBClient
-        .getQueryKotlinApi()
-        .query(fluxQuery)
-        .toList()
-        .map { it.toCheckIn() }
-        .sortedBy { it.timestamp }
-        .groupBy { it.timestamp.toLocalDateTime(TimeZone.UTC).date }
+        val influxDbClient: InfluxDBClientKotlin = InfluxDBClientProvider.client()
+        influxDbClient.use { client ->
+            // Reads check ins from InfluxDB and maps to the CheckIn class
+            val receivedCheckIns: List<CheckIn> = client
+                .getQueryKotlinApi()
+                .query(fluxQuery)
+                .toList()
+                .map { it.toCheckIn() }
+                .sortedBy { it.timestamp }
+            storeUpdates(receivedCheckIns)
+        }
+    }
 
-    influxDBClient.close()
+    private suspend fun storeUpdates(checkIns: List<CheckIn>) {
+        if (checkIns.isEmpty()) {
+            logger.info("No check ins to update.")
+        } else {
+            for (checkIn in checkIns) {
+                checkInRepository.addOrUpdate(checkIn)
+            }
+            val latestTimestamp: Instant? = checkIns.maxByOrNull { it.timestamp }?.timestamp
 
-    return@runBlocking receivedCheckIns
+            if (latestTimestamp != null) {
+                checkInRepository.addOrUpdate(latestTimestamp)
+            }
+            logger.info("Saved ${checkIns.size} check ins.")
+        }
+    }
+
+    private val fullSyncStopOrDefault: Instant
+        get() = fullSyncStop ?: Clock.System.now()
+
+    private suspend fun filterTimeRange(): FilterTimeRange {
+        val lastCheckInTimestamp: Instant? = checkInRepository.lastCheckInTimestamp()
+        return if (lastCheckInTimestamp == null) {
+            val range = FilterTimeRange(
+                start = fullSyncStart.toIsoUtcString(),
+                stop = fullSyncStopOrDefault.toIsoUtcString(),
+            )
+            logger.info("Performing full sync for check ins between $range")
+
+            range
+        } else {
+            val range = // Adding 1 second to the start to exclude last check in already processed
+                FilterTimeRange(
+                    start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
+                    stop = nowIsoUtcString(),
+                )
+            logger.info("Performing incremental sync for check ins between $range")
+
+            range
+        }
+    }
+
+    private fun FluxRecord.toCheckIn(): CheckIn = CheckIn(
+        id = time.toString(),
+        timestamp = time!!.toKotlinInstant().truncatedToMillis(),
+        status = (value as String).toStatus(),
+    )
+
+    private fun String.toStatus() = if (this == "on") CheckInStatus.CHECKED_IN else CheckInStatus.CHECKED_OUT
+
+    private data class FilterTimeRange(val start: String, val stop: String) {
+        override fun toString(): String = "$start - $stop"
+    }
 }
-
-private fun FluxRecord.toCheckIn(): CheckIn = CheckIn(
-    timestamp = time!!.toKotlinInstant(),
-    status = (value as String).toStatus(),
-)
-
-private fun String.toStatus() = if (this == "on") CheckInStatus.CHECKED_IN else CheckInStatus.CHECKED_OUT

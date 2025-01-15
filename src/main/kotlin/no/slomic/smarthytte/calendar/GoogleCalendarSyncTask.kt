@@ -6,14 +6,22 @@ import io.ktor.server.application.log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
+import no.slomic.smarthytte.properties.GoogleCalendarProperties
+import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
+import no.slomic.smarthytte.properties.loadProperties
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 fun Application.startPeriodicGoogleCalendarSync(googleCalendarService: GoogleCalendarService) {
+    val googleProperties: GoogleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
+    val syncFrequencyMinutes: Duration = googleProperties.syncFrequencyMinutes.minutes
+
     // Launch the task in a background coroutine
+    log.info("Launching startPeriodicGoogleCalendarSync task every $syncFrequencyMinutes")
     val taskJob = launch {
         while (isActive) {
             performPeriodicGoogleCalendarRequest(googleCalendarService)
-            delay(10.seconds)
+            delay(syncFrequencyMinutes)
         }
     }
 
@@ -27,8 +35,8 @@ fun Application.startPeriodicGoogleCalendarSync(googleCalendarService: GoogleCal
 private fun Application.performPeriodicGoogleCalendarRequest(googleCalendarService: GoogleCalendarService) {
     // Launch custom code in a coroutine
     launch {
-        log.info("Subscribing to Google Calendar events...")
+        log.info("Starting syncing the Google Calendar events")
         googleCalendarService.synchronizeCalendarEvents()
-        log.info("Successfully subscribed")
+        log.info("Completed syncing the Google Calendar events")
     }
 }
