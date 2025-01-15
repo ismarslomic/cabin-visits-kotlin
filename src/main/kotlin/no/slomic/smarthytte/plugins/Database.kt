@@ -3,10 +3,14 @@ package no.slomic.smarthytte.plugins
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
 import no.slomic.smarthytte.calendar.CalendarEventTable
+import no.slomic.smarthytte.calendar.CalendarSyncTable
+import no.slomic.smarthytte.checkin.CheckInSyncTable
+import no.slomic.smarthytte.checkin.CheckInTable
 import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
 import no.slomic.smarthytte.guest.GuestTable
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.vehicletrip.VehicleTripTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -31,10 +35,26 @@ fun Application.configureDatabases() {
     // Initialize schemas
     transaction {
         // Create tables that do not exist
-        SchemaUtils.create(CalendarEventTable, GuestTable, CalenderEventGuestTable)
+        SchemaUtils.create(
+            CalendarSyncTable,
+            CalendarEventTable,
+            GuestTable,
+            CalenderEventGuestTable,
+            VehicleTripTable,
+            CheckInSyncTable,
+            CheckInTable,
+        )
 
         // Create missing columns to existing tables if changed from a previous app version
-        SchemaUtils.createMissingTablesAndColumns(CalendarEventTable, GuestTable, CalenderEventGuestTable)
+        SchemaUtils.createMissingTablesAndColumns(
+            CalendarSyncTable,
+            CalendarEventTable,
+            GuestTable,
+            CalenderEventGuestTable,
+            VehicleTripTable,
+            CheckInSyncTable,
+            CheckInTable,
+        )
 
         // Removing already created columns is not supported directly by Exposed. We need to execute the raw sql or use
         // db migration library such as Flyway or Liquibase.

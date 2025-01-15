@@ -28,6 +28,7 @@ class SqliteGuestRepository : GuestRepository {
             birthYear = guest.birthYear
             email = guest.email
             gender = guest.gender
+            created = Clock.System.now()
         }
 
         logger.info("Added guest with id: ${guest.id}")

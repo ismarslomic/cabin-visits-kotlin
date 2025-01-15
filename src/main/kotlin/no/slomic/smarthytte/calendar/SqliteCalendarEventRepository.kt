@@ -10,9 +10,10 @@ import org.jetbrains.exposed.sql.SizedCollection
 
 class SqliteCalendarEventRepository : CalendarEventRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteCalendarEventRepository::class.java.name)
+    private val synckTokenId: Int = 1
 
     override suspend fun allEvents(): List<CalendarEvent> = suspendTransaction {
-        CalendarEventEntity.all().map(::daoToModel)
+        CalendarEventEntity.all().sortedBy { it.start }.map(::daoToModel)
     }
 
     override suspend fun eventById(id: String): CalendarEvent? = suspendTransaction {
@@ -48,6 +49,48 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
         wasDeleted
     }
 
+    override suspend fun syncToken(): String? =
+        suspendTransaction { CalendarSyncEntity.findById(synckTokenId)?.syncToken }
+
+    override suspend fun addOrUpdate(newSyncToken: String) {
+        suspendTransaction {
+            val storedCalendarSync: CalendarSyncEntity? = CalendarSyncEntity.findById(synckTokenId)
+
+            var isUpdated = false
+            if (storedCalendarSync == null) {
+                CalendarSyncEntity.new(synckTokenId) {
+                    syncToken = newSyncToken
+                    updated = Clock.System.now()
+                    isUpdated = true
+                }
+            } else {
+                storedCalendarSync.syncToken = newSyncToken
+
+                val isDirty: Boolean = storedCalendarSync.writeValues.isNotEmpty()
+
+                if (isDirty) {
+                    storedCalendarSync.updated = Clock.System.now()
+                    isUpdated = true
+                }
+            }
+
+            if (isUpdated) {
+                logger.info("Calendar sync token updated.")
+            } else {
+                logger.info("No need to update the calendar sync token.")
+            }
+        }
+    }
+
+    override suspend fun deleteSyncToken() {
+        suspendTransaction {
+            logger.info("Deleting calendar sync token")
+            val storedCalendarSync: CalendarSyncEntity? = CalendarSyncEntity.findById(synckTokenId)
+            storedCalendarSync?.delete()
+            logger.info("Calendar sync token deleted")
+        }
+    }
+
     private fun addEvent(event: CalendarEvent): CalendarEvent {
         logger.info("Adding event with id: ${event.id}")
 
@@ -61,6 +104,7 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
             guests = SizedCollection(eventGuests)
             sourceCreated = event.sourceCreated
             sourceUpdated = event.sourceUpdated
+            created = Clock.System.now()
         }
 
         logger.info("Added event with id: ${event.id} and summary: ${event.summary}")

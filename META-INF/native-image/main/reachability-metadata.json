@@ -4,6 +4,9 @@
       "type": "[Lio.ktor.network.selector.SelectInterest;"
     },
     {
+      "type": "[Ljava.lang.String;"
+    },
+    {
       "type": "apple.security.AppleProvider",
       "methods": [
         {
@@ -665,6 +668,82 @@
       "type": "com.ibm.lang.management.OperatingSystemMXBean"
     },
     {
+      "type": "com.influxdb.client.domain.Dialect",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.Dialect$AnnotationsEnum$Adapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.influxdb.client.domain.Dialect$DateTimeFormatEnum$Adapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.influxdb.client.domain.Expression",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.File",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.File$FileBodyAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.influxdb.client.domain.Identifier",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.ImportDeclaration",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.Node",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.PackageClause",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.PropertyKey",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.Query",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.influxdb.client.domain.Query$TypeEnum$Adapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.influxdb.client.domain.StringLiteral",
+      "allDeclaredFields": true
+    },
+    {
       "type": "com.sksamuel.hoplite.decoder.Base64Decoder"
     },
     {
@@ -1290,6 +1369,9 @@
       ]
     },
     {
+      "type": "java.lang.reflect.RecordComponent"
+    },
+    {
       "type": "java.math.BigDecimal"
     },
     {
@@ -1358,6 +1440,9 @@
     },
     {
       "type": "java.util.Date"
+    },
+    {
+      "type": "java.util.HashMap"
     },
     {
       "type": "java.util.LinkedHashMap"
@@ -1642,6 +1727,49 @@
       ]
     },
     {
+      "type": "kotlinx.coroutines.channels.BufferedChannel",
+      "fields": [
+        {
+          "name": "_closeCause$volatile"
+        },
+        {
+          "name": "bufferEnd$volatile"
+        },
+        {
+          "name": "bufferEndSegment$volatile"
+        },
+        {
+          "name": "closeHandler$volatile"
+        },
+        {
+          "name": "completedExpandBuffersAndPauseFlag$volatile"
+        },
+        {
+          "name": "receiveSegment$volatile"
+        },
+        {
+          "name": "receivers$volatile"
+        },
+        {
+          "name": "sendSegment$volatile"
+        },
+        {
+          "name": "sendersAndCloseStatus$volatile"
+        }
+      ]
+    },
+    {
+      "type": "kotlinx.coroutines.internal.ConcurrentLinkedListNode",
+      "fields": [
+        {
+          "name": "_next$volatile"
+        },
+        {
+          "name": "_prev$volatile"
+        }
+      ]
+    },
+    {
       "type": "kotlinx.coroutines.internal.DispatchedContinuation",
       "fields": [
         {
@@ -1687,6 +1815,14 @@
         },
         {
           "name": "_state$volatile"
+        }
+      ]
+    },
+    {
+      "type": "kotlinx.coroutines.internal.Segment",
+      "fields": [
+        {
+          "name": "cleanedAndPointers$volatile"
         }
       ]
     },
@@ -1766,6 +1902,19 @@
           "name": "<init>",
           "parameterTypes": [
             "org.jetbrains.exposed.dao.id.EntityID"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.CheckInProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String"
           ]
         }
       ]
@@ -1852,6 +2001,32 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.properties.InfluxDbProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "no.slomic.smarthytte.properties.CheckInProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.InfluxDbPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.InfluxDbProperties"
+          ]
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.KtorProperties",
       "methods": [
         {
@@ -1869,6 +2044,39 @@
           "name": "<init>",
           "parameterTypes": [
             "no.slomic.smarthytte.properties.KtorProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.VehicleTripProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.VehicleTripPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.VehicleTripProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrip.VehicleTripEntity",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.jetbrains.exposed.dao.id.EntityID"
           ]
         }
       ]
@@ -2299,6 +2507,27 @@
           ]
         }
       ]
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.influxdb.client.service.HealthService"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.influxdb.client.service.PingService"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.influxdb.client.service.QueryService"
+        ]
+      }
     }
   ],
   "resources": [

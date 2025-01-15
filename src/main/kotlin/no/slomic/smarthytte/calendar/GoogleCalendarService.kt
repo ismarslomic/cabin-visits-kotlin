@@ -7,12 +7,9 @@ import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import no.slomic.smarthytte.common.readSummaryToGuestFromJsonFile
-import no.slomic.smarthytte.common.truncatedToMillis
-import kotlin.time.Duration.Companion.nanoseconds
+import no.slomic.smarthytte.common.toInstant
 
 class GoogleCalendarService(
     private val calendarApiClient: Calendar,
@@ -22,8 +19,7 @@ class GoogleCalendarService(
     private val syncFromDateTime: DateTime,
     summaryToGuestFilePath: String,
 ) {
-    private var syncTokenKey: String? = null
-    private val calendarTimezone: TimeZone = TimeZone.of("CET")
+    private val osloTimeZone = TimeZone.of("Europe/Oslo")
     private val mapping: Map<String, List<String>> = readSummaryToGuestFromJsonFile(summaryToGuestFilePath)
 
     companion object {
@@ -34,12 +30,13 @@ class GoogleCalendarService(
         val request: Calendar.Events.List
 
         // Load the sync token stored from the last execution, if any.
+        val syncTokenKey = calendarRepository.syncToken()
         if (syncTokenKey == null) {
             logger.info("Performing full sync for calendar $calendarId from date $syncFromDateTime.")
             request = createFullSyncRequest()
         } else {
             logger.info("Performing incremental sync for calendar $calendarId.")
-            request = createIncrementalSyncRequest()
+            request = createIncrementalSyncRequest(syncTokenKey)
         }
 
         // Retrieve the events, one page at a time.
@@ -54,7 +51,7 @@ class GoogleCalendarService(
                 if (e.statusCode == STATUS_CODE_GONE) {
                     // A 410 status code, "Gone", indicates that the sync token is invalid.
                     logger.info("Invalid sync token, clearing event store and re-syncing.")
-                    syncTokenKey = null
+                    calendarRepository.deleteSyncToken()
                     synchronizeCalendarEvents()
                 } else {
                     throw e
@@ -72,7 +69,9 @@ class GoogleCalendarService(
         } while (pageToken != null)
 
         // Store the sync token from the last request to be used during the next execution.
-        syncTokenKey = events?.nextSyncToken
+        if (events?.nextSyncToken != null) {
+            calendarRepository.addOrUpdate(events.nextSyncToken)
+        }
 
         logger.info("Sync complete.")
     }
@@ -105,7 +104,7 @@ class GoogleCalendarService(
         .list(calendarId)
         .setTimeMin(syncFromDateTime)
 
-    private fun createIncrementalSyncRequest() = calendarApiClient
+    private fun createIncrementalSyncRequest(syncTokenKey: String) = calendarApiClient
         .events()
         .list(calendarId)
         .setSyncToken(syncTokenKey)
@@ -117,7 +116,7 @@ class GoogleCalendarService(
         require(date != null || dateTime != null) { "Both start date and start datetime cannot be null" }
 
         return if (date != null) {
-            LocalDate.parse(date.toStringRfc3339()).atStartOfDayIn(calendarTimezone).truncatedToMillis()
+            toInstant(date = date, hour = 18, timeZone = osloTimeZone)
         } else {
             Instant.parse(dateTime!!.toStringRfc3339())
         }
@@ -130,8 +129,7 @@ class GoogleCalendarService(
         require(date != null || dateTime != null) { "Both end date and end datetime cannot be null" }
 
         return if (date != null) {
-            LocalDate.parse(date.toStringRfc3339()).atStartOfDayIn(calendarTimezone).minus(1.nanoseconds)
-                .truncatedToMillis()
+            toInstant(date = date, hour = 15, timeZone = osloTimeZone, minusDays = 1)
         } else {
             Instant.parse(dateTime!!.toStringRfc3339())
         }

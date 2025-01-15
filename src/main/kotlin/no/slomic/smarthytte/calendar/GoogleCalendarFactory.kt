@@ -15,9 +15,7 @@ import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import java.io.FileInputStream
 
-fun createGoogleCalendarService(
-    calendarRepository: CalendarEventRepository,
-): GoogleCalendarService {
+fun createGoogleCalendarService(calendarRepository: CalendarEventRepository): GoogleCalendarService {
     val googleProperties: GoogleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
     val calendarApiClient: Calendar = createCalendarApiClient()
     val googleCalendarLogger: Logger = KtorSimpleLogger(GoogleCalendarService::class.java.name)

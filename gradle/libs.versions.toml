@@ -5,6 +5,7 @@ googleCalendarService = "v3-rev20241101-2.0.0"
 googleOauthClient = "1.30.1"
 graalvm = "0.10.4"
 hoplite = "2.9.0"
+influxdb = "7.2.0"
 kotest = "5.9.1"
 kotlin = "2.1.0"
 kotlinter = "5.0.1"
@@ -23,6 +24,7 @@ exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kot
 google-calendar-api = { group = "com.google.apis", name = "google-api-services-calendar", version.ref = "googleCalendarService" }
 google-oauth = { group = "com.google.auth", name = "google-auth-library-oauth2-http", version.ref = "googleOauthClient" }
 hoplite-yaml = { group = "com.sksamuel.hoplite", name = "hoplite-yaml", version.ref = "hoplite" }
+influxdb-client = { group = "com.influxdb", name = "influxdb-client-kotlin", version.ref = "influxdb" }
 kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
 kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
 ktor-micrometer-metrics = { group = "io.ktor", name = "ktor-server-metrics-micrometer-jvm", version.ref = "ktor" }
