@@ -3,12 +3,13 @@ package no.slomic.smarthytte.vehicletrip
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import no.slomic.smarthytte.common.StringToDoubleSerde
 import no.slomic.smarthytte.common.StringToLocalDateSerde
 import no.slomic.smarthytte.common.StringToLocalTimeSerde
+import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.toInstant
+import no.slomic.smarthytte.common.toUtcDate
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -34,6 +35,16 @@ data class VehicleTrip(
     val totalDistance: Double,
     val extraStops: List<String> = listOf(),
 ) {
+    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = endDate == utcDate && endCity == ULLSAK_CITY_NAME
+
+    fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = startDate == utcDate && startCity == ULLSAK_CITY_NAME
+
+    private val startDate: LocalDate
+        get() = startTimestamp.toUtcDate()
+
+    private val endDate: LocalDate
+        get() = endTimestamp.toUtcDate()
+
     override fun toString(): String {
         val extraStopCityNames =
             if (extraStops.isEmpty()) {
@@ -100,8 +111,6 @@ data class VehicleTripExternal(
     @Serializable(with = StringToDoubleSerde::class)
     val tripEfficiency: Double,
 ) {
-    private val timeZone: TimeZone = TimeZone.of("Europe/Oslo")
-
     fun toInternal() = VehicleTrip(
         averageEnergyConsumption = averageEnergyConsumption,
         averageEnergyConsumptionUnit = averageEnergyConsumptionUnit,
@@ -112,14 +121,14 @@ data class VehicleTripExternal(
         durationUnit = durationUnit,
         endAddress = endAddress,
         endCity = endCity,
-        endTimestamp = toInstant(date = endDateInUserFormat, time = endTimeInUserFormat, timeZone = timeZone),
+        endTimestamp = toInstant(date = endDateInUserFormat, time = endTimeInUserFormat, timeZone = osloTimeZone),
         energyRegenerated = energyRegenerated,
         energyRegeneratedUnit = energyRegeneratedUnit,
         id = journeyId.toString(),
         speedUnit = speedUnit,
         startAddress = startAddress,
         startCity = startCity,
-        startTimestamp = toInstant(date = startDateInUserFormat, time = startTimeInUserFormat, timeZone = timeZone),
+        startTimestamp = toInstant(date = startDateInUserFormat, time = startTimeInUserFormat, timeZone = osloTimeZone),
         totalDistance = totalDistance,
     )
 

@@ -3,11 +3,13 @@ package no.slomic.smarthytte
 import io.ktor.server.application.Application
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import no.slomic.smarthytte.cabinvisit.CabinVisitService
 import no.slomic.smarthytte.calendar.CalendarEventRepository
 import no.slomic.smarthytte.calendar.SqliteCalendarEventRepository
 import no.slomic.smarthytte.calendar.createGoogleCalendarService
 import no.slomic.smarthytte.calendar.startPeriodicGoogleCalendarSync
 import no.slomic.smarthytte.checkin.CheckInRepository
+import no.slomic.smarthytte.checkin.CheckInService
 import no.slomic.smarthytte.checkin.SqliteCheckInRepository
 import no.slomic.smarthytte.checkin.createCheckInService
 import no.slomic.smarthytte.checkin.startPeriodicCheckInSync
@@ -21,7 +23,6 @@ import no.slomic.smarthytte.properties.KtorPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.vehicletrip.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrip.VehicleTripRepository
-import no.slomic.smarthytte.vehicletrip.analyzeVehicleTrips
 import no.slomic.smarthytte.vehicletrip.insertVehicleTripsFromFile
 
 fun main() {
@@ -43,7 +44,12 @@ fun Application.module() {
     val googleCalendarService = createGoogleCalendarService(calendarRepository = calendarRepository)
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
     val checkInRepository: CheckInRepository = SqliteCheckInRepository()
-    val checkInService = createCheckInService(checkInRepository)
+    val checkInService: CheckInService = createCheckInService(checkInRepository)
+    val cabinVisitService = CabinVisitService(
+        calendarRepository = calendarRepository,
+        checkInRepository = checkInRepository,
+        vehicleTripRepository = vehicleTripRepository,
+    )
 
     configureMonitoring()
     configureRouting()
@@ -52,5 +58,5 @@ fun Application.module() {
     insertVehicleTripsFromFile(vehicleTripRepository)
     startPeriodicGoogleCalendarSync(googleCalendarService)
     startPeriodicCheckInSync(checkInService)
-    analyzeVehicleTrips(vehicleTripRepository = vehicleTripRepository, calendarEventRepository = calendarRepository)
+    cabinVisitService.createOrUpdateCabinVisits()
 }

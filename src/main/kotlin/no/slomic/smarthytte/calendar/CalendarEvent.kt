@@ -1,6 +1,9 @@
 package no.slomic.smarthytte.calendar
 
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.common.toUtcDate
+import no.slomic.smarthytte.common.utcDateNow
 
 data class CalendarEvent(
     val id: String,
@@ -11,4 +14,16 @@ data class CalendarEvent(
     val description: String? = null,
     val sourceCreated: Instant? = null,
     val sourceUpdated: Instant? = null,
-)
+) {
+    val hasStarted: Boolean
+        get() = startDate <= utcDateNow()
+
+    val hasEnded: Boolean
+        get() = endDate <= utcDateNow()
+
+    val startDate: LocalDate
+        get() = start.toUtcDate()
+
+    val endDate: LocalDate
+        get() = end.toUtcDate()
+}

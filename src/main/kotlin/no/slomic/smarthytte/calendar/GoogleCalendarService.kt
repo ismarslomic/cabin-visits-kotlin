@@ -7,7 +7,7 @@ import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
+import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.readSummaryToGuestFromJsonFile
 import no.slomic.smarthytte.common.toInstant
 
@@ -19,7 +19,6 @@ class GoogleCalendarService(
     private val syncFromDateTime: DateTime,
     summaryToGuestFilePath: String,
 ) {
-    private val osloTimeZone = TimeZone.of("Europe/Oslo")
     private val mapping: Map<String, List<String>> = readSummaryToGuestFromJsonFile(summaryToGuestFilePath)
 
     companion object {

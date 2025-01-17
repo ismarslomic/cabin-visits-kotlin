@@ -11,10 +11,14 @@ import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toJavaInstant
 import kotlinx.datetime.toKotlinInstant
+import kotlinx.datetime.toLocalDateTime
 import java.time.ZoneOffset.UTC
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.days
+
+val osloTimeZone: TimeZone = TimeZone.of("Europe/Oslo")
+val utcTimeZone: TimeZone = TimeZone.UTC
 
 /**
  * Truncates the Instant to millis.
@@ -57,3 +61,7 @@ fun Instant.toIsoUtcString(): String {
 }
 
 fun toInstant(date: LocalDate, time: LocalTime, timeZone: TimeZone) = LocalDateTime(date, time).toInstant(timeZone)
+
+fun Instant.toUtcDate(): LocalDate = toLocalDateTime(utcTimeZone).date
+
+fun utcDateNow(): LocalDate = Clock.System.now().toLocalDateTime(utcTimeZone).date

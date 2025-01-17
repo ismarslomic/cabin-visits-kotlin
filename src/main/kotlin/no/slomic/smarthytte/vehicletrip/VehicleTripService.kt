@@ -3,10 +3,6 @@ package no.slomic.smarthytte.vehicletrip
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import no.slomic.smarthytte.calendar.CalendarEvent
-import no.slomic.smarthytte.calendar.CalendarEventRepository
 import no.slomic.smarthytte.common.UpsertStatus
 import no.slomic.smarthytte.common.readVehicleTripFromJsonFile
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
@@ -37,23 +33,4 @@ fun Application.insertVehicleTripsFromFile(vehicleTripRepository: VehicleTripRep
             "Total trips: ${tripsFromFile.size}, added: $addedCount, " +
             "updated: $updatedCount, no actions: $noActionCount",
     )
-}
-
-fun analyzeVehicleTrips(
-    vehicleTripRepository: VehicleTripRepository,
-    calendarEventRepository: CalendarEventRepository,
-) {
-    runBlocking {
-        val allTrips: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
-        val events: List<CalendarEvent> = calendarEventRepository.allEvents()
-        val homeCabinTrips: List<VehicleTrip> = findCabinTripsWithExtraStops(allTrips)
-
-        homeCabinTrips.forEach {
-            val foundInCalendar = events.find { event ->
-                event.start.toLocalDateTime(TimeZone.UTC).date == it.endTimestamp.toLocalDateTime(TimeZone.UTC).date ||
-                    event.end.toLocalDateTime(TimeZone.UTC).date == it.startTimestamp.toLocalDateTime(TimeZone.UTC).date
-            } != null
-            println("$it found: $foundInCalendar")
-        }
-    }
 }
