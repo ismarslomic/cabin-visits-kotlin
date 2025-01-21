@@ -271,8 +271,8 @@ fun assertTrip(
     vehicleTrip.startCity shouldBe startCity
     vehicleTrip.endCity shouldBe endCity
     vehicleTrip.extraStops shouldBe extraStops
-    vehicleTrip.startTimestamp shouldBe Instant.parse(startTimestamp)
-    vehicleTrip.endTimestamp shouldBe Instant.parse(endTimestamp)
+    vehicleTrip.startTime shouldBe Instant.parse(startTimestamp)
+    vehicleTrip.endTime shouldBe Instant.parse(endTimestamp)
 }
 
 fun createTrip(
@@ -295,14 +295,14 @@ fun createTrip(
         durationUnit = "",
         endAddress = "",
         endCity = endCity,
-        endTimestamp = endTimestamp,
+        endTime = endTimestamp,
         energyRegenerated = 0.0,
         energyRegeneratedUnit = "",
         id = id,
         speedUnit = "",
         startAddress = "",
         startCity = startCity,
-        startTimestamp = startTimestamp,
+        startTime = startTimestamp,
         totalDistance = 0.0,
     )
 }

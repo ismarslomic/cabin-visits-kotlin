@@ -11,7 +11,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteVehicleTripRepository::class.java.name)
 
     override suspend fun allVehicleTrips(): List<VehicleTrip> = suspendTransaction {
-        VehicleTripEntity.all().sortedBy { it.startTimestamp }.map(::daoToModel)
+        VehicleTripEntity.all().sortedBy { it.startTime }.map(::daoToModel)
     }
 
     override suspend fun addOrUpdate(vehicleTrip: VehicleTrip): UpsertStatus = suspendTransaction {
@@ -23,6 +23,22 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         } else {
             updateVehicleTrip(vehicleTrip)
         }
+    }
+
+    override suspend fun setNotionId(notionId: String, vehicleTripId: String): UpsertStatus {
+        logger.trace("Setting notion Id for vehicle trip with id: $vehicleTripId")
+
+        val storedVehicleTrip: VehicleTripEntity =
+            VehicleTripEntity.findById(vehicleTripId) ?: return UpsertStatus.NO_ACTION
+
+        with(storedVehicleTrip) {
+            this.notionId = notionId
+            version = storedVehicleTrip.version.inc()
+            updatedTime = Clock.System.now()
+        }
+
+        logger.trace("Notion id set for vehicle trip with id: $vehicleTripId")
+        return UpsertStatus.UPDATED
     }
 
     @Suppress("DuplicatedCode")
@@ -40,13 +56,13 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             durationUnit = vehicleTrip.durationUnit
             endAddress = vehicleTrip.endAddress
             endCity = vehicleTrip.endCity
-            endTimestamp = vehicleTrip.endTimestamp
+            endTime = vehicleTrip.endTime
             energyRegenerated = vehicleTrip.energyRegenerated
             energyRegeneratedUnit = vehicleTrip.energyRegeneratedUnit
             speedUnit = vehicleTrip.speedUnit
             startAddress = vehicleTrip.startAddress
             startCity = vehicleTrip.startCity
-            startTimestamp = vehicleTrip.startTimestamp
+            startTime = vehicleTrip.startTime
             totalDistance = vehicleTrip.totalDistance
         }
 
@@ -79,13 +95,13 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             durationUnit = vehicleTrip.durationUnit
             endAddress = vehicleTrip.endAddress
             endCity = vehicleTrip.endCity
-            endTimestamp = vehicleTrip.endTimestamp
+            endTime = vehicleTrip.endTime
             energyRegenerated = vehicleTrip.energyRegenerated
             energyRegeneratedUnit = vehicleTrip.energyRegeneratedUnit
             speedUnit = vehicleTrip.speedUnit
             startAddress = vehicleTrip.startAddress
             startCity = vehicleTrip.startCity
-            startTimestamp = vehicleTrip.startTimestamp
+            startTime = vehicleTrip.startTime
             totalDistance = vehicleTrip.totalDistance
         }
 

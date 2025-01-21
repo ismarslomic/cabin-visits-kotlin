@@ -10,7 +10,7 @@ const val ULLSAK_CITY_NAME = "Ullsåk"
 const val ONE_DECIMAL_ROUND = 10
 
 fun findCabinTripsWithExtraStops(trips: List<VehicleTrip>): List<VehicleTrip> {
-    var sortedTrips: List<VehicleTrip> = trips.sortedBy { it.startTimestamp }
+    var sortedTrips: List<VehicleTrip> = trips.sortedBy { it.startTime }
     val homeCabinTrips: MutableList<VehicleTrip> = mutableListOf()
 
     var homeCabinWithExtraStop: OsloUllsakVehicleTrip? = findFirstCabinWithExtraStops(trips = sortedTrips)
@@ -22,7 +22,7 @@ fun findCabinTripsWithExtraStops(trips: List<VehicleTrip>): List<VehicleTrip> {
         homeCabinWithExtraStop = findFirstCabinWithExtraStops(trips = sortedTrips)
     }
 
-    return homeCabinTrips.sortedBy { it.startTimestamp }
+    return homeCabinTrips.sortedBy { it.startTime }
 }
 
 private fun findOsloToUllsakTrip(trips: List<VehicleTrip>): Pair<Int, VehicleTrip>? {
@@ -55,7 +55,7 @@ private fun findOsloToUllsakTrip(trips: List<VehicleTrip>): Pair<Int, VehicleTri
 
             fromOsloTrip.copy(
                 id = "${fromOsloTrip.id}-${toUllsakTrip.id}",
-                endTimestamp = toUllsakTrip.endTimestamp,
+                endTime = toUllsakTrip.endTime,
                 endAddress = toUllsakTrip.endAddress,
                 endCity = toUllsakTrip.endCity,
                 averageSpeed = weightedMeanSpeed(fromOsloTrip, toUllsakTrip, extraTrips),
@@ -93,7 +93,7 @@ private fun findUllsakToOsloTrip(trips: List<VehicleTrip>, indexOfToUllsak: Int)
 
             fromUllsakTrip.copy(
                 id = "${fromUllsakTrip.id}-${toOsloTrip.id}",
-                endTimestamp = toOsloTrip.endTimestamp,
+                endTime = toOsloTrip.endTime,
                 endAddress = toOsloTrip.endAddress,
                 endCity = toOsloTrip.endCity,
                 averageSpeed = weightedMeanSpeed(fromUllsakTrip, toOsloTrip, extraTrips),

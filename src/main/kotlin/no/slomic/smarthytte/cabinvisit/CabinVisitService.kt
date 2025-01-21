@@ -95,13 +95,13 @@ class CabinVisitService(
             checkInOutSensor = findCheckInFromSensor(checkInOutSensorsByDate, reservation)
             timeFromCheckInSensor = checkInOutSensor?.time
             vehicleTrip = findArrivalAtCabinTrip(homeCabinTrips, reservation)
-            timeFromVehicleTrip = vehicleTrip?.endTimestamp
+            timeFromVehicleTrip = vehicleTrip?.endTime
             timeFromReservation = reservation.start
         } else {
             checkInOutSensor = findCheckOutFromSensor(checkInOutSensorsByDate, reservation)
             timeFromCheckInSensor = checkInOutSensor?.time
             vehicleTrip = findDepartureFromCabinTrip(homeCabinTrips, reservation)
-            timeFromVehicleTrip = vehicleTrip?.startTimestamp
+            timeFromVehicleTrip = vehicleTrip?.startTime
             timeFromReservation = reservation.end
         }
 

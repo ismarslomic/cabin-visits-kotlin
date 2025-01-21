@@ -21,14 +21,15 @@ object VehicleTripTable : BaseIdTable<String>(name = "vehicle_trip") {
     val durationUnit: Column<String> = varchar(name = "duration_unit", length = 5)
     val endAddress: Column<String> = varchar(name = "end_address", length = 100)
     val endCity: Column<String> = varchar(name = "end_city", length = 30)
-    val endTimestamp: Column<Instant> = timestamp(name = "end_timestamp")
+    val endTime: Column<Instant> = timestamp(name = "end_time")
     val energyRegenerated: Column<Double> = double(name = "energy_regenerated")
     val energyRegeneratedUnit: Column<String> = varchar(name = "energy_generated_unit", length = 5)
     val speedUnit: Column<String> = varchar(name = "speed_unit", length = 5)
     val startAddress: Column<String> = varchar(name = "start_address", length = 100)
     val startCity: Column<String> = varchar(name = "start_city", length = 30)
-    val startTimestamp: Column<Instant> = timestamp(name = "start_timestamp")
+    val startTime: Column<Instant> = timestamp(name = "start_time")
     val totalDistance: Column<Double> = double(name = "total_distance")
+    val notionId: Column<String?> = varchar(name = "notion_id", length = 50).nullable()
 
     override val primaryKey = PrimaryKey(id, name = "pk_vehicle_trip_id")
 }
@@ -45,13 +46,14 @@ class VehicleTripEntity(id: EntityID<String>) : BaseEntity<String>(id, VehicleTr
     var durationUnit: String by VehicleTripTable.durationUnit
     var endAddress: String by VehicleTripTable.endAddress
     var endCity: String by VehicleTripTable.endCity
-    var endTimestamp: Instant by VehicleTripTable.endTimestamp
+    var endTime: Instant by VehicleTripTable.endTime
     var energyRegenerated: Double by VehicleTripTable.energyRegenerated
     var energyRegeneratedUnit: String by VehicleTripTable.energyRegeneratedUnit
+    var notionId: String? by VehicleTripTable.notionId
     var speedUnit: String by VehicleTripTable.speedUnit
     var startAddress: String by VehicleTripTable.startAddress
     var startCity: String by VehicleTripTable.startCity
-    var startTimestamp: Instant by VehicleTripTable.startTimestamp
+    var startTime: Instant by VehicleTripTable.startTime
     var totalDistance: Double by VehicleTripTable.totalDistance
 }
 
@@ -65,13 +67,14 @@ fun daoToModel(dao: VehicleTripEntity) = VehicleTrip(
     durationUnit = dao.durationUnit,
     endAddress = dao.endAddress,
     endCity = dao.endCity,
-    endTimestamp = dao.endTimestamp,
+    endTime = dao.endTime,
     energyRegenerated = dao.energyRegenerated,
     energyRegeneratedUnit = dao.energyRegeneratedUnit,
     id = dao.id.value,
     speedUnit = dao.speedUnit,
     startAddress = dao.startAddress,
     startCity = dao.startCity,
-    startTimestamp = dao.startTimestamp,
+    startTime = dao.startTime,
     totalDistance = dao.totalDistance,
+    notionId = dao.notionId,
 )

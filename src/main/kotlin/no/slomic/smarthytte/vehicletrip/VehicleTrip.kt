@@ -24,26 +24,30 @@ data class VehicleTrip(
     val durationUnit: String,
     val endAddress: String,
     val endCity: String,
-    val endTimestamp: Instant,
+    val endTime: Instant,
     val energyRegenerated: Double,
     val energyRegeneratedUnit: String,
     val id: String,
     val speedUnit: String,
     val startAddress: String,
     val startCity: String,
-    val startTimestamp: Instant,
+    val startTime: Instant,
     val totalDistance: Double,
+    /**
+     * List of city names with extra stops between start and end city
+     */
     val extraStops: List<String> = listOf(),
+    val notionId: String? = null,
 ) {
     fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = endDate == utcDate && endCity == ULLSAK_CITY_NAME
 
     fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = startDate == utcDate && startCity == ULLSAK_CITY_NAME
 
     private val startDate: LocalDate
-        get() = startTimestamp.toUtcDate()
+        get() = startTime.toUtcDate()
 
     private val endDate: LocalDate
-        get() = endTimestamp.toUtcDate()
+        get() = endTime.toUtcDate()
 
     override fun toString(): String {
         val extraStopCityNames =
@@ -53,8 +57,8 @@ data class VehicleTrip(
                 extraStops.joinToString(",")
             }
 
-        val str = "$startCity ($startTimestamp) " +
-            "- $endCity ($endTimestamp) " +
+        val str = "$startCity ($startTime) " +
+            "- $endCity ($endTime) " +
             "$averageSpeed kmh " +
             "$totalDistance km " +
             "$duration " +
@@ -121,14 +125,14 @@ data class VehicleTripExternal(
         durationUnit = durationUnit,
         endAddress = endAddress,
         endCity = endCity,
-        endTimestamp = toInstant(date = endDateInUserFormat, time = endTimeInUserFormat, timeZone = osloTimeZone),
+        endTime = toInstant(date = endDateInUserFormat, time = endTimeInUserFormat, timeZone = osloTimeZone),
         energyRegenerated = energyRegenerated,
         energyRegeneratedUnit = energyRegeneratedUnit,
         id = journeyId.toString(),
         speedUnit = speedUnit,
         startAddress = startAddress,
         startCity = startCity,
-        startTimestamp = toInstant(date = startDateInUserFormat, time = startTimeInUserFormat, timeZone = osloTimeZone),
+        startTime = toInstant(date = startDateInUserFormat, time = startTimeInUserFormat, timeZone = osloTimeZone),
         totalDistance = totalDistance,
     )
 
