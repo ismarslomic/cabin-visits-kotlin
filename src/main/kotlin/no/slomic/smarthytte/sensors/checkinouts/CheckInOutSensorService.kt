@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.checkin
+package no.slomic.smarthytte.sensors.checkinouts
 
 import com.influxdb.client.kotlin.InfluxDBClientKotlin
 import com.influxdb.query.FluxRecord
@@ -13,16 +13,16 @@ import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.common.truncatedToMillis
 import kotlin.time.Duration.Companion.seconds
 
-class CheckInService(
-    val checkInRepository: CheckInRepository,
+class CheckInOutSensorService(
+    val checkInOutSensorRepository: CheckInOutSensorRepository,
     val bucketName: String,
     val measurement: String,
-    val fullSyncStart: Instant,
-    val fullSyncStop: Instant?,
+    val fullSyncStartTime: Instant,
+    val fullSyncStopTime: Instant?,
 ) {
-    private val logger: Logger = KtorSimpleLogger(CheckInService::class.java.name)
+    private val logger: Logger = KtorSimpleLogger(CheckInOutSensorService::class.java.name)
 
-    suspend fun synchronizeCheckIns() {
+    suspend fun synchronizeCheckInOut() {
         val filterTimeRange = filterTimeRange()
 
         val fluxQuery = (
@@ -40,43 +40,43 @@ class CheckInService(
         val influxDbClient: InfluxDBClientKotlin = InfluxDBClientProvider.client()
         influxDbClient.use { client ->
             // Reads check ins from InfluxDB and maps to the CheckIn class
-            val receivedCheckIns: List<CheckIn> = client
+            val receivedCheckInOutSensors: List<CheckInOutSensor> = client
                 .getQueryKotlinApi()
                 .query(fluxQuery)
                 .toList()
                 .map { it.toCheckIn() }
-                .sortedBy { it.timestamp }
-            storeUpdates(receivedCheckIns)
+                .sortedBy { it.time }
+            storeUpdates(receivedCheckInOutSensors)
         }
     }
 
-    private suspend fun storeUpdates(checkIns: List<CheckIn>) {
-        if (checkIns.isEmpty()) {
-            logger.info("No check ins to update.")
+    private suspend fun storeUpdates(checkInOutSensors: List<CheckInOutSensor>) {
+        if (checkInOutSensors.isEmpty()) {
+            logger.info("No check in/out entries to update.")
         } else {
-            for (checkIn in checkIns) {
-                checkInRepository.addOrUpdate(checkIn)
+            for (checkIn in checkInOutSensors) {
+                checkInOutSensorRepository.addOrUpdate(checkIn)
             }
-            val latestTimestamp: Instant? = checkIns.maxByOrNull { it.timestamp }?.timestamp
+            val latestTimestamp: Instant? = checkInOutSensors.maxByOrNull { it.time }?.time
 
             if (latestTimestamp != null) {
-                checkInRepository.addOrUpdate(latestTimestamp)
+                checkInOutSensorRepository.addOrUpdate(latestTimestamp)
             }
-            logger.info("Saved ${checkIns.size} check ins.")
+            logger.info("Saved ${checkInOutSensors.size} check in/out entries.")
         }
     }
 
     private val fullSyncStopOrDefault: Instant
-        get() = fullSyncStop ?: Clock.System.now()
+        get() = fullSyncStopTime ?: Clock.System.now()
 
     private suspend fun filterTimeRange(): FilterTimeRange {
-        val lastCheckInTimestamp: Instant? = checkInRepository.lastCheckInTimestamp()
+        val lastCheckInTimestamp: Instant? = checkInOutSensorRepository.latestTime()
         return if (lastCheckInTimestamp == null) {
             val range = FilterTimeRange(
-                start = fullSyncStart.toIsoUtcString(),
+                start = fullSyncStartTime.toIsoUtcString(),
                 stop = fullSyncStopOrDefault.toIsoUtcString(),
             )
-            logger.info("Performing full sync for check ins between $range")
+            logger.info("Performing full sync for check in/out entries between $range")
 
             range
         } else {
@@ -85,15 +85,15 @@ class CheckInService(
                     start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
                     stop = nowIsoUtcString(),
                 )
-            logger.info("Performing incremental sync for check ins between $range")
+            logger.info("Performing incremental sync for check in/out entries between $range")
 
             range
         }
     }
 
-    private fun FluxRecord.toCheckIn(): CheckIn = CheckIn(
+    private fun FluxRecord.toCheckIn(): CheckInOutSensor = CheckInOutSensor(
         id = time.toString(),
-        timestamp = time!!.toKotlinInstant().truncatedToMillis(),
+        time = time!!.toKotlinInstant().truncatedToMillis(),
         status = (value as String).toStatus(),
     )
 

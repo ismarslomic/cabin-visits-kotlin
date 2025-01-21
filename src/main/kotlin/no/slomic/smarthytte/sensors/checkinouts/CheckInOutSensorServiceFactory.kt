@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.checkin
+package no.slomic.smarthytte.sensors.checkinouts
 
 import com.influxdb.client.kotlin.InfluxDBClientKotlin
 import com.influxdb.client.kotlin.InfluxDBClientKotlinFactory
@@ -8,22 +8,22 @@ import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 
-fun createCheckInService(checkInRepository: CheckInRepository): CheckInService {
+fun createCheckInOutSensorService(checkInOutSensorRepository: CheckInOutSensorRepository): CheckInOutSensorService {
     val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
-    val checkInProperties: CheckInProperties = influxdbProperties.checkIn
+    val checkInOutSensorProperties: CheckInProperties = influxdbProperties.checkIn
 
-    val fullSyncStop: Instant? = if (checkInProperties.rangeStop.isNullOrEmpty()) {
+    val fullSyncStopTime: Instant? = if (checkInOutSensorProperties.rangeStop.isNullOrEmpty()) {
         null
     } else {
-        Instant.parse(checkInProperties.rangeStop)
+        Instant.parse(checkInOutSensorProperties.rangeStop)
     }
 
-    return CheckInService(
-        checkInRepository = checkInRepository,
+    return CheckInOutSensorService(
+        checkInOutSensorRepository = checkInOutSensorRepository,
         bucketName = influxdbProperties.bucket,
-        measurement = checkInProperties.measurement,
-        fullSyncStart = Instant.parse(checkInProperties.rangeStart),
-        fullSyncStop = fullSyncStop,
+        measurement = checkInOutSensorProperties.measurement,
+        fullSyncStartTime = Instant.parse(checkInOutSensorProperties.rangeStart),
+        fullSyncStopTime = fullSyncStopTime,
     )
 }
 

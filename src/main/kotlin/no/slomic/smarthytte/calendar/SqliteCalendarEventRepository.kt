@@ -104,7 +104,7 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
             guests = SizedCollection(eventGuests)
             sourceCreated = event.sourceCreated
             sourceUpdated = event.sourceUpdated
-            created = Clock.System.now()
+            createdTime = Clock.System.now()
         }
 
         logger.info("Added event with id: ${event.id} and summary: ${event.summary}")
@@ -137,7 +137,7 @@ class SqliteCalendarEventRepository : CalendarEventRepository {
 
         if (isDirty) {
             updatedEvent.version = updatedEvent.version.inc()
-            updatedEvent.updated = Clock.System.now()
+            updatedEvent.updatedTime = Clock.System.now()
         }
 
         // This triggers flushing changes and thus empties the writeValues, so we keep it as the last change

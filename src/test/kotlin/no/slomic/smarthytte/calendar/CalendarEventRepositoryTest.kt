@@ -54,7 +54,7 @@ class CalendarEventRepositoryTest :
                 readEvent.description shouldBe event.description
                 readEvent.sourceCreated shouldBe event.sourceCreated
                 readEvent.sourceUpdated shouldBe event.sourceUpdated
-                readEvent.updated.shouldBeNull()
+                readEvent.updatedTime.shouldBeNull()
                 readEvent.version shouldBe 1
             }
         }
@@ -79,7 +79,7 @@ class CalendarEventRepositoryTest :
                 readEvent.description shouldBe updatedEvent.description
                 readEvent.sourceCreated shouldBe updatedEvent.sourceCreated
                 readEvent.sourceUpdated shouldBe updatedEvent.sourceUpdated
-                readEvent.updated.shouldNotBeNull()
+                readEvent.updatedTime.shouldNotBeNull()
                 readEvent.version shouldBe 2
             }
         }
@@ -104,7 +104,7 @@ class CalendarEventRepositoryTest :
                 readEvent.description shouldBe updatedEvent.description
                 readEvent.sourceCreated shouldBe updatedEvent.sourceCreated
                 readEvent.sourceUpdated shouldBe updatedEvent.sourceUpdated
-                readEvent.updated.shouldBeNull()
+                readEvent.updatedTime.shouldBeNull()
                 readEvent.version shouldBe 1
             }
         }

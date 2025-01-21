@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.checkin
+package no.slomic.smarthytte.sensors.checkinouts
 
 import com.influxdb.client.kotlin.InfluxDBClientKotlin
 import com.influxdb.client.kotlin.QueryKotlinApi
@@ -35,18 +35,18 @@ fun emitMockRecords(records: List<MockFluxRecord>): Channel<FluxRecord> {
 
 class CheckInServiceTest :
     BaseDbTest({
-        lateinit var checkInRepository: CheckInRepository
-        lateinit var checkInService: CheckInService
+        lateinit var checkInOutSensorRepository: CheckInOutSensorRepository
+        lateinit var checkInOutSensorService: CheckInOutSensorService
         lateinit var mockQueryApi: QueryKotlinApi
 
         beforeEach {
-            checkInRepository = SqliteCheckInRepository()
-            checkInService = CheckInService(
-                checkInRepository = checkInRepository,
+            checkInOutSensorRepository = SqliteCheckInOutSensorRepository()
+            checkInOutSensorService = CheckInOutSensorService(
+                checkInOutSensorRepository = checkInOutSensorRepository,
                 bucketName = "foo",
                 measurement = "checked_in",
-                fullSyncStart = Instant.parse("2025-01-14T10:00:00Z"),
-                fullSyncStop = Instant.parse("2025-01-23T18:00:00Z"),
+                fullSyncStartTime = Instant.parse("2025-01-14T10:00:00Z"),
+                fullSyncStopTime = Instant.parse("2025-01-23T18:00:00Z"),
             )
 
             val mockClient: InfluxDBClientKotlin = mockk<InfluxDBClientKotlin>(relaxed = true)
@@ -71,19 +71,19 @@ class CheckInServiceTest :
             // Stub the method to return our mock flow
             coEvery { mockQueryApi.query(any<String>()) } returns mockChannel
 
-            checkInService.synchronizeCheckIns()
+            checkInOutSensorService.synchronizeCheckInOut()
 
-            val storedCheckIns = checkInRepository.allCheckIns()
+            val storedCheckIns = checkInOutSensorRepository.allCheckInOuts()
             storedCheckIns shouldHaveSize 2
 
             val storedCheckInTrip1 = storedCheckIns.first()
             storedCheckInTrip1.id shouldBe checkInTimeVisit1.toString()
-            storedCheckInTrip1.timestamp shouldBe checkInTimeVisit1
+            storedCheckInTrip1.time shouldBe checkInTimeVisit1
             storedCheckInTrip1.status shouldBe CheckInStatus.CHECKED_IN
 
             val storedCheckOutTrip1 = storedCheckIns.last()
             storedCheckOutTrip1.id shouldBe checkOutTimeVisit1.toString()
-            storedCheckOutTrip1.timestamp shouldBe checkOutTimeVisit1
+            storedCheckOutTrip1.time shouldBe checkOutTimeVisit1
             storedCheckOutTrip1.status shouldBe CheckInStatus.CHECKED_OUT
         }
 
@@ -104,19 +104,19 @@ class CheckInServiceTest :
             // Stub the method to return our mock flow
             coEvery { mockQueryApi.query(any<String>()) } returns mockChannel
 
-            checkInService.synchronizeCheckIns()
+            checkInOutSensorService.synchronizeCheckInOut()
 
-            val storedCheckIns = checkInRepository.allCheckIns()
+            val storedCheckIns = checkInOutSensorRepository.allCheckInOuts()
             storedCheckIns shouldHaveSize 2
 
             val storedCheckInTrip1 = storedCheckIns.first()
             storedCheckInTrip1.id shouldBe checkInTime.toString()
-            storedCheckInTrip1.timestamp shouldBe checkInTime
+            storedCheckInTrip1.time shouldBe checkInTime
             storedCheckInTrip1.status shouldBe CheckInStatus.CHECKED_OUT
 
             val storedCheckOutTrip1 = storedCheckIns.last()
             storedCheckOutTrip1.id shouldBe checkOutTime.toString()
-            storedCheckOutTrip1.timestamp shouldBe checkOutTime
+            storedCheckOutTrip1.time shouldBe checkOutTime
             storedCheckOutTrip1.status shouldBe CheckInStatus.CHECKED_IN
         }
 
@@ -127,9 +127,9 @@ class CheckInServiceTest :
             // Stub the method to return our mock flow
             coEvery { mockQueryApi.query(any<String>()) } returns mockChannel
 
-            checkInService.synchronizeCheckIns()
+            checkInOutSensorService.synchronizeCheckInOut()
 
-            val storedCheckIns = checkInRepository.allCheckIns()
+            val storedCheckIns = checkInOutSensorRepository.allCheckInOuts()
             storedCheckIns shouldHaveSize 0
         }
     })

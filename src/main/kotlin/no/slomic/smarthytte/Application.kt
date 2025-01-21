@@ -8,11 +8,6 @@ import no.slomic.smarthytte.calendar.CalendarEventRepository
 import no.slomic.smarthytte.calendar.SqliteCalendarEventRepository
 import no.slomic.smarthytte.calendar.createGoogleCalendarService
 import no.slomic.smarthytte.calendar.startPeriodicGoogleCalendarSync
-import no.slomic.smarthytte.checkin.CheckInRepository
-import no.slomic.smarthytte.checkin.CheckInService
-import no.slomic.smarthytte.checkin.SqliteCheckInRepository
-import no.slomic.smarthytte.checkin.createCheckInService
-import no.slomic.smarthytte.checkin.startPeriodicCheckInSync
 import no.slomic.smarthytte.guest.GuestRepository
 import no.slomic.smarthytte.guest.SqliteGuestRepository
 import no.slomic.smarthytte.guest.insertGuestsFromFile
@@ -21,6 +16,11 @@ import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
+import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
+import no.slomic.smarthytte.sensors.checkinouts.createCheckInOutSensorService
+import no.slomic.smarthytte.sensors.checkinouts.launchSyncCheckInOutSensorTask
 import no.slomic.smarthytte.vehicletrip.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrip.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrip.insertVehicleTripsFromFile
@@ -43,11 +43,11 @@ fun Application.module() {
     val guestRepository: GuestRepository = SqliteGuestRepository()
     val googleCalendarService = createGoogleCalendarService(calendarRepository = calendarRepository)
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
-    val checkInRepository: CheckInRepository = SqliteCheckInRepository()
-    val checkInService: CheckInService = createCheckInService(checkInRepository)
+    val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
+    val checkInOutSensorService: CheckInOutSensorService = createCheckInOutSensorService(checkInOutSensorRepository)
     val cabinVisitService = CabinVisitService(
         calendarRepository = calendarRepository,
-        checkInRepository = checkInRepository,
+        checkInOutSensorRepository = checkInOutSensorRepository,
         vehicleTripRepository = vehicleTripRepository,
     )
 
@@ -57,6 +57,6 @@ fun Application.module() {
     insertGuestsFromFile(guestRepository)
     insertVehicleTripsFromFile(vehicleTripRepository)
     startPeriodicGoogleCalendarSync(googleCalendarService)
-    startPeriodicCheckInSync(checkInService)
+    launchSyncCheckInOutSensorTask(checkInOutSensorService)
     cabinVisitService.createOrUpdateCabinVisits()
 }

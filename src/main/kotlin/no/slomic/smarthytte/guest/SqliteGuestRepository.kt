@@ -28,7 +28,7 @@ class SqliteGuestRepository : GuestRepository {
             birthYear = guest.birthYear
             email = guest.email
             gender = guest.gender
-            created = Clock.System.now()
+            createdTime = Clock.System.now()
         }
 
         logger.info("Added guest with id: ${guest.id}")
@@ -58,7 +58,7 @@ class SqliteGuestRepository : GuestRepository {
 
         if (isDirty) {
             updatedGuest.version = updatedGuest.version.inc()
-            updatedGuest.updated = Clock.System.now()
+            updatedGuest.updatedTime = Clock.System.now()
 
             logger.info("Updated guest with id: ${guest.id}")
         } else {

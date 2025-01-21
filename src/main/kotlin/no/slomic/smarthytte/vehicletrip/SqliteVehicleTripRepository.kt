@@ -33,7 +33,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
             averageSpeed = vehicleTrip.averageSpeed
-            created = Clock.System.now()
+            createdTime = Clock.System.now()
             distance = vehicleTrip.distance
             distanceUnit = vehicleTrip.distanceUnit
             duration = vehicleTrip.duration
@@ -72,7 +72,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
             averageSpeed = vehicleTrip.averageSpeed
-            created = Clock.System.now()
+            createdTime = Clock.System.now()
             distance = vehicleTrip.distance
             distanceUnit = vehicleTrip.distanceUnit
             duration = vehicleTrip.duration
@@ -93,7 +93,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
 
         if (isDirty) {
             updatedVehicleTrip.version = updatedVehicleTrip.version.inc()
-            updatedVehicleTrip.updated = Clock.System.now()
+            updatedVehicleTrip.updatedTime = Clock.System.now()
 
             logger.trace("Updated vehicle trip with id: ${vehicleTrip.id}")
 

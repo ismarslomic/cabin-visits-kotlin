@@ -1,12 +1,12 @@
-package no.slomic.smarthytte.checkin
+package no.slomic.smarthytte.sensors.checkinouts
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.toUtcDate
 
-data class CheckIn(val id: String, val timestamp: Instant, val status: CheckInStatus) {
+data class CheckInOutSensor(val id: String, val time: Instant, val status: CheckInStatus) {
     val date: LocalDate
-        get() = timestamp.toUtcDate()
+        get() = time.toUtcDate()
 
     val isCheckedOut: Boolean
         get() = status == CheckInStatus.CHECKED_OUT

@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.checkin
+package no.slomic.smarthytte.sensors.checkinouts
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
@@ -12,31 +12,29 @@ import no.slomic.smarthytte.properties.loadProperties
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-fun Application.startPeriodicCheckInSync(checkInService: CheckInService) {
+fun Application.launchSyncCheckInOutSensorTask(checkInOutSensorService: CheckInOutSensorService) {
     val checkInProperties: CheckInProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb.checkIn
     val syncFrequencyMinutes: Duration = checkInProperties.syncFrequencyMinutes.minutes
 
     // Launch the task in a background coroutine
-    log.info("Launching startPeriodicCheckInSync task every $syncFrequencyMinutes")
+    log.info("Launching syncCheckInOutSensor task every $syncFrequencyMinutes")
     val taskJob = launch {
         while (isActive) {
-            performPeriodicCheckInRequest(checkInService)
+            performSync(checkInOutSensorService)
             delay(syncFrequencyMinutes)
         }
     }
 
     // Ensure the client is closed when the application stops
     monitor.subscribe(ApplicationStopping) {
-        log.info("Canceling the startPeriodicCheckInSync task since Application is stopping.")
+        log.info("Canceling the syncCheckInOutSensor task since Application is stopping.")
         taskJob.cancel() // Stop the task
     }
 }
 
-private fun Application.performPeriodicCheckInRequest(checkInService: CheckInService) {
+private suspend fun Application.performSync(checkInOutSensorService: CheckInOutSensorService) {
     // Launch custom code in a coroutine
-    launch {
-        log.info("Starting syncing the Check Ins from InfluxDb.")
-        checkInService.synchronizeCheckIns()
-        log.info("Completed syncing the Check Ins from InfluxDb")
-    }
+    log.info("Starting syncing the Check In/Out sensor from InfluxDb.")
+    checkInOutSensorService.synchronizeCheckInOut()
+    log.info("Completed syncing the Check In/Out sensor from InfluxDb")
 }
