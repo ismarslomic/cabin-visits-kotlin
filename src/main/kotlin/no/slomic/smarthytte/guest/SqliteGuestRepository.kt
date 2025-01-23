@@ -3,6 +3,7 @@ package no.slomic.smarthytte.guest
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
+import no.slomic.smarthytte.common.UpsertStatus
 import no.slomic.smarthytte.common.suspendTransaction
 import org.jetbrains.exposed.dao.id.EntityID
 
@@ -18,6 +19,21 @@ class SqliteGuestRepository : GuestRepository {
         } else {
             updateGuest(guest)!!
         }
+    }
+
+    override suspend fun setNotionId(notionId: String, guestId: String): UpsertStatus {
+        logger.trace("Setting notion Id for guest with id: $guestId")
+
+        val storedGuest: GuestEntity = GuestEntity.findById(guestId) ?: return UpsertStatus.NO_ACTION
+
+        with(storedGuest) {
+            this.notionId = notionId
+            version = storedGuest.version.inc()
+            updatedTime = Clock.System.now()
+        }
+
+        logger.trace("Notion id set for guest with id: $guestId")
+        return UpsertStatus.UPDATED
     }
 
     private fun addGuest(guest: Guest): Guest {
