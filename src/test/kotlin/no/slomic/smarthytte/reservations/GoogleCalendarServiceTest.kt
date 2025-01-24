@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.calendar
+package no.slomic.smarthytte.reservations
 
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
@@ -8,11 +8,13 @@ import com.google.api.services.calendar.model.Events
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.ktor.util.logging.KtorSimpleLogger
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.slomic.smarthytte.BaseDbTest
+import no.slomic.smarthytte.calendarevents.GoogleCalendarRepository
+import no.slomic.smarthytte.calendarevents.GoogleCalendarService
+import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
 
 class GoogleCalendarServiceTest :
     BaseDbTest({
@@ -21,15 +23,16 @@ class GoogleCalendarServiceTest :
         val mockCalendarApiClient = mockk<Calendar>(relaxed = true)
         val mockEventsList = mockk<Calendar.Events.List>(relaxed = true)
         val syncFromDateTime = DateTime("2024-12-29T00:00:00Z")
-        val calendarRepository: CalendarEventRepository = SqliteCalendarEventRepository()
+        val reservationRepository: ReservationRepository = SqliteReservationRepository()
+        val googleCalendarRepository: GoogleCalendarRepository = SqliteGoogleCalendarRepository()
         val summaryToGuestFilePath = getResourceFilePath("summaryToGuestIds.json")
 
         val googleCalendarService = GoogleCalendarService(
             calendarApiClient = mockCalendarApiClient,
-            logger = KtorSimpleLogger(GoogleCalendarService::class.java.name),
             calendarId = "test-calendar",
             syncFromDateTime = syncFromDateTime,
-            calendarRepository = calendarRepository,
+            reservationRepository = reservationRepository,
+            googleCalendarRepository = googleCalendarRepository,
             summaryToGuestFilePath = summaryToGuestFilePath,
         )
 
@@ -45,7 +48,7 @@ class GoogleCalendarServiceTest :
                 googleCalendarService.synchronizeCalendarEvents()
             }
 
-            calendarRepository.allEvents().shouldBeEmpty()
+            reservationRepository.allReservations().shouldBeEmpty()
         }
 
         "list with new events should be stored to database" {
@@ -63,7 +66,7 @@ class GoogleCalendarServiceTest :
                 googleCalendarService.synchronizeCalendarEvents()
             }
 
-            calendarRepository.allEvents() shouldHaveSize 1
+            reservationRepository.allReservations() shouldHaveSize 1
         }
 
         "list with updated events should be stored to database" {
@@ -91,7 +94,7 @@ class GoogleCalendarServiceTest :
                 googleCalendarService.synchronizeCalendarEvents()
             }
 
-            val allEvents = calendarRepository.allEvents()
+            val allEvents = reservationRepository.allReservations()
             allEvents shouldHaveSize 1
             allEvents.first().id shouldBe changedEvent.id
             allEvents.first().summary shouldBe changedEvent.summary
@@ -112,7 +115,7 @@ class GoogleCalendarServiceTest :
                 googleCalendarService.synchronizeCalendarEvents()
             }
 
-            calendarRepository.allEvents() shouldHaveSize 1
+            reservationRepository.allReservations() shouldHaveSize 1
 
             val deletedEvent = newEvent.apply {
                 status = "cancelled"
@@ -124,6 +127,6 @@ class GoogleCalendarServiceTest :
                 googleCalendarService.synchronizeCalendarEvents()
             }
 
-            calendarRepository.allEvents().shouldBeEmpty()
+            reservationRepository.allReservations().shouldBeEmpty()
         }
     })

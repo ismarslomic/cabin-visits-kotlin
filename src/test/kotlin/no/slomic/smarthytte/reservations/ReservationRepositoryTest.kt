@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.calendar
+package no.slomic.smarthytte.reservations
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -10,7 +10,6 @@ import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.common.truncatedToMillis
-import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
 import no.slomic.smarthytte.guest.GuestRepository
 import no.slomic.smarthytte.guest.SqliteGuestRepository
 import no.slomic.smarthytte.guest.guest
@@ -22,38 +21,38 @@ import kotlin.time.Duration.Companion.hours
 
 val now = Clock.System.now()
 
-val event = CalendarEvent(
+val event = Reservation(
     id = "event1",
-    start = now.truncatedToMillis(),
-    end = now.plus(2.days).truncatedToMillis(),
+    startTime = now.truncatedToMillis(),
+    endTime = now.plus(2.days).truncatedToMillis(),
     guestIds = listOf(),
     summary = "Test event",
     description = null,
-    sourceCreated = now.minus(1.days).truncatedToMillis(),
-    sourceUpdated = now.minus(5.hours).truncatedToMillis(),
+    sourceCreatedTime = now.minus(1.days).truncatedToMillis(),
+    sourceUpdatedTime = now.minus(5.hours).truncatedToMillis(),
 )
 
-class CalendarEventRepositoryTest :
+class ReservationRepositoryTest :
     BaseDbTest({
-        val repository: CalendarEventRepository = SqliteCalendarEventRepository()
+        val repository: ReservationRepository = SqliteReservationRepository()
 
         "add or update with new id should add new event" {
             val returnedEvent = repository.addOrUpdate(event)
             returnedEvent.shouldBeEqualToComparingFields(event)
 
             transaction {
-                val allEvents: List<CalendarEventEntity> = CalendarEventEntity.all().toList()
+                val allEvents: List<ReservationEntity> = ReservationEntity.all().toList()
                 allEvents shouldHaveSize 1
 
-                val readEvent: CalendarEventEntity = allEvents.first()
+                val readEvent: ReservationEntity = allEvents.first()
                 readEvent.id.value shouldBe event.id
-                readEvent.start shouldBe event.start
-                readEvent.end shouldBe event.end
+                readEvent.startTime shouldBe event.startTime
+                readEvent.endTime shouldBe event.endTime
                 readEvent.guests.shouldBeEmpty()
                 readEvent.summary shouldBe event.summary
                 readEvent.description shouldBe event.description
-                readEvent.sourceCreated shouldBe event.sourceCreated
-                readEvent.sourceUpdated shouldBe event.sourceUpdated
+                readEvent.sourceCreatedTime shouldBe event.sourceCreatedTime
+                readEvent.sourceUpdatedTime shouldBe event.sourceUpdatedTime
                 readEvent.updatedTime.shouldBeNull()
                 readEvent.version shouldBe 1
             }
@@ -62,23 +61,23 @@ class CalendarEventRepositoryTest :
         "add or update with existing id should update the existing event" {
             repository.addOrUpdate(event)
 
-            val updatedEvent: CalendarEvent = event.copy(summary = "Test event 2")
-            val returnedEvent: CalendarEvent = repository.addOrUpdate(updatedEvent)
+            val updatedEvent: Reservation = event.copy(summary = "Test event 2")
+            val returnedEvent: Reservation = repository.addOrUpdate(updatedEvent)
             returnedEvent.shouldBeEqualToComparingFields(updatedEvent)
 
             transaction {
-                val allEvents: List<CalendarEventEntity> = CalendarEventEntity.all().toList()
+                val allEvents: List<ReservationEntity> = ReservationEntity.all().toList()
                 allEvents shouldHaveSize 1
 
-                val readEvent: CalendarEventEntity = allEvents.first()
+                val readEvent: ReservationEntity = allEvents.first()
                 readEvent.id.value shouldBe updatedEvent.id
-                readEvent.start shouldBe updatedEvent.start
-                readEvent.end shouldBe updatedEvent.end
+                readEvent.startTime shouldBe updatedEvent.startTime
+                readEvent.endTime shouldBe updatedEvent.endTime
                 readEvent.guests.shouldBeEmpty()
                 readEvent.summary shouldBe updatedEvent.summary
                 readEvent.description shouldBe updatedEvent.description
-                readEvent.sourceCreated shouldBe updatedEvent.sourceCreated
-                readEvent.sourceUpdated shouldBe updatedEvent.sourceUpdated
+                readEvent.sourceCreatedTime shouldBe updatedEvent.sourceCreatedTime
+                readEvent.sourceUpdatedTime shouldBe updatedEvent.sourceUpdatedTime
                 readEvent.updatedTime.shouldNotBeNull()
                 readEvent.version shouldBe 2
             }
@@ -87,23 +86,23 @@ class CalendarEventRepositoryTest :
         "add or update with existing id without property changes should not update the existing event" {
             repository.addOrUpdate(event)
 
-            val updatedEvent: CalendarEvent = event
-            val returnedEvent: CalendarEvent = repository.addOrUpdate(updatedEvent)
+            val updatedEvent: Reservation = event
+            val returnedEvent: Reservation = repository.addOrUpdate(updatedEvent)
             returnedEvent.shouldBeEqualToComparingFields(updatedEvent)
 
             transaction {
-                val allEvents: List<CalendarEventEntity> = CalendarEventEntity.all().toList()
+                val allEvents: List<ReservationEntity> = ReservationEntity.all().toList()
                 allEvents shouldHaveSize 1
 
-                val readEvent: CalendarEventEntity = allEvents.first()
+                val readEvent: ReservationEntity = allEvents.first()
                 readEvent.id.value shouldBe updatedEvent.id
-                readEvent.start shouldBe updatedEvent.start
-                readEvent.end shouldBe updatedEvent.end
+                readEvent.startTime shouldBe updatedEvent.startTime
+                readEvent.endTime shouldBe updatedEvent.endTime
                 readEvent.guests.shouldBeEmpty()
                 readEvent.summary shouldBe updatedEvent.summary
                 readEvent.description shouldBe updatedEvent.description
-                readEvent.sourceCreated shouldBe updatedEvent.sourceCreated
-                readEvent.sourceUpdated shouldBe updatedEvent.sourceUpdated
+                readEvent.sourceCreatedTime shouldBe updatedEvent.sourceCreatedTime
+                readEvent.sourceUpdatedTime shouldBe updatedEvent.sourceUpdatedTime
                 readEvent.updatedTime.shouldBeNull()
                 readEvent.version shouldBe 1
             }
@@ -111,18 +110,18 @@ class CalendarEventRepositoryTest :
 
         "delete should remove existing event" {
             repository.addOrUpdate(event)
-            repository.allEvents() shouldHaveSize 1
-            repository.deleteEvent(event.id)
-            repository.allEvents() shouldHaveSize 0
+            repository.allReservations() shouldHaveSize 1
+            repository.deleteReservation(event.id)
+            repository.allReservations() shouldHaveSize 0
         }
 
         "reading event by existing id should read event" {
             repository.addOrUpdate(event)
-            repository.eventById(event.id)!!.shouldBeEqualToComparingFields(event)
+            repository.reservationById(event.id)!!.shouldBeEqualToComparingFields(event)
         }
 
         "reading event by non existing id should return null" {
-            repository.eventById(event.id).shouldBeNull()
+            repository.reservationById(event.id).shouldBeNull()
         }
 
         "adding guests to the event should store guests to intermediate table" {
@@ -137,19 +136,19 @@ class CalendarEventRepositoryTest :
             repository.addOrUpdate(eventWithGuest)
 
             // We are currently not loading the guests when reading from database
-            repository.eventById(event.id)!!.shouldBeEqualToIgnoringFields(eventWithGuest, CalendarEvent::guestIds)
+            repository.reservationById(event.id)!!.shouldBeEqualToIgnoringFields(eventWithGuest, Reservation::guestIds)
 
             transaction {
-                val allEventGuests: List<ResultRow> = CalenderEventGuestTable.selectAll().toList()
+                val allEventGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
                 allEventGuests shouldHaveSize 2
 
                 val firsGuest: ResultRow = allEventGuests.first()
-                firsGuest[CalenderEventGuestTable.event] = event.id
-                firsGuest[CalenderEventGuestTable.guest] = guest.id
+                firsGuest[ReservationGuestTable.event] = event.id
+                firsGuest[ReservationGuestTable.guest] = guest.id
 
                 val lastGuest: ResultRow = allEventGuests.last()
-                lastGuest[CalenderEventGuestTable.event] = event.id
-                lastGuest[CalenderEventGuestTable.guest] = guest2.id
+                lastGuest[ReservationGuestTable.event] = event.id
+                lastGuest[ReservationGuestTable.guest] = guest2.id
             }
         }
 
@@ -163,18 +162,18 @@ class CalendarEventRepositoryTest :
                 guestIds = listOf(guest.id, guest2.id),
             )
             repository.addOrUpdate(eventWithGuest)
-            repository.eventById(eventWithGuest.id).shouldNotBeNull()
+            repository.reservationById(eventWithGuest.id).shouldNotBeNull()
 
             transaction {
-                val allEventGuests: List<ResultRow> = CalenderEventGuestTable.selectAll().toList()
+                val allEventGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
                 allEventGuests shouldHaveSize 2
             }
 
-            repository.deleteEvent(eventWithGuest.id)
-            repository.eventById(eventWithGuest.id).shouldBeNull()
+            repository.deleteReservation(eventWithGuest.id)
+            repository.reservationById(eventWithGuest.id).shouldBeNull()
 
             transaction {
-                val allEventGuests: List<ResultRow> = CalenderEventGuestTable.selectAll().toList()
+                val allEventGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
                 allEventGuests.shouldBeEmpty()
             }
         }

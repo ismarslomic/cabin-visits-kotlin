@@ -5,8 +5,8 @@ import io.ktor.util.logging.Logger
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import no.slomic.smarthytte.calendar.CalendarEvent
-import no.slomic.smarthytte.calendar.CalendarEventRepository
+import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.vehicletrip.VehicleTrip
@@ -15,7 +15,7 @@ import no.slomic.smarthytte.vehicletrip.findCabinTripsWithExtraStops
 import kotlin.time.Duration
 
 class CabinVisitService(
-    private val calendarRepository: CalendarEventRepository,
+    private val calendarRepository: ReservationRepository,
     private val checkInOutSensorRepository: CheckInOutSensorRepository,
     private val vehicleTripRepository: VehicleTripRepository,
 ) {
@@ -23,25 +23,25 @@ class CabinVisitService(
 
     fun createOrUpdateCabinVisits() {
         runBlocking {
-            val allCalendarEvents: List<CalendarEvent> = calendarRepository.allEvents()
+            val allReservations: List<Reservation> = calendarRepository.allReservations()
             val allCheckInOutSensors: Map<LocalDate, List<CheckInOutSensor>> =
                 checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
             val allVehicleTrips: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
             val homeCabinTrips: List<VehicleTrip> = findCabinTripsWithExtraStops(allVehicleTrips)
-            allCalendarEvents.forEach { event ->
+            allReservations.forEach { event ->
                 val cabinVisit = createCabinVisit(
                     reservation = event,
                     checkInOutSensorsByDate = allCheckInOutSensors,
                     homeCabinTrips = homeCabinTrips,
                 )
 
-                logger.info("Cabin visit ${cabinVisit.reservation.start} - ${cabinVisit.reservation.end}")
+                logger.info("Cabin visit ${cabinVisit.reservation.startTime} - ${cabinVisit.reservation.endTime}")
             }
         }
     }
 
     private fun createCabinVisit(
-        reservation: CalendarEvent,
+        reservation: Reservation,
         checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>>,
         homeCabinTrips: List<VehicleTrip>,
     ): CabinVisit {
@@ -80,7 +80,7 @@ class CabinVisitService(
     }
 
     private fun createVisitEvent(
-        reservation: CalendarEvent,
+        reservation: Reservation,
         checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>>,
         homeCabinTrips: List<VehicleTrip>,
         forCheckIn: Boolean,
@@ -96,13 +96,13 @@ class CabinVisitService(
             timeFromCheckInSensor = checkInOutSensor?.time
             vehicleTrip = findArrivalAtCabinTrip(homeCabinTrips, reservation)
             timeFromVehicleTrip = vehicleTrip?.endTime
-            timeFromReservation = reservation.start
+            timeFromReservation = reservation.startTime
         } else {
             checkInOutSensor = findCheckOutFromSensor(checkInOutSensorsByDate, reservation)
             timeFromCheckInSensor = checkInOutSensor?.time
             vehicleTrip = findDepartureFromCabinTrip(homeCabinTrips, reservation)
             timeFromVehicleTrip = vehicleTrip?.startTime
-            timeFromReservation = reservation.end
+            timeFromReservation = reservation.endTime
         }
 
         return if (vehicleTrip != null && timeFromVehicleTrip != null) {
@@ -126,14 +126,14 @@ class CabinVisitService(
         }
     }
 
-    private fun findArrivalAtCabinTrip(homeCabinTrips: List<VehicleTrip>, event: CalendarEvent): VehicleTrip? {
+    private fun findArrivalAtCabinTrip(homeCabinTrips: List<VehicleTrip>, event: Reservation): VehicleTrip? {
         val eventStartDate: LocalDate = event.startDate
         val checkInTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasArrivedCabinAt(eventStartDate) }
 
         return checkInTrip
     }
 
-    private fun findDepartureFromCabinTrip(homeCabinTrips: List<VehicleTrip>, event: CalendarEvent): VehicleTrip? {
+    private fun findDepartureFromCabinTrip(homeCabinTrips: List<VehicleTrip>, event: Reservation): VehicleTrip? {
         val eventEndDate: LocalDate = event.endDate
         val checkOutTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasDepartedCabinAt(eventEndDate) }
 
@@ -142,7 +142,7 @@ class CabinVisitService(
 
     private fun findCheckInFromSensor(
         checkInOutSensors: Map<LocalDate, List<CheckInOutSensor>>,
-        event: CalendarEvent,
+        event: Reservation,
     ): CheckInOutSensor? {
         val startDate: LocalDate = event.startDate
         val startCheckInOutSensors: List<CheckInOutSensor>? = checkInOutSensors[startDate]
@@ -152,7 +152,7 @@ class CabinVisitService(
 
     private fun findCheckOutFromSensor(
         checkInOutSensors: Map<LocalDate, List<CheckInOutSensor>>,
-        event: CalendarEvent,
+        event: Reservation,
     ): CheckInOutSensor? {
         val endDate: LocalDate = event.endDate
         val endCheckInOutSensors: List<CheckInOutSensor>? = checkInOutSensors[endDate]

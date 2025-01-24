@@ -2,12 +2,12 @@ package no.slomic.smarthytte.plugins
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
-import no.slomic.smarthytte.calendar.CalendarEventTable
-import no.slomic.smarthytte.calendar.CalendarSyncTable
-import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
+import no.slomic.smarthytte.calendarevents.GoogleCalendarSyncTable
 import no.slomic.smarthytte.guest.GuestTable
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.reservations.ReservationGuestTable
+import no.slomic.smarthytte.reservations.ReservationTable
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorSyncTable
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorTable
 import no.slomic.smarthytte.vehicletrip.VehicleTripTable
@@ -36,10 +36,10 @@ fun Application.configureDatabases() {
     transaction {
         // Create tables that do not exist
         SchemaUtils.create(
-            CalendarSyncTable,
-            CalendarEventTable,
+            GoogleCalendarSyncTable,
+            ReservationTable,
             GuestTable,
-            CalenderEventGuestTable,
+            ReservationGuestTable,
             VehicleTripTable,
             CheckInOutSensorSyncTable,
             CheckInOutSensorTable,
@@ -47,10 +47,10 @@ fun Application.configureDatabases() {
 
         // Create missing columns to existing tables if changed from a previous app version
         SchemaUtils.createMissingTablesAndColumns(
-            CalendarSyncTable,
-            CalendarEventTable,
+            GoogleCalendarSyncTable,
+            ReservationTable,
             GuestTable,
-            CalenderEventGuestTable,
+            ReservationGuestTable,
             VehicleTripTable,
             CheckInOutSensorSyncTable,
             CheckInOutSensorTable,

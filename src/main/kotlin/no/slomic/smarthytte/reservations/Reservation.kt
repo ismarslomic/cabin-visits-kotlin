@@ -1,19 +1,20 @@
-package no.slomic.smarthytte.calendar
+package no.slomic.smarthytte.reservations
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
 
-data class CalendarEvent(
+data class Reservation(
     val id: String,
-    val start: Instant,
-    val end: Instant,
+    val startTime: Instant,
+    val endTime: Instant,
     val guestIds: List<String>,
     val summary: String? = null,
     val description: String? = null,
-    val sourceCreated: Instant? = null,
-    val sourceUpdated: Instant? = null,
+    val sourceCreatedTime: Instant? = null,
+    val sourceUpdatedTime: Instant? = null,
+    val notionId: String? = null,
 ) {
     val hasStarted: Boolean
         get() = startDate <= utcDateNow()
@@ -22,8 +23,8 @@ data class CalendarEvent(
         get() = endDate <= utcDateNow()
 
     val startDate: LocalDate
-        get() = start.toUtcDate()
+        get() = startTime.toUtcDate()
 
     val endDate: LocalDate
-        get() = end.toUtcDate()
+        get() = endTime.toUtcDate()
 }

@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.calendar
+package no.slomic.smarthytte.calendarevents
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
@@ -12,7 +12,7 @@ import no.slomic.smarthytte.properties.loadProperties
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-fun Application.startPeriodicGoogleCalendarSync(googleCalendarService: GoogleCalendarService) {
+fun Application.launchSyncGoogleCalendarTask(googleCalendarService: GoogleCalendarService) {
     val googleProperties: GoogleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
     val syncFrequencyMinutes: Duration = googleProperties.syncFrequencyMinutes.minutes
 
@@ -20,7 +20,7 @@ fun Application.startPeriodicGoogleCalendarSync(googleCalendarService: GoogleCal
     log.info("Launching startPeriodicGoogleCalendarSync task every $syncFrequencyMinutes")
     val taskJob = launch {
         while (isActive) {
-            performPeriodicGoogleCalendarRequest(googleCalendarService)
+            performSync(googleCalendarService)
             delay(syncFrequencyMinutes)
         }
     }
@@ -32,7 +32,7 @@ fun Application.startPeriodicGoogleCalendarSync(googleCalendarService: GoogleCal
     }
 }
 
-private fun Application.performPeriodicGoogleCalendarRequest(googleCalendarService: GoogleCalendarService) {
+private fun Application.performSync(googleCalendarService: GoogleCalendarService) {
     // Launch custom code in a coroutine
     launch {
         log.info("Starting syncing the Google Calendar events")

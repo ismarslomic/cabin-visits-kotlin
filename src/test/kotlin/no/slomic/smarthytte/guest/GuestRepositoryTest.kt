@@ -7,10 +7,10 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.BaseDbTest
-import no.slomic.smarthytte.calendar.CalendarEventRepository
-import no.slomic.smarthytte.calendar.SqliteCalendarEventRepository
-import no.slomic.smarthytte.calendar.event
-import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
+import no.slomic.smarthytte.reservations.ReservationGuestTable
+import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.reservations.event
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -95,7 +95,7 @@ class GuestRepositoryTest :
         }
 
         "delete should remove event guests from the intermediate table (cascade)" {
-            val calenderEventRepository: CalendarEventRepository = SqliteCalendarEventRepository()
+            val calenderEventRepository: ReservationRepository = SqliteReservationRepository()
             repository.addOrUpdate(guest)
             val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
             repository.addOrUpdate(guest2)
@@ -104,14 +104,14 @@ class GuestRepositoryTest :
                 guestIds = listOf(guest.id, guest2.id),
             )
             calenderEventRepository.addOrUpdate(eventWithGuest)
-            calenderEventRepository.eventById(eventWithGuest.id).shouldNotBeNull()
+            calenderEventRepository.reservationById(eventWithGuest.id).shouldNotBeNull()
 
             transaction {
-                CalenderEventGuestTable.selectAll().toList() shouldHaveSize 2
+                ReservationGuestTable.selectAll().toList() shouldHaveSize 2
                 GuestEntity.findById(EntityID(guest.id, GuestTable))!!.delete()
-                CalenderEventGuestTable.selectAll().toList() shouldHaveSize 1
+                ReservationGuestTable.selectAll().toList() shouldHaveSize 1
                 GuestEntity.findById(EntityID(guest2.id, GuestTable))!!.delete()
-                CalenderEventGuestTable.selectAll().toList().shouldBeEmpty()
+                ReservationGuestTable.selectAll().toList().shouldBeEmpty()
             }
         }
     })

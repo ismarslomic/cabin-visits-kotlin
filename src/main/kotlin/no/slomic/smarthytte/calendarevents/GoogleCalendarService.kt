@@ -1,24 +1,28 @@
-package no.slomic.smarthytte.calendar
+package no.slomic.smarthytte.calendarevents
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
+import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.readSummaryToGuestFromJsonFile
 import no.slomic.smarthytte.common.toInstant
+import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationRepository
 
 class GoogleCalendarService(
     private val calendarApiClient: Calendar,
-    private val calendarRepository: CalendarEventRepository,
-    private val logger: Logger,
+    private val reservationRepository: ReservationRepository,
+    private val googleCalendarRepository: GoogleCalendarRepository,
     private val calendarId: String,
     private val syncFromDateTime: DateTime,
     summaryToGuestFilePath: String,
 ) {
+    private val logger: Logger = KtorSimpleLogger(GoogleCalendarService::class.java.name)
     private val mapping: Map<String, List<String>> = readSummaryToGuestFromJsonFile(summaryToGuestFilePath)
 
     companion object {
@@ -29,7 +33,7 @@ class GoogleCalendarService(
         val request: Calendar.Events.List
 
         // Load the sync token stored from the last execution, if any.
-        val syncTokenKey = calendarRepository.syncToken()
+        val syncTokenKey = googleCalendarRepository.syncToken()
         if (syncTokenKey == null) {
             logger.info("Performing full sync for calendar $calendarId from date $syncFromDateTime.")
             request = createFullSyncRequest()
@@ -50,7 +54,7 @@ class GoogleCalendarService(
                 if (e.statusCode == STATUS_CODE_GONE) {
                     // A 410 status code, "Gone", indicates that the sync token is invalid.
                     logger.info("Invalid sync token, clearing event store and re-syncing.")
-                    calendarRepository.deleteSyncToken()
+                    googleCalendarRepository.deleteSyncToken()
                     synchronizeCalendarEvents()
                 } else {
                     throw e
@@ -61,7 +65,7 @@ class GoogleCalendarService(
             if (eventItems.isNullOrEmpty()) {
                 logger.info("No new events to sync.")
             } else {
-                storeUpdates(eventItems)
+                storeReservations(eventItems)
             }
 
             pageToken = events?.nextPageToken
@@ -69,33 +73,33 @@ class GoogleCalendarService(
 
         // Store the sync token from the last request to be used during the next execution.
         if (events?.nextSyncToken != null) {
-            calendarRepository.addOrUpdate(events.nextSyncToken)
+            googleCalendarRepository.addOrUpdateSyncToken(events.nextSyncToken)
         }
 
         logger.info("Sync complete.")
     }
 
-    private suspend fun storeUpdates(eventItems: List<Event>) {
+    private suspend fun storeReservations(eventItems: List<Event>) {
         for (event in eventItems) {
             if (event.status != "cancelled") {
-                val calendarEvent = CalendarEvent(
+                val reservation = Reservation(
                     id = event.id,
                     summary = event.summary,
                     description = event.description,
-                    start = startToInstant(event.start.date, event.start.dateTime),
-                    end = endToInstant(event.end.date, event.end.dateTime),
+                    startTime = startToInstant(event.start.date, event.start.dateTime),
+                    endTime = endToInstant(event.end.date, event.end.dateTime),
                     guestIds = summaryToGuestIds(event.summary),
-                    sourceCreated = event.created?.let { Instant.parse(it.toStringRfc3339()) },
-                    sourceUpdated = event.updated?.let { Instant.parse(it.toStringRfc3339()) },
+                    sourceCreatedTime = event.created?.let { Instant.parse(it.toStringRfc3339()) },
+                    sourceUpdatedTime = event.updated?.let { Instant.parse(it.toStringRfc3339()) },
                 )
 
-                calendarRepository.addOrUpdate(calendarEvent)
+                reservationRepository.addOrUpdate(reservation)
             } else {
-                calendarRepository.deleteEvent(event.id)
+                reservationRepository.deleteReservation(event.id)
             }
         }
 
-        logger.info("Saved ${eventItems.size} event(s)")
+        logger.info("Saved ${eventItems.size} reservation(s)")
     }
 
     private fun createFullSyncRequest() = calendarApiClient

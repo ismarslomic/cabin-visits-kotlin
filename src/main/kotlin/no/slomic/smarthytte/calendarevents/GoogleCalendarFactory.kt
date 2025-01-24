@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.calendar
+package no.slomic.smarthytte.calendarevents
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
@@ -8,25 +8,26 @@ import com.google.api.services.calendar.CalendarScopes
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.auth.oauth2.ServiceAccountCredentials
-import io.ktor.util.logging.KtorSimpleLogger
-import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.reservations.ReservationRepository
 import java.io.FileInputStream
 
-fun createGoogleCalendarService(calendarRepository: CalendarEventRepository): GoogleCalendarService {
+fun createGoogleCalendarService(
+    reservationRepository: ReservationRepository,
+    googleCalendarRepository: GoogleCalendarRepository,
+): GoogleCalendarService {
     val googleProperties: GoogleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
     val calendarApiClient: Calendar = createCalendarApiClient()
-    val googleCalendarLogger: Logger = KtorSimpleLogger(GoogleCalendarService::class.java.name)
     val calendarId: String = googleProperties.calendarId
     val syncFromDateTime = DateTime(googleProperties.syncFromDateTime)
     val summaryToGuestFilePath: String = googleProperties.summaryToGuestFilePath
 
     return GoogleCalendarService(
         calendarApiClient = calendarApiClient,
-        calendarRepository = calendarRepository,
-        logger = googleCalendarLogger,
+        reservationRepository = reservationRepository,
+        googleCalendarRepository = googleCalendarRepository,
         calendarId = calendarId,
         syncFromDateTime = syncFromDateTime,
         summaryToGuestFilePath,
@@ -46,8 +47,11 @@ private fun createCalendarApiClient(): Calendar {
 
     // Build the Calendar API client
     return Calendar.Builder(
+        /* transport = */
         GoogleNetHttpTransport.newTrustedTransport(),
+        /* jsonFactory = */
         GsonFactory.getDefaultInstance(),
+        /* httpRequestInitializer = */
         requestInitializer,
     ).setApplicationName("Cabin Visits Kotlin").build()
 }
