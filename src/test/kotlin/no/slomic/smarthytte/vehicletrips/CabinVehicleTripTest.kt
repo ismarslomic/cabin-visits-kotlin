@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.vehicletrip
+package no.slomic.smarthytte.vehicletrips
 
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe

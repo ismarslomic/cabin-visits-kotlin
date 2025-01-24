@@ -1,6 +1,6 @@
 @file:Suppress("TooManyFunctions")
 
-package no.slomic.smarthytte.vehicletrip
+package no.slomic.smarthytte.vehicletrips
 
 import kotlin.math.round
 import kotlin.time.Duration

@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.guest
+package no.slomic.smarthytte.guests
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger

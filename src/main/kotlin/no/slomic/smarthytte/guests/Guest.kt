@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.guest
+package no.slomic.smarthytte.guests
 
 import kotlinx.serialization.Serializable
 

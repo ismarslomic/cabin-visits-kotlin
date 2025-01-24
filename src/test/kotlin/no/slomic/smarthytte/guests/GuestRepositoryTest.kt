@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.guest
+package no.slomic.smarthytte.guests
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize

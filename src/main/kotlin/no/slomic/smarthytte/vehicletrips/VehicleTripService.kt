@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.vehicletrip
+package no.slomic.smarthytte.vehicletrips
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.log

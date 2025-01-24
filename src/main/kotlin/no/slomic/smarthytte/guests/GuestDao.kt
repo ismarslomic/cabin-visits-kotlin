@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.guest
+package no.slomic.smarthytte.guests
 
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable

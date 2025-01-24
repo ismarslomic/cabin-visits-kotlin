@@ -9,9 +9,9 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
-import no.slomic.smarthytte.vehicletrip.VehicleTrip
-import no.slomic.smarthytte.vehicletrip.VehicleTripRepository
-import no.slomic.smarthytte.vehicletrip.findCabinTripsWithExtraStops
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.findCabinTripsWithExtraStops
 import kotlin.time.Duration
 
 class CabinVisitService(

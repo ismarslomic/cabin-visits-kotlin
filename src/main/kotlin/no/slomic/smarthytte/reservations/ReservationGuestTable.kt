@@ -1,6 +1,6 @@
 package no.slomic.smarthytte.reservations
 
-import no.slomic.smarthytte.guest.GuestTable
+import no.slomic.smarthytte.guests.GuestTable
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption

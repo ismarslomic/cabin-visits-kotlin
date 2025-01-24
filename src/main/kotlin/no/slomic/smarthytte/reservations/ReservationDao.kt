@@ -3,7 +3,7 @@ package no.slomic.smarthytte.reservations
 import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
-import no.slomic.smarthytte.guest.GuestEntity
+import no.slomic.smarthytte.guests.GuestEntity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column

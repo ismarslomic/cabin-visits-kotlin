@@ -9,9 +9,9 @@ import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.createGoogleCalendarService
 import no.slomic.smarthytte.calendarevents.launchSyncGoogleCalendarTask
-import no.slomic.smarthytte.guest.GuestRepository
-import no.slomic.smarthytte.guest.SqliteGuestRepository
-import no.slomic.smarthytte.guest.insertGuestsFromFile
+import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.guests.insertGuestsFromFile
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
@@ -24,9 +24,9 @@ import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.createCheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.launchSyncCheckInOutSensorTask
-import no.slomic.smarthytte.vehicletrip.SqliteVehicleTripRepository
-import no.slomic.smarthytte.vehicletrip.VehicleTripRepository
-import no.slomic.smarthytte.vehicletrip.insertVehicleTripsFromFile
+import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.insertVehicleTripsFromFile
 
 fun main() {
     val ktorProperties = loadProperties<KtorPropertiesHolder>().ktor

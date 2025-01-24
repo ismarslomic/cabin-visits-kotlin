@@ -3,14 +3,14 @@ package no.slomic.smarthytte.plugins
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
 import no.slomic.smarthytte.calendarevents.GoogleCalendarSyncTable
-import no.slomic.smarthytte.guest.GuestTable
+import no.slomic.smarthytte.guests.GuestTable
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.ReservationGuestTable
 import no.slomic.smarthytte.reservations.ReservationTable
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorSyncTable
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorTable
-import no.slomic.smarthytte.vehicletrip.VehicleTripTable
+import no.slomic.smarthytte.vehicletrips.VehicleTripTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager

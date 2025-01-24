@@ -4,7 +4,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.suspendTransaction
-import no.slomic.smarthytte.guest.GuestEntity
+import no.slomic.smarthytte.guests.GuestEntity
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedCollection
 

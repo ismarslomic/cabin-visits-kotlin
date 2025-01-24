@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.vehicletrip
+package no.slomic.smarthytte.vehicletrips
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate

@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.vehicletrip
+package no.slomic.smarthytte.vehicletrips
 
 import no.slomic.smarthytte.common.UpsertStatus
 

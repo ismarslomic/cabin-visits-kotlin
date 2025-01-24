@@ -10,9 +10,9 @@ import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.common.truncatedToMillis
-import no.slomic.smarthytte.guest.GuestRepository
-import no.slomic.smarthytte.guest.SqliteGuestRepository
-import no.slomic.smarthytte.guest.guest
+import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.guests.guest
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
