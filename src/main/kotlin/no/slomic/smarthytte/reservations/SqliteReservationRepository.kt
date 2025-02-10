@@ -3,6 +3,9 @@ package no.slomic.smarthytte.reservations
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
+import no.slomic.smarthytte.checkinouts.CheckIn
+import no.slomic.smarthytte.checkinouts.CheckOut
+import no.slomic.smarthytte.common.UpsertStatus
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.guests.GuestEntity
 import org.jetbrains.exposed.dao.id.EntityID
@@ -46,6 +49,61 @@ class SqliteReservationRepository : ReservationRepository {
         logger.info("Deleted reservation with id: $id and summary: $summary was successful: $wasDeleted")
 
         wasDeleted
+    }
+
+    override suspend fun setNotionId(notionId: String, id: String): UpsertStatus = suspendTransaction {
+        logger.info("Setting notion Id for reservation with id: $id")
+
+        val storedReservation: ReservationEntity =
+            ReservationEntity.findById(id) ?: return@suspendTransaction UpsertStatus.NO_ACTION
+
+        with(storedReservation) {
+            this.notionId = notionId
+            version = storedReservation.version.inc()
+            updatedTime = Clock.System.now()
+        }
+
+        logger.info("Notion id set for reservation with id: $id")
+
+        UpsertStatus.UPDATED
+    }
+
+    @Suppress("DuplicatedCode")
+    override suspend fun setCheckIn(checkIn: CheckIn, id: String): UpsertStatus = suspendTransaction {
+        logger.info("Setting check in for reservation with id: $id")
+
+        val storedReservation: ReservationEntity =
+            ReservationEntity.findById(id) ?: return@suspendTransaction UpsertStatus.NO_ACTION
+
+        with(storedReservation) {
+            this.checkInTime = checkIn.time
+            this.checkInSourceName = checkIn.sourceName
+            this.checkInSourceId = checkIn.sourceId
+            version = storedReservation.version.inc()
+            updatedTime = Clock.System.now()
+        }
+
+        logger.info("Check in set for reservation with id: $id")
+        UpsertStatus.UPDATED
+    }
+
+    @Suppress("DuplicatedCode")
+    override suspend fun setCheckOut(checkOut: CheckOut, id: String): UpsertStatus = suspendTransaction {
+        logger.info("Setting check out for reservation with id: $id")
+
+        val storedReservation: ReservationEntity =
+            ReservationEntity.findById(id) ?: return@suspendTransaction UpsertStatus.NO_ACTION
+
+        with(storedReservation) {
+            this.checkOutTime = checkOut.time
+            this.checkOutSourceName = checkOut.sourceName
+            this.checkOutSourceId = checkOut.sourceId
+            version = storedReservation.version.inc()
+            updatedTime = Clock.System.now()
+        }
+
+        logger.info("Check out set for reservation with id: $id")
+        UpsertStatus.UPDATED
     }
 
     private fun addReservation(reservation: Reservation): Reservation {

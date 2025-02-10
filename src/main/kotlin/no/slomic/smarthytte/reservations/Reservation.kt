@@ -2,6 +2,8 @@ package no.slomic.smarthytte.reservations
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.checkinouts.CheckIn
+import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
 
@@ -15,6 +17,8 @@ data class Reservation(
     val sourceCreatedTime: Instant? = null,
     val sourceUpdatedTime: Instant? = null,
     val notionId: String? = null,
+    var checkIn: CheckIn? = null,
+    var checkOut: CheckOut? = null,
 ) {
     val hasStarted: Boolean
         get() = startDate <= utcDateNow()

@@ -3,12 +3,12 @@ package no.slomic.smarthytte
 import io.ktor.server.application.Application
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
-import no.slomic.smarthytte.cabinvisit.CabinVisitService
 import no.slomic.smarthytte.calendarevents.GoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.createGoogleCalendarService
 import no.slomic.smarthytte.calendarevents.launchSyncGoogleCalendarTask
+import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.guests.insertGuestsFromFile
@@ -53,8 +53,8 @@ fun Application.module() {
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
     val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
     val checkInOutSensorService: CheckInOutSensorService = createCheckInOutSensorService(checkInOutSensorRepository)
-    val cabinVisitService = CabinVisitService(
-        calendarRepository = reservationRepository,
+    val checkInOutService = CheckInOutService(
+        reservationRepository = reservationRepository,
         checkInOutSensorRepository = checkInOutSensorRepository,
         vehicleTripRepository = vehicleTripRepository,
     )
@@ -66,5 +66,5 @@ fun Application.module() {
     insertVehicleTripsFromFile(vehicleTripRepository)
     launchSyncGoogleCalendarTask(googleCalendarService)
     launchSyncCheckInOutSensorTask(checkInOutSensorService)
-    cabinVisitService.createOrUpdateCabinVisits()
+    checkInOutService.updateCheckInOut()
 }
