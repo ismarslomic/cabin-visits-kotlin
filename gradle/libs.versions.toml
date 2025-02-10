@@ -1,6 +1,7 @@
 [versions]
 dektekt = "1.23.7"
-exposed = "0.59.0"
+# Don't upgrade to 0.59.0 since it has issues with timestamp table columns where timestamp is -1 hour
+exposed = "0.58.0"
 googleCalendarService = "v3-rev20250115-2.0.0"
 googleOauthClient = "1.32.1"
 graalvm = "0.10.5"
