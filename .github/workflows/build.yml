@@ -5,9 +5,15 @@ on:
     branches: [ 'main' ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+    # Don't trigger if changes done to .md or .txt files
+    paths-ignore:
+      - '**/*.md'
 
   pull_request:
     branches: [ 'main' ]
+    # Don't trigger if changes done to .md or .txt files
+    paths-ignore:
+      - '**/*.md'
 
 env:
   # github.repository as <account>/<repo>
@@ -52,6 +58,9 @@ jobs:
       # Uploads Detekt results to GitHub repository using the upload-sarif action
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
+        # workflows triggered by Dependabot on push events run with read-only access, meaning they can't upload
+        # SARIF reports for code scanning
+        if: github.event_name == 'pull_request' || github.actor != 'dependabot[bot]'
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: ${{ github.workspace }}/build/reports/detekt/detekt.sarif
