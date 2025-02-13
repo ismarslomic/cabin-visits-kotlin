@@ -37,3 +37,11 @@ influx-db:
 
 vehicle-trip:
   file-path: ${VEHICLE_TRIP_FILE_PATH}
+  login-url: ${VEHICLE_TRIP_LOGIN_URL}
+  trips-url: ${VEHICLE_TRIP_TRIPS_URL}
+  username: ${VEHICLE_TRIP_USERNAME}
+  password: ${VEHICLE_TRIP_PASSWORD}
+  sync-from-date: ${VEHICLE_TRIP_SYNC_FROM_DATE}
+  user-agent: ${VEHICLE_TRIP_USER_AGENT}
+  referrer: ${VEHICLE_TRIP_REFERRER}
+  locale: ${VEHICLE_TRIP_LOCALE}

@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.system.withEnvironment
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import kotlinx.datetime.LocalDate
 
 class AppPropertiesTest :
     BehaviorSpec({
@@ -21,6 +22,14 @@ class AppPropertiesTest :
         val envVarInfluxDbCheckInRangeStart = "2019-01-01T00:00:00Z"
         val envVarInfluxDbCheckInRangeStop = "2025-01-09T00:00:00Z"
         val envVarVehicleTripFilePath = "/data/vehicle-trips.json"
+        val envVarVehicleTripLoginUrl = "https://mycar.com/login"
+        val envVarVehicleTripTripsUrl = "https://mycar.com/trips"
+        val envVarVehicleTripUsername = "secretName"
+        val envVarVehicleTripPassword = "secretPassword"
+        val envVarVehicleTripSyncFromDate = "2020-01-01"
+        val envVarVehicleTripUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+        val envVarVehicleTripReferrer = "https://myapp.com"
+        val envVarVehicleTripLocale = "key=nb_NO"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -35,6 +44,14 @@ class AppPropertiesTest :
                 "INFLUXDB_CHECK_IN_MEASUREMENT" to envVarInfluxDbCheckInMeasurement,
                 "INFLUXDB_CHECK_IN_RANGE_START" to envVarInfluxDbCheckInRangeStart,
                 "VEHICLE_TRIP_FILE_PATH" to envVarVehicleTripFilePath,
+                "VEHICLE_TRIP_LOGIN_URL" to envVarVehicleTripLoginUrl,
+                "VEHICLE_TRIP_TRIPS_URL" to envVarVehicleTripTripsUrl,
+                "VEHICLE_TRIP_USERNAME" to envVarVehicleTripUsername,
+                "VEHICLE_TRIP_PASSWORD" to envVarVehicleTripPassword,
+                "VEHICLE_TRIP_SYNC_FROM_DATE" to envVarVehicleTripSyncFromDate,
+                "VEHICLE_TRIP_USER_AGENT" to envVarVehicleTripUserAgent,
+                "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
+                "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
             )
             withEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -113,6 +130,18 @@ class AppPropertiesTest :
 
                     Then("filePath should be set to the environment variable value") {
                         vehicleTripProperties.filePath shouldBe envVarVehicleTripFilePath
+                    }
+
+                    Then("properties for external service should be set to the environment variable value") {
+                        vehicleTripProperties.loginUrl shouldBe envVarVehicleTripLoginUrl
+                        vehicleTripProperties.tripsUrl shouldBe envVarVehicleTripTripsUrl
+                        vehicleTripProperties.username shouldBe envVarVehicleTripUsername
+                        vehicleTripProperties.password shouldBe envVarVehicleTripPassword
+                        LocalDate.parse(vehicleTripProperties.syncFromDate) shouldBe
+                            LocalDate.parse(envVarVehicleTripSyncFromDate)
+                        vehicleTripProperties.userAgent shouldBe envVarVehicleTripUserAgent
+                        vehicleTripProperties.referrer shouldBe envVarVehicleTripReferrer
+                        vehicleTripProperties.locale shouldBe envVarVehicleTripLocale
                     }
                 }
             }
