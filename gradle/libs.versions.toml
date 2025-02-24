@@ -1,5 +1,5 @@
 [versions]
-dektekt = "1.23.7"
+dektekt = "1.23.8"
 exposed = "0.59.0"
 googleCalendarService = "v3-rev20250115-2.0.0"
 googleOauthClient = "1.32.1"
