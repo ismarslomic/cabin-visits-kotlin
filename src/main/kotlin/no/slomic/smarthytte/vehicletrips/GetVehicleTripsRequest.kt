@@ -9,7 +9,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GetVehicleTripsRequest(
+    /** Example: 01.02.2025 */
     val fromDateInUserFormat: String,
+    /** Example: 11.02.2025 */
     val toDateInUserFormat: String,
     @Required
     val fetchJourneys: Boolean = true,

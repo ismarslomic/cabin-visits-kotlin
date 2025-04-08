@@ -13,7 +13,23 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 @Serializable
-data class GetVehicleTripsResponse(val journeys: List<VehicleTripResponse>)
+data class GetVehicleTripsResponse(
+    val journeys: List<VehicleTripResponse>,
+    /** Last update from vehicle, example: 2025-04-06T06:54:11.000Z */
+    val lastUpdate: String,
+    /** Example: 1 */
+    val currentPage: Int,
+    /** Example: 20 */
+    val pageSize: Int,
+    /** Example: 89 */
+    val totalNumberOfRows: Int,
+    /** Example: 5 */
+    val totalNumberOfPages: Int,
+    /** Example: 01.02.2025 */
+    val fromDateInUserFormat: String,
+    /** Example: 11.02.2025 */
+    val toDateInUserFormat: String,
+)
 
 /**
  * Data model representing JSON response from the Jaguar REST API
