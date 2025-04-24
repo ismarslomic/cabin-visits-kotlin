@@ -1,16 +1,9 @@
 package no.slomic.smarthytte
 
 import io.kotest.core.spec.style.StringSpec
-import no.slomic.smarthytte.calendarevents.GoogleCalendarSyncTable
-import no.slomic.smarthytte.guests.GuestTable
-import no.slomic.smarthytte.reservations.ReservationGuestTable
-import no.slomic.smarthytte.reservations.ReservationTable
-import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorSyncTable
-import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorTable
-import no.slomic.smarthytte.vehicletrips.VehicleTripTable
+import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.sqlite.SQLiteDataSource
 import java.sql.Connection
 import java.sql.DriverManager
 
@@ -22,38 +15,31 @@ import java.sql.DriverManager
  */
 abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
     StringSpec({
-        val sqlitePath = "jdbc:sqlite:file:test?mode=memory&cache=shared&foreign_keys=on"
+        val sqlitePath = "jdbc:sqlite:file:test?mode=memory&cache=shared"
         lateinit var keepAliveConnection: Connection
+        lateinit var flyway: Flyway
 
         beforeTest {
-            keepAliveConnection = DriverManager.getConnection(sqlitePath)
-            Database.connect(sqlitePath)
-            transaction {
-                SchemaUtils.create(
-                    GoogleCalendarSyncTable,
-                    ReservationTable,
-                    GuestTable,
-                    ReservationGuestTable,
-                    VehicleTripTable,
-                    CheckInOutSensorSyncTable,
-                    CheckInOutSensorTable,
-                )
+            val dataSource = SQLiteDataSource().apply {
+                url = sqlitePath
+                config.enforceForeignKeys(true)
             }
+
+            keepAliveConnection = DriverManager.getConnection(sqlitePath)
+
+            flyway = Flyway.configure()
+                .dataSource(dataSource)
+                .validateMigrationNaming(true)
+                .cleanDisabled(false)
+                .load()
+            flyway.clean()
+            flyway.migrate()
+
+            Database.connect(dataSource)
         }
 
         afterTest {
-            transaction {
-                SchemaUtils.drop(
-                    GoogleCalendarSyncTable,
-                    ReservationTable,
-                    GuestTable,
-                    ReservationGuestTable,
-                    VehicleTripTable,
-                    CheckInOutSensorSyncTable,
-                    CheckInOutSensorTable,
-                )
-            }
-
+            flyway.clean()
             keepAliveConnection.close()
         }
     }) {
