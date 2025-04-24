@@ -2,64 +2,38 @@ package no.slomic.smarthytte.plugins
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
-import no.slomic.smarthytte.calendarevents.GoogleCalendarSyncTable
-import no.slomic.smarthytte.guests.GuestTable
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
-import no.slomic.smarthytte.reservations.ReservationGuestTable
-import no.slomic.smarthytte.reservations.ReservationTable
-import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorSyncTable
-import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorTable
-import no.slomic.smarthytte.vehicletrips.VehicleTripTable
+import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.sqlite.SQLiteDataSource
 import java.sql.Connection
 
 fun Application.configureDatabases() {
     val databaseProperties = loadProperties<DatabasePropertiesHolder>().database
     val databaseFilePath = databaseProperties.filePath
+    val dataSource = SQLiteDataSource().apply {
+        url = "jdbc:sqlite:$databaseFilePath"
+        // We must enable the foreign keys constraints to enable on delete actions in Sqlite
+        // read more at https://www.sqlite.org/foreignkeys.html#fk_actions
+        config.enforceForeignKeys(true)
+    }
 
     log.info("Initializing database..")
 
-    Database.connect(
-        // We must enable the foreign keys constraints to enable on delete actions in Sqlite
-        // read more at https://www.sqlite.org/foreignkeys.html#fk_actions
-        url = "jdbc:sqlite:$databaseFilePath?foreign_keys=on",
-        driver = "org.sqlite.JDBC",
-    )
+    // Use flyway to migrate database structure according to scripts located in src/main/resources/db/migration
+    val flyway = Flyway.configure()
+        .dataSource(dataSource)
+        .validateMigrationNaming(true)
+        .load()
+
+    flyway.migrate()
+
+    // Make an Exposed connection to the database
+    Database.connect(datasource = dataSource)
 
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
-
-    // Initialize schemas
-    transaction {
-        // Create tables that do not exist
-        SchemaUtils.create(
-            GoogleCalendarSyncTable,
-            ReservationTable,
-            GuestTable,
-            ReservationGuestTable,
-            VehicleTripTable,
-            CheckInOutSensorSyncTable,
-            CheckInOutSensorTable,
-        )
-
-        // Create missing columns to existing tables if changed from a previous app version
-        SchemaUtils.createMissingTablesAndColumns(
-            GoogleCalendarSyncTable,
-            ReservationTable,
-            GuestTable,
-            ReservationGuestTable,
-            VehicleTripTable,
-            CheckInOutSensorSyncTable,
-            CheckInOutSensorTable,
-        )
-
-        // Removing already created columns is not supported directly by Exposed. We need to execute the raw sql or use
-        // db migration library such as Flyway or Liquibase.
-        // exec("ALTER TABLE calendar_event DROP COLUMN test_column")
-    }
 
     log.info("Database initialization complete")
 }

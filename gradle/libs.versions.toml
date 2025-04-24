@@ -1,6 +1,7 @@
 [versions]
-dektekt = "1.23.8"
+detekt = "1.23.8"
 exposed = "0.58.0"
+flyway = "11.7.2"
 googleCalendarService = "v3-rev20250404-2.0.0"
 googleOauthClient = "1.33.1"
 graalvm = "0.10.6"
@@ -21,6 +22,7 @@ exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version
 exposed-dao = { group = "org.jetbrains.exposed", name = "exposed-dao", version.ref = "exposed" }
 exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version.ref = "exposed" }
 exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kotlin-datetime", version.ref = "exposed" }
+flyway = { group = "org.flywaydb", name = "flyway-core", version.ref = "flyway" }
 google-calendar-api = { group = "com.google.apis", name = "google-api-services-calendar", version.ref = "googleCalendarService" }
 google-oauth = { group = "com.google.auth", name = "google-auth-library-oauth2-http", version.ref = "googleOauthClient" }
 hoplite-yaml = { group = "com.sksamuel.hoplite", name = "hoplite-yaml", version.ref = "hoplite" }
@@ -42,14 +44,14 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlite" }
 
 [bundles]
-database = ["ktor-serialization-kotlinx-json", "exposed-core", "exposed-jdbc", "exposed-dao", "exposed-kotlin-datetime", "sqlite-jdbc"]
+database = ["ktor-serialization-kotlinx-json", "exposed-core", "exposed-jdbc", "exposed-dao", "exposed-kotlin-datetime", "sqlite-jdbc", "flyway"]
 google-calendar = ["google-oauth", "google-calendar-api"]
 kotest = ["kotest-runner-junit5", "kotest-assertions", "kotest-assertions-json"]
 ktor = ["ktor-server-core-jvm", "ktor-server-cio-jvm", "ktor-client", "ktor-client-content-negotiation", "ktor-client-cio"]
 metrics = ["ktor-micrometer-metrics", "micrometer-registry-prometheus"]
 
 [plugins]
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "dektekt" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
