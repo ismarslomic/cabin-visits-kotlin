@@ -2,15 +2,15 @@ package no.slomic.smarthytte.plugins
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
-import no.slomic.smarthytte.calendar.CalendarEventTable
-import no.slomic.smarthytte.calendar.CalendarSyncTable
-import no.slomic.smarthytte.checkin.CheckInSyncTable
-import no.slomic.smarthytte.checkin.CheckInTable
-import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
-import no.slomic.smarthytte.guest.GuestTable
+import no.slomic.smarthytte.calendarevents.GoogleCalendarSyncTable
+import no.slomic.smarthytte.guests.GuestTable
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
-import no.slomic.smarthytte.vehicletrip.VehicleTripTable
+import no.slomic.smarthytte.reservations.ReservationGuestTable
+import no.slomic.smarthytte.reservations.ReservationTable
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorSyncTable
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorTable
+import no.slomic.smarthytte.vehicletrips.VehicleTripTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -36,24 +36,24 @@ fun Application.configureDatabases() {
     transaction {
         // Create tables that do not exist
         SchemaUtils.create(
-            CalendarSyncTable,
-            CalendarEventTable,
+            GoogleCalendarSyncTable,
+            ReservationTable,
             GuestTable,
-            CalenderEventGuestTable,
+            ReservationGuestTable,
             VehicleTripTable,
-            CheckInSyncTable,
-            CheckInTable,
+            CheckInOutSensorSyncTable,
+            CheckInOutSensorTable,
         )
 
         // Create missing columns to existing tables if changed from a previous app version
         SchemaUtils.createMissingTablesAndColumns(
-            CalendarSyncTable,
-            CalendarEventTable,
+            GoogleCalendarSyncTable,
+            ReservationTable,
             GuestTable,
-            CalenderEventGuestTable,
+            ReservationGuestTable,
             VehicleTripTable,
-            CheckInSyncTable,
-            CheckInTable,
+            CheckInOutSensorSyncTable,
+            CheckInOutSensorTable,
         )
 
         // Removing already created columns is not supported directly by Exposed. We need to execute the raw sql or use

@@ -3,26 +3,30 @@ package no.slomic.smarthytte
 import io.ktor.server.application.Application
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
-import no.slomic.smarthytte.calendar.CalendarEventRepository
-import no.slomic.smarthytte.calendar.SqliteCalendarEventRepository
-import no.slomic.smarthytte.calendar.createGoogleCalendarService
-import no.slomic.smarthytte.calendar.startPeriodicGoogleCalendarSync
-import no.slomic.smarthytte.checkin.CheckInRepository
-import no.slomic.smarthytte.checkin.SqliteCheckInRepository
-import no.slomic.smarthytte.checkin.createCheckInService
-import no.slomic.smarthytte.checkin.startPeriodicCheckInSync
-import no.slomic.smarthytte.guest.GuestRepository
-import no.slomic.smarthytte.guest.SqliteGuestRepository
-import no.slomic.smarthytte.guest.insertGuestsFromFile
+import no.slomic.smarthytte.calendarevents.GoogleCalendarRepository
+import no.slomic.smarthytte.calendarevents.GoogleCalendarService
+import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
+import no.slomic.smarthytte.calendarevents.createGoogleCalendarService
+import no.slomic.smarthytte.calendarevents.launchSyncGoogleCalendarTask
+import no.slomic.smarthytte.checkinouts.CheckInOutService
+import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.guests.insertGuestsFromFile
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
-import no.slomic.smarthytte.vehicletrip.SqliteVehicleTripRepository
-import no.slomic.smarthytte.vehicletrip.VehicleTripRepository
-import no.slomic.smarthytte.vehicletrip.analyzeVehicleTrips
-import no.slomic.smarthytte.vehicletrip.insertVehicleTripsFromFile
+import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
+import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
+import no.slomic.smarthytte.sensors.checkinouts.createCheckInOutSensorService
+import no.slomic.smarthytte.sensors.checkinouts.launchSyncCheckInOutSensorTask
+import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.insertVehicleTripsFromFile
 
 fun main() {
     val ktorProperties = loadProperties<KtorPropertiesHolder>().ktor
@@ -38,19 +42,29 @@ fun main() {
 }
 
 fun Application.module() {
-    val calendarRepository: CalendarEventRepository = SqliteCalendarEventRepository()
+    val reservationRepository: ReservationRepository = SqliteReservationRepository()
+    val googleCalendarRepository: GoogleCalendarRepository = SqliteGoogleCalendarRepository()
     val guestRepository: GuestRepository = SqliteGuestRepository()
-    val googleCalendarService = createGoogleCalendarService(calendarRepository = calendarRepository)
+    val googleCalendarService: GoogleCalendarService =
+        createGoogleCalendarService(
+            reservationRepository = reservationRepository,
+            googleCalendarRepository = googleCalendarRepository,
+        )
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
-    val checkInRepository: CheckInRepository = SqliteCheckInRepository()
-    val checkInService = createCheckInService(checkInRepository)
+    val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
+    val checkInOutSensorService: CheckInOutSensorService = createCheckInOutSensorService(checkInOutSensorRepository)
+    val checkInOutService = CheckInOutService(
+        reservationRepository = reservationRepository,
+        checkInOutSensorRepository = checkInOutSensorRepository,
+        vehicleTripRepository = vehicleTripRepository,
+    )
 
     configureMonitoring()
     configureRouting()
     configureDatabases()
     insertGuestsFromFile(guestRepository)
     insertVehicleTripsFromFile(vehicleTripRepository)
-    startPeriodicGoogleCalendarSync(googleCalendarService)
-    startPeriodicCheckInSync(checkInService)
-    analyzeVehicleTrips(vehicleTripRepository = vehicleTripRepository, calendarEventRepository = calendarRepository)
+    launchSyncGoogleCalendarTask(googleCalendarService)
+    launchSyncCheckInOutSensorTask(checkInOutSensorService)
+    checkInOutService.updateCheckInOut()
 }

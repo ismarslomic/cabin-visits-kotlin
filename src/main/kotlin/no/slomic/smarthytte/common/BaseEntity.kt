@@ -11,14 +11,14 @@ import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 abstract class BaseIdTable<T : Any>(name: String = "") : IdTable<T>(name) {
-    val created: Column<Instant> = timestamp("created")
-    val updated: Column<Instant?> = timestamp("updated").nullable()
+    val createdTime: Column<Instant> = timestamp("created_time")
+    val updatedTime: Column<Instant?> = timestamp("updated_time").nullable()
     val version: Column<Short> = short(name = "version").default(defaultValue = 1)
 }
 
 abstract class BaseEntity<T : Any>(id: EntityID<T>, table: BaseIdTable<T>) : Entity<T>(id) {
-    var created: Instant by table.created
-    var updated: Instant? by table.updated
+    var createdTime: Instant by table.createdTime
+    var updatedTime: Instant? by table.updatedTime
     var version: Short by table.version
 }
 

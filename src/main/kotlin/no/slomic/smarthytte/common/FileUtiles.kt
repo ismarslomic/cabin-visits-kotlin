@@ -1,8 +1,8 @@
 package no.slomic.smarthytte.common
 
 import kotlinx.serialization.json.Json
-import no.slomic.smarthytte.guest.Guest
-import no.slomic.smarthytte.vehicletrip.VehicleTripExternal
+import no.slomic.smarthytte.guests.Guest
+import no.slomic.smarthytte.vehicletrips.VehicleTripResponse
 import java.io.File
 
 fun readGuestFromJsonFile(filePath: String): List<Guest> {
@@ -13,7 +13,7 @@ fun readGuestFromJsonFile(filePath: String): List<Guest> {
     return json.decodeFromString(jsonStringFromFile)
 }
 
-fun readVehicleTripFromJsonFile(filePath: String): List<VehicleTripExternal> {
+fun readVehicleTripFromJsonFile(filePath: String): List<VehicleTripResponse> {
     val file = File(filePath)
     val json = Json { prettyPrint = true }
     val jsonStringFromFile = file.readText()

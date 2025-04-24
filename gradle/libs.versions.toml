@@ -1,14 +1,14 @@
 [versions]
 dektekt = "1.23.8"
 exposed = "0.58.0"
-googleCalendarService = "v3-rev20250115-2.0.0"
+googleCalendarService = "v3-rev20250404-2.0.0"
 googleOauthClient = "1.33.1"
 graalvm = "0.10.6"
 hoplite = "2.9.0"
 influxdb = "7.2.0"
 kotest = "5.9.1"
 kotlin = "2.1.20"
-kotlinter = "5.0.1"
+kotlinter = "5.0.2"
 ktor = "3.1.2"
 logback = "1.5.18"
 mockk = "1.14.0"
@@ -26,7 +26,11 @@ google-oauth = { group = "com.google.auth", name = "google-auth-library-oauth2-h
 hoplite-yaml = { group = "com.sksamuel.hoplite", name = "hoplite-yaml", version.ref = "hoplite" }
 influxdb-client = { group = "com.influxdb", name = "influxdb-client-kotlin", version.ref = "influxdb" }
 kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+kotest-assertions-json = { group = "io.kotest", name = "kotest-assertions-json", version.ref = "kotest" }
 kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+ktor-client = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-micrometer-metrics = { group = "io.ktor", name = "ktor-server-metrics-micrometer-jvm", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 ktor-server-cio-jvm = { group = "io.ktor", name = "ktor-server-cio-jvm", version.ref = "ktor" }
@@ -40,8 +44,8 @@ sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlit
 [bundles]
 database = ["ktor-serialization-kotlinx-json", "exposed-core", "exposed-jdbc", "exposed-dao", "exposed-kotlin-datetime", "sqlite-jdbc"]
 google-calendar = ["google-oauth", "google-calendar-api"]
-kotest = ["kotest-runner-junit5", "kotest-assertions"]
-ktor = ["ktor-server-core-jvm", "ktor-server-cio-jvm"]
+kotest = ["kotest-runner-junit5", "kotest-assertions", "kotest-assertions-json"]
+ktor = ["ktor-server-core-jvm", "ktor-server-cio-jvm", "ktor-client", "ktor-client-content-negotiation", "ktor-client-cio"]
 metrics = ["ktor-micrometer-metrics", "micrometer-registry-prometheus"]
 
 [plugins]

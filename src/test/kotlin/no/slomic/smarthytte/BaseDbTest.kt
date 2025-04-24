@@ -1,13 +1,13 @@
 package no.slomic.smarthytte
 
 import io.kotest.core.spec.style.StringSpec
-import no.slomic.smarthytte.calendar.CalendarEventTable
-import no.slomic.smarthytte.calendar.CalendarSyncTable
-import no.slomic.smarthytte.checkin.CheckInSyncTable
-import no.slomic.smarthytte.checkin.CheckInTable
-import no.slomic.smarthytte.eventguest.CalenderEventGuestTable
-import no.slomic.smarthytte.guest.GuestTable
-import no.slomic.smarthytte.vehicletrip.VehicleTripTable
+import no.slomic.smarthytte.calendarevents.GoogleCalendarSyncTable
+import no.slomic.smarthytte.guests.GuestTable
+import no.slomic.smarthytte.reservations.ReservationGuestTable
+import no.slomic.smarthytte.reservations.ReservationTable
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorSyncTable
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorTable
+import no.slomic.smarthytte.vehicletrips.VehicleTripTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -30,13 +30,13 @@ abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
             Database.connect(sqlitePath)
             transaction {
                 SchemaUtils.create(
-                    CalendarSyncTable,
-                    CalendarEventTable,
+                    GoogleCalendarSyncTable,
+                    ReservationTable,
                     GuestTable,
-                    CalenderEventGuestTable,
+                    ReservationGuestTable,
                     VehicleTripTable,
-                    CheckInSyncTable,
-                    CheckInTable,
+                    CheckInOutSensorSyncTable,
+                    CheckInOutSensorTable,
                 )
             }
         }
@@ -44,13 +44,13 @@ abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
         afterTest {
             transaction {
                 SchemaUtils.drop(
-                    CalendarSyncTable,
-                    CalendarEventTable,
+                    GoogleCalendarSyncTable,
+                    ReservationTable,
                     GuestTable,
-                    CalenderEventGuestTable,
+                    ReservationGuestTable,
                     VehicleTripTable,
-                    CheckInSyncTable,
-                    CheckInTable,
+                    CheckInOutSensorSyncTable,
+                    CheckInOutSensorTable,
                 )
             }
 

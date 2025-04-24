@@ -2,12 +2,13 @@
 
 ### Install GraalVM (for Mac)
 
-You can follow [official installation](https://www.graalvm.org/latest/docs/getting-started/macos/) steps or by using
-Homebrew and [jenv](https://www.jenv.be) bellow.
+You can follow [official installation](https://www.graalvm.org/latest/docs/getting-started/macos/) steps
+or by using [sdkman](https://sdkman.io) bellow, which can be installed
+with [homebrew](https://github.com/sdkman/homebrew-tap).
 
 ```bash
-brew install --cask graalvm-jdk
-jenv add 23.0.2-graal /Library/Java/JavaVirtualMachines/graalvm-23.jdk/Contents/Home/
+sdk env install
+sdk env
 ```
 
 To check whether the installation was successful, run
@@ -18,8 +19,6 @@ java version "23.0.2" 2025-01-21
 Java(TM) SE Runtime Environment Oracle GraalVM 23.0.2+7.1 (build 23.0.2+7-jvmci-b01)
 Java HotSpot(TM) 64-Bit Server VM Oracle GraalVM 23.0.2+7.1 (build 23.0.2+7-jvmci-b01, mixed mode, sharing)
 ```
-
-Note! jenv will report a deprecation warning, but you can ignore it.
 
 ### Run tests
 
