@@ -1,13 +1,15 @@
 package no.slomic.smarthytte
 
 import io.ktor.server.application.Application
+import io.ktor.server.application.log
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import kotlinx.coroutines.runBlocking
 import no.slomic.smarthytte.calendarevents.GoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.createGoogleCalendarService
-import no.slomic.smarthytte.calendarevents.launchSyncGoogleCalendarTask
+import no.slomic.smarthytte.calendarevents.fetchGoogleCalendarEvents
 import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
@@ -23,7 +25,7 @@ import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.createCheckInOutSensorService
-import no.slomic.smarthytte.sensors.checkinouts.launchSyncCheckInOutSensorTask
+import no.slomic.smarthytte.sensors.checkinouts.fetchCheckInOut
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.insertVehicleTripsFromFile
@@ -42,16 +44,25 @@ fun main() {
 }
 
 fun Application.module() {
+    // Initialize database
+    configureDatabases()
+
+    // Initialize monitoring
+    configureMonitoring()
+
+    // Initialize repositories
     val reservationRepository: ReservationRepository = SqliteReservationRepository()
     val googleCalendarRepository: GoogleCalendarRepository = SqliteGoogleCalendarRepository()
     val guestRepository: GuestRepository = SqliteGuestRepository()
+    val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
+    val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
+
+    // Initialize services
     val googleCalendarService: GoogleCalendarService =
         createGoogleCalendarService(
             reservationRepository = reservationRepository,
             googleCalendarRepository = googleCalendarRepository,
         )
-    val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
-    val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
     val checkInOutSensorService: CheckInOutSensorService = createCheckInOutSensorService(checkInOutSensorRepository)
     val checkInOutService = CheckInOutService(
         reservationRepository = reservationRepository,
@@ -59,12 +70,54 @@ fun Application.module() {
         vehicleTripRepository = vehicleTripRepository,
     )
 
-    configureMonitoring()
+    // Run initial load BEFORE starting to handle requests and running synchronization processes in the background
+    runBlocking {
+        initialLoad(
+            guestRepository,
+            vehicleTripRepository,
+            checkInOutSensorService,
+            googleCalendarService,
+            checkInOutService,
+        )
+    }
+
+    // Fetch reservations, check in/out sensor data and update check in/out status continuously in the background
+    // launchSyncGoogleCalendarTask(googleCalendarService)
+    // checkInOutService.updateCheckInOut()
+
+    // Configure Ktor routing (after the initial load is completed)
     configureRouting()
-    configureDatabases()
+}
+
+/***
+ * Initial load of historical data from a file or external storage.
+ *
+ * Loads historical data for
+ * * guests from a file
+ * * vehicle trips from a file
+ * * check in/out sensor data from InfluxDb
+ * * reservations from Google Calendar and join these with loaded guests
+ * * updates the check in/out status of reservations by using check in/out sensor data and vehicle trips
+ *
+ */
+suspend fun Application.initialLoad(
+    guestRepository: GuestRepository,
+    vehicleTripRepository: VehicleTripRepository,
+    checkInOutSensorService: CheckInOutSensorService,
+    googleCalendarService: GoogleCalendarService,
+    checkInOutService: CheckInOutService,
+) {
+    log.info("Starting initial load...")
+
+    // The following data are decoupled from each other and could potentially be parallelized
     insertGuestsFromFile(guestRepository)
     insertVehicleTripsFromFile(vehicleTripRepository)
-    launchSyncGoogleCalendarTask(googleCalendarService)
-    launchSyncCheckInOutSensorTask(checkInOutSensorService)
+    fetchCheckInOut(checkInOutSensorService)
+
+    // The following data must be loaded after previous steps since they depend on them.
+    // These steps must also be executed in sequence
+    fetchGoogleCalendarEvents(googleCalendarService)
     checkInOutService.updateCheckInOut()
+
+    log.info("Initial load complete!")
 }

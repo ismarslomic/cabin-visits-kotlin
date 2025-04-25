@@ -32,20 +32,18 @@ import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 
-fun Application.insertVehicleTripsFromFile(vehicleTripRepository: VehicleTripRepository) {
+suspend fun Application.insertVehicleTripsFromFile(vehicleTripRepository: VehicleTripRepository) {
     val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
 
     val filePath = vehicleTripProperties.filePath
 
     log.info("Reading vehicle trips from file $filePath and updating database..")
 
-    val tripsFromFile: List<VehicleTripResponse>
     val upsertStatus: MutableList<UpsertStatus> = mutableListOf()
-    runBlocking {
-        tripsFromFile = readVehicleTripFromJsonFile(filePath)
-        for (trip in tripsFromFile) {
-            upsertStatus.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
-        }
+
+    val tripsFromFile: List<VehicleTripResponse> = readVehicleTripFromJsonFile(filePath)
+    for (trip in tripsFromFile) {
+        upsertStatus.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
     }
 
     val addedCount = upsertStatus.count { it == UpsertStatus.ADDED }
