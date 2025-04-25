@@ -7,14 +7,11 @@ import no.slomic.smarthytte.properties.GuestPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 
 class GuestService(private val guestRepository: GuestRepository) {
-
     private val logger: Logger = KtorSimpleLogger(GuestService::class.java.name)
+    val guestProperties = loadProperties<GuestPropertiesHolder>().guest
+    val filePath = guestProperties.filePath
 
     suspend fun insertGuestsFromFile() {
-        val guestProperties = loadProperties<GuestPropertiesHolder>().guest
-
-        val filePath = guestProperties.filePath
-
         logger.info("Reading guests from file $filePath and updating database..")
 
         val guestsFromFile: List<Guest> = readGuestFromJsonFile(filePath)
