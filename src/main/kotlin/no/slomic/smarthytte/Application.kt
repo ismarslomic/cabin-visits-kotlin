@@ -27,7 +27,7 @@ import no.slomic.smarthytte.sensors.checkinouts.createCheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.fetchCheckInOut
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
-import no.slomic.smarthytte.vehicletrips.insertVehicleTripsFromFile
+import no.slomic.smarthytte.vehicletrips.VehicleTripService
 
 fun main() {
     val ktorProperties = loadProperties<KtorPropertiesHolder>().ktor
@@ -56,6 +56,7 @@ fun Application.module() {
     val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
 
     // Initialize services
+    val vehicleTripService = VehicleTripService(vehicleTripRepository)
     val googleCalendarService: GoogleCalendarService =
         createGoogleCalendarService(
             reservationRepository = reservationRepository,
@@ -71,7 +72,7 @@ fun Application.module() {
     // Run initial load BEFORE starting to handle requests and running synchronization processes in the background
     runBlocking {
         initialLoad(
-            vehicleTripRepository,
+            vehicleTripService,
             checkInOutSensorService,
             googleCalendarService,
             checkInOutService,
@@ -98,7 +99,7 @@ fun Application.module() {
  *
  */
 suspend fun Application.initialLoad(
-    vehicleTripRepository: VehicleTripRepository,
+    vehicleTripService: VehicleTripService,
     checkInOutSensorService: CheckInOutSensorService,
     googleCalendarService: GoogleCalendarService,
     checkInOutService: CheckInOutService,
@@ -109,7 +110,7 @@ suspend fun Application.initialLoad(
 
     // The following data are decoupled from each other and could potentially be parallelized
     guestService.insertGuestsFromFile()
-    insertVehicleTripsFromFile(vehicleTripRepository)
+    vehicleTripService.insertVehicleTripsFromFile()
     fetchCheckInOut(checkInOutSensorService)
 
     // The following data must be loaded after previous steps since they depend on them.
