@@ -11,9 +11,8 @@ import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.createGoogleCalendarService
 import no.slomic.smarthytte.calendarevents.fetchGoogleCalendarEvents
 import no.slomic.smarthytte.checkinouts.CheckInOutService
-import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.GuestService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
-import no.slomic.smarthytte.guests.insertGuestsFromFile
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
@@ -53,7 +52,6 @@ fun Application.module() {
     // Initialize repositories
     val reservationRepository: ReservationRepository = SqliteReservationRepository()
     val googleCalendarRepository: GoogleCalendarRepository = SqliteGoogleCalendarRepository()
-    val guestRepository: GuestRepository = SqliteGuestRepository()
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
     val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
 
@@ -73,7 +71,6 @@ fun Application.module() {
     // Run initial load BEFORE starting to handle requests and running synchronization processes in the background
     runBlocking {
         initialLoad(
-            guestRepository,
             vehicleTripRepository,
             checkInOutSensorService,
             googleCalendarService,
@@ -101,7 +98,6 @@ fun Application.module() {
  *
  */
 suspend fun Application.initialLoad(
-    guestRepository: GuestRepository,
     vehicleTripRepository: VehicleTripRepository,
     checkInOutSensorService: CheckInOutSensorService,
     googleCalendarService: GoogleCalendarService,
@@ -109,8 +105,10 @@ suspend fun Application.initialLoad(
 ) {
     log.info("Starting initial load...")
 
+    val guestService = GuestService(guestRepository = SqliteGuestRepository())
+
     // The following data are decoupled from each other and could potentially be parallelized
-    insertGuestsFromFile(guestRepository)
+    guestService.insertGuestsFromFile()
     insertVehicleTripsFromFile(vehicleTripRepository)
     fetchCheckInOut(checkInOutSensorService)
 
