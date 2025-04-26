@@ -43,6 +43,7 @@ class GuestRepositoryTest :
                 readGuest.birthYear shouldBe guest.birthYear
                 readGuest.email shouldBe guest.email
                 readGuest.gender shouldBe guest.gender
+                readGuest.createdTime.shouldNotBeNull()
                 readGuest.updatedTime.shouldBeNull()
                 readGuest.version shouldBe 1
             }
@@ -66,6 +67,7 @@ class GuestRepositoryTest :
                 readGuest.birthYear shouldBe updatedGuest.birthYear
                 readGuest.email shouldBe updatedGuest.email
                 readGuest.gender shouldBe updatedGuest.gender
+                readGuest.createdTime.shouldNotBeNull()
                 readGuest.updatedTime.shouldNotBeNull()
                 readGuest.version shouldBe 2
             }
@@ -89,6 +91,7 @@ class GuestRepositoryTest :
                 readGuest.birthYear shouldBe updatedGuest.birthYear
                 readGuest.email shouldBe updatedGuest.email
                 readGuest.gender shouldBe updatedGuest.gender
+                readGuest.createdTime.shouldNotBeNull()
                 readGuest.updatedTime.shouldBeNull()
                 readGuest.version shouldBe 1
             }

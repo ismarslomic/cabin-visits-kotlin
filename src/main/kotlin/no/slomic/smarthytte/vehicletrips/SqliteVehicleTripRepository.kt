@@ -88,7 +88,6 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
             averageSpeed = vehicleTrip.averageSpeed
-            createdTime = Clock.System.now()
             distance = vehicleTrip.distance
             distanceUnit = vehicleTrip.distanceUnit
             duration = vehicleTrip.duration
