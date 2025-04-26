@@ -55,7 +55,7 @@ class VehicleTripService(private val vehicleTripRepository: VehicleTripRepositor
 
         logger.info(
             "Updating vehicle trips in database complete. " +
-                "Total trips: ${tripsFromFile.size}, added: $addedCount, " +
+                "Total trips in file: ${tripsFromFile.size}, added: $addedCount, " +
                 "updated: $updatedCount, no actions: $noActionCount",
         )
     }

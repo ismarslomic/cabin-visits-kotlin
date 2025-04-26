@@ -67,7 +67,6 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         }
 
         logger.trace("Added vehicle trip with id: ${vehicleTrip.id}")
-
         return UpsertStatus.ADDED
     }
 
@@ -83,7 +82,6 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         val updatedVehicleTrip: VehicleTripEntity =
             VehicleTripEntity.findById(vehicleTrip.id) ?: return UpsertStatus.NO_ACTION
 
-        val status: UpsertStatus
         with(updatedVehicleTrip) {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
@@ -106,19 +104,15 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
 
         val isDirty: Boolean = updatedVehicleTrip.writeValues.isNotEmpty()
 
-        if (isDirty) {
+        return if (isDirty) {
             updatedVehicleTrip.version = updatedVehicleTrip.version.inc()
             updatedVehicleTrip.updatedTime = Clock.System.now()
 
             logger.trace("Updated vehicle trip with id: ${vehicleTrip.id}")
-
-            status = UpsertStatus.UPDATED
+            UpsertStatus.UPDATED
         } else {
             logger.trace("No changes detected for vehicle trip with id: ${vehicleTrip.id}")
-
-            status = UpsertStatus.NO_ACTION
+            UpsertStatus.NO_ACTION
         }
-
-        return status
     }
 }
