@@ -104,6 +104,7 @@ private fun VehicleTripEntity.shouldBeEqualToTrip(
     startCity shouldBe other.startCity
     startTime shouldBe other.startTime
     totalDistance shouldBe other.totalDistance
+    notionId shouldBe other.notionId
 
     if (shouldCreatedTimeBeNull) {
         createdTime.shouldBeNull()

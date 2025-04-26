@@ -37,15 +37,12 @@ class GuestRepositoryTest :
                 allGuests shouldHaveSize 1
 
                 val readGuest: GuestEntity = allGuests.first()
-                readGuest.id.value shouldBe guest.id
-                readGuest.firstName shouldBe guest.firstName
-                readGuest.lastName shouldBe guest.lastName
-                readGuest.birthYear shouldBe guest.birthYear
-                readGuest.email shouldBe guest.email
-                readGuest.gender shouldBe guest.gender
-                readGuest.createdTime.shouldNotBeNull()
-                readGuest.updatedTime.shouldBeNull()
-                readGuest.version shouldBe 1
+                readGuest.shouldBeEqualToGuest(
+                    other = guest,
+                    expectedVersion = 1,
+                    shouldCreatedTimeBeNull = false,
+                    shouldUpdatedTimeBeNull = true,
+                )
             }
         }
 
@@ -61,15 +58,12 @@ class GuestRepositoryTest :
                 allGuests shouldHaveSize 1
 
                 val readGuest: GuestEntity = allGuests.first()
-                readGuest.id.value shouldBe updatedGuest.id
-                readGuest.firstName shouldBe updatedGuest.firstName
-                readGuest.lastName shouldBe updatedGuest.lastName
-                readGuest.birthYear shouldBe updatedGuest.birthYear
-                readGuest.email shouldBe updatedGuest.email
-                readGuest.gender shouldBe updatedGuest.gender
-                readGuest.createdTime.shouldNotBeNull()
-                readGuest.updatedTime.shouldNotBeNull()
-                readGuest.version shouldBe 2
+                readGuest.shouldBeEqualToGuest(
+                    other = updatedGuest,
+                    expectedVersion = 2,
+                    shouldCreatedTimeBeNull = false,
+                    shouldUpdatedTimeBeNull = false,
+                )
             }
         }
 
@@ -85,15 +79,12 @@ class GuestRepositoryTest :
                 allGuests shouldHaveSize 1
 
                 val readGuest: GuestEntity = allGuests.first()
-                readGuest.id.value shouldBe updatedGuest.id
-                readGuest.firstName shouldBe updatedGuest.firstName
-                readGuest.lastName shouldBe updatedGuest.lastName
-                readGuest.birthYear shouldBe updatedGuest.birthYear
-                readGuest.email shouldBe updatedGuest.email
-                readGuest.gender shouldBe updatedGuest.gender
-                readGuest.createdTime.shouldNotBeNull()
-                readGuest.updatedTime.shouldBeNull()
-                readGuest.version shouldBe 1
+                readGuest.shouldBeEqualToGuest(
+                    other = updatedGuest,
+                    expectedVersion = 1,
+                    shouldCreatedTimeBeNull = false,
+                    shouldUpdatedTimeBeNull = true,
+                )
             }
         }
 
@@ -118,3 +109,32 @@ class GuestRepositoryTest :
             }
         }
     })
+
+private fun GuestEntity.shouldBeEqualToGuest(
+    other: Guest,
+    expectedVersion: Short,
+    shouldCreatedTimeBeNull: Boolean,
+    shouldUpdatedTimeBeNull: Boolean,
+) {
+    id.value shouldBe other.id
+    firstName shouldBe other.firstName
+    lastName shouldBe other.lastName
+    birthYear shouldBe other.birthYear
+    email shouldBe other.email
+    gender shouldBe other.gender
+    notionId shouldBe other.notionId
+
+    if (shouldCreatedTimeBeNull) {
+        createdTime.shouldBeNull()
+    } else {
+        createdTime.shouldNotBeNull()
+    }
+
+    if (shouldUpdatedTimeBeNull) {
+        updatedTime.shouldBeNull()
+    } else {
+        updatedTime.shouldNotBeNull()
+    }
+
+    version shouldBe expectedVersion
+}

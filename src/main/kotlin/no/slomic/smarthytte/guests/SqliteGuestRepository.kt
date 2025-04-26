@@ -10,14 +10,14 @@ import org.jetbrains.exposed.dao.id.EntityID
 class SqliteGuestRepository : GuestRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteGuestRepository::class.java.name)
 
-    override suspend fun addOrUpdate(guest: Guest): Guest = suspendTransaction {
+    override suspend fun addOrUpdate(guest: Guest): UpsertStatus = suspendTransaction {
         val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
         val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
 
         if (storedGuest == null) {
             addGuest(guest)
         } else {
-            updateGuest(guest)!!
+            updateGuest(guest)
         }
     }
 
@@ -36,9 +36,10 @@ class SqliteGuestRepository : GuestRepository {
         return UpsertStatus.UPDATED
     }
 
-    private fun addGuest(guest: Guest): Guest {
+    private fun addGuest(guest: Guest): UpsertStatus {
         logger.trace("Adding guest with id: ${guest.id}")
-        val newGuest = GuestEntity.new(guest.id) {
+
+        GuestEntity.new(guest.id) {
             firstName = guest.firstName
             lastName = guest.lastName
             birthYear = guest.birthYear
@@ -48,8 +49,7 @@ class SqliteGuestRepository : GuestRepository {
         }
 
         logger.trace("Added guest with id: ${guest.id}")
-
-        return daoToModel(newGuest)
+        return UpsertStatus.ADDED
     }
 
     /**
@@ -57,10 +57,10 @@ class SqliteGuestRepository : GuestRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * guest.
      */
-    private fun updateGuest(guest: Guest): Guest? {
+    private fun updateGuest(guest: Guest): UpsertStatus {
         logger.trace("Updating guest with id: ${guest.id}")
 
-        val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return null
+        val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return UpsertStatus.NO_ACTION
 
         with(updatedGuest) {
             firstName = guest.firstName
@@ -72,15 +72,15 @@ class SqliteGuestRepository : GuestRepository {
 
         val isDirty: Boolean = updatedGuest.writeValues.isNotEmpty()
 
-        if (isDirty) {
+        return if (isDirty) {
             updatedGuest.version = updatedGuest.version.inc()
             updatedGuest.updatedTime = Clock.System.now()
 
             logger.trace("Updated guest with id: ${guest.id}")
+            UpsertStatus.UPDATED
         } else {
             logger.trace("No changes detected for guest with id: ${guest.id}")
+            UpsertStatus.NO_ACTION
         }
-
-        return daoToModel(updatedGuest)
     }
 }
