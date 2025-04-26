@@ -37,7 +37,7 @@ class SqliteGuestRepository : GuestRepository {
     }
 
     private fun addGuest(guest: Guest): Guest {
-        logger.info("Adding guest with id: ${guest.id}")
+        logger.trace("Adding guest with id: ${guest.id}")
         val newGuest = GuestEntity.new(guest.id) {
             firstName = guest.firstName
             lastName = guest.lastName
@@ -47,7 +47,7 @@ class SqliteGuestRepository : GuestRepository {
             createdTime = Clock.System.now()
         }
 
-        logger.info("Added guest with id: ${guest.id}")
+        logger.trace("Added guest with id: ${guest.id}")
 
         return daoToModel(newGuest)
     }
@@ -58,7 +58,7 @@ class SqliteGuestRepository : GuestRepository {
      * guest.
      */
     private fun updateGuest(guest: Guest): Guest? {
-        logger.info("Updating guest with id: ${guest.id}")
+        logger.trace("Updating guest with id: ${guest.id}")
 
         val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return null
 
@@ -76,9 +76,9 @@ class SqliteGuestRepository : GuestRepository {
             updatedGuest.version = updatedGuest.version.inc()
             updatedGuest.updatedTime = Clock.System.now()
 
-            logger.info("Updated guest with id: ${guest.id}")
+            logger.trace("Updated guest with id: ${guest.id}")
         } else {
-            logger.info("No changes detected for guest with id: ${guest.id}")
+            logger.trace("No changes detected for guest with id: ${guest.id}")
         }
 
         return daoToModel(updatedGuest)
