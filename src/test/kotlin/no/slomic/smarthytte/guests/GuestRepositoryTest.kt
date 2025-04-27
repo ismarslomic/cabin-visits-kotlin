@@ -7,6 +7,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.BaseDbTest
+import no.slomic.smarthytte.common.UpsertStatus
 import no.slomic.smarthytte.reservations.ReservationGuestTable
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
@@ -29,8 +30,8 @@ class GuestRepositoryTest :
         val repository: GuestRepository = SqliteGuestRepository()
 
         "add or update with new id should add new guest" {
-            val returnedGuest = repository.addOrUpdate(guest)
-            returnedGuest.shouldBeEqualToComparingFields(guest)
+            val upsertStatus = repository.addOrUpdate(guest)
+            upsertStatus shouldBe UpsertStatus.ADDED
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
@@ -50,8 +51,8 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest)
 
             val updatedGuest = guest.copy(firstName = "John 2")
-            val returnedGuest = repository.addOrUpdate(updatedGuest)
-            returnedGuest.shouldBeEqualToComparingFields(updatedGuest)
+            val upsertStatus = repository.addOrUpdate(updatedGuest)
+            upsertStatus shouldBe UpsertStatus.UPDATED
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
@@ -71,8 +72,8 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest)
 
             val updatedGuest = guest
-            val returnedGuest = repository.addOrUpdate(updatedGuest)
-            returnedGuest.shouldBeEqualToComparingFields(updatedGuest)
+            val upsertStatus = repository.addOrUpdate(updatedGuest)
+            upsertStatus shouldBe UpsertStatus.NO_ACTION
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
