@@ -102,7 +102,7 @@ class CheckInOutSensorService(
                 start = fullSyncStartTime.toIsoUtcString(),
                 stop = fullSyncStopOrDefault.toIsoUtcString(),
             )
-            logger.trace("Performing full sync for check in/out entries between $range")
+            logger.trace("Performing full sync for check in/out entries between {}", range)
 
             range
         } else {
@@ -111,7 +111,7 @@ class CheckInOutSensorService(
                     start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
                     stop = nowIsoUtcString(),
                 )
-            logger.trace("Performing incremental sync for check in/out entries between $range")
+            logger.trace("Performing incremental sync for check in/out entries between {}", range)
 
             range
         }
