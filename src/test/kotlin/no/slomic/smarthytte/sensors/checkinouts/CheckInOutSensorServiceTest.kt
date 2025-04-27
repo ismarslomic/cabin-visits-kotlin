@@ -13,6 +13,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
 import no.slomic.smarthytte.BaseDbTest
+import no.slomic.smarthytte.properties.CheckInProperties
+import no.slomic.smarthytte.properties.InfluxDbProperties
+import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 
 data class MockFluxRecord(val time: Instant, val value: String)
 
@@ -33,8 +36,22 @@ fun emitMockRecords(records: List<MockFluxRecord>): Channel<FluxRecord> {
     }
 }
 
-class CheckInServiceTest :
+class CheckInOutSensorServiceTest :
     BaseDbTest({
+        val influxDbPropertiesHolder = InfluxDbPropertiesHolder(
+            influxDb = InfluxDbProperties(
+                url = "http://localhost:8086",
+                token = "foo-bar",
+                org = "my-org",
+                bucket = "foo",
+                checkIn = CheckInProperties(
+                    syncFrequencyMinutes = 10,
+                    measurement = "checked_in",
+                    rangeStart = "2025-01-14T10:00:00Z",
+                    rangeStop = "2025-01-23T18:00:00Z",
+                ),
+            ),
+        )
         lateinit var checkInOutSensorRepository: CheckInOutSensorRepository
         lateinit var checkInOutSensorService: CheckInOutSensorService
         lateinit var mockQueryApi: QueryKotlinApi
@@ -43,17 +60,14 @@ class CheckInServiceTest :
             checkInOutSensorRepository = SqliteCheckInOutSensorRepository()
             checkInOutSensorService = CheckInOutSensorService(
                 checkInOutSensorRepository = checkInOutSensorRepository,
-                bucketName = "foo",
-                measurement = "checked_in",
-                fullSyncStartTime = Instant.parse("2025-01-14T10:00:00Z"),
-                fullSyncStopTime = Instant.parse("2025-01-23T18:00:00Z"),
+                influxDbPropertiesHolder = influxDbPropertiesHolder,
             )
 
             val mockClient: InfluxDBClientKotlin = mockk<InfluxDBClientKotlin>(relaxed = true)
             mockQueryApi = mockk<QueryKotlinApi>(relaxed = true)
             every { mockClient.getQueryKotlinApi() } returns mockQueryApi
-            mockkObject(InfluxDBClientProvider)
-            every { InfluxDBClientProvider.client() } returns mockClient
+            mockkObject(CheckInOutSensorService.InfluxDBClientProvider)
+            every { CheckInOutSensorService.InfluxDBClientProvider.client() } returns mockClient
         }
 
         "list with new check ins should be stored to database" {
@@ -71,7 +85,7 @@ class CheckInServiceTest :
             // Stub the method to return our mock flow
             coEvery { mockQueryApi.query(any<String>()) } returns mockChannel
 
-            checkInOutSensorService.synchronizeCheckInOut()
+            checkInOutSensorService.fetchCheckInOut()
 
             val storedCheckIns = checkInOutSensorRepository.allCheckInOuts()
             storedCheckIns shouldHaveSize 2
@@ -104,7 +118,7 @@ class CheckInServiceTest :
             // Stub the method to return our mock flow
             coEvery { mockQueryApi.query(any<String>()) } returns mockChannel
 
-            checkInOutSensorService.synchronizeCheckInOut()
+            checkInOutSensorService.fetchCheckInOut()
 
             val storedCheckIns = checkInOutSensorRepository.allCheckInOuts()
             storedCheckIns shouldHaveSize 2
@@ -127,7 +141,7 @@ class CheckInServiceTest :
             // Stub the method to return our mock flow
             coEvery { mockQueryApi.query(any<String>()) } returns mockChannel
 
-            checkInOutSensorService.synchronizeCheckInOut()
+            checkInOutSensorService.fetchCheckInOut()
 
             val storedCheckIns = checkInOutSensorRepository.allCheckInOuts()
             storedCheckIns shouldHaveSize 0

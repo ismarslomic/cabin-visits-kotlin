@@ -4,6 +4,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import no.slomic.smarthytte.common.UpsertStatus
 import no.slomic.smarthytte.common.suspendTransaction
 import org.jetbrains.exposed.dao.id.EntityID
 
@@ -15,29 +16,28 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         CheckInOutSensorEntity.all().sortedBy { it.time }.map(::daoToModel)
     }
 
-    override suspend fun addOrUpdate(checkInOutSensor: CheckInOutSensor): CheckInOutSensor = suspendTransaction {
+    override suspend fun addOrUpdate(checkInOutSensor: CheckInOutSensor): UpsertStatus = suspendTransaction {
         val entityId: EntityID<String> = EntityID(checkInOutSensor.id, CheckInOutSensorTable)
         val storedCheckInOut: CheckInOutSensorEntity? = CheckInOutSensorEntity.findById(entityId)
 
         if (storedCheckInOut == null) {
             addEvent(checkInOutSensor)
         } else {
-            updateEvent(checkInOutSensor)!!
+            updateEvent(checkInOutSensor)
         }
     }
 
-    private fun addEvent(checkInOutSensor: CheckInOutSensor): CheckInOutSensor {
-        logger.info("Adding check in/out with id: ${checkInOutSensor.id}")
+    private fun addEvent(checkInOutSensor: CheckInOutSensor): UpsertStatus {
+        logger.trace("Adding check in/out with id: ${checkInOutSensor.id}")
 
-        val newEvent = CheckInOutSensorEntity.new(checkInOutSensor.id) {
+        CheckInOutSensorEntity.new(checkInOutSensor.id) {
             time = checkInOutSensor.time
             status = checkInOutSensor.status
             createdTime = Clock.System.now()
         }
 
-        logger.info("Added check in with id: ${checkInOutSensor.id}")
-
-        return daoToModel(newEvent)
+        logger.trace("Added check in with id: ${checkInOutSensor.id}")
+        return UpsertStatus.ADDED
     }
 
     /**
@@ -45,11 +45,11 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * check in.
      */
-    private fun updateEvent(checkInOutSensor: CheckInOutSensor): CheckInOutSensor? {
-        logger.info("Updating check in/out with id: ${checkInOutSensor.id}")
+    private fun updateEvent(checkInOutSensor: CheckInOutSensor): UpsertStatus {
+        logger.trace("Updating check in/out with id: ${checkInOutSensor.id}")
 
         val updatedCheckInOut: CheckInOutSensorEntity =
-            CheckInOutSensorEntity.findById(checkInOutSensor.id) ?: return null
+            CheckInOutSensorEntity.findById(checkInOutSensor.id) ?: return UpsertStatus.NO_ACTION
 
         with(updatedCheckInOut) {
             time = checkInOutSensor.time
@@ -58,18 +58,16 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
 
         val isDirty: Boolean = updatedCheckInOut.writeValues.isNotEmpty()
 
-        if (isDirty) {
+        return if (isDirty) {
             updatedCheckInOut.version = updatedCheckInOut.version.inc()
             updatedCheckInOut.updatedTime = Clock.System.now()
-        }
 
-        if (isDirty) {
-            logger.info("Updated check in/out with id: ${checkInOutSensor.id}")
+            logger.trace("Updated check in/out with id: ${checkInOutSensor.id}")
+            UpsertStatus.UPDATED
         } else {
-            logger.info("No changes detected for check in/out with id: ${checkInOutSensor.id}")
+            logger.trace("No changes detected for check in/out with id: ${checkInOutSensor.id}")
+            UpsertStatus.NO_ACTION
         }
-
-        return daoToModel(updatedCheckInOut)
     }
 
     override suspend fun latestTime(): Instant? =
@@ -98,9 +96,9 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
             }
 
             if (isUpdated) {
-                logger.info("Latest check in/out sync time updated.")
+                logger.trace("Latest check in/out sync time updated.")
             } else {
-                logger.info("No need to update the latest check in/out sync time.")
+                logger.trace("No need to update the latest check in/out sync time.")
             }
         }
     }

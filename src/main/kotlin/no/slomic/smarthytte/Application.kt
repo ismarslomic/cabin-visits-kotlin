@@ -23,8 +23,6 @@ import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
-import no.slomic.smarthytte.sensors.checkinouts.createCheckInOutSensorService
-import no.slomic.smarthytte.sensors.checkinouts.fetchCheckInOut
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripService
@@ -62,7 +60,7 @@ fun Application.module() {
             reservationRepository = reservationRepository,
             googleCalendarRepository = googleCalendarRepository,
         )
-    val checkInOutSensorService: CheckInOutSensorService = createCheckInOutSensorService(checkInOutSensorRepository)
+    val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository)
     val checkInOutService = CheckInOutService(
         reservationRepository = reservationRepository,
         checkInOutSensorRepository = checkInOutSensorRepository,
@@ -111,7 +109,7 @@ suspend fun Application.initialLoad(
     // The following data are decoupled from each other and could potentially be parallelized
     guestService.insertGuestsFromFile()
     vehicleTripService.insertVehicleTripsFromFile()
-    fetchCheckInOut(checkInOutSensorService)
+    checkInOutSensorService.fetchCheckInOut()
 
     // The following data must be loaded after previous steps since they depend on them.
     // These steps must also be executed in sequence
