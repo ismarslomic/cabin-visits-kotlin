@@ -27,6 +27,39 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         }
     }
 
+    override suspend fun latestTime(): Instant? =
+        suspendTransaction { CheckInOutSensorSyncEntity.findById(checkInSyncId)?.latestTime }
+
+    override suspend fun addOrUpdate(latestTime: Instant) {
+        suspendTransaction {
+            val storedCheckInOutSync: CheckInOutSensorSyncEntity? = CheckInOutSensorSyncEntity.findById(checkInSyncId)
+
+            var isUpdated = false
+            if (storedCheckInOutSync == null) {
+                CheckInOutSensorSyncEntity.new(checkInSyncId) {
+                    this.latestTime = latestTime
+                    updatedTime = Clock.System.now()
+                    isUpdated = true
+                }
+            } else {
+                storedCheckInOutSync.latestTime = latestTime
+
+                val isDirty: Boolean = storedCheckInOutSync.writeValues.isNotEmpty()
+
+                if (isDirty) {
+                    storedCheckInOutSync.updatedTime = Clock.System.now()
+                    isUpdated = true
+                }
+            }
+
+            if (isUpdated) {
+                logger.trace("Latest check in/out sync time updated.")
+            } else {
+                logger.trace("No need to update the latest check in/out sync time.")
+            }
+        }
+    }
+
     private fun addEvent(checkInOutSensor: CheckInOutSensor): UpsertStatus {
         logger.trace("Adding check in/out with id: ${checkInOutSensor.id}")
 
@@ -67,39 +100,6 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         } else {
             logger.trace("No changes detected for check in/out with id: ${checkInOutSensor.id}")
             UpsertStatus.NO_ACTION
-        }
-    }
-
-    override suspend fun latestTime(): Instant? =
-        suspendTransaction { CheckInOutSensorSyncEntity.findById(checkInSyncId)?.latestTime }
-
-    override suspend fun addOrUpdate(latestTime: Instant) {
-        suspendTransaction {
-            val storedCheckInOutSync: CheckInOutSensorSyncEntity? = CheckInOutSensorSyncEntity.findById(checkInSyncId)
-
-            var isUpdated = false
-            if (storedCheckInOutSync == null) {
-                CheckInOutSensorSyncEntity.new(checkInSyncId) {
-                    this.latestTime = latestTime
-                    updatedTime = Clock.System.now()
-                    isUpdated = true
-                }
-            } else {
-                storedCheckInOutSync.latestTime = latestTime
-
-                val isDirty: Boolean = storedCheckInOutSync.writeValues.isNotEmpty()
-
-                if (isDirty) {
-                    storedCheckInOutSync.updatedTime = Clock.System.now()
-                    isUpdated = true
-                }
-            }
-
-            if (isUpdated) {
-                logger.trace("Latest check in/out sync time updated.")
-            } else {
-                logger.trace("No need to update the latest check in/out sync time.")
-            }
         }
     }
 }
