@@ -36,8 +36,25 @@ class CheckInOutSensorService(
     private val measurement = checkInOutSensorProperties.measurement
 
     suspend fun fetchCheckInOut() {
-        val filterTimeRange = filterTimeRange()
-        logger.info("Fetching check in and check out from InfluxDb in time range $filterTimeRange..")
+        val lastCheckInTimestamp: Instant? = checkInOutSensorRepository.latestTime()
+        val filterTimeRange = if (lastCheckInTimestamp == null) {
+            val range = FilterTimeRange(
+                start = fullSyncStartTime.toIsoUtcString(),
+                stop = fullSyncStopOrDefault.toIsoUtcString(),
+            )
+            logger.info("Performing full fetch for check in/out sensors between {}", range)
+
+            range
+        } else {
+            // Adding 1 second to the start to exclude last check in already processed
+            val range = FilterTimeRange(
+                start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
+                stop = nowIsoUtcString(),
+            )
+            logger.info("Performing incremental fetch for check in/out sensors between {}", range)
+
+            range
+        }
 
         val fluxQuery = (
             """
@@ -94,28 +111,6 @@ class CheckInOutSensorService(
 
     private val fullSyncStopOrDefault: Instant
         get() = fullSyncStopTime ?: Clock.System.now()
-
-    private suspend fun filterTimeRange(): FilterTimeRange {
-        val lastCheckInTimestamp: Instant? = checkInOutSensorRepository.latestTime()
-        return if (lastCheckInTimestamp == null) {
-            val range = FilterTimeRange(
-                start = fullSyncStartTime.toIsoUtcString(),
-                stop = fullSyncStopOrDefault.toIsoUtcString(),
-            )
-            logger.trace("Performing full sync for check in/out entries between {}", range)
-
-            range
-        } else {
-            val range = // Adding 1 second to the start to exclude last check in already processed
-                FilterTimeRange(
-                    start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
-                    stop = nowIsoUtcString(),
-                )
-            logger.trace("Performing incremental sync for check in/out entries between {}", range)
-
-            range
-        }
-    }
 
     private fun FluxRecord.toCheckIn(): CheckInOutSensor = CheckInOutSensor(
         id = time.toString(),
