@@ -24,8 +24,15 @@ import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripService
+import java.util.*
 
 fun main() {
+    // Set UTC as the default timezone for the entire app to avoid inconsistency between the local dev environment
+    // and the Docker runtime.
+    // Exposed v0.59 introduced some bugs with handling timezone for timestamp types,
+    // see https://youtrack.jetbrains.com/issue/EXPOSED-731/Timestamp-support-for-SQLite-is-broken
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
     val ktorProperties = loadProperties<KtorPropertiesHolder>().ktor
 
     with(ktorProperties.deployment) {
