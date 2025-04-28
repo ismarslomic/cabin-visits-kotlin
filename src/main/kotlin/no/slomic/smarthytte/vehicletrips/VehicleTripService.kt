@@ -28,7 +28,7 @@ import io.ktor.util.logging.Logger
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.readVehicleTripFromJsonFile
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
@@ -42,16 +42,16 @@ class VehicleTripService(private val vehicleTripRepository: VehicleTripRepositor
     suspend fun insertVehicleTripsFromFile() {
         logger.info("Reading vehicle trips from file $filePath and updating database..")
 
-        val upsertStatus: MutableList<UpsertStatus> = mutableListOf()
+        val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
         val tripsFromFile: List<VehicleTripResponse> = readVehicleTripFromJsonFile(filePath)
         for (trip in tripsFromFile) {
-            upsertStatus.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
+            persistenceResults.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
         }
 
-        val addedCount = upsertStatus.count { it == UpsertStatus.ADDED }
-        val updatedCount = upsertStatus.count { it == UpsertStatus.UPDATED }
-        val noActionCount = upsertStatus.count { it == UpsertStatus.NO_ACTION }
+        val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }
+        val updatedCount = persistenceResults.count { it == PersistenceResult.UPDATED }
+        val noActionCount = persistenceResults.count { it == PersistenceResult.NO_ACTION }
 
         logger.info(
             "Updating vehicle trips in database complete. " +

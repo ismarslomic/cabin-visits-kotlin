@@ -5,7 +5,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.BaseDbTest
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import org.jetbrains.exposed.sql.transactions.transaction
 
 val vehicleTrip = createTrip(
@@ -20,8 +20,8 @@ class VehicleTripRepositoryTest :
         val repository: VehicleTripRepository = SqliteVehicleTripRepository()
 
         "add or update with new id should add new vehicle trip" {
-            val upsertStatus = repository.addOrUpdate(vehicleTrip)
-            upsertStatus shouldBe UpsertStatus.ADDED
+            val persistenceResult = repository.addOrUpdate(vehicleTrip)
+            persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
                 val allVehicleTrips: List<VehicleTripEntity> = VehicleTripEntity.all().toList()
@@ -41,8 +41,8 @@ class VehicleTripRepositoryTest :
             repository.addOrUpdate(vehicleTrip)
 
             val updatedVehicleTrip = vehicleTrip.copy(endCity = "new end city")
-            val upsertStatus = repository.addOrUpdate(updatedVehicleTrip)
-            upsertStatus shouldBe UpsertStatus.UPDATED
+            val persistenceResult = repository.addOrUpdate(updatedVehicleTrip)
+            persistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
                 val allVehicleTrips: List<VehicleTripEntity> = VehicleTripEntity.all().toList()
@@ -62,8 +62,8 @@ class VehicleTripRepositoryTest :
             repository.addOrUpdate(vehicleTrip)
 
             val updatedVehicleTrip = vehicleTrip
-            val upsertStatus = repository.addOrUpdate(updatedVehicleTrip)
-            upsertStatus shouldBe UpsertStatus.NO_ACTION
+            val persistenceResult = repository.addOrUpdate(updatedVehicleTrip)
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {
                 val allVehicleTrips: List<VehicleTripEntity> = VehicleTripEntity.all().toList()

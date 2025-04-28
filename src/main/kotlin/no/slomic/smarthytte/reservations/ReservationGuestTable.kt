@@ -7,10 +7,10 @@ import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 
 object ReservationGuestTable : Table(name = "reservation_guest") {
-    val event: Column<EntityID<String>> =
+    val reservation: Column<EntityID<String>> =
         reference("reservation_id", ReservationTable.id, onDelete = ReferenceOption.CASCADE)
     val guest: Column<EntityID<String>> =
         reference("guest_id", GuestTable.id, onDelete = ReferenceOption.CASCADE)
 
-    override val primaryKey = PrimaryKey(event, guest, name = "pk_reservation_guest")
+    override val primaryKey = PrimaryKey(reservation, guest, name = "pk_reservation_guest")
 }

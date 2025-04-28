@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.toList
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toKotlinInstant
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.nowIsoUtcString
 import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.common.truncatedToMillis
@@ -79,11 +79,11 @@ class CheckInOutSensorService(
                 .sortedBy { it.time }
 
             // Store check in and out sensor data to db
-            val upsertStatus = storeUpdates(receivedCheckInOutSensors)
+            val persistenceResults = storeUpdates(receivedCheckInOutSensors)
 
-            val addedCount = upsertStatus.count { it == UpsertStatus.ADDED }
-            val updatedCount = upsertStatus.count { it == UpsertStatus.UPDATED }
-            val noActionCount = upsertStatus.count { it == UpsertStatus.NO_ACTION }
+            val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }
+            val updatedCount = persistenceResults.count { it == PersistenceResult.UPDATED }
+            val noActionCount = persistenceResults.count { it == PersistenceResult.NO_ACTION }
 
             logger.info(
                 "Fetching check in and check out complete. " +
@@ -93,11 +93,11 @@ class CheckInOutSensorService(
         }
     }
 
-    private suspend fun storeUpdates(checkInOutSensors: List<CheckInOutSensor>): MutableList<UpsertStatus> {
-        val upsertStatus: MutableList<UpsertStatus> = mutableListOf()
+    private suspend fun storeUpdates(checkInOutSensors: List<CheckInOutSensor>): List<PersistenceResult> {
+        val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
         for (checkIn in checkInOutSensors) {
-            upsertStatus.add(checkInOutSensorRepository.addOrUpdate(checkIn))
+            persistenceResults.add(checkInOutSensorRepository.addOrUpdate(checkIn))
         }
 
         val latestTimestamp: Instant? = checkInOutSensors.maxByOrNull { it.time }?.time
@@ -106,7 +106,7 @@ class CheckInOutSensorService(
             checkInOutSensorRepository.addOrUpdate(latestTimestamp)
         }
 
-        return upsertStatus
+        return persistenceResults
     }
 
     private val fullSyncStopOrDefault: Instant

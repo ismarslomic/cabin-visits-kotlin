@@ -3,7 +3,7 @@ package no.slomic.smarthytte.vehicletrips
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import org.jetbrains.exposed.dao.id.EntityID
 
@@ -14,7 +14,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         VehicleTripEntity.all().sortedBy { it.startTime }.map(::daoToModel)
     }
 
-    override suspend fun addOrUpdate(vehicleTrip: VehicleTrip): UpsertStatus = suspendTransaction {
+    override suspend fun addOrUpdate(vehicleTrip: VehicleTrip): PersistenceResult = suspendTransaction {
         val entityId: EntityID<String> = EntityID(vehicleTrip.id, VehicleTripTable)
         val storedVehicleTrip: VehicleTripEntity? = VehicleTripEntity.findById(entityId)
 
@@ -25,11 +25,11 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         }
     }
 
-    override suspend fun setNotionId(notionId: String, vehicleTripId: String): UpsertStatus {
+    override suspend fun setNotionId(notionId: String, vehicleTripId: String): PersistenceResult {
         logger.trace("Setting notion Id for vehicle trip with id: $vehicleTripId")
 
         val storedVehicleTrip: VehicleTripEntity =
-            VehicleTripEntity.findById(vehicleTripId) ?: return UpsertStatus.NO_ACTION
+            VehicleTripEntity.findById(vehicleTripId) ?: return PersistenceResult.NO_ACTION
 
         with(storedVehicleTrip) {
             this.notionId = notionId
@@ -38,11 +38,11 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         }
 
         logger.trace("Notion id set for vehicle trip with id: $vehicleTripId")
-        return UpsertStatus.UPDATED
+        return PersistenceResult.UPDATED
     }
 
     @Suppress("DuplicatedCode")
-    private fun addVehicleTrip(vehicleTrip: VehicleTrip): UpsertStatus {
+    private fun addVehicleTrip(vehicleTrip: VehicleTrip): PersistenceResult {
         logger.trace("Adding vehicle trip with id: ${vehicleTrip.id}")
 
         VehicleTripEntity.new(vehicleTrip.id) {
@@ -67,7 +67,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         }
 
         logger.trace("Added vehicle trip with id: ${vehicleTrip.id}")
-        return UpsertStatus.ADDED
+        return PersistenceResult.ADDED
     }
 
     /**
@@ -76,11 +76,11 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
      * guest.
      */
     @Suppress("DuplicatedCode")
-    private fun updateVehicleTrip(vehicleTrip: VehicleTrip): UpsertStatus {
+    private fun updateVehicleTrip(vehicleTrip: VehicleTrip): PersistenceResult {
         logger.trace("Updating vehicle trip with id: ${vehicleTrip.id}")
 
         val updatedVehicleTrip: VehicleTripEntity =
-            VehicleTripEntity.findById(vehicleTrip.id) ?: return UpsertStatus.NO_ACTION
+            VehicleTripEntity.findById(vehicleTrip.id) ?: return PersistenceResult.NO_ACTION
 
         with(updatedVehicleTrip) {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
@@ -109,10 +109,10 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             updatedVehicleTrip.updatedTime = Clock.System.now()
 
             logger.trace("Updated vehicle trip with id: ${vehicleTrip.id}")
-            UpsertStatus.UPDATED
+            PersistenceResult.UPDATED
         } else {
             logger.trace("No changes detected for vehicle trip with id: ${vehicleTrip.id}")
-            UpsertStatus.NO_ACTION
+            PersistenceResult.NO_ACTION
         }
     }
 }

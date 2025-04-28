@@ -4,7 +4,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import org.jetbrains.exposed.dao.id.EntityID
 
@@ -16,7 +16,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         CheckInOutSensorEntity.all().sortedBy { it.time }.map(::daoToModel)
     }
 
-    override suspend fun addOrUpdate(checkInOutSensor: CheckInOutSensor): UpsertStatus = suspendTransaction {
+    override suspend fun addOrUpdate(checkInOutSensor: CheckInOutSensor): PersistenceResult = suspendTransaction {
         val entityId: EntityID<String> = EntityID(checkInOutSensor.id, CheckInOutSensorTable)
         val storedCheckInOut: CheckInOutSensorEntity? = CheckInOutSensorEntity.findById(entityId)
 
@@ -60,7 +60,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         }
     }
 
-    private fun addEvent(checkInOutSensor: CheckInOutSensor): UpsertStatus {
+    private fun addEvent(checkInOutSensor: CheckInOutSensor): PersistenceResult {
         logger.trace("Adding check in/out with id: ${checkInOutSensor.id}")
 
         CheckInOutSensorEntity.new(checkInOutSensor.id) {
@@ -70,7 +70,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         }
 
         logger.trace("Added check in with id: ${checkInOutSensor.id}")
-        return UpsertStatus.ADDED
+        return PersistenceResult.ADDED
     }
 
     /**
@@ -78,11 +78,11 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * check in.
      */
-    private fun updateEvent(checkInOutSensor: CheckInOutSensor): UpsertStatus {
+    private fun updateEvent(checkInOutSensor: CheckInOutSensor): PersistenceResult {
         logger.trace("Updating check in/out with id: ${checkInOutSensor.id}")
 
         val updatedCheckInOut: CheckInOutSensorEntity =
-            CheckInOutSensorEntity.findById(checkInOutSensor.id) ?: return UpsertStatus.NO_ACTION
+            CheckInOutSensorEntity.findById(checkInOutSensor.id) ?: return PersistenceResult.NO_ACTION
 
         with(updatedCheckInOut) {
             time = checkInOutSensor.time
@@ -96,10 +96,10 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
             updatedCheckInOut.updatedTime = Clock.System.now()
 
             logger.trace("Updated check in/out with id: ${checkInOutSensor.id}")
-            UpsertStatus.UPDATED
+            PersistenceResult.UPDATED
         } else {
             logger.trace("No changes detected for check in/out with id: ${checkInOutSensor.id}")
-            UpsertStatus.NO_ACTION
+            PersistenceResult.NO_ACTION
         }
     }
 }

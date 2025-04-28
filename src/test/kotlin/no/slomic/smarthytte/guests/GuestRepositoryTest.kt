@@ -6,11 +6,11 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.BaseDbTest
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.reservations.ReservationGuestTable
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
-import no.slomic.smarthytte.reservations.event
+import no.slomic.smarthytte.reservations.reservation
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -29,8 +29,8 @@ class GuestRepositoryTest :
         val repository: GuestRepository = SqliteGuestRepository()
 
         "add or update with new id should add new guest" {
-            val upsertStatus = repository.addOrUpdate(guest)
-            upsertStatus shouldBe UpsertStatus.ADDED
+            val persistenceResult = repository.addOrUpdate(guest)
+            persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
@@ -50,8 +50,8 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest)
 
             val updatedGuest = guest.copy(firstName = "John 2")
-            val upsertStatus = repository.addOrUpdate(updatedGuest)
-            upsertStatus shouldBe UpsertStatus.UPDATED
+            val persistenceResult = repository.addOrUpdate(updatedGuest)
+            persistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
@@ -71,8 +71,8 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest)
 
             val updatedGuest = guest
-            val upsertStatus = repository.addOrUpdate(updatedGuest)
-            upsertStatus shouldBe UpsertStatus.NO_ACTION
+            val persistenceResult = repository.addOrUpdate(updatedGuest)
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
@@ -94,7 +94,7 @@ class GuestRepositoryTest :
             val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
             repository.addOrUpdate(guest2)
 
-            val eventWithGuest = event.copy(
+            val eventWithGuest = reservation.copy(
                 guestIds = listOf(guest.id, guest2.id),
             )
             calenderEventRepository.addOrUpdate(eventWithGuest)

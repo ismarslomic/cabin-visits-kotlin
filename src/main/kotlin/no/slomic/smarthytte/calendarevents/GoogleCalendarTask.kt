@@ -20,7 +20,7 @@ fun Application.launchSyncGoogleCalendarTask(googleCalendarService: GoogleCalend
     log.info("Launching startPeriodicGoogleCalendarSync task every $syncFrequencyMinutes")
     val taskJob = launch {
         while (isActive) {
-            fetchGoogleCalendarEvents(googleCalendarService)
+            googleCalendarService.fetchGoogleCalendarEvents()
             delay(syncFrequencyMinutes)
         }
     }
@@ -30,11 +30,4 @@ fun Application.launchSyncGoogleCalendarTask(googleCalendarService: GoogleCalend
         log.info("Canceling the startPeriodicGoogleCalendarSync task since Application is stopping.")
         taskJob.cancel() // Stop the task
     }
-}
-
-suspend fun Application.fetchGoogleCalendarEvents(googleCalendarService: GoogleCalendarService) {
-    // Launch custom code in a coroutine
-    log.info("Starting syncing the Google Calendar events")
-    googleCalendarService.synchronizeCalendarEvents()
-    log.info("Completed syncing the Google Calendar events")
 }

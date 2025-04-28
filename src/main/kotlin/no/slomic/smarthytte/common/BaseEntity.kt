@@ -27,8 +27,9 @@ suspend fun <T> suspendTransaction(block: Transaction.() -> T): T = newSuspended
     statement = block,
 )
 
-enum class UpsertStatus {
-    UPDATED,
+enum class PersistenceResult {
     ADDED,
+    DELETED,
+    UPDATED,
     NO_ACTION,
 }

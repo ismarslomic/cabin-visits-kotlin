@@ -1,71 +1,85 @@
 package no.slomic.smarthytte.calendarevents
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
+import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
+import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
+import com.google.auth.http.HttpCredentialsAdapter
+import com.google.auth.oauth2.GoogleCredentials
+import com.google.auth.oauth2.ServiceAccountCredentials
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Instant
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.readSummaryToGuestFromJsonFile
 import no.slomic.smarthytte.common.toInstant
+import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
+import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
+import java.io.FileInputStream
 
 class GoogleCalendarService(
-    private val calendarApiClient: Calendar,
     private val reservationRepository: ReservationRepository,
     private val googleCalendarRepository: GoogleCalendarRepository,
-    private val calendarId: String,
-    private val syncFromDateTime: DateTime,
-    summaryToGuestFilePath: String,
+    private val googleCalendarPropertiesHolder: GoogleCalendarPropertiesHolder =
+        loadProperties<GoogleCalendarPropertiesHolder>(),
+    private val calendarApiClient: Calendar = createCalendarApiClient(googleCalendarPropertiesHolder),
 ) {
     private val logger: Logger = KtorSimpleLogger(GoogleCalendarService::class.java.name)
+    private val googleProperties = googleCalendarPropertiesHolder.googleCalendar
+    private val calendarId: String = googleProperties.calendarId
+    private val syncFromDateTime: DateTime = DateTime(googleProperties.syncFromDateTime)
+    private val summaryToGuestFilePath: String = googleProperties.summaryToGuestFilePath
     private val mapping: Map<String, List<String>> = readSummaryToGuestFromJsonFile(summaryToGuestFilePath)
 
     companion object {
         private const val STATUS_CODE_GONE = 410
     }
 
-    suspend fun synchronizeCalendarEvents() {
+    suspend fun fetchGoogleCalendarEvents() {
         val request: Calendar.Events.List
 
         // Load the sync token stored from the last execution, if any.
-        val syncTokenKey = googleCalendarRepository.syncToken()
+        val syncTokenKey: String? = googleCalendarRepository.syncToken()
         if (syncTokenKey == null) {
-            logger.info("Performing full sync for calendar $calendarId from date $syncFromDateTime.")
+            logger.info("Performing full fetch for google calendar $calendarId from date $syncFromDateTime.")
             request = createFullSyncRequest()
         } else {
-            logger.info("Performing incremental sync for calendar $calendarId.")
+            logger.info("Performing incremental sync for google calendar $calendarId.")
             request = createIncrementalSyncRequest(syncTokenKey)
         }
 
         // Retrieve the events, one page at a time.
         var pageToken: String? = null
+        val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
         var events: Events? = null
+        var totalNumberOfEvents = 0
         do {
-            request.setPageToken(pageToken)
+            request.pageToken = pageToken
 
             try {
                 events = request.execute()
             } catch (e: GoogleJsonResponseException) {
                 if (e.statusCode == STATUS_CODE_GONE) {
                     // A 410 status code, "Gone", indicates that the sync token is invalid.
-                    logger.info("Invalid sync token, clearing event store and re-syncing.")
+                    logger.warn("Invalid sync token, clearing event store and re-syncing.")
                     googleCalendarRepository.deleteSyncToken()
-                    synchronizeCalendarEvents()
+                    fetchGoogleCalendarEvents()
                 } else {
                     throw e
                 }
             }
 
             val eventItems: List<Event>? = events?.items
-            if (eventItems.isNullOrEmpty()) {
-                logger.info("No new events to sync.")
-            } else {
-                storeReservations(eventItems)
+            totalNumberOfEvents += eventItems?.size ?: 0
+            if (!eventItems.isNullOrEmpty()) {
+                persistenceResults.addAll(storeReservations(eventItems))
             }
 
             pageToken = events?.nextPageToken
@@ -76,10 +90,20 @@ class GoogleCalendarService(
             googleCalendarRepository.addOrUpdateSyncToken(events.nextSyncToken)
         }
 
-        logger.info("Sync complete.")
+        val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }
+        val deletedCount = persistenceResults.count { it == PersistenceResult.DELETED }
+        val updatedCount = persistenceResults.count { it == PersistenceResult.UPDATED }
+        val noActionCount = persistenceResults.count { it == PersistenceResult.NO_ACTION }
+
+        logger.info(
+            "Fetching google events complete. " +
+                "Total google events in response: $totalNumberOfEvents, added: $addedCount, " +
+                "deleted: $deletedCount, updated: $updatedCount, no actions: $noActionCount",
+        )
     }
 
-    private suspend fun storeReservations(eventItems: List<Event>) {
+    private suspend fun storeReservations(eventItems: List<Event>): List<PersistenceResult> {
+        val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
         for (event in eventItems) {
             if (event.status != "cancelled") {
                 val reservation = Reservation(
@@ -92,14 +116,13 @@ class GoogleCalendarService(
                     sourceCreatedTime = event.created?.let { Instant.parse(it.toStringRfc3339()) },
                     sourceUpdatedTime = event.updated?.let { Instant.parse(it.toStringRfc3339()) },
                 )
-
-                reservationRepository.addOrUpdate(reservation)
+                persistenceResults.add(reservationRepository.addOrUpdate(reservation))
             } else {
-                reservationRepository.deleteReservation(event.id)
+                persistenceResults.add(reservationRepository.deleteReservation(event.id))
             }
         }
 
-        logger.info("Saved ${eventItems.size} reservation(s)")
+        return persistenceResults
     }
 
     private fun createFullSyncRequest() = calendarApiClient
@@ -143,4 +166,26 @@ class GoogleCalendarService(
      * guests could be extracted.
      */
     private fun summaryToGuestIds(summary: String): List<String> = mapping[summary] ?: listOf()
+}
+
+private fun createCalendarApiClient(googleCalendarPropertiesHolder: GoogleCalendarPropertiesHolder): Calendar {
+    val googleProperties = googleCalendarPropertiesHolder.googleCalendar
+    val googleServiceAccountKeys = FileInputStream(googleProperties.credentialsFilePath)
+
+    // Load service account credentials
+    val credentials: GoogleCredentials =
+        ServiceAccountCredentials.fromStream(googleServiceAccountKeys)
+            .createScoped(listOf(CalendarScopes.CALENDAR_READONLY))
+
+    val requestInitializer = HttpCredentialsAdapter(credentials)
+
+    // Build the Calendar API client
+    return Calendar.Builder(
+        /* transport = */
+        GoogleNetHttpTransport.newTrustedTransport(),
+        /* jsonFactory = */
+        GsonFactory.getDefaultInstance(),
+        /* httpRequestInitializer = */
+        requestInitializer,
+    ).setApplicationName("Cabin Visits Kotlin").build()
 }

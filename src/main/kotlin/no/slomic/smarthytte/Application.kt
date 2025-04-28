@@ -8,8 +8,6 @@ import kotlinx.coroutines.runBlocking
 import no.slomic.smarthytte.calendarevents.GoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
-import no.slomic.smarthytte.calendarevents.createGoogleCalendarService
-import no.slomic.smarthytte.calendarevents.fetchGoogleCalendarEvents
 import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.guests.GuestService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
@@ -55,11 +53,7 @@ fun Application.module() {
 
     // Initialize services
     val vehicleTripService = VehicleTripService(vehicleTripRepository)
-    val googleCalendarService: GoogleCalendarService =
-        createGoogleCalendarService(
-            reservationRepository = reservationRepository,
-            googleCalendarRepository = googleCalendarRepository,
-        )
+    val googleCalendarService = GoogleCalendarService(reservationRepository, googleCalendarRepository)
     val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository)
     val checkInOutService = CheckInOutService(
         reservationRepository = reservationRepository,
@@ -113,7 +107,7 @@ suspend fun Application.initialLoad(
 
     // The following data must be loaded after previous steps since they depend on them.
     // These steps must also be executed in sequence
-    fetchGoogleCalendarEvents(googleCalendarService)
+    googleCalendarService.fetchGoogleCalendarEvents()
     checkInOutService.updateCheckInOut()
 
     log.info("Initial load complete!")

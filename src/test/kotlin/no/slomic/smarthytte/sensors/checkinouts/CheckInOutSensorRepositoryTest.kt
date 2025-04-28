@@ -6,7 +6,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Instant
 import no.slomic.smarthytte.BaseDbTest
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import org.jetbrains.exposed.sql.transactions.transaction
 
 val checkInSensor = CheckInOutSensor(
@@ -20,8 +20,8 @@ class CheckInOutSensorRepositoryTest :
         val repository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
 
         "add or update with new id should add new check in/out" {
-            val upsertStatus = repository.addOrUpdate(checkInSensor)
-            upsertStatus shouldBe UpsertStatus.ADDED
+            val persistenceResult = repository.addOrUpdate(checkInSensor)
+            persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
                 val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.Companion.all().toList()
@@ -41,8 +41,8 @@ class CheckInOutSensorRepositoryTest :
             repository.addOrUpdate(checkInSensor)
 
             val updatedCheckInSensor = checkInSensor.copy(status = CheckInStatus.CHECKED_OUT)
-            val upsertStatus = repository.addOrUpdate(updatedCheckInSensor)
-            upsertStatus shouldBe UpsertStatus.UPDATED
+            val persistenceResult = repository.addOrUpdate(updatedCheckInSensor)
+            persistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
                 val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.Companion.all().toList()
@@ -62,8 +62,8 @@ class CheckInOutSensorRepositoryTest :
             repository.addOrUpdate(checkInSensor)
 
             val updatedCheckInSensor = checkInSensor
-            val upsertStatus = repository.addOrUpdate(updatedCheckInSensor)
-            upsertStatus shouldBe UpsertStatus.NO_ACTION
+            val persistenceResult = repository.addOrUpdate(updatedCheckInSensor)
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {
                 val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.Companion.all().toList()
