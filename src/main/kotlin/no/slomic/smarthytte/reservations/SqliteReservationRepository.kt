@@ -65,7 +65,7 @@ class SqliteReservationRepository : ReservationRepository {
         with(storedReservation) {
             this.notionId = notionId
             version = storedReservation.version.inc()
-            updatedTime = Clock.System.now()
+            updatedTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Notion id set for reservation with id: $id")
@@ -89,7 +89,7 @@ class SqliteReservationRepository : ReservationRepository {
 
         if (isDirty) {
             storedReservation.version = storedReservation.version.inc()
-            storedReservation.updatedTime = Clock.System.now()
+            storedReservation.updatedTime = Clock.System.now().truncatedToMillis()
 
             logger.trace(
                 "Updated check in status for reservation with id: {} and summary: {}",
@@ -124,7 +124,7 @@ class SqliteReservationRepository : ReservationRepository {
 
         if (isDirty) {
             storedReservation.version = storedReservation.version.inc()
-            storedReservation.updatedTime = Clock.System.now()
+            storedReservation.updatedTime = Clock.System.now().truncatedToMillis()
 
             logger.trace(
                 "Updated check out status for reservation with id: {} and summary: {}",
@@ -150,12 +150,12 @@ class SqliteReservationRepository : ReservationRepository {
         ReservationEntity.new(reservation.id) {
             summary = reservation.summary
             description = reservation.description
-            startTime = reservation.startTime
-            endTime = reservation.endTime
+            startTime = reservation.startTime.truncatedToMillis()
+            endTime = reservation.endTime.truncatedToMillis()
             guests = SizedCollection(reservationGuests)
-            sourceCreatedTime = reservation.sourceCreatedTime
-            sourceUpdatedTime = reservation.sourceUpdatedTime
-            createdTime = Clock.System.now()
+            sourceCreatedTime = reservation.sourceCreatedTime?.truncatedToMillis()
+            sourceUpdatedTime = reservation.sourceUpdatedTime?.truncatedToMillis()
+            createdTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Added reservation with id: ${reservation.id} and summary: ${reservation.summary}")
@@ -178,17 +178,17 @@ class SqliteReservationRepository : ReservationRepository {
         with(storedReservation) {
             summary = reservation.summary
             description = reservation.description
-            startTime = reservation.startTime
-            endTime = reservation.endTime
-            sourceCreatedTime = reservation.sourceCreatedTime
-            sourceUpdatedTime = reservation.sourceUpdatedTime
+            startTime = reservation.startTime.truncatedToMillis()
+            endTime = reservation.endTime.truncatedToMillis()
+            sourceCreatedTime = reservation.sourceCreatedTime?.truncatedToMillis()
+            sourceUpdatedTime = reservation.sourceUpdatedTime?.truncatedToMillis()
         }
 
         val isDirty: Boolean = storedReservation.writeValues.isNotEmpty()
 
         if (isDirty) {
             storedReservation.version = storedReservation.version.inc()
-            storedReservation.updatedTime = Clock.System.now()
+            storedReservation.updatedTime = Clock.System.now().truncatedToMillis()
         }
 
         // This triggers flushing changes and thus empties the writeValues, so we keep it as the last change

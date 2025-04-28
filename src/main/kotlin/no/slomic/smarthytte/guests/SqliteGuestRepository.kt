@@ -5,6 +5,7 @@ import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
+import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.dao.id.EntityID
 
 class SqliteGuestRepository : GuestRepository {
@@ -29,7 +30,7 @@ class SqliteGuestRepository : GuestRepository {
         with(storedGuest) {
             this.notionId = notionId
             version = storedGuest.version.inc()
-            updatedTime = Clock.System.now()
+            updatedTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Notion id set for guest with id: $guestId")
@@ -45,7 +46,7 @@ class SqliteGuestRepository : GuestRepository {
             birthYear = guest.birthYear
             email = guest.email
             gender = guest.gender
-            createdTime = Clock.System.now()
+            createdTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Added guest with id: ${guest.id}")
@@ -74,7 +75,7 @@ class SqliteGuestRepository : GuestRepository {
 
         return if (isDirty) {
             updatedGuest.version = updatedGuest.version.inc()
-            updatedGuest.updatedTime = Clock.System.now()
+            updatedGuest.updatedTime = Clock.System.now().truncatedToMillis()
 
             logger.trace("Updated guest with id: ${guest.id}")
             PersistenceResult.UPDATED

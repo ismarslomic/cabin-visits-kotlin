@@ -12,7 +12,6 @@ import kotlinx.datetime.toKotlinInstant
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.nowIsoUtcString
 import no.slomic.smarthytte.common.toIsoUtcString
-import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
@@ -96,8 +95,8 @@ class CheckInOutSensorService(
     private suspend fun storeUpdates(checkInOutSensors: List<CheckInOutSensor>): List<PersistenceResult> {
         val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
-        for (checkIn in checkInOutSensors) {
-            persistenceResults.add(checkInOutSensorRepository.addOrUpdate(checkIn))
+        for (checkInOutSensor in checkInOutSensors) {
+            persistenceResults.add(checkInOutSensorRepository.addOrUpdate(checkInOutSensor))
         }
 
         val latestTimestamp: Instant? = checkInOutSensors.maxByOrNull { it.time }?.time
@@ -114,7 +113,7 @@ class CheckInOutSensorService(
 
     private fun FluxRecord.toCheckIn(): CheckInOutSensor = CheckInOutSensor(
         id = time.toString(),
-        time = time!!.toKotlinInstant().truncatedToMillis(),
+        time = time!!.toKotlinInstant(),
         status = (value as String).toStatus(),
     )
 

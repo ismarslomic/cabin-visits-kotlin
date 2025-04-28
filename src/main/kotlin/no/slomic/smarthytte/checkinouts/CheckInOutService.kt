@@ -68,7 +68,7 @@ class CheckInOutService(
         logger.info(
             "Updating check in/out status for all reservations complete. " +
                 "Total reservations in db: ${allReservations.size}, " +
-                "check in updated: $checkInUpdatedCount, check in no actions: $checkInNoActionCount ," +
+                "check in updated: $checkInUpdatedCount, check in no actions: $checkInNoActionCount, " +
                 "check out updated: $checkOutUpdatedCount, check out no actions: $checkOutNoActionCount",
         )
     }

@@ -6,6 +6,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
+import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.dao.id.EntityID
 
 class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
@@ -37,17 +38,17 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
             var isUpdated = false
             if (storedCheckInOutSync == null) {
                 CheckInOutSensorSyncEntity.new(checkInSyncId) {
-                    this.latestTime = latestTime
-                    updatedTime = Clock.System.now()
+                    this.latestTime = latestTime.truncatedToMillis()
+                    updatedTime = Clock.System.now().truncatedToMillis()
                     isUpdated = true
                 }
             } else {
-                storedCheckInOutSync.latestTime = latestTime
+                storedCheckInOutSync.latestTime = latestTime.truncatedToMillis()
 
                 val isDirty: Boolean = storedCheckInOutSync.writeValues.isNotEmpty()
 
                 if (isDirty) {
-                    storedCheckInOutSync.updatedTime = Clock.System.now()
+                    storedCheckInOutSync.updatedTime = Clock.System.now().truncatedToMillis()
                     isUpdated = true
                 }
             }
@@ -64,9 +65,9 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         logger.trace("Adding check in/out with id: ${checkInOutSensor.id}")
 
         CheckInOutSensorEntity.new(checkInOutSensor.id) {
-            time = checkInOutSensor.time
+            time = checkInOutSensor.time.truncatedToMillis()
             status = checkInOutSensor.status
-            createdTime = Clock.System.now()
+            createdTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Added check in with id: ${checkInOutSensor.id}")
@@ -85,7 +86,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
             CheckInOutSensorEntity.findById(checkInOutSensor.id) ?: return PersistenceResult.NO_ACTION
 
         with(updatedCheckInOut) {
-            time = checkInOutSensor.time
+            time = checkInOutSensor.time.truncatedToMillis()
             status = checkInOutSensor.status
         }
 
@@ -93,7 +94,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
 
         return if (isDirty) {
             updatedCheckInOut.version = updatedCheckInOut.version.inc()
-            updatedCheckInOut.updatedTime = Clock.System.now()
+            updatedCheckInOut.updatedTime = Clock.System.now().truncatedToMillis()
 
             logger.trace("Updated check in/out with id: ${checkInOutSensor.id}")
             PersistenceResult.UPDATED

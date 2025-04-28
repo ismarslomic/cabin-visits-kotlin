@@ -4,6 +4,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.suspendTransaction
+import no.slomic.smarthytte.common.truncatedToMillis
 
 class SqliteGoogleCalendarRepository : GoogleCalendarRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteGoogleCalendarRepository::class.java.name)
@@ -20,7 +21,7 @@ class SqliteGoogleCalendarRepository : GoogleCalendarRepository {
             if (storedGoogleCalendarSync == null) {
                 GoogleCalendarSyncEntity.new(synckTokenId) {
                     syncToken = newSyncToken
-                    updatedTime = Clock.System.now()
+                    updatedTime = Clock.System.now().truncatedToMillis()
                     isUpdated = true
                 }
             } else {
@@ -29,7 +30,7 @@ class SqliteGoogleCalendarRepository : GoogleCalendarRepository {
                 val isDirty: Boolean = storedGoogleCalendarSync.writeValues.isNotEmpty()
 
                 if (isDirty) {
-                    storedGoogleCalendarSync.updatedTime = Clock.System.now()
+                    storedGoogleCalendarSync.updatedTime = Clock.System.now().truncatedToMillis()
                     isUpdated = true
                 }
             }

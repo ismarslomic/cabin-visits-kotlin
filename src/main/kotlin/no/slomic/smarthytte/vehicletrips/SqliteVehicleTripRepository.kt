@@ -5,6 +5,7 @@ import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
+import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.dao.id.EntityID
 
 class SqliteVehicleTripRepository : VehicleTripRepository {
@@ -34,7 +35,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         with(storedVehicleTrip) {
             this.notionId = notionId
             version = storedVehicleTrip.version.inc()
-            updatedTime = Clock.System.now()
+            updatedTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Notion id set for vehicle trip with id: $vehicleTripId")
@@ -49,20 +50,20 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
             averageSpeed = vehicleTrip.averageSpeed
-            createdTime = Clock.System.now()
+            createdTime = Clock.System.now().truncatedToMillis()
             distance = vehicleTrip.distance
             distanceUnit = vehicleTrip.distanceUnit
             duration = vehicleTrip.duration
             durationUnit = vehicleTrip.durationUnit
             endAddress = vehicleTrip.endAddress
             endCity = vehicleTrip.endCity
-            endTime = vehicleTrip.endTime
+            endTime = vehicleTrip.endTime.truncatedToMillis()
             energyRegenerated = vehicleTrip.energyRegenerated
             energyRegeneratedUnit = vehicleTrip.energyRegeneratedUnit
             speedUnit = vehicleTrip.speedUnit
             startAddress = vehicleTrip.startAddress
             startCity = vehicleTrip.startCity
-            startTime = vehicleTrip.startTime
+            startTime = vehicleTrip.startTime.truncatedToMillis()
             totalDistance = vehicleTrip.totalDistance
         }
 
@@ -92,13 +93,13 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             durationUnit = vehicleTrip.durationUnit
             endAddress = vehicleTrip.endAddress
             endCity = vehicleTrip.endCity
-            endTime = vehicleTrip.endTime
+            endTime = vehicleTrip.endTime.truncatedToMillis()
             energyRegenerated = vehicleTrip.energyRegenerated
             energyRegeneratedUnit = vehicleTrip.energyRegeneratedUnit
             speedUnit = vehicleTrip.speedUnit
             startAddress = vehicleTrip.startAddress
             startCity = vehicleTrip.startCity
-            startTime = vehicleTrip.startTime
+            startTime = vehicleTrip.startTime.truncatedToMillis()
             totalDistance = vehicleTrip.totalDistance
         }
 
@@ -106,7 +107,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
 
         return if (isDirty) {
             updatedVehicleTrip.version = updatedVehicleTrip.version.inc()
-            updatedVehicleTrip.updatedTime = Clock.System.now()
+            updatedVehicleTrip.updatedTime = Clock.System.now().truncatedToMillis()
 
             logger.trace("Updated vehicle trip with id: ${vehicleTrip.id}")
             PersistenceResult.UPDATED
