@@ -1,6 +1,7 @@
 package no.slomic.smarthytte.sensors.checkinouts
 
 import com.influxdb.client.kotlin.InfluxDBClientKotlin
+import com.influxdb.client.kotlin.InfluxDBClientKotlinFactory
 import com.influxdb.query.FluxRecord
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
@@ -8,22 +9,51 @@ import kotlinx.coroutines.channels.toList
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toKotlinInstant
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.nowIsoUtcString
 import no.slomic.smarthytte.common.toIsoUtcString
-import no.slomic.smarthytte.common.truncatedToMillis
+import no.slomic.smarthytte.properties.CheckInProperties
+import no.slomic.smarthytte.properties.InfluxDbProperties
+import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
+import no.slomic.smarthytte.properties.loadProperties
 import kotlin.time.Duration.Companion.seconds
 
 class CheckInOutSensorService(
     val checkInOutSensorRepository: CheckInOutSensorRepository,
-    val bucketName: String,
-    val measurement: String,
-    val fullSyncStartTime: Instant,
-    val fullSyncStopTime: Instant?,
+    influxDbPropertiesHolder: InfluxDbPropertiesHolder = loadProperties<InfluxDbPropertiesHolder>(),
 ) {
     private val logger: Logger = KtorSimpleLogger(CheckInOutSensorService::class.java.name)
+    private val influxdbProperties: InfluxDbProperties = influxDbPropertiesHolder.influxDb
+    private val checkInOutSensorProperties: CheckInProperties = influxdbProperties.checkIn
+    private val fullSyncStartTime = Instant.parse(checkInOutSensorProperties.rangeStart)
+    private val fullSyncStopTime: Instant? = if (checkInOutSensorProperties.rangeStop.isNullOrEmpty()) {
+        null
+    } else {
+        Instant.parse(checkInOutSensorProperties.rangeStop)
+    }
+    private val bucketName = influxdbProperties.bucket
+    private val measurement = checkInOutSensorProperties.measurement
 
-    suspend fun synchronizeCheckInOut() {
-        val filterTimeRange = filterTimeRange()
+    suspend fun fetchCheckInOut() {
+        val lastCheckInTimestamp: Instant? = checkInOutSensorRepository.latestTime()
+        val filterTimeRange = if (lastCheckInTimestamp == null) {
+            val range = FilterTimeRange(
+                start = fullSyncStartTime.toIsoUtcString(),
+                stop = fullSyncStopOrDefault.toIsoUtcString(),
+            )
+            logger.info("Performing full fetch for check in/out sensors between {}", range)
+
+            range
+        } else {
+            // Adding 1 second to the start to exclude last check in already processed
+            val range = FilterTimeRange(
+                start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
+                stop = nowIsoUtcString(),
+            )
+            logger.info("Performing incremental fetch for check in/out sensors between {}", range)
+
+            range
+        }
 
         val fluxQuery = (
             """
@@ -34,66 +64,56 @@ class CheckInOutSensorService(
               |> keep(columns: ["_time", "_value"])
               |> sort(columns: ["_time"], desc: false)
               |> group(columns: [])
-        """
+            """
             )
 
         val influxDbClient: InfluxDBClientKotlin = InfluxDBClientProvider.client()
         influxDbClient.use { client ->
-            // Reads check ins from InfluxDB and maps to the CheckIn class
+            // Reads check in and out from InfluxDB and maps to the CheckIn class
             val receivedCheckInOutSensors: List<CheckInOutSensor> = client
                 .getQueryKotlinApi()
                 .query(fluxQuery)
                 .toList()
                 .map { it.toCheckIn() }
                 .sortedBy { it.time }
-            storeUpdates(receivedCheckInOutSensors)
+
+            // Store check in and out sensor data to db
+            val persistenceResults = storeUpdates(receivedCheckInOutSensors)
+
+            val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }
+            val updatedCount = persistenceResults.count { it == PersistenceResult.UPDATED }
+            val noActionCount = persistenceResults.count { it == PersistenceResult.NO_ACTION }
+
+            logger.info(
+                "Fetching check in and check out complete. " +
+                    "Total check in/out in response: ${receivedCheckInOutSensors.size}, added: $addedCount, " +
+                    "updated: $updatedCount, no actions: $noActionCount",
+            )
         }
     }
 
-    private suspend fun storeUpdates(checkInOutSensors: List<CheckInOutSensor>) {
-        if (checkInOutSensors.isEmpty()) {
-            logger.info("No check in/out entries to update.")
-        } else {
-            for (checkIn in checkInOutSensors) {
-                checkInOutSensorRepository.addOrUpdate(checkIn)
-            }
-            val latestTimestamp: Instant? = checkInOutSensors.maxByOrNull { it.time }?.time
+    private suspend fun storeUpdates(checkInOutSensors: List<CheckInOutSensor>): List<PersistenceResult> {
+        val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
-            if (latestTimestamp != null) {
-                checkInOutSensorRepository.addOrUpdate(latestTimestamp)
-            }
-            logger.info("Saved ${checkInOutSensors.size} check in/out entries.")
+        for (checkInOutSensor in checkInOutSensors) {
+            persistenceResults.add(checkInOutSensorRepository.addOrUpdate(checkInOutSensor))
         }
+
+        val latestTimestamp: Instant? = checkInOutSensors.maxByOrNull { it.time }?.time
+
+        if (latestTimestamp != null) {
+            checkInOutSensorRepository.addOrUpdate(latestTimestamp)
+        }
+
+        return persistenceResults
     }
 
     private val fullSyncStopOrDefault: Instant
         get() = fullSyncStopTime ?: Clock.System.now()
 
-    private suspend fun filterTimeRange(): FilterTimeRange {
-        val lastCheckInTimestamp: Instant? = checkInOutSensorRepository.latestTime()
-        return if (lastCheckInTimestamp == null) {
-            val range = FilterTimeRange(
-                start = fullSyncStartTime.toIsoUtcString(),
-                stop = fullSyncStopOrDefault.toIsoUtcString(),
-            )
-            logger.info("Performing full sync for check in/out entries between $range")
-
-            range
-        } else {
-            val range = // Adding 1 second to the start to exclude last check in already processed
-                FilterTimeRange(
-                    start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
-                    stop = nowIsoUtcString(),
-                )
-            logger.info("Performing incremental sync for check in/out entries between $range")
-
-            range
-        }
-    }
-
     private fun FluxRecord.toCheckIn(): CheckInOutSensor = CheckInOutSensor(
         id = time.toString(),
-        time = time!!.toKotlinInstant().truncatedToMillis(),
+        time = time!!.toKotlinInstant(),
         status = (value as String).toStatus(),
     )
 
@@ -101,5 +121,17 @@ class CheckInOutSensorService(
 
     private data class FilterTimeRange(val start: String, val stop: String) {
         override fun toString(): String = "$start - $stop"
+    }
+
+    object InfluxDBClientProvider {
+        fun client(): InfluxDBClientKotlin {
+            val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
+
+            return InfluxDBClientKotlinFactory.create(
+                url = influxdbProperties.url,
+                token = influxdbProperties.token.toCharArray(),
+                org = influxdbProperties.org,
+            )
+        }
     }
 }

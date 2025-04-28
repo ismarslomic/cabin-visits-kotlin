@@ -20,7 +20,7 @@ fun Application.launchSyncCheckInOutSensorTask(checkInOutSensorService: CheckInO
     log.info("Launching syncCheckInOutSensor task every $syncFrequencyMinutes")
     val taskJob = launch {
         while (isActive) {
-            performSync(checkInOutSensorService)
+            checkInOutSensorService.fetchCheckInOut()
             delay(syncFrequencyMinutes)
         }
     }
@@ -30,11 +30,4 @@ fun Application.launchSyncCheckInOutSensorTask(checkInOutSensorService: CheckInO
         log.info("Canceling the syncCheckInOutSensor task since Application is stopping.")
         taskJob.cancel() // Stop the task
     }
-}
-
-private suspend fun Application.performSync(checkInOutSensorService: CheckInOutSensorService) {
-    // Launch custom code in a coroutine
-    log.info("Starting syncing the Check In/Out sensor from InfluxDb.")
-    checkInOutSensorService.synchronizeCheckInOut()
-    log.info("Completed syncing the Check In/Out sensor from InfluxDb")
 }

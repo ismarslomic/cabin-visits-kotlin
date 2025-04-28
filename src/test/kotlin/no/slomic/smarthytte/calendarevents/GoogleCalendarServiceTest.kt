@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.reservations
+package no.slomic.smarthytte.calendarevents
 
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
@@ -12,9 +12,10 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.slomic.smarthytte.BaseDbTest
-import no.slomic.smarthytte.calendarevents.GoogleCalendarRepository
-import no.slomic.smarthytte.calendarevents.GoogleCalendarService
-import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
+import no.slomic.smarthytte.properties.GoogleCalendarProperties
+import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
+import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.SqliteReservationRepository
 
 class GoogleCalendarServiceTest :
     BaseDbTest({
@@ -22,18 +23,23 @@ class GoogleCalendarServiceTest :
 
         val mockCalendarApiClient = mockk<Calendar>(relaxed = true)
         val mockEventsList = mockk<Calendar.Events.List>(relaxed = true)
-        val syncFromDateTime = DateTime("2024-12-29T00:00:00Z")
         val reservationRepository: ReservationRepository = SqliteReservationRepository()
         val googleCalendarRepository: GoogleCalendarRepository = SqliteGoogleCalendarRepository()
-        val summaryToGuestFilePath = getResourceFilePath("summaryToGuestIds.json")
+        val googleCalendarPropertiesHolder = GoogleCalendarPropertiesHolder(
+            googleCalendar = GoogleCalendarProperties(
+                credentialsFilePath = "foo/path",
+                calendarId = "test-calendar",
+                syncFromDateTime = "2024-12-29T00:00:00Z",
+                summaryToGuestFilePath = getResourceFilePath("summaryToGuestIds.json"),
+                syncFrequencyMinutes = 5,
+            ),
+        )
 
         val googleCalendarService = GoogleCalendarService(
-            calendarApiClient = mockCalendarApiClient,
-            calendarId = "test-calendar",
-            syncFromDateTime = syncFromDateTime,
             reservationRepository = reservationRepository,
             googleCalendarRepository = googleCalendarRepository,
-            summaryToGuestFilePath = summaryToGuestFilePath,
+            googleCalendarPropertiesHolder = googleCalendarPropertiesHolder,
+            calendarApiClient = mockCalendarApiClient,
         )
 
         // Set up generic mocking for Calendar.Events.List no matter if its full or incremental sync
@@ -45,7 +51,7 @@ class GoogleCalendarServiceTest :
             every { mockEventsList.execute() } returns Events().apply { items = emptyList() }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents()
+                googleCalendarService.fetchGoogleCalendarEvents()
             }
 
             reservationRepository.allReservations().shouldBeEmpty()
@@ -63,7 +69,7 @@ class GoogleCalendarServiceTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(newEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents()
+                googleCalendarService.fetchGoogleCalendarEvents()
             }
 
             reservationRepository.allReservations() shouldHaveSize 1
@@ -81,7 +87,7 @@ class GoogleCalendarServiceTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(newEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents()
+                googleCalendarService.fetchGoogleCalendarEvents()
             }
 
             val changedEvent = newEvent.apply {
@@ -91,7 +97,7 @@ class GoogleCalendarServiceTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(changedEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents()
+                googleCalendarService.fetchGoogleCalendarEvents()
             }
 
             val allEvents = reservationRepository.allReservations()
@@ -112,7 +118,7 @@ class GoogleCalendarServiceTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(newEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents()
+                googleCalendarService.fetchGoogleCalendarEvents()
             }
 
             reservationRepository.allReservations() shouldHaveSize 1
@@ -124,7 +130,7 @@ class GoogleCalendarServiceTest :
             every { mockEventsList.execute() } returns Events().apply { items = listOf(deletedEvent) }
 
             runBlocking {
-                googleCalendarService.synchronizeCalendarEvents()
+                googleCalendarService.fetchGoogleCalendarEvents()
             }
 
             reservationRepository.allReservations().shouldBeEmpty()

@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.Database
 import org.sqlite.SQLiteDataSource
 import java.sql.Connection
 import java.sql.DriverManager
+import java.util.*
 
 /**
  * This class is created to make it easier creating tests with an in-memory Sqlite database for testing Repositories and
@@ -15,6 +16,12 @@ import java.sql.DriverManager
  */
 abstract class BaseDbTest(body: BaseDbTest.() -> Unit = {}) :
     StringSpec({
+        // Set UTC as the default timezone in tests to avoid inconsistency between the local dev environment and the
+        // test environment in GitHub.
+        // Exposed v0.59 introduced some bugs with handling timezone for timestamp types,
+        // see https://youtrack.jetbrains.com/issue/EXPOSED-731/Timestamp-support-for-SQLite-is-broken
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
         val sqlitePath = "jdbc:sqlite:file:test?mode=memory&cache=shared"
         lateinit var keepAliveConnection: Connection
         lateinit var flyway: Flyway

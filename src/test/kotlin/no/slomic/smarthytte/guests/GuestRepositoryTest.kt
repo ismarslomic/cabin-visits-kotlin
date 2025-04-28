@@ -2,15 +2,15 @@ package no.slomic.smarthytte.guests
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.equality.shouldBeEqualToComparingFields
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.BaseDbTest
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.reservations.ReservationGuestTable
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
-import no.slomic.smarthytte.reservations.event
+import no.slomic.smarthytte.reservations.reservation
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -29,22 +29,20 @@ class GuestRepositoryTest :
         val repository: GuestRepository = SqliteGuestRepository()
 
         "add or update with new id should add new guest" {
-            val returnedGuest = repository.addOrUpdate(guest)
-            returnedGuest.shouldBeEqualToComparingFields(guest)
+            val persistenceResult = repository.addOrUpdate(guest)
+            persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
                 allGuests shouldHaveSize 1
 
                 val readGuest: GuestEntity = allGuests.first()
-                readGuest.id.value shouldBe guest.id
-                readGuest.firstName shouldBe guest.firstName
-                readGuest.lastName shouldBe guest.lastName
-                readGuest.birthYear shouldBe guest.birthYear
-                readGuest.email shouldBe guest.email
-                readGuest.gender shouldBe guest.gender
-                readGuest.updatedTime.shouldBeNull()
-                readGuest.version shouldBe 1
+                readGuest.shouldBeEqualToGuest(
+                    other = guest,
+                    expectedVersion = 1,
+                    shouldCreatedTimeBeNull = false,
+                    shouldUpdatedTimeBeNull = true,
+                )
             }
         }
 
@@ -52,22 +50,20 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest)
 
             val updatedGuest = guest.copy(firstName = "John 2")
-            val returnedGuest = repository.addOrUpdate(updatedGuest)
-            returnedGuest.shouldBeEqualToComparingFields(updatedGuest)
+            val persistenceResult = repository.addOrUpdate(updatedGuest)
+            persistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
                 allGuests shouldHaveSize 1
 
                 val readGuest: GuestEntity = allGuests.first()
-                readGuest.id.value shouldBe updatedGuest.id
-                readGuest.firstName shouldBe updatedGuest.firstName
-                readGuest.lastName shouldBe updatedGuest.lastName
-                readGuest.birthYear shouldBe updatedGuest.birthYear
-                readGuest.email shouldBe updatedGuest.email
-                readGuest.gender shouldBe updatedGuest.gender
-                readGuest.updatedTime.shouldNotBeNull()
-                readGuest.version shouldBe 2
+                readGuest.shouldBeEqualToGuest(
+                    other = updatedGuest,
+                    expectedVersion = 2,
+                    shouldCreatedTimeBeNull = false,
+                    shouldUpdatedTimeBeNull = false,
+                )
             }
         }
 
@@ -75,36 +71,34 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest)
 
             val updatedGuest = guest
-            val returnedGuest = repository.addOrUpdate(updatedGuest)
-            returnedGuest.shouldBeEqualToComparingFields(updatedGuest)
+            val persistenceResult = repository.addOrUpdate(updatedGuest)
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {
                 val allGuests: List<GuestEntity> = GuestEntity.all().toList()
                 allGuests shouldHaveSize 1
 
                 val readGuest: GuestEntity = allGuests.first()
-                readGuest.id.value shouldBe updatedGuest.id
-                readGuest.firstName shouldBe updatedGuest.firstName
-                readGuest.lastName shouldBe updatedGuest.lastName
-                readGuest.birthYear shouldBe updatedGuest.birthYear
-                readGuest.email shouldBe updatedGuest.email
-                readGuest.gender shouldBe updatedGuest.gender
-                readGuest.updatedTime.shouldBeNull()
-                readGuest.version shouldBe 1
+                readGuest.shouldBeEqualToGuest(
+                    other = updatedGuest,
+                    expectedVersion = 1,
+                    shouldCreatedTimeBeNull = false,
+                    shouldUpdatedTimeBeNull = true,
+                )
             }
         }
 
-        "delete should remove event guests from the intermediate table (cascade)" {
-            val calenderEventRepository: ReservationRepository = SqliteReservationRepository()
+        "delete should remove reservation guests from the intermediate table (cascade)" {
+            val reservationRepository: ReservationRepository = SqliteReservationRepository()
             repository.addOrUpdate(guest)
             val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
             repository.addOrUpdate(guest2)
 
-            val eventWithGuest = event.copy(
+            val reservationWithGuest = reservation.copy(
                 guestIds = listOf(guest.id, guest2.id),
             )
-            calenderEventRepository.addOrUpdate(eventWithGuest)
-            calenderEventRepository.reservationById(eventWithGuest.id).shouldNotBeNull()
+            reservationRepository.addOrUpdate(reservationWithGuest)
+            reservationRepository.reservationById(reservationWithGuest.id).shouldNotBeNull()
 
             transaction {
                 ReservationGuestTable.selectAll().toList() shouldHaveSize 2
@@ -115,3 +109,32 @@ class GuestRepositoryTest :
             }
         }
     })
+
+private fun GuestEntity.shouldBeEqualToGuest(
+    other: Guest,
+    expectedVersion: Short,
+    shouldCreatedTimeBeNull: Boolean,
+    shouldUpdatedTimeBeNull: Boolean,
+) {
+    id.value shouldBe other.id
+    firstName shouldBe other.firstName
+    lastName shouldBe other.lastName
+    birthYear shouldBe other.birthYear
+    email shouldBe other.email
+    gender shouldBe other.gender
+    notionId shouldBe other.notionId
+
+    if (shouldCreatedTimeBeNull) {
+        createdTime.shouldBeNull()
+    } else {
+        createdTime.shouldNotBeNull()
+    }
+
+    if (shouldUpdatedTimeBeNull) {
+        updatedTime.shouldBeNull()
+    } else {
+        updatedTime.shouldNotBeNull()
+    }
+
+    version shouldBe expectedVersion
+}

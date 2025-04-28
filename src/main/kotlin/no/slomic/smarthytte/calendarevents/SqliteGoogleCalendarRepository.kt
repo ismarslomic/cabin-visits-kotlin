@@ -4,6 +4,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.suspendTransaction
+import no.slomic.smarthytte.common.truncatedToMillis
 
 class SqliteGoogleCalendarRepository : GoogleCalendarRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteGoogleCalendarRepository::class.java.name)
@@ -20,7 +21,7 @@ class SqliteGoogleCalendarRepository : GoogleCalendarRepository {
             if (storedGoogleCalendarSync == null) {
                 GoogleCalendarSyncEntity.new(synckTokenId) {
                     syncToken = newSyncToken
-                    updatedTime = Clock.System.now()
+                    updatedTime = Clock.System.now().truncatedToMillis()
                     isUpdated = true
                 }
             } else {
@@ -29,25 +30,25 @@ class SqliteGoogleCalendarRepository : GoogleCalendarRepository {
                 val isDirty: Boolean = storedGoogleCalendarSync.writeValues.isNotEmpty()
 
                 if (isDirty) {
-                    storedGoogleCalendarSync.updatedTime = Clock.System.now()
+                    storedGoogleCalendarSync.updatedTime = Clock.System.now().truncatedToMillis()
                     isUpdated = true
                 }
             }
 
             if (isUpdated) {
-                logger.info("Calendar sync token updated.")
+                logger.trace("Calendar sync token updated.")
             } else {
-                logger.info("No need to update the calendar sync token.")
+                logger.trace("No need to update the calendar sync token.")
             }
         }
     }
 
     override suspend fun deleteSyncToken() {
         suspendTransaction {
-            logger.info("Deleting calendar sync token")
+            logger.trace("Deleting calendar sync token")
             val storedCalendarSync: GoogleCalendarSyncEntity? = GoogleCalendarSyncEntity.findById(synckTokenId)
             storedCalendarSync?.delete()
-            logger.info("Calendar sync token deleted")
+            logger.trace("Calendar sync token deleted")
         }
     }
 }

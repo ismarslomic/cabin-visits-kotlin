@@ -23,40 +23,42 @@ import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
+import io.ktor.util.logging.KtorSimpleLogger
+import io.ktor.util.logging.Logger
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
-import no.slomic.smarthytte.common.UpsertStatus
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.readVehicleTripFromJsonFile
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 
-fun Application.insertVehicleTripsFromFile(vehicleTripRepository: VehicleTripRepository) {
-    val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
+class VehicleTripService(private val vehicleTripRepository: VehicleTripRepository) {
+    private val logger: Logger = KtorSimpleLogger(VehicleTripService::class.java.name)
+    private val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
+    private val filePath = vehicleTripProperties.filePath
 
-    val filePath = vehicleTripProperties.filePath
+    suspend fun insertVehicleTripsFromFile() {
+        logger.info("Reading vehicle trips from file $filePath and updating database..")
 
-    log.info("Reading vehicle trips from file $filePath and updating database..")
+        val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
-    val tripsFromFile: List<VehicleTripResponse>
-    val upsertStatus: MutableList<UpsertStatus> = mutableListOf()
-    runBlocking {
-        tripsFromFile = readVehicleTripFromJsonFile(filePath)
+        val tripsFromFile: List<VehicleTripResponse> = readVehicleTripFromJsonFile(filePath)
         for (trip in tripsFromFile) {
-            upsertStatus.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
+            persistenceResults.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
         }
+
+        val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }
+        val updatedCount = persistenceResults.count { it == PersistenceResult.UPDATED }
+        val noActionCount = persistenceResults.count { it == PersistenceResult.NO_ACTION }
+
+        logger.info(
+            "Updating vehicle trips in database complete. " +
+                "Total trips in file: ${tripsFromFile.size}, added: $addedCount, " +
+                "updated: $updatedCount, no actions: $noActionCount",
+        )
     }
-
-    val addedCount = upsertStatus.count { it == UpsertStatus.ADDED }
-    val updatedCount = upsertStatus.count { it == UpsertStatus.UPDATED }
-    val noActionCount = upsertStatus.count { it == UpsertStatus.NO_ACTION }
-
-    log.info(
-        "Updating vehicle trips in database complete. " +
-            "Total trips: ${tripsFromFile.size}, added: $addedCount, " +
-            "updated: $updatedCount, no actions: $noActionCount",
-    )
 }
 
 fun Application.synchronizeVehicleTrips() {
