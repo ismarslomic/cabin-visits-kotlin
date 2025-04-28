@@ -35,19 +35,19 @@ class SqliteGoogleCalendarRepository : GoogleCalendarRepository {
             }
 
             if (isUpdated) {
-                logger.info("Calendar sync token updated.")
+                logger.trace("Calendar sync token updated.")
             } else {
-                logger.info("No need to update the calendar sync token.")
+                logger.trace("No need to update the calendar sync token.")
             }
         }
     }
 
     override suspend fun deleteSyncToken() {
         suspendTransaction {
-            logger.info("Deleting calendar sync token")
+            logger.trace("Deleting calendar sync token")
             val storedCalendarSync: GoogleCalendarSyncEntity? = GoogleCalendarSyncEntity.findById(synckTokenId)
             storedCalendarSync?.delete()
-            logger.info("Calendar sync token deleted")
+            logger.trace("Calendar sync token deleted")
         }
     }
 }

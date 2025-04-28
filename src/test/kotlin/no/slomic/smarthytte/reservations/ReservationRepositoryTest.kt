@@ -9,6 +9,9 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock
 import no.slomic.smarthytte.BaseDbTest
+import no.slomic.smarthytte.checkinouts.CheckIn
+import no.slomic.smarthytte.checkinouts.CheckInOutSource
+import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.GuestRepository
@@ -31,6 +34,18 @@ val reservation = Reservation(
     description = null,
     sourceCreatedTime = now.minus(1.days).truncatedToMillis(),
     sourceUpdatedTime = now.minus(5.hours).truncatedToMillis(),
+)
+
+val checkIn = CheckIn(
+    time = now,
+    sourceName = CheckInOutSource.CHECK_IN_SENSOR,
+    sourceId = "foo-source-id",
+)
+
+val checkOut = CheckOut(
+    time = now,
+    sourceName = CheckInOutSource.CHECK_IN_SENSOR,
+    sourceId = "foo-source-id",
 )
 
 class ReservationRepositoryTest :
@@ -119,6 +134,102 @@ class ReservationRepositoryTest :
 
         "reading reservation by non existing id should return null" {
             repository.reservationById(reservation.id).shouldBeNull()
+        }
+
+        "setting check in status for non existing reservation should return NO_ACTION as result" {
+            val persistenceResult = repository.setCheckIn(checkIn = checkIn, id = "non-existing-id")
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
+        }
+
+        "setting new check in status should return UPDATED as result and update reservations check in time" {
+            repository.addOrUpdate(reservation)
+            val persistenceResult = repository.setCheckIn(checkIn = checkIn, id = reservation.id)
+
+            persistenceResult shouldBe PersistenceResult.UPDATED
+            transaction {
+                val updatedReservation = ReservationEntity.all().first()
+                updatedReservation.checkInTime shouldBe checkIn.time.truncatedToMillis()
+                updatedReservation.checkInSourceId shouldBe checkIn.sourceId
+                updatedReservation.checkInSourceName shouldBe checkIn.sourceName
+                updatedReservation.version shouldBe 2
+                updatedReservation.updatedTime.shouldNotBeNull()
+            }
+        }
+
+        "update check in status without change should return NO_ACTION as result without any updates" {
+            repository.addOrUpdate(reservation)
+            repository.setCheckIn(checkIn = checkIn, id = reservation.id)
+            val persistenceResult = repository.setCheckIn(checkIn = checkIn, id = reservation.id)
+
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
+            transaction {
+                val updatedReservation = ReservationEntity.all().first()
+                updatedReservation.version shouldBe 2
+            }
+        }
+
+        "update check in status with change should return UPDATED and update reservations check in time" {
+            repository.addOrUpdate(reservation)
+            repository.setCheckIn(checkIn = checkIn, id = reservation.id)
+            val changedCheckIn = checkIn.copy(time = now.plus(1.hours))
+            val persistenceResult = repository.setCheckIn(checkIn = changedCheckIn, id = reservation.id)
+
+            persistenceResult shouldBe PersistenceResult.UPDATED
+            transaction {
+                val updatedReservation = ReservationEntity.all().first()
+                updatedReservation.checkInTime shouldBe changedCheckIn.time.truncatedToMillis()
+                updatedReservation.checkInSourceId shouldBe changedCheckIn.sourceId
+                updatedReservation.checkInSourceName shouldBe changedCheckIn.sourceName
+                updatedReservation.version shouldBe 3
+            }
+        }
+
+        "setting check out status for non existing reservation should return NO_ACTION as result" {
+            val persistenceResult = repository.setCheckOut(checkOut = checkOut, id = "non-existing-id")
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
+        }
+
+        "setting new check out status should return UPDATED as result and update reservations check out time" {
+            repository.addOrUpdate(reservation)
+            val persistenceResult = repository.setCheckOut(checkOut = checkOut, id = reservation.id)
+
+            persistenceResult shouldBe PersistenceResult.UPDATED
+            transaction {
+                val updatedReservation = ReservationEntity.all().first()
+                updatedReservation.checkOutTime shouldBe checkOut.time.truncatedToMillis()
+                updatedReservation.checkOutSourceId shouldBe checkOut.sourceId
+                updatedReservation.checkOutSourceName shouldBe checkOut.sourceName
+                updatedReservation.version shouldBe 2
+                updatedReservation.updatedTime.shouldNotBeNull()
+            }
+        }
+
+        "update check out status without change should return NO_ACTION as result without any updates" {
+            repository.addOrUpdate(reservation)
+            repository.setCheckOut(checkOut = checkOut, id = reservation.id)
+            val persistenceResult = repository.setCheckOut(checkOut = checkOut, id = reservation.id)
+
+            persistenceResult shouldBe PersistenceResult.NO_ACTION
+            transaction {
+                val updatedReservation = ReservationEntity.all().first()
+                updatedReservation.version shouldBe 2
+            }
+        }
+
+        "update check out status with change should return UPDATED and update reservations check out time" {
+            repository.addOrUpdate(reservation)
+            repository.setCheckOut(checkOut = checkOut, id = reservation.id)
+            val changedCheckOut = checkOut.copy(time = now.plus(1.hours))
+            val persistenceResult = repository.setCheckOut(checkOut = changedCheckOut, id = reservation.id)
+
+            persistenceResult shouldBe PersistenceResult.UPDATED
+            transaction {
+                val updatedReservation = ReservationEntity.all().first()
+                updatedReservation.checkOutTime shouldBe changedCheckOut.time.truncatedToMillis()
+                updatedReservation.checkOutSourceId shouldBe changedCheckOut.sourceId
+                updatedReservation.checkOutSourceName shouldBe changedCheckOut.sourceName
+                updatedReservation.version shouldBe 3
+            }
         }
 
         "adding guests to the reservation should store guests to intermediate table" {

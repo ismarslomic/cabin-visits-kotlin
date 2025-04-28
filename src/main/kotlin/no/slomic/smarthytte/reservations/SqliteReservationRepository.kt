@@ -7,6 +7,7 @@ import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
+import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.GuestEntity
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedCollection
@@ -79,15 +80,31 @@ class SqliteReservationRepository : ReservationRepository {
             ReservationEntity.findById(id) ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
         with(storedReservation) {
-            this.checkInTime = checkIn.time
+            this.checkInTime = checkIn.time.truncatedToMillis()
             this.checkInSourceName = checkIn.sourceName
             this.checkInSourceId = checkIn.sourceId
-            version = storedReservation.version.inc()
-            updatedTime = Clock.System.now()
         }
 
-        logger.trace("Check in set for reservation with id: $id")
-        PersistenceResult.UPDATED
+        val isDirty: Boolean = storedReservation.writeValues.isNotEmpty()
+
+        if (isDirty) {
+            storedReservation.version = storedReservation.version.inc()
+            storedReservation.updatedTime = Clock.System.now()
+
+            logger.trace(
+                "Updated check in status for reservation with id: {} and summary: {}",
+                storedReservation.id,
+                storedReservation.summary,
+            )
+            PersistenceResult.UPDATED
+        } else {
+            logger.trace(
+                "No changes detected for check in status of reservation with id: {} and summary: {}",
+                storedReservation.id,
+                storedReservation.summary,
+            )
+            PersistenceResult.NO_ACTION
+        }
     }
 
     @Suppress("DuplicatedCode")
@@ -98,15 +115,31 @@ class SqliteReservationRepository : ReservationRepository {
             ReservationEntity.findById(id) ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
         with(storedReservation) {
-            this.checkOutTime = checkOut.time
+            this.checkOutTime = checkOut.time.truncatedToMillis()
             this.checkOutSourceName = checkOut.sourceName
             this.checkOutSourceId = checkOut.sourceId
-            version = storedReservation.version.inc()
-            updatedTime = Clock.System.now()
         }
 
-        logger.trace("Check out set for reservation with id: $id")
-        PersistenceResult.UPDATED
+        val isDirty: Boolean = storedReservation.writeValues.isNotEmpty()
+
+        if (isDirty) {
+            storedReservation.version = storedReservation.version.inc()
+            storedReservation.updatedTime = Clock.System.now()
+
+            logger.trace(
+                "Updated check out status for reservation with id: {} and summary: {}",
+                storedReservation.id,
+                storedReservation.summary,
+            )
+            PersistenceResult.UPDATED
+        } else {
+            logger.trace(
+                "No changes detected for check out status of reservation with id: {} and summary: {}",
+                storedReservation.id,
+                storedReservation.summary,
+            )
+            PersistenceResult.NO_ACTION
+        }
     }
 
     private fun addReservation(reservation: Reservation): PersistenceResult {

@@ -1,8 +1,10 @@
 package no.slomic.smarthytte.checkinouts
 
-import kotlinx.coroutines.runBlocking
+import io.ktor.util.logging.KtorSimpleLogger
+import io.ktor.util.logging.Logger
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
@@ -16,39 +18,59 @@ class CheckInOutService(
     private val checkInOutSensorRepository: CheckInOutSensorRepository,
     private val vehicleTripRepository: VehicleTripRepository,
 ) {
-    fun updateCheckInOut() {
-        runBlocking {
-            val allReservations: List<Reservation> = reservationRepository.allReservations()
-            val checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>> =
-                checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
-            val allVehicleTrips: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
-            val homeCabinTrips: List<VehicleTrip> = findCabinTripsWithExtraStops(allVehicleTrips)
-            allReservations.forEach { reservation ->
-                val checkIn: CheckIn? = if (reservation.hasStarted) {
-                    createCheckIn(reservation, checkInOutSensorsByDate, homeCabinTrips)
-                } else {
-                    null
-                }
+    private val logger: Logger = KtorSimpleLogger(CheckInOutService::class.java.name)
 
-                val checkOut: CheckOut? = if (reservation.hasEnded) {
-                    createCheckOut(
-                        reservation,
-                        checkInOutSensorsByDate,
-                        homeCabinTrips,
-                    )
-                } else {
-                    null
-                }
+    suspend fun updateCheckInOutStatusForAllReservations() {
+        logger.info("Updating check in/out status for all reservations...")
 
-                if (checkIn != null) {
-                    reservationRepository.setCheckIn(checkIn, reservation.id)
-                }
+        val allReservations: List<Reservation> = reservationRepository.allReservations()
+        val checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>> =
+            checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
+        val allVehicleTrips: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
+        val homeCabinTrips: List<VehicleTrip> = findCabinTripsWithExtraStops(allVehicleTrips)
 
-                if (checkOut != null) {
-                    reservationRepository.setCheckOut(checkOut, reservation.id)
-                }
+        val checkInPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
+        val checkOutPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
+        allReservations.forEach { reservation ->
+            val checkIn: CheckIn? = if (reservation.hasStarted) {
+                createCheckIn(reservation, checkInOutSensorsByDate, homeCabinTrips)
+            } else {
+                null
+            }
+
+            val checkOut: CheckOut? = if (reservation.hasEnded) {
+                createCheckOut(
+                    reservation,
+                    checkInOutSensorsByDate,
+                    homeCabinTrips,
+                )
+            } else {
+                null
+            }
+
+            if (checkIn != null) {
+                checkInPersistenceResults.add(reservationRepository.setCheckIn(checkIn, reservation.id))
+            } else {
+                checkInPersistenceResults.add(PersistenceResult.NO_ACTION)
+            }
+
+            if (checkOut != null) {
+                checkOutPersistenceResults.add(reservationRepository.setCheckOut(checkOut, reservation.id))
+            } else {
+                checkOutPersistenceResults.add(PersistenceResult.NO_ACTION)
             }
         }
+
+        val checkInUpdatedCount = checkInPersistenceResults.count { it == PersistenceResult.UPDATED }
+        val checkInNoActionCount = checkInPersistenceResults.count { it == PersistenceResult.NO_ACTION }
+        val checkOutUpdatedCount = checkOutPersistenceResults.count { it == PersistenceResult.UPDATED }
+        val checkOutNoActionCount = checkOutPersistenceResults.count { it == PersistenceResult.NO_ACTION }
+        logger.info(
+            "Updating check in/out status for all reservations complete. " +
+                "Total reservations in db: ${allReservations.size}, " +
+                "check in updated: $checkInUpdatedCount, check in no actions: $checkInNoActionCount ," +
+                "check out updated: $checkOutUpdatedCount, check out no actions: $checkOutNoActionCount",
+        )
     }
 
     private fun createCheckIn(

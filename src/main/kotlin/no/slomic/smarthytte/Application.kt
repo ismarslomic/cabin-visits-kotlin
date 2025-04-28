@@ -73,7 +73,8 @@ fun Application.module() {
 
     // Fetch reservations, check in/out sensor data and update check in/out status continuously in the background
     // launchSyncGoogleCalendarTask(googleCalendarService)
-    // checkInOutService.updateCheckInOut()
+    // NOTE!: the method below reads all reservations and updates their check in/out status.
+    // checkInOutService.updateCheckInOutStatusForAllReservations()
 
     // Configure Ktor routing (after the initial load is completed)
     configureRouting()
@@ -108,7 +109,7 @@ suspend fun Application.initialLoad(
     // The following data must be loaded after previous steps since they depend on them.
     // These steps must also be executed in sequence
     googleCalendarService.fetchGoogleCalendarEvents()
-    checkInOutService.updateCheckInOut()
+    checkInOutService.updateCheckInOutStatusForAllReservations()
 
     log.info("Initial load complete!")
 }
