@@ -26,11 +26,11 @@ import kotlin.time.Duration.Companion.hours
 val now = Clock.System.now()
 
 val reservation = Reservation(
-    id = "event1",
+    id = "reservation1",
     startTime = now.truncatedToMillis(),
     endTime = now.plus(2.days).truncatedToMillis(),
     guestIds = listOf(),
-    summary = "Test event",
+    summary = "Test reservation",
     description = null,
     sourceCreatedTime = now.minus(1.days).truncatedToMillis(),
     sourceUpdatedTime = now.minus(5.hours).truncatedToMillis(),
@@ -70,10 +70,10 @@ class ReservationRepositoryTest :
             }
         }
 
-        "add or update with existing id should update the existing event" {
+        "add or update with existing id should update the existing reservation" {
             repository.addOrUpdate(reservation)
 
-            val updatedReservation: Reservation = reservation.copy(summary = "Test event 2")
+            val updatedReservation: Reservation = reservation.copy(summary = "Test reservation 2")
             val persistenceResult: PersistenceResult = repository.addOrUpdate(updatedReservation)
             persistenceResult shouldBe PersistenceResult.UPDATED
 
@@ -91,7 +91,7 @@ class ReservationRepositoryTest :
             }
         }
 
-        "add or update with existing id without property changes should not update the existing event" {
+        "add or update with existing id without property changes should not update the existing reservation" {
             repository.addOrUpdate(reservation)
 
             val updatedReservation: Reservation = reservation
@@ -282,8 +282,8 @@ class ReservationRepositoryTest :
             repository.reservationById(reservationWithGuest.id).shouldBeNull()
 
             transaction {
-                val allEventGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
-                allEventGuests.shouldBeEmpty()
+                val allReservationGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
+                allReservationGuests.shouldBeEmpty()
             }
         }
     })

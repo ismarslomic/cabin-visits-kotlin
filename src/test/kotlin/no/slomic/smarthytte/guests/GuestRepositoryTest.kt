@@ -88,17 +88,17 @@ class GuestRepositoryTest :
             }
         }
 
-        "delete should remove event guests from the intermediate table (cascade)" {
-            val calenderEventRepository: ReservationRepository = SqliteReservationRepository()
+        "delete should remove reservation guests from the intermediate table (cascade)" {
+            val reservationRepository: ReservationRepository = SqliteReservationRepository()
             repository.addOrUpdate(guest)
             val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
             repository.addOrUpdate(guest2)
 
-            val eventWithGuest = reservation.copy(
+            val reservationWithGuest = reservation.copy(
                 guestIds = listOf(guest.id, guest2.id),
             )
-            calenderEventRepository.addOrUpdate(eventWithGuest)
-            calenderEventRepository.reservationById(eventWithGuest.id).shouldNotBeNull()
+            reservationRepository.addOrUpdate(reservationWithGuest)
+            reservationRepository.reservationById(reservationWithGuest.id).shouldNotBeNull()
 
             transaction {
                 ReservationGuestTable.selectAll().toList() shouldHaveSize 2

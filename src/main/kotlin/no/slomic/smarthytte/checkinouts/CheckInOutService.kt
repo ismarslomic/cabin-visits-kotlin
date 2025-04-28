@@ -137,25 +137,25 @@ class CheckInOutService(
         }
     }
 
-    private fun findArrivalAtCabinTrip(homeCabinTrips: List<VehicleTrip>, event: Reservation): VehicleTrip? {
-        val eventStartDate: LocalDate = event.startDate
-        val checkInTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasArrivedCabinAt(eventStartDate) }
+    private fun findArrivalAtCabinTrip(homeCabinTrips: List<VehicleTrip>, reservation: Reservation): VehicleTrip? {
+        val reservationStartDate: LocalDate = reservation.startDate
+        val checkInTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasArrivedCabinAt(reservationStartDate) }
 
         return checkInTrip
     }
 
-    private fun findDepartureFromCabinTrip(homeCabinTrips: List<VehicleTrip>, event: Reservation): VehicleTrip? {
-        val eventEndDate: LocalDate = event.endDate
-        val checkOutTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasDepartedCabinAt(eventEndDate) }
+    private fun findDepartureFromCabinTrip(homeCabinTrips: List<VehicleTrip>, reservation: Reservation): VehicleTrip? {
+        val reservationEndDate: LocalDate = reservation.endDate
+        val checkOutTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasDepartedCabinAt(reservationEndDate) }
 
         return checkOutTrip
     }
 
     private fun findCheckInFromSensor(
         checkInOutSensors: Map<LocalDate, List<CheckInOutSensor>>,
-        event: Reservation,
+        reservation: Reservation,
     ): CheckInOutSensor? {
-        val startDate: LocalDate = event.startDate
+        val startDate: LocalDate = reservation.startDate
         val startCheckInOutSensors: List<CheckInOutSensor>? = checkInOutSensors[startDate]
 
         return startCheckInOutSensors?.firstOrNull { it.isCheckedIn }
@@ -163,9 +163,9 @@ class CheckInOutService(
 
     private fun findCheckOutFromSensor(
         checkInOutSensors: Map<LocalDate, List<CheckInOutSensor>>,
-        event: Reservation,
+        reservation: Reservation,
     ): CheckInOutSensor? {
-        val endDate: LocalDate = event.endDate
+        val endDate: LocalDate = reservation.endDate
         val endCheckInOutSensors: List<CheckInOutSensor>? = checkInOutSensors[endDate]
 
         return endCheckInOutSensors?.firstOrNull { it.isCheckedOut }

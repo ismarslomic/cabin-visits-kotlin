@@ -21,9 +21,9 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         val storedCheckInOut: CheckInOutSensorEntity? = CheckInOutSensorEntity.findById(entityId)
 
         if (storedCheckInOut == null) {
-            addEvent(checkInOutSensor)
+            addCheckInOutSensor(checkInOutSensor)
         } else {
-            updateEvent(checkInOutSensor)
+            updateCheckInOutSensor(checkInOutSensor)
         }
     }
 
@@ -60,7 +60,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         }
     }
 
-    private fun addEvent(checkInOutSensor: CheckInOutSensor): PersistenceResult {
+    private fun addCheckInOutSensor(checkInOutSensor: CheckInOutSensor): PersistenceResult {
         logger.trace("Adding check in/out with id: ${checkInOutSensor.id}")
 
         CheckInOutSensorEntity.new(checkInOutSensor.id) {
@@ -78,7 +78,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * check in.
      */
-    private fun updateEvent(checkInOutSensor: CheckInOutSensor): PersistenceResult {
+    private fun updateCheckInOutSensor(checkInOutSensor: CheckInOutSensor): PersistenceResult {
         logger.trace("Updating check in/out with id: ${checkInOutSensor.id}")
 
         val updatedCheckInOut: CheckInOutSensorEntity =
