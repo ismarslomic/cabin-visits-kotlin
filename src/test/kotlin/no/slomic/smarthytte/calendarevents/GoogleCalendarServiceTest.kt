@@ -26,7 +26,7 @@ class GoogleCalendarServiceTest :
         val mockCalendarApiClient = mockk<Calendar>(relaxed = true)
         val mockEventsList = mockk<Calendar.Events.List>(relaxed = true)
         val reservationRepository: ReservationRepository = SqliteReservationRepository()
-        val syncCheckpointService: SyncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
+        val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
         val googleCalendarPropertiesHolder = GoogleCalendarPropertiesHolder(
             googleCalendar = GoogleCalendarProperties(
                 credentialsFilePath = "foo/path",
