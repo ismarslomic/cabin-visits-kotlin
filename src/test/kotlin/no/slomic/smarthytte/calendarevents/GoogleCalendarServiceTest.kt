@@ -16,6 +16,8 @@ import no.slomic.smarthytte.properties.GoogleCalendarProperties
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 
 class GoogleCalendarServiceTest :
     BaseDbTest({
@@ -24,7 +26,7 @@ class GoogleCalendarServiceTest :
         val mockCalendarApiClient = mockk<Calendar>(relaxed = true)
         val mockEventsList = mockk<Calendar.Events.List>(relaxed = true)
         val reservationRepository: ReservationRepository = SqliteReservationRepository()
-        val googleCalendarRepository: GoogleCalendarRepository = SqliteGoogleCalendarRepository()
+        val syncCheckpointService: SyncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
         val googleCalendarPropertiesHolder = GoogleCalendarPropertiesHolder(
             googleCalendar = GoogleCalendarProperties(
                 credentialsFilePath = "foo/path",
@@ -37,7 +39,7 @@ class GoogleCalendarServiceTest :
 
         val googleCalendarService = GoogleCalendarService(
             reservationRepository = reservationRepository,
-            googleCalendarRepository = googleCalendarRepository,
+            syncCheckpointService = syncCheckpointService,
             googleCalendarPropertiesHolder = googleCalendarPropertiesHolder,
             calendarApiClient = mockCalendarApiClient,
         )
