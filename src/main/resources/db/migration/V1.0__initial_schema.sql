@@ -10,15 +10,6 @@ create table check_in_out_sensor
     constraint chk_check_in_out_sensor_signed_short_version check (version BETWEEN -32768 AND 32767)
 );
 
-create table check_in_out_sensor_sync
-(
-    id           INTEGER
-        primary key autoincrement,
-    latest_time  TEXT not null,
-    updated_time TEXT not null,
-    constraint chk_check_in_out_sensor_sync_signed_integer_id check (id BETWEEN -2147483648 AND 2147483647)
-);
-
 create table google_calendar_sync
 (
     id           INTEGER

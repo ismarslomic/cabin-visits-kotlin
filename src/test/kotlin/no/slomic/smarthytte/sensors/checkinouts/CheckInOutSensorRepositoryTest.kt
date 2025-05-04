@@ -78,18 +78,6 @@ class CheckInOutSensorRepositoryTest :
                 )
             }
         }
-
-        "reading latest check in/out time when empty table should return null as latest time" {
-            val latestTime: Instant? = repository.latestTime()
-            latestTime.shouldBeNull()
-        }
-
-        "reading latest check in/out time when at least one sensor stored in table should return latest time" {
-            repository.addOrUpdate(checkInSensor.time)
-
-            val latestTime: Instant? = repository.latestTime()
-            latestTime shouldBe checkInSensor.time
-        }
     })
 
 private fun CheckInOutSensorEntity.shouldBeEqualToCheckInOutSensor(

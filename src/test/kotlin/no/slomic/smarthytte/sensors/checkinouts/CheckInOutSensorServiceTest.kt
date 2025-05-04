@@ -16,6 +16,8 @@ import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
+import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 
 data class MockFluxRecord(val time: Instant, val value: String)
 
@@ -52,15 +54,19 @@ class CheckInOutSensorServiceTest :
                 ),
             ),
         )
+
+        lateinit var syncCheckpointService: SyncCheckpointService
         lateinit var checkInOutSensorRepository: CheckInOutSensorRepository
         lateinit var checkInOutSensorService: CheckInOutSensorService
         lateinit var mockQueryApi: QueryKotlinApi
 
         beforeEach {
+            syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             checkInOutSensorRepository = SqliteCheckInOutSensorRepository()
             checkInOutSensorService = CheckInOutSensorService(
                 checkInOutSensorRepository = checkInOutSensorRepository,
                 influxDbPropertiesHolder = influxDbPropertiesHolder,
+                syncCheckpointService = syncCheckpointService,
             )
 
             val mockClient: InfluxDBClientKotlin = mockk<InfluxDBClientKotlin>(relaxed = true)
