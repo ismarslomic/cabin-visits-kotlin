@@ -61,7 +61,7 @@ class SyncCheckpointServiceTest :
             syncCheckpointService.addOrUpdateCheckpointForCheckInOutSensor(checkInOutCheckpointInstant)
             syncCheckpointService.checkpointForCheckInOutSensor() shouldBe checkInOutCheckpointInstant
 
-            val newCheckpointString: String = "2025-05-04T13:20:00.123456Z"
+            val newCheckpointString = "2025-05-04T13:20:00.123456Z"
             val newCheckpointInstant: Instant = Instant.parse(newCheckpointString)
 
             syncCheckpointService.addOrUpdateCheckpointForCheckInOutSensor(newCheckpointInstant)
