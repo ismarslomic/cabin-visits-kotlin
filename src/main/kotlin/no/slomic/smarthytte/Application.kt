@@ -5,9 +5,7 @@ import io.ktor.server.application.log
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import kotlinx.coroutines.runBlocking
-import no.slomic.smarthytte.calendarevents.GoogleCalendarRepository
 import no.slomic.smarthytte.calendarevents.GoogleCalendarService
-import no.slomic.smarthytte.calendarevents.SqliteGoogleCalendarRepository
 import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.guests.GuestService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
@@ -21,6 +19,9 @@ import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
+import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointRepository
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripService
@@ -53,15 +54,16 @@ fun Application.module() {
     configureMonitoring()
 
     // Initialize repositories
+    val syncCheckpointRepository: SyncCheckpointRepository = SqliteSyncCheckpointRepository()
     val reservationRepository: ReservationRepository = SqliteReservationRepository()
-    val googleCalendarRepository: GoogleCalendarRepository = SqliteGoogleCalendarRepository()
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
     val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
 
     // Initialize services
+    val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
     val vehicleTripService = VehicleTripService(vehicleTripRepository)
-    val googleCalendarService = GoogleCalendarService(reservationRepository, googleCalendarRepository)
-    val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository)
+    val googleCalendarService = GoogleCalendarService(reservationRepository, syncCheckpointService)
+    val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
     val checkInOutService = CheckInOutService(
         reservationRepository = reservationRepository,
         checkInOutSensorRepository = checkInOutSensorRepository,

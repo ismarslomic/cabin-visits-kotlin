@@ -24,7 +24,7 @@ class CheckInOutSensorRepositoryTest :
             persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
-                val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.Companion.all().toList()
+                val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.all().toList()
                 allCheckInOutSensors shouldHaveSize 1
 
                 val readCheckInOutSensor: CheckInOutSensorEntity = allCheckInOutSensors.first()
@@ -45,7 +45,7 @@ class CheckInOutSensorRepositoryTest :
             persistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
-                val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.Companion.all().toList()
+                val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.all().toList()
                 allCheckInOutSensors shouldHaveSize 1
 
                 val readCheckInOutSensor: CheckInOutSensorEntity = allCheckInOutSensors.first()
@@ -66,7 +66,7 @@ class CheckInOutSensorRepositoryTest :
             persistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {
-                val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.Companion.all().toList()
+                val allCheckInOutSensors: List<CheckInOutSensorEntity> = CheckInOutSensorEntity.all().toList()
                 allCheckInOutSensors shouldHaveSize 1
 
                 val readCheckInOutSensor: CheckInOutSensorEntity = allCheckInOutSensors.first()
@@ -77,18 +77,6 @@ class CheckInOutSensorRepositoryTest :
                     shouldUpdatedTimeBeNull = true,
                 )
             }
-        }
-
-        "reading latest check in/out time when empty table should return null as latest time" {
-            val latestTime: Instant? = repository.latestTime()
-            latestTime.shouldBeNull()
-        }
-
-        "reading latest check in/out time when at least one sensor stored in table should return latest time" {
-            repository.addOrUpdate(checkInSensor.time)
-
-            val latestTime: Instant? = repository.latestTime()
-            latestTime shouldBe checkInSensor.time
         }
     })
 

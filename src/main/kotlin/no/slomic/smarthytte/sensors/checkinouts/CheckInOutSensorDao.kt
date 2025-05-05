@@ -4,10 +4,7 @@ import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
 import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.IntEntity
-import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
@@ -30,15 +27,3 @@ fun daoToModel(dao: CheckInOutSensorEntity) = CheckInOutSensor(
     time = dao.time,
     status = dao.status,
 )
-
-object CheckInOutSensorSyncTable : IntIdTable(name = "check_in_out_sensor_sync") {
-    val latestTime: Column<Instant> = timestamp(name = "latest_time")
-    val updatedTime: Column<Instant> = timestamp("updated_time")
-}
-
-class CheckInOutSensorSyncEntity(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<CheckInOutSensorSyncEntity>(CheckInOutSensorSyncTable)
-
-    var latestTime: Instant by CheckInOutSensorSyncTable.latestTime
-    var updatedTime: Instant by CheckInOutSensorSyncTable.updatedTime
-}
