@@ -51,6 +51,12 @@ jobs:
       - name: Run Tests
         run: ./gradlew test --no-daemon
 
+      # Upload code coverage to codecov.io
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       # Run Detekt
       - name: Run Detekt analysis
         run: ./gradlew detekt --no-daemon

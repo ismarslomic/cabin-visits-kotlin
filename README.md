@@ -1,5 +1,7 @@
 # cabin-visits-kotlin
 
+[![Code coverage](https://codecov.io/gh/ismarslomic/cabin-visits-kotlin/branch/main/graph/badge.svg)](https://codecov.io/gh/ismarslomic/cabin-visits-kotlin)
+
 Kotlin app using Ktor server application with GraalVM to create HTTP endpoints to receive data from different sources to
 collect all data belonging to a visit at Slomic Smarthytte and store it to a database.
 
