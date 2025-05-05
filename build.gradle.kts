@@ -4,6 +4,7 @@ import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 
 plugins {
     application
+    alias(libs.plugins.jacoco)
     alias(libs.plugins.detekt)
     alias(libs.plugins.graalvm)
     alias(libs.plugins.kotlin.jvm)
@@ -145,6 +146,19 @@ graalvmNative {
     }
 }
 
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(true)
+    }
+}
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     /*
@@ -158,6 +172,7 @@ tasks.withType<Test>().configureEach {
         // see https://github.com/mockk/mockk/issues/1022
         // "-agentlib:native-image-agent=config-merge-dir=META-INF/native-image/test/",
     )
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 // Detekt
