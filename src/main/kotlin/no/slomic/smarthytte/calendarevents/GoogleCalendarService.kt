@@ -22,11 +22,12 @@ import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 import java.io.FileInputStream
 
 class GoogleCalendarService(
     private val reservationRepository: ReservationRepository,
-    private val googleCalendarRepository: GoogleCalendarRepository,
+    private val syncCheckpointService: SyncCheckpointService,
     private val googleCalendarPropertiesHolder: GoogleCalendarPropertiesHolder =
         loadProperties<GoogleCalendarPropertiesHolder>(),
     private val calendarApiClient: Calendar = createCalendarApiClient(googleCalendarPropertiesHolder),
@@ -46,7 +47,7 @@ class GoogleCalendarService(
         val request: Calendar.Events.List
 
         // Load the sync token stored from the last execution, if any.
-        val syncTokenKey: String? = googleCalendarRepository.syncToken()
+        val syncTokenKey: String? = syncCheckpointService.checkpointForGoogleCalendarEvents()
         if (syncTokenKey == null) {
             logger.info("Performing full fetch for google calendar $calendarId from date $syncFromDateTime.")
             request = createFullSyncRequest()
@@ -69,7 +70,7 @@ class GoogleCalendarService(
                 if (e.statusCode == STATUS_CODE_GONE) {
                     // A 410 status code, "Gone", indicates that the sync token is invalid.
                     logger.warn("Invalid sync token, clearing event store and re-syncing.")
-                    googleCalendarRepository.deleteSyncToken()
+                    syncCheckpointService.deleteCheckpointForGoogleCalendarEvents()
                     fetchGoogleCalendarEvents()
                 } else {
                     throw e
@@ -87,7 +88,7 @@ class GoogleCalendarService(
 
         // Store the sync token from the last request to be used during the next execution.
         if (events?.nextSyncToken != null) {
-            googleCalendarRepository.addOrUpdateSyncToken(events.nextSyncToken)
+            syncCheckpointService.addOrUpdateCheckpointForGoogleCalendarEvents(value = events.nextSyncToken)
         }
 
         val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }

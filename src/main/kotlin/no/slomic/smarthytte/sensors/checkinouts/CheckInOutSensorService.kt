@@ -16,10 +16,12 @@ import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 import kotlin.time.Duration.Companion.seconds
 
 class CheckInOutSensorService(
     val checkInOutSensorRepository: CheckInOutSensorRepository,
+    val syncCheckpointService: SyncCheckpointService,
     influxDbPropertiesHolder: InfluxDbPropertiesHolder = loadProperties<InfluxDbPropertiesHolder>(),
 ) {
     private val logger: Logger = KtorSimpleLogger(CheckInOutSensorService::class.java.name)
@@ -34,8 +36,20 @@ class CheckInOutSensorService(
     private val bucketName = influxdbProperties.bucket
     private val measurement = checkInOutSensorProperties.measurement
 
+    object InfluxDBClientProvider {
+        fun client(): InfluxDBClientKotlin {
+            val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
+
+            return InfluxDBClientKotlinFactory.create(
+                url = influxdbProperties.url,
+                token = influxdbProperties.token.toCharArray(),
+                org = influxdbProperties.org,
+            )
+        }
+    }
+
     suspend fun fetchCheckInOut() {
-        val lastCheckInTimestamp: Instant? = checkInOutSensorRepository.latestTime()
+        val lastCheckInTimestamp: Instant? = syncCheckpointService.checkpointForCheckInOutSensor()
         val filterTimeRange = if (lastCheckInTimestamp == null) {
             val range = FilterTimeRange(
                 start = fullSyncStartTime.toIsoUtcString(),
@@ -45,7 +59,7 @@ class CheckInOutSensorService(
 
             range
         } else {
-            // Adding 1 second to the start to exclude last check in already processed
+            // Adding 1 second to the start to exclude the last check in already processed
             val range = FilterTimeRange(
                 start = lastCheckInTimestamp.plus(1.seconds).toIsoUtcString(),
                 stop = nowIsoUtcString(),
@@ -102,7 +116,7 @@ class CheckInOutSensorService(
         val latestTimestamp: Instant? = checkInOutSensors.maxByOrNull { it.time }?.time
 
         if (latestTimestamp != null) {
-            checkInOutSensorRepository.addOrUpdate(latestTimestamp)
+            syncCheckpointService.addOrUpdateCheckpointForCheckInOutSensor(value = latestTimestamp)
         }
 
         return persistenceResults
@@ -121,17 +135,5 @@ class CheckInOutSensorService(
 
     private data class FilterTimeRange(val start: String, val stop: String) {
         override fun toString(): String = "$start - $stop"
-    }
-
-    object InfluxDBClientProvider {
-        fun client(): InfluxDBClientKotlin {
-            val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
-
-            return InfluxDBClientKotlinFactory.create(
-                url = influxdbProperties.url,
-                token = influxdbProperties.token.toCharArray(),
-                org = influxdbProperties.org,
-            )
-        }
     }
 }
