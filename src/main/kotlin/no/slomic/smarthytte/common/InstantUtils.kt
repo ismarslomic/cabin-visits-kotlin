@@ -60,8 +60,30 @@ fun Instant.toIsoUtcString(): String {
     return formatter.format(this.toJavaInstant())
 }
 
+/**
+ * Combines a [date] and [time] into a [LocalDateTime],
+ * then converts it to an [Instant] using the specified [timeZone].
+ *
+ * This is useful for representing a specific date and time in a given time zone
+ * as an exact moment on the UTC timeline.
+ *
+ * @param date the calendar date (year, month, day) without time or timezone
+ * @param time the time-of-day (hour, minute, second) without date or timezone
+ * @param timeZone the timezone to interpret the local date and time in
+ * @return the [Instant] representing the exact UTC moment for the date and time in the specified zone
+ *
+ * Example usage:
+ * ```
+ * val instant = toInstant(LocalDate(2024, 6, 1), LocalTime(15, 0), TimeZone.of("Europe/Oslo"))
+ * // instant is the UTC moment corresponding to 2024-06-01 15:00:00 in Oslo timezone
+ * ```
+ */
 fun toInstant(date: LocalDate, time: LocalTime, timeZone: TimeZone) = LocalDateTime(date, time).toInstant(timeZone)
 
 fun Instant.toUtcDate(): LocalDate = toLocalDateTime(utcTimeZone).date
 
+fun Instant.toOsloDate(): LocalDate = toLocalDateTime(osloTimeZone).date
+
 fun utcDateNow(): LocalDate = Clock.System.now().toLocalDateTime(utcTimeZone).date
+
+fun osloDateNow(): LocalDate = Clock.System.now().toLocalDateTime(osloTimeZone).date

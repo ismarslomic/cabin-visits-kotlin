@@ -42,6 +42,7 @@ vehicle-trip:
   username: ${VEHICLE_TRIP_USERNAME}
   password: ${VEHICLE_TRIP_PASSWORD}
   sync-from-date: ${VEHICLE_TRIP_SYNC_FROM_DATE}
+  sync-frequency-minutes: ${VEHICLE_TRIP_SYNC_FREQ_MINUTES:-60}
   user-agent: ${VEHICLE_TRIP_USER_AGENT}
   referrer: ${VEHICLE_TRIP_REFERRER}
   locale: ${VEHICLE_TRIP_LOCALE}
