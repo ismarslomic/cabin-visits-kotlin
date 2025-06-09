@@ -1,7 +1,7 @@
 [versions]
 detekt = "1.23.8"
 exposed = "0.61.0"
-flyway = "11.8.2"
+flyway = "11.9.1"
 googleCalendarService = "v3-rev20250404-2.0.0"
 googleOauthClient = "1.35.0"
 graalvm = "0.10.6"
