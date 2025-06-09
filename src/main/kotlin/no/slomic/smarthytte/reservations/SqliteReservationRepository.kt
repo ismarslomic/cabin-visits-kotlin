@@ -39,6 +39,7 @@ class SqliteReservationRepository : ReservationRepository {
 
     override suspend fun deleteReservation(id: String): PersistenceResult = suspendTransaction {
         logger.trace("Deleting reservation with id: $id")
+
         val entityId: EntityID<String> = EntityID(id, ReservationTable)
         val storedReservation: ReservationEntity? = ReservationEntity.findById(entityId)
 

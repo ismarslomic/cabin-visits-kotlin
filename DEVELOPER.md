@@ -34,10 +34,13 @@ Read more
 at [Collect Metadata with the Tracing Agent](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/)
 
 ```bash
-gradlew clean build
-export GOOGLE_CREDENTIALS_FILE_PATH=""
-export GOOGLE_CALENDAR_ID=""
-.....
+# Build
+./gradlew clean build
+
+# Source all env variables from the .env file
+set -a; source .env; set +a
+
+# Run tracing agent
 java -agentlib:native-image-agent=config-output-dir=META-INF/native-image/main -jar ./build/libs/cabin-visits-kotlin-all.jar
 ```
 

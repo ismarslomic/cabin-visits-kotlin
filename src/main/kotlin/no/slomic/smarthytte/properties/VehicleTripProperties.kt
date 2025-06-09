@@ -9,6 +9,7 @@ data class VehicleTripProperties(
     val username: String,
     val password: String,
     val syncFromDate: String,
+    val syncFrequencyMinutes: Int,
     val userAgent: String,
     val referrer: String,
     val locale: String,
