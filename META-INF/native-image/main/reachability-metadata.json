@@ -94,6 +94,15 @@
       "type": "ch.qos.logback.core.spi.ContextAware"
     },
     {
+      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "com.google.api.client.googleapis.services.AbstractGoogleClientRequest",
       "allDeclaredFields": true
     },
@@ -320,242 +329,6 @@
         {
           "name": "<init>",
           "parameterTypes": []
-        },
-        {
-          "name": "setCreated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setCreator",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Creator"
-          ]
-        },
-        {
-          "name": "setDescription",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEnd",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setEtag",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEventType",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setExtendedProperties",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$ExtendedProperties"
-          ]
-        },
-        {
-          "name": "setGuestsCanInviteOthers",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        },
-        {
-          "name": "setGuestsCanSeeOtherGuests",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        },
-        {
-          "name": "setHtmlLink",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setICalUID",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setId",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setKind",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLocation",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setOrganizer",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Organizer"
-          ]
-        },
-        {
-          "name": "setReminders",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Reminders"
-          ]
-        },
-        {
-          "name": "setSequence",
-          "parameterTypes": [
-            "java.lang.Integer"
-          ]
-        },
-        {
-          "name": "setStart",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setStatus",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSummary",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setTransparency",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setUpdated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setVisibility",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Creator",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setEmail",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$ExtendedProperties",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Organizer",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setDisplayName",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEmail",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSelf",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Reminders",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setUseDefault",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.EventDateTime",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setDate",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setDateTime",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setTimeZone",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
         }
       ]
     },
@@ -1058,6 +831,40 @@
       "type": "io.grpc.override.ContextStorageOverride"
     },
     {
+      "type": "io.ktor.client.HttpClient",
+      "fields": [
+        {
+          "name": "closed"
+        }
+      ]
+    },
+    {
+      "type": "io.ktor.client.content.ProgressListener"
+    },
+    {
+      "type": "io.ktor.client.engine.HttpClientEngineBase",
+      "fields": [
+        {
+          "name": "closed"
+        }
+      ]
+    },
+    {
+      "type": "io.ktor.client.plugins.HttpSend"
+    },
+    {
+      "type": "io.ktor.client.plugins.api.ClientPluginImpl"
+    },
+    {
+      "type": "io.ktor.client.plugins.api.ClientPluginInstance"
+    },
+    {
+      "type": "io.ktor.client.plugins.cookies.HttpCookies"
+    },
+    {
+      "type": "io.ktor.http.ContentType"
+    },
+    {
       "type": "io.ktor.http.HttpStatusCode"
     },
     {
@@ -1105,7 +912,7 @@
       ]
     },
     {
-      "type": "io.ktor.server.application.Application"
+      "type": "io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider"
     },
     {
       "type": "io.ktor.server.application.PluginInstance"
@@ -1172,9 +979,6 @@
           "parameterTypes": []
         }
       ]
-    },
-    {
-      "type": "java.io.FilePermission"
     },
     {
       "type": "java.lang.AbstractStringBuilder"
@@ -1278,9 +1082,6 @@
       "allDeclaredFields": true
     },
     {
-      "type": "java.lang.RuntimePermission"
-    },
-    {
       "type": "java.lang.Short",
       "fields": [
         {
@@ -1378,25 +1179,7 @@
       "type": "java.math.BigInteger"
     },
     {
-      "type": "java.net.NetPermission"
-    },
-    {
-      "type": "java.net.SocketPermission"
-    },
-    {
       "type": "java.net.StandardSocketOptions"
-    },
-    {
-      "type": "java.net.URLPermission",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "java.lang.String",
-            "java.lang.String"
-          ]
-        }
-      ]
     },
     {
       "type": "java.nio.charset.Charset"
@@ -1405,13 +1188,7 @@
       "type": "java.security.AlgorithmParametersSpi"
     },
     {
-      "type": "java.security.AllPermission"
-    },
-    {
       "type": "java.security.KeyStoreSpi"
-    },
-    {
-      "type": "java.security.SecurityPermission"
     },
     {
       "type": "java.security.interfaces.ECPrivateKey"
@@ -1448,13 +1225,6 @@
       "type": "java.util.LinkedHashMap"
     },
     {
-      "type": "java.util.Map",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "java.util.PropertyPermission"
-    },
-    {
       "type": "java.util.SortedSet"
     },
     {
@@ -1478,9 +1248,6 @@
     },
     {
       "type": "javax.management.ObjectName"
-    },
-    {
-      "type": "javax.smartcardio.CardPermission"
     },
     {
       "type": "jdk.internal.ValueBased"
@@ -1874,29 +1641,35 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.ApplicationKt",
-      "methods": [
+      "type": "kotlinx.coroutines.sync.MutexImpl",
+      "fields": [
         {
-          "name": "module",
-          "parameterTypes": [
-            "io.ktor.server.application.Application"
-          ]
+          "name": "owner$volatile"
         }
       ]
     },
     {
-      "type": "no.slomic.smarthytte.calendar.CalendarEventEntity",
-      "methods": [
+      "type": "kotlinx.coroutines.sync.SemaphoreAndMutexImpl",
+      "fields": [
         {
-          "name": "<init>",
-          "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
-          ]
+          "name": "_availablePermits$volatile"
+        },
+        {
+          "name": "deqIdx$volatile"
+        },
+        {
+          "name": "enqIdx$volatile"
+        },
+        {
+          "name": "head$volatile"
+        },
+        {
+          "name": "tail$volatile"
         }
       ]
     },
     {
-      "type": "no.slomic.smarthytte.guest.GuestEntity",
+      "type": "no.slomic.smarthytte.guests.GuestEntity",
       "methods": [
         {
           "name": "<init>",
@@ -1912,6 +1685,7 @@
         {
           "name": "<init>",
           "parameterTypes": [
+            "int",
             "java.lang.String",
             "java.lang.String",
             "java.lang.String"
@@ -1962,7 +1736,8 @@
             "java.lang.String",
             "java.lang.String",
             "java.lang.String",
-            "java.lang.String"
+            "java.lang.String",
+            "int"
           ]
         }
       ]
@@ -2054,6 +1829,15 @@
         {
           "name": "<init>",
           "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "int",
+            "java.lang.String",
+            "java.lang.String",
             "java.lang.String"
           ]
         }
@@ -2071,7 +1855,7 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.vehicletrip.VehicleTripEntity",
+      "type": "no.slomic.smarthytte.reservations.ReservationEntity",
       "methods": [
         {
           "name": "<init>",
@@ -2080,6 +1864,240 @@
           ]
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorEntity",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.jetbrains.exposed.dao.id.EntityID"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.sync.checkpoint.SyncCheckpointEntity",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.jetbrains.exposed.dao.id.EntityID"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.VehicleTripEntity",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.jetbrains.exposed.dao.id.EntityID"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineAppliedMigration"
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineMigrationConfigurationExtension",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getBaselineMigrationPrefix",
+          "parameterTypes": []
+        },
+        {
+          "name": "setBaselineMigrationPrefix",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineMigrationResolver"
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineResourceTypeProvider"
+    },
+    {
+      "type": "org.flywaydb.core.extensibility.ConfigurationExtension"
+    },
+    {
+      "type": "org.flywaydb.core.extensibility.Plugin"
+    },
+    {
+      "type": "org.flywaydb.core.internal.NullFlywayTelemetryManager"
+    },
+    {
+      "type": "org.flywaydb.core.internal.command.clean.CleanModeConfigurationExtension",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getClean",
+          "parameterTypes": []
+        },
+        {
+          "name": "setClean",
+          "parameterTypes": [
+            "org.flywaydb.core.internal.command.clean.CleanModel"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.command.clean.CleanModel",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.flywaydb.core.internal.command.clean.SchemaModel",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.extensions.DeployScriptFilenameConfigurationExtension",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getScriptFilename",
+          "parameterTypes": []
+        },
+        {
+          "name": "setScriptFilename",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.extensions.PrepareScriptFilenameConfigurationExtension",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getScriptFilename",
+          "parameterTypes": []
+        },
+        {
+          "name": "setScriptFilename",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.resolvers.EnvironmentProvisionerNone"
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.resolvers.EnvironmentVariableResolver"
+    },
+    {
+      "type": "org.flywaydb.core.internal.configuration.resolvers.PlaceholderPropertyResolver"
+    },
+    {
+      "type": "org.flywaydb.core.internal.database.base.TestContainersDatabaseType"
+    },
+    {
+      "type": "org.flywaydb.core.internal.database.h2.H2DatabaseType"
+    },
+    {
+      "type": "org.flywaydb.core.internal.database.sqlite.SQLiteDatabaseType"
+    },
+    {
+      "type": "org.flywaydb.core.internal.logging.slf4j.Slf4jLogCreator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.AuthCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DeployCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DiffCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DiffTextCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.GenerateCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.LicensingConfigurationExtensionStub",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ModelCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.PATTokenConfigurationExtensionStub",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.PrepareCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.publishing.PublishingConfigurationExtension",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "isCheckDriftOnMigrate",
+          "parameterTypes": []
+        },
+        {
+          "name": "isPublishResult",
+          "parameterTypes": []
+        },
+        {
+          "name": "setCheckDriftOnMigrate",
+          "parameterTypes": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "setPublishResult",
+          "parameterTypes": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.resource.CoreResourceTypeProvider"
+    },
+    {
+      "type": "org.flywaydb.core.internal.schemahistory.BaseAppliedMigration"
     },
     {
       "type": "org.jetbrains.exposed.dao.DaoEntityIDFactory"
@@ -2143,13 +2161,10 @@
       "type": "org.slf4j.Logger"
     },
     {
-      "type": "org.sqlite.JDBC",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
+      "type": "org.slf4j.impl.StaticLoggerBinder"
+    },
+    {
+      "type": "org.slf4j.spi.SLF4JServiceProvider"
     },
     {
       "type": "sun.misc.Unsafe",
@@ -2547,6 +2562,9 @@
       "glob": "META-INF/services/com.sksamuel.hoplite.parsers.Parser"
     },
     {
+      "glob": "META-INF/services/io.ktor.serialization.kotlinx.KotlinxSerializationExtensionProvider"
+    },
+    {
       "glob": "META-INF/services/java.lang.System$LoggerFinder"
     },
     {
@@ -2557,9 +2575,6 @@
     },
     {
       "glob": "META-INF/services/java.nio.channels.spi.SelectorProvider"
-    },
-    {
-      "glob": "META-INF/services/java.sql.Driver"
     },
     {
       "glob": "META-INF/services/java.time.zone.ZoneRulesProvider"
@@ -2575,6 +2590,9 @@
     },
     {
       "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper"
+    },
+    {
+      "glob": "META-INF/services/org.flywaydb.core.extensibility.Plugin"
     },
     {
       "glob": "META-INF/services/org.jetbrains.exposed.dao.id.EntityIDFactory"
@@ -2607,10 +2625,22 @@
       "glob": "com/google/auth/oauth2/google-auth-library.properties"
     },
     {
+      "glob": "db/callback"
+    },
+    {
+      "glob": "db/migration"
+    },
+    {
+      "glob": "db/migration/V1.0__initial_schema.sql"
+    },
+    {
       "glob": "kotlin/annotation/annotation.kotlin_builtins"
     },
     {
       "glob": "kotlin/collections/collections.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/concurrent/atomics/atomics.kotlin_builtins"
     },
     {
       "glob": "kotlin/coroutines/coroutines.kotlin_builtins"
@@ -2638,6 +2668,9 @@
     },
     {
       "glob": "logback.xml"
+    },
+    {
+      "glob": "org/flywaydb/core/internal/version.txt"
     },
     {
       "glob": "org/sqlite/native/Mac/aarch64/libsqlitejdbc.dylib"
