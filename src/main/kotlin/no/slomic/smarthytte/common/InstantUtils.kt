@@ -36,28 +36,22 @@ fun Instant.truncatedToMillis(): Instant = this.toJavaInstant().truncatedTo(Chro
  * the provided [timeZone] and returns an [Instant].
  *
  * Reduces the date time by [minusDays].
+ *
+ * @param date the Google calendar date (year, month, day) without time or timezone
+ * @param hour the hour (0-24) to set in the instant
+ * @param timeZone the timezone to interpret for [date] and [hour]
+ * @param minusDays the number of days to subtract from the [date] (optional, default to 0)
+ *
+ * Example usage:
+ * ```
+ * val instant = toInstant(DateTime("2025-07-10"), 15, TimeZone.of("Europe/Oslo"), 1)
+ * // instant is the UTC moment corresponding to 2025-07-09 15:00:00 in Oslo timezone
+ * ```
  */
 fun toInstant(date: DateTime, hour: Int, timeZone: TimeZone, minusDays: Int = 0): Instant {
-    val endDate = LocalDate.parse(date.toStringRfc3339())
-    val endDateTime = endDate.atTime(hour = hour, minute = 0, second = 0)
-    return endDateTime.toInstant(timeZone).minus(minusDays.days)
-}
-
-/**
- * Returns now as String in format yyyy-MM-ddTHH:mm:ssX
- */
-fun nowIsoUtcString(): String {
-    val now = Clock.System.now()
-    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX").withZone(UTC)
-    return formatter.format(now.toJavaInstant())
-}
-
-/**
- * Returns Instant as String in ISO format yyyy-MM-ddTHH:mm:ssX
- */
-fun Instant.toIsoUtcString(): String {
-    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX").withZone(UTC)
-    return formatter.format(this.toJavaInstant())
+    val localDate = LocalDate.parse(date.toStringRfc3339())
+    val localDateTime = localDate.atTime(hour = hour, minute = 0, second = 0)
+    return localDateTime.toInstant(timeZone).minus(minusDays.days)
 }
 
 /**
@@ -79,6 +73,23 @@ fun Instant.toIsoUtcString(): String {
  * ```
  */
 fun toInstant(date: LocalDate, time: LocalTime, timeZone: TimeZone) = LocalDateTime(date, time).toInstant(timeZone)
+
+/**
+ * Returns now as String in format yyyy-MM-ddTHH:mm:ssX
+ */
+fun nowIsoUtcString(): String {
+    val now = Clock.System.now()
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX").withZone(UTC)
+    return formatter.format(now.toJavaInstant())
+}
+
+/**
+ * Returns Instant as String in ISO format yyyy-MM-ddTHH:mm:ssX
+ */
+fun Instant.toIsoUtcString(): String {
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX").withZone(UTC)
+    return formatter.format(this.toJavaInstant())
+}
 
 fun Instant.toUtcDate(): LocalDate = toLocalDateTime(utcTimeZone).date
 
