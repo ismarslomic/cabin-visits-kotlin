@@ -36,12 +36,43 @@ fun Instant.truncatedToMillis(): Instant = this.toJavaInstant().truncatedTo(Chro
  * the provided [timeZone] and returns an [Instant].
  *
  * Reduces the date time by [minusDays].
+ *
+ * @param date the Google calendar date (year, month, day) without time or timezone
+ * @param hour the hour (0-24) to set in the instant
+ * @param timeZone the timezone to interpret for [date] and [hour]
+ * @param minusDays the number of days to subtract from the [date] (optional, default to 0)
+ *
+ * Example usage:
+ * ```
+ * val instant = toInstant(DateTime("2025-07-10"), 15, TimeZone.of("Europe/Oslo"), 1)
+ * // instant is the UTC moment corresponding to 2025-07-09 15:00:00 in Oslo timezone
+ * ```
  */
 fun toInstant(date: DateTime, hour: Int, timeZone: TimeZone, minusDays: Int = 0): Instant {
-    val endDate = LocalDate.parse(date.toStringRfc3339())
-    val endDateTime = endDate.atTime(hour = hour, minute = 0, second = 0)
-    return endDateTime.toInstant(timeZone).minus(minusDays.days)
+    val localDate = LocalDate.parse(date.toStringRfc3339())
+    val localDateTime = localDate.atTime(hour = hour, minute = 0, second = 0)
+    return localDateTime.toInstant(timeZone).minus(minusDays.days)
 }
+
+/**
+ * Combines a [date] and [time] into a [LocalDateTime],
+ * then converts it to an [Instant] using the specified [timeZone].
+ *
+ * This is useful for representing a specific date and time in a given time zone
+ * as an exact moment on the UTC timeline.
+ *
+ * @param date the calendar date (year, month, day) without time or timezone
+ * @param time the time-of-day (hour, minute, second) without date or timezone
+ * @param timeZone the timezone to interpret the local date and time in
+ * @return the [Instant] representing the exact UTC moment for the date and time in the specified zone
+ *
+ * Example usage:
+ * ```
+ * val instant = toInstant(LocalDate(2024, 6, 1), LocalTime(15, 0), TimeZone.of("Europe/Oslo"))
+ * // instant is the UTC moment corresponding to 2024-06-01 15:00:00 in Oslo timezone
+ * ```
+ */
+fun toInstant(date: LocalDate, time: LocalTime, timeZone: TimeZone) = LocalDateTime(date, time).toInstant(timeZone)
 
 /**
  * Returns now as String in format yyyy-MM-ddTHH:mm:ssX
@@ -60,8 +91,10 @@ fun Instant.toIsoUtcString(): String {
     return formatter.format(this.toJavaInstant())
 }
 
-fun toInstant(date: LocalDate, time: LocalTime, timeZone: TimeZone) = LocalDateTime(date, time).toInstant(timeZone)
-
 fun Instant.toUtcDate(): LocalDate = toLocalDateTime(utcTimeZone).date
 
+fun Instant.toOsloDate(): LocalDate = toLocalDateTime(osloTimeZone).date
+
 fun utcDateNow(): LocalDate = Clock.System.now().toLocalDateTime(utcTimeZone).date
+
+fun osloDateNow(): LocalDate = Clock.System.now().toLocalDateTime(osloTimeZone).date

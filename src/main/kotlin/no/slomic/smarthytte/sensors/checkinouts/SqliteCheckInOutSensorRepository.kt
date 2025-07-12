@@ -3,7 +3,6 @@ package no.slomic.smarthytte.sensors.checkinouts
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
@@ -11,7 +10,6 @@ import org.jetbrains.exposed.dao.id.EntityID
 
 class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteCheckInOutSensorRepository::class.java.name)
-    private val checkInSyncId: Int = 1
 
     override suspend fun allCheckInOuts(): List<CheckInOutSensor> = suspendTransaction {
         CheckInOutSensorEntity.all().sortedBy { it.time }.map(::daoToModel)
@@ -25,39 +23,6 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
             addCheckInOutSensor(checkInOutSensor)
         } else {
             updateCheckInOutSensor(checkInOutSensor)
-        }
-    }
-
-    override suspend fun latestTime(): Instant? =
-        suspendTransaction { CheckInOutSensorSyncEntity.findById(checkInSyncId)?.latestTime }
-
-    override suspend fun addOrUpdate(latestTime: Instant) {
-        suspendTransaction {
-            val storedCheckInOutSync: CheckInOutSensorSyncEntity? = CheckInOutSensorSyncEntity.findById(checkInSyncId)
-
-            var isUpdated = false
-            if (storedCheckInOutSync == null) {
-                CheckInOutSensorSyncEntity.new(checkInSyncId) {
-                    this.latestTime = latestTime.truncatedToMillis()
-                    updatedTime = Clock.System.now().truncatedToMillis()
-                    isUpdated = true
-                }
-            } else {
-                storedCheckInOutSync.latestTime = latestTime.truncatedToMillis()
-
-                val isDirty: Boolean = storedCheckInOutSync.writeValues.isNotEmpty()
-
-                if (isDirty) {
-                    storedCheckInOutSync.updatedTime = Clock.System.now().truncatedToMillis()
-                    isUpdated = true
-                }
-            }
-
-            if (isUpdated) {
-                logger.trace("Latest check in/out sync time updated.")
-            } else {
-                logger.trace("No need to update the latest check in/out sync time.")
-            }
         }
     }
 
