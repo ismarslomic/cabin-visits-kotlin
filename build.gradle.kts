@@ -39,6 +39,7 @@ dependencies {
 
     testImplementation(libs.bundles.kotest)
     testImplementation(libs.ktor.server.test)
+    testImplementation(libs.ktor.client.mock)
     testImplementation(libs.mockk)
 }
 

@@ -31,9 +31,11 @@ class VehicleTripService(
     private val vehicleTripRepository: VehicleTripRepository,
     private val syncCheckpointService: SyncCheckpointService,
     private val httpClient: HttpClient,
+    vehicleTripPropertiesHolder: VehicleTripPropertiesHolder =
+        loadProperties<VehicleTripPropertiesHolder>(),
 ) {
     private val logger: Logger = KtorSimpleLogger(VehicleTripService::class.java.name)
-    private val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
+    private val vehicleTripProperties = vehicleTripPropertiesHolder.vehicleTrip
     private val filePath = vehicleTripProperties.filePath
     private val username = vehicleTripProperties.username
     private val password = vehicleTripProperties.password
