@@ -18,11 +18,10 @@ import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
+import no.slomic.smarthytte.utils.getResourceFilePath
 
 class GoogleCalendarServiceTest :
     BaseDbTest({
-        fun getResourceFilePath(fileName: String) = this::class.java.classLoader.getResource(fileName)!!.toURI().path
-
         val mockCalendarApiClient = mockk<Calendar>(relaxed = true)
         val mockEventsList = mockk<Calendar.Events.List>(relaxed = true)
         val reservationRepository: ReservationRepository = SqliteReservationRepository()
