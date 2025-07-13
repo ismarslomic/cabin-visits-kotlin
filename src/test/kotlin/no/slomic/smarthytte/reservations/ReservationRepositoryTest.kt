@@ -14,9 +14,10 @@ import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.truncatedToMillis
+import no.slomic.smarthytte.guests.Gender
+import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
-import no.slomic.smarthytte.guests.guest
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -46,6 +47,33 @@ val checkOut = CheckOut(
     time = now,
     sourceName = CheckInOutSource.CHECK_IN_SENSOR,
     sourceId = "foo-source-id",
+)
+
+val guestLena = Guest(
+    id = "lena",
+    firstName = "Lena",
+    lastName = "Whitmore",
+    birthYear = 1980,
+    email = "lena.whitmore@example.no",
+    gender = Gender.FEMALE,
+)
+
+val guestCarlos = Guest(
+    id = "carlos",
+    firstName = "Carlos",
+    lastName = "Brenner",
+    birthYear = 1986,
+    email = "carlos.brennere@example.no",
+    gender = Gender.MALE,
+)
+
+val guestAmira = Guest(
+    id = "amira",
+    firstName = "Amira",
+    lastName = "Khatib",
+    birthYear = 1990,
+    email = "amira.khatib@example.no",
+    gender = Gender.FEMALE,
 )
 
 class ReservationRepositoryTest :
@@ -234,12 +262,11 @@ class ReservationRepositoryTest :
 
         "adding guests to the reservation should store guests to intermediate table" {
             val guestRepository: GuestRepository = SqliteGuestRepository()
-            guestRepository.addOrUpdate(guest)
-            val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
-            guestRepository.addOrUpdate(guest2)
+            guestRepository.addOrUpdate(guestLena)
+            guestRepository.addOrUpdate(guestCarlos)
 
             val reservationWithGuest = reservation.copy(
-                guestIds = listOf(guest.id, guest2.id),
+                guestIds = listOf(guestLena.id, guestCarlos.id),
             )
             repository.addOrUpdate(reservationWithGuest)
 
@@ -253,22 +280,68 @@ class ReservationRepositoryTest :
 
                 val firsGuest: ResultRow = allReservationGuests.first()
                 firsGuest[ReservationGuestTable.reservation] = reservation.id
-                firsGuest[ReservationGuestTable.guest] = guest.id
+                firsGuest[ReservationGuestTable.guest] = guestLena.id
 
                 val lastGuest: ResultRow = allReservationGuests.last()
                 lastGuest[ReservationGuestTable.reservation] = reservation.id
-                lastGuest[ReservationGuestTable.guest] = guest2.id
+                lastGuest[ReservationGuestTable.guest] = guestCarlos.id
+            }
+        }
+
+        "updating guests in the reservation should update guests in intermediate table" {
+            // Add guests to the Guest table
+            val guestRepository: GuestRepository = SqliteGuestRepository()
+            guestRepository.addOrUpdate(guestLena)
+            guestRepository.addOrUpdate(guestCarlos)
+
+            // Add a new reservation with guests Lena and Carlos in the Reservation table
+            val reservationWithGuest = reservation.copy(
+                guestIds = listOf(guestLena.id, guestCarlos.id),
+            )
+            repository.addOrUpdate(reservationWithGuest)
+
+            // Assert that the reservation has 2 guests
+            transaction {
+                val allReservationGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
+                allReservationGuests shouldHaveSize 2
+
+                val firsGuest: ResultRow = allReservationGuests.first()
+                firsGuest[ReservationGuestTable.reservation] = reservation.id
+                firsGuest[ReservationGuestTable.guest] = guestLena.id
+
+                val lastGuest: ResultRow = allReservationGuests.last()
+                lastGuest[ReservationGuestTable.reservation] = reservation.id
+                lastGuest[ReservationGuestTable.guest] = guestCarlos.id
+            }
+
+            // Remove the guest Carlos and add the guest Amira to the reservation
+            val modifiedReservationWithGuest = reservation.copy(
+                guestIds = listOf(guestLena.id, guestAmira.id),
+            )
+            repository.addOrUpdate(modifiedReservationWithGuest)
+
+            // Assert that the reservation has 2 guests
+            transaction {
+                val allReservationGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
+                allReservationGuests shouldHaveSize 1
+
+                val firsGuest: ResultRow = allReservationGuests.first()
+                firsGuest[ReservationGuestTable.reservation] = reservation.id
+                firsGuest[ReservationGuestTable.guest] = guestLena.id
+
+                val lastGuest: ResultRow = allReservationGuests.last()
+                lastGuest[ReservationGuestTable.reservation] = reservation.id
+                lastGuest[ReservationGuestTable.guest] = guestAmira.id
             }
         }
 
         "delete should remove reservation guests from the intermediate table (cascade)" {
             val guestRepository: GuestRepository = SqliteGuestRepository()
-            guestRepository.addOrUpdate(guest)
-            val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
-            guestRepository.addOrUpdate(guest2)
+            guestRepository.addOrUpdate(guestLena)
+            guestRepository.addOrUpdate(guestCarlos)
 
             val reservationWithGuest = reservation.copy(
-                guestIds = listOf(guest.id, guest2.id),
+                guestIds = listOf(guestLena.id, guestCarlos.id),
             )
             repository.addOrUpdate(reservationWithGuest)
             repository.reservationById(reservationWithGuest.id).shouldNotBeNull()

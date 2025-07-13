@@ -26,10 +26,3 @@ suspend fun <T> suspendTransaction(block: Transaction.() -> T): T = newSuspended
     context = Dispatchers.IO,
     statement = block,
 )
-
-enum class PersistenceResult {
-    ADDED,
-    DELETED,
-    UPDATED,
-    NO_ACTION,
-}

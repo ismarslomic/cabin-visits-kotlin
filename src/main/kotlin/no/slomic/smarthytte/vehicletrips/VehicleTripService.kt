@@ -2,11 +2,6 @@ package no.slomic.smarthytte.vehicletrips
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpRedirect
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
-import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.cookies.cookies
 import io.ktor.client.request.accept
 import io.ktor.client.request.forms.submitForm
@@ -20,24 +15,36 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.parameters
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.log
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.json.Json
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.PersistenceResults
+import no.slomic.smarthytte.common.osloDateNow
 import no.slomic.smarthytte.common.readVehicleTripFromJsonFile
-import no.slomic.smarthytte.common.utcDateNow
+import no.slomic.smarthytte.common.toOsloDate
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 
-class VehicleTripService(private val vehicleTripRepository: VehicleTripRepository) {
+class VehicleTripService(
+    private val vehicleTripRepository: VehicleTripRepository,
+    private val syncCheckpointService: SyncCheckpointService,
+    private val httpClient: HttpClient,
+    vehicleTripPropertiesHolder: VehicleTripPropertiesHolder =
+        loadProperties<VehicleTripPropertiesHolder>(),
+) {
     private val logger: Logger = KtorSimpleLogger(VehicleTripService::class.java.name)
-    private val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
+    private val vehicleTripProperties = vehicleTripPropertiesHolder.vehicleTrip
     private val filePath = vehicleTripProperties.filePath
+    private val username = vehicleTripProperties.username
+    private val password = vehicleTripProperties.password
+    private val fullSyncFromDate = LocalDate.parse(vehicleTripProperties.syncFromDate)
+    private val loginUrl = vehicleTripProperties.loginUrl
+    private val tripsUrl = vehicleTripProperties.tripsUrl
+    private val userAgent = vehicleTripProperties.userAgent
+    private val referrer = vehicleTripProperties.referrer
+    private val localeKeyValue = vehicleTripProperties.locale
 
     suspend fun insertVehicleTripsFromFile() {
         logger.info("Reading vehicle trips from file $filePath and updating database..")
@@ -59,75 +66,128 @@ class VehicleTripService(private val vehicleTripRepository: VehicleTripRepositor
                 "updated: $updatedCount, no actions: $noActionCount",
         )
     }
-}
 
-fun Application.synchronizeVehicleTrips() {
-    val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
+    suspend fun fetchVehicleTrips() {
+        logger.info("Started fetching vehicle trips from external source")
 
-    // Create an HTTP client with a persistent cookie storage
-    val client = HttpClient(CIO) {
-        install(HttpCookies) {
-            storage = AcceptAllCookiesStorage() // Stores cookies automatically
+        val filterTimeRange: FilterTimeRange = createFilterTimeRange()
+
+        val vehicleTrips: List<VehicleTrip> = fetchVehicleTrips(
+            fromDate = filterTimeRange.fromDate,
+            toDate = filterTimeRange.toDate,
+        )
+
+        val persistenceResults: PersistenceResults = addOrUpdateVehicleTrips(vehicleTrips)
+
+        val latestDate: LocalDate? = vehicleTrips.maxByOrNull { it.endTime }?.endTime?.toOsloDate()
+
+        if (latestDate != null) {
+            syncCheckpointService.addOrUpdateCheckpointForVehicleTrips(latestDate)
         }
-        install(HttpRedirect) {
-            checkHttpMethod = false // Allow redirects on POST
-        }
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true }) // Allows parsing JSON responses
-        }
+
+        logger.info(
+            "Fetching vehicle trips complete. " +
+                "Total trips in response: ${vehicleTrips.size}, added: ${persistenceResults.addedCount}, " +
+                "updated: ${persistenceResults.updatedCount}, no actions: ${persistenceResults.noActionCount}",
+        )
     }
 
-    // Configuration
-    val username = vehicleTripProperties.username
-    val password = vehicleTripProperties.password
-    val fromDate = LocalDate.parse(vehicleTripProperties.syncFromDate)
-    val toDate = utcDateNow()
-    val loginUrl = vehicleTripProperties.loginUrl
-    val tripsUrl = vehicleTripProperties.tripsUrl
-    val userAgent = vehicleTripProperties.userAgent
-    val referrer = vehicleTripProperties.referrer
-    val localeKeyValue = vehicleTripProperties.locale
+    private suspend fun addOrUpdateVehicleTrips(trips: List<VehicleTrip>): PersistenceResults {
+        val results = PersistenceResults()
 
-    log.info("Starting syncing the vehicle trips")
-
-    runBlocking {
-        // Perform login (assuming form-based login)
-        val loginResponse: HttpResponse = client.submitForm(
-            url = loginUrl,
-            formParameters = parameters {
-                append("loginName", username)
-                append("password", password)
-            },
-        ) {
-            headers {
-                append(HttpHeaders.Cookie, localeKeyValue)
-                append(HttpHeaders.Referrer, referrer)
-                append(HttpHeaders.UserAgent, userAgent)
-            }
+        for (trip in trips) {
+            results.add(vehicleTripRepository.addOrUpdate(trip))
         }
 
-        if (loginResponse.status == HttpStatusCode.OK) {
-            // Now perform an authenticated request using the stored session cookie
-            val loginCookies: List<Cookie> = client.cookies(loginUrl)
-            val cookieHeader = loginCookies.joinToString("; ") { "${it.name}=${it.value}" }
-            val request = createRequest(fromDate = fromDate, toDate = toDate)
-            val response: GetVehicleTripsResponse = client.post(tripsUrl) {
-                setBody(request)
-                contentType(ContentType.Application.Json)
-                accept(ContentType.Application.Json)
+        return results
+    }
+
+    private suspend fun fetchVehicleTrips(fromDate: LocalDate, toDate: LocalDate): List<VehicleTrip> {
+        val vehicleTrips: MutableList<VehicleTrip> = mutableListOf()
+
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            // Perform login (assuming form-based login)
+            val loginResponse: HttpResponse = httpClient.submitForm(
+                url = loginUrl,
+                formParameters = parameters {
+                    append("loginName", username)
+                    append("password", password)
+                },
+            ) {
                 headers {
-                    append(HttpHeaders.Cookie, cookieHeader)
+                    append(HttpHeaders.Cookie, localeKeyValue)
                     append(HttpHeaders.Referrer, referrer)
                     append(HttpHeaders.UserAgent, userAgent)
                 }
-            }.body()
+            }
 
-            log.info("Vehicle trip response: $response")
-        } else {
-            log.error("Authentication to the vehicle trip service failed with status: ${loginResponse.status}")
+            if (loginResponse.status == HttpStatusCode.OK) {
+                var currentPage = 0
+                var totalNumberOfPages: Int
+
+                val loginCookies: List<Cookie> = httpClient.cookies(loginUrl)
+                val cookieHeader = loginCookies.joinToString("; ") { "${it.name}=${it.value}" }
+
+                do {
+                    currentPage = currentPage + 1
+
+                    val request = createRequest(
+                        fromDate = fromDate,
+                        toDate = toDate,
+                        currentPage = currentPage,
+                    )
+
+                    val response: GetVehicleTripsResponse = httpClient.post(tripsUrl) {
+                        setBody(request)
+                        contentType(ContentType.Application.Json)
+                        accept(ContentType.Application.Json)
+                        headers {
+                            append(HttpHeaders.Cookie, cookieHeader)
+                            append(HttpHeaders.Referrer, referrer)
+                            append(HttpHeaders.UserAgent, userAgent)
+                        }
+                    }.body()
+
+                    vehicleTrips.addAll(response.journeys.map { it.toInternal() })
+
+                    totalNumberOfPages = response.totalNumberOfPages
+                } while (currentPage < totalNumberOfPages)
+            } else {
+                logger.error("Authentication to the vehicle trip service failed with status: ${loginResponse.status}")
+            }
+        } catch (e: Exception) {
+            logger.error("Error occurred during fetching of vehicle trips from external service", e)
         }
 
-        client.close()
-        log.info("Completed syncing the vehicle trips")
+        return vehicleTrips
+    }
+
+    private suspend fun createFilterTimeRange(): FilterTimeRange {
+        val lastTripDate: LocalDate? = syncCheckpointService.checkpointForVehicleTrips()
+
+        val filterTimeRange = if (lastTripDate == null) {
+            val range = FilterTimeRange(
+                fromDate = fullSyncFromDate,
+                toDate = osloDateNow(),
+            )
+            logger.info("Performing full fetch of vehicle trips between {}", range)
+
+            range
+        } else {
+            val range = FilterTimeRange(
+                fromDate = lastTripDate,
+                toDate = osloDateNow(),
+            )
+            logger.info("Performing incremental fetch of vehicle trips between {}", range)
+
+            range
+        }
+
+        return filterTimeRange
+    }
+
+    private data class FilterTimeRange(val fromDate: LocalDate, val toDate: LocalDate) {
+        override fun toString(): String = "$fromDate - $toDate"
     }
 }
