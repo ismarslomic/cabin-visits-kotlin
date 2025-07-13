@@ -57,6 +57,14 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+      # Upload test results for codecov.io Test Analytics
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: build/test-results/test
+
       # Run Detekt
       - name: Run Detekt analysis
         run: ./gradlew detekt --no-daemon
