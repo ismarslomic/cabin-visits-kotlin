@@ -31,7 +31,7 @@ class VehicleTripServiceIntegrationTest :
     BaseDbTest({
         val propertiesHolder = VehicleTripPropertiesHolder(
             vehicleTrip = VehicleTripProperties(
-                filePath = "/foo/bar",
+                filePath = getResourceFilePath("vehicleTrips.json"),
                 loginUrl = "http://my-vehicle-api.com/login",
                 tripsUrl = "http://my-vehicle-api.com/trips",
                 username = "foo",
@@ -114,7 +114,7 @@ class VehicleTripServiceIntegrationTest :
             tripsInDb.first().id shouldBe "1740825126884"
         }
 
-        "should set the checkpoint for vehicle trips to latest endTime when trips list is not empty" {
+        "should set the checkpoint for vehicle trips to latest endTime when fetched trip list is not empty" {
             // Mock the JSON response returned by the fetch API
             val vehicleTripsPage1 = readJsonResource("vehicleTripsPage1Response.json")
             val vehicleTripsPage2 = readJsonResource("vehicleTripsPage2Response.json")
@@ -140,7 +140,7 @@ class VehicleTripServiceIntegrationTest :
             checkPointAfterFetching shouldBe LocalDate(year = 2025, monthNumber = 3, dayOfMonth = 15)
         }
 
-        "should not update the checkpoint for vehicle trips when trips list is empty" {
+        "should not update the checkpoint for vehicle trips when fetched trip list is empty" {
             // Mock the JSON response returned by the fetch API
             val vehicleTripsPage1 = "vehicleTripsNoTripsResponse.json"
             val vehicleTripsPage2 = ""
@@ -162,6 +162,85 @@ class VehicleTripServiceIntegrationTest :
 
             // Assert
             val checkPointAfterFetching: LocalDate? = syncCheckpointService.checkpointForVehicleTrips()
+            checkPointBeforeFetching.shouldBeNull()
+            checkPointAfterFetching.shouldBeNull()
+        }
+
+        "should use saved checkpoint as the time filter in the fetch request body" {
+            // Arrange
+            val vehicleTripsPage1 = readJsonResource("vehicleTripsPage1Response.json")
+
+            var requestFromDate: String? = null
+
+            val mockHttpClient = HttpClient(MockEngine) {
+                install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+                engine {
+                    addHandler { request ->
+                        if (request.url.toString() == propertiesHolder.vehicleTrip.tripsUrl) {
+                            val bodyContent = request.body
+                            val jsonText = when (bodyContent) {
+                                is TextContent -> bodyContent.bytes().toString(Charset.defaultCharset())
+                                else -> ""
+                            }
+                            val jsonElement = Json.parseToJsonElement(jsonText)
+                            requestFromDate = jsonElement.jsonObject["fromDateInUserFormat"]!!.jsonPrimitive.content
+                            respond(
+                                content = vehicleTripsPage1,
+                                status = HttpStatusCode.OK,
+                                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                            )
+                        } else {
+                            respond("", HttpStatusCode.OK)
+                        }
+                    }
+                }
+            }
+
+            val vehicleTripRepository = SqliteVehicleTripRepository()
+            val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
+            val tripService = VehicleTripService(
+                vehicleTripRepository = vehicleTripRepository,
+                syncCheckpointService = syncCheckpointService,
+                httpClient = mockHttpClient,
+                vehicleTripPropertiesHolder = propertiesHolder,
+            )
+            // Simulate setting checkpoint
+            syncCheckpointService.addOrUpdateCheckpointForVehicleTrips(
+                value = LocalDate(
+                    year = 2025,
+                    monthNumber = 3,
+                    dayOfMonth = 2,
+                ),
+            )
+
+            // Act
+            tripService.fetchVehicleTrips()
+
+            // Assert
+            requestFromDate shouldBe "02.03.2025"
+        }
+
+        "should read vehicle trips from file and add trips to database without updating checkpoint" {
+            val vehicleTripsPage1 = "vehicleTripsNoTripsResponse.json"
+            val mockHttpClient = createMockHttpClient(vehicleTripsPage1, "")
+            val vehicleTripRepository = SqliteVehicleTripRepository()
+            val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
+            val tripService = VehicleTripService(
+                vehicleTripRepository = vehicleTripRepository,
+                syncCheckpointService = syncCheckpointService,
+                httpClient = mockHttpClient,
+                vehicleTripPropertiesHolder = propertiesHolder,
+            )
+            val checkPointBeforeFetching: LocalDate? = syncCheckpointService.checkpointForVehicleTrips()
+
+            // Act
+            tripService.insertVehicleTripsFromFile()
+
+            // Assert
+            val checkPointAfterFetching: LocalDate? = syncCheckpointService.checkpointForVehicleTrips()
+            val tripsInDb: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
+            tripsInDb.size shouldBe 2
+            tripsInDb.first().id shouldBe "1741200104073"
             checkPointBeforeFetching.shouldBeNull()
             checkPointAfterFetching.shouldBeNull()
         }

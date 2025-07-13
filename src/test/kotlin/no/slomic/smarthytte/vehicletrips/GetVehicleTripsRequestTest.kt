@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 
-class VehicleTripServiceTest :
+class GetVehicleTripsRequestTest :
     StringSpec({
         val fromDate = LocalDate(dayOfMonth = 1, monthNumber = 2, year = 2025)
         val toDate = LocalDate(dayOfMonth = 5, monthNumber = 2, year = 2025)
