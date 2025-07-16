@@ -33,6 +33,7 @@ influx-db:
     measurement: ${INFLUXDB_CHECK_IN_MEASUREMENT}
     range-start: ${INFLUXDB_CHECK_IN_RANGE_START}
     range-stop: ${INFLUXDB_CHECK_IN_RANGE_STOP:-}
+    # TODO: consider removing, not used in the orchestration logic
     sync-frequency-minutes: ${INFLUXDB_CHECK_IN_SYNC_FREQ_MINUTES:-10}
 
 vehicle-trip:
