@@ -2,12 +2,12 @@
 
 ```mermaid
 sequenceDiagram
-    participant InitialLoad as "Initial load"
-    participant GuestService as "Guest Service"
-    participant VehicleTripService as "Vehicle Trip Service"
-    participant CheckInOutSensorService as "Check In Out Sensor Service"
-    participant CheckInOutService as "Check In Out Service"
-    participant GoogleCalendarService as "Google Calendar Service"
+    participant InitialLoad as Initial load
+    participant GuestService as Guest Service
+    participant VehicleTripService as Vehicle Trip Service
+    participant CheckInOutSensorService as Check In Out Sensor Service
+    participant CheckInOutService as Check In Out Service
+    participant GoogleCalendarService as Google Calendar Service
 
     InitialLoad->>GuestService: insert guests from file
     InitialLoad->>VehicleTripService: insert vehicle trips from file
@@ -21,11 +21,11 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant BackgroundSync as "Background Sync"
-    participant VehicleTripService as "Vehicle Trip Service"
-    participant CheckInOutSensorService as "Check In Out Sensor Service"
-    participant CheckInOutService as "Check In Out Service"
-    participant GoogleCalendarService as "Google Calendar Service"
+    participant BackgroundSync as Background Sync
+    participant VehicleTripService as Vehicle Trip Service
+    participant CheckInOutSensorService as Check In Out Sensor Service
+    participant CheckInOutService as Check In Out Service
+    participant GoogleCalendarService as Google Calendar Service
 
     alt is day time
         loop every 10 minutes (GOOGLE_CALENDAR_SYNC_FREQ_MINUTES)
