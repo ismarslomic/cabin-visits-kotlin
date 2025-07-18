@@ -2,6 +2,7 @@
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant InitialLoad as Initial load
     participant GuestService as Guest Service
     participant VehicleTripService as Vehicle Trip Service
@@ -21,6 +22,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant BackgroundSync as Background Sync
     participant VehicleTripService as Vehicle Trip Service
     participant CheckInOutSensorService as Check In Out Sensor Service
@@ -51,3 +53,41 @@ sequenceDiagram
 #### Is within reservation window?
 
 `reservation.startTime - 1 day <= now <= reservation.endTime + 1 day`
+
+## Google Calendar Service
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant GoogleCalendarService as Google Calendar Service
+    participant SyncCheckpointService as Sync Checkpoint Service
+    participant sync_checkpoint as db:sync_checkpoint
+    participant Calendar as Calendar (Google)
+    participant ReservationRepository as Reservation Repository
+    
+    GoogleCalendarService->>SyncCheckpointService: checkpoint for Google Calendar events
+    SyncCheckpointService->>sync_checkpoint: checkpointById
+    sync_checkpoint-->>SyncCheckpointService: checkpoint
+    SyncCheckpointService-->>GoogleCalendarService: checkpoint
+    
+    alt is checkpoint null
+        GoogleCalendarService->>Calendar: read all events (full sync)
+        Calendar-->>GoogleCalendarService: all events
+    else
+        GoogleCalendarService->>Calendar: read new/updated events since checkpoint (incremental sync)
+        Calendar-->>GoogleCalendarService: new/updated events
+    end
+    
+    GoogleCalendarService->>ReservationRepository: add, update or delete reservations
+    ReservationRepository-->>GoogleCalendarService: persistence result
+    
+    GoogleCalendarService->>SyncCheckpointService: add/update checkpoint for Google Calendar events
+```
+
+## Guest Service
+
+## Vehicle Trip Service
+
+## Check In/Out Sensor Service
+
+## Check In/Out Service
