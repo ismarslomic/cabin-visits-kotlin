@@ -66,7 +66,7 @@ sequenceDiagram
     participant ReservationRepository as Reservation Repository
     
     GoogleCalendarService->>SyncCheckpointService: checkpoint for Google Calendar events
-    SyncCheckpointService->>sync_checkpoint: checkpointById
+    SyncCheckpointService->>sync_checkpoint: checkpoint by id
     sync_checkpoint-->>SyncCheckpointService: checkpoint
     SyncCheckpointService-->>GoogleCalendarService: checkpoint
     
@@ -80,8 +80,9 @@ sequenceDiagram
     
     GoogleCalendarService->>ReservationRepository: add, update or delete reservations
     ReservationRepository-->>GoogleCalendarService: persistence result
-    
     GoogleCalendarService->>SyncCheckpointService: add/update checkpoint for Google Calendar events
+    SyncCheckpointService->>sync_checkpoint: add/update checkpoint
+    sync_checkpoint-->>SyncCheckpointService: persistence result
 ```
 
 ## Guest Service
