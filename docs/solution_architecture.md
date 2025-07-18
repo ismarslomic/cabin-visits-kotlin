@@ -62,10 +62,11 @@ sequenceDiagram
     participant GoogleCalendarService as Google Calendar Service
     participant SyncCheckpointService as Sync Checkpoint Service
     participant SyncCheckpointRepository as SyncCheckpointRepository
+    participant sync_checkpoint as db:sync_checkpoint
     participant Calendar as Calendar (Google)
     participant ReservationRepository as Reservation Repository
-    participant sync_checkpoint as db:sync_checkpoint
-    
+    participant reservation as db:reservation
+   
     GoogleCalendarService->>SyncCheckpointService: checkpoint for Google Calendar events
     SyncCheckpointService->>SyncCheckpointRepository: checkpoint by id
     SyncCheckpointRepository->>sync_checkpoint: checkpoint by id
@@ -82,7 +83,9 @@ sequenceDiagram
     end
     
     GoogleCalendarService->>ReservationRepository: add, update or delete reservations
+    ReservationRepository->>reservation: add, update or delete reservations
     ReservationRepository-->>GoogleCalendarService: persistence result
+    
     GoogleCalendarService->>SyncCheckpointService: add/update checkpoint for Google Calendar events
     SyncCheckpointService->>SyncCheckpointRepository: add/update checkpoint
     SyncCheckpointRepository->>sync_checkpoint: add/update checkpoint
