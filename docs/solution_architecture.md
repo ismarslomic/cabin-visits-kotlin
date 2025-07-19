@@ -119,6 +119,70 @@ sequenceDiagram
 
 ## Vehicle Trip Service
 
+### insert vehicle trips from file
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Application
+    participant VehicleTripService as Vehicle Trip Service
+    participant tripsFile as file:vehicleTrips.json
+    participant VehicleTripRepository as Vehicle Trip Repository
+    participant vehicleTrip as db:vehicle_trip
+
+    Application->>VehicleTripService: insert vehicle trips from file
+    activate VehicleTripService
+    VehicleTripService->>tripsFile: read vehicle trips from json file
+    tripsFile-->>VehicleTripService: vehicle trips
+    VehicleTripService->>VehicleTripRepository: add/update vehicle trips
+    VehicleTripRepository->>vehicleTrip: add/update vehicle trips
+    VehicleTripRepository-->>VehicleTripService: persistence result
+    deactivate VehicleTripService
+```
+
+### fetch vehicle trips
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Application
+    participant VehicleTripService as Vehicle Trip Service
+    participant SyncCheckpointService as Sync Checkpoint Service
+    participant SyncCheckpointRepository as SyncCheckpointRepository
+    participant sync_checkpoint as db:sync_checkpoint
+    participant VehicleTrips as Http Vehicle Trips (External)
+    participant VehicleTripRepository as Vehicle Trip Repository
+    participant vehicleTrip as db:vehicle_trip
+    
+    Application->>VehicleTripService: fetch vehicle trips
+    activate VehicleTripService
+    
+    VehicleTripService->>SyncCheckpointService: checkpoint for Vehicle Trips
+    SyncCheckpointService->>SyncCheckpointRepository: checkpoint by id
+    SyncCheckpointRepository->>sync_checkpoint: checkpoint by id
+    sync_checkpoint-->>SyncCheckpointRepository: checkpoint
+    SyncCheckpointRepository-->>SyncCheckpointService: checkpoint
+    SyncCheckpointService-->>VehicleTripService: checkpoint
+    
+    alt is checkpoint null
+        VehicleTripService->>VehicleTrips: read all vehicle trips (full sync)
+        VehicleTrips-->>VehicleTripService: all vehicle trips
+    else
+        VehicleTripService->>VehicleTrips: read new vehicle trips since checkpoint (incremental sync)
+        VehicleTrips-->>VehicleTripService: new vehicle trips
+    end
+    
+    VehicleTripService->>VehicleTripRepository: add/update vehicle trips
+    VehicleTripRepository->>vehicleTrip: add/update vehicle trips
+    VehicleTripRepository-->>VehicleTripService: persistence result
+    
+    VehicleTripService->>SyncCheckpointService: add/update checkpoint for vehicle trips
+    SyncCheckpointService->>SyncCheckpointRepository: add/update checkpoint
+    SyncCheckpointRepository->>sync_checkpoint: add/update checkpoint
+    SyncCheckpointRepository-->>SyncCheckpointService: persistence result
+    deactivate VehicleTripService
+```
+
 ## Check In/Out Sensor Service
 
 ## Check In/Out Service
