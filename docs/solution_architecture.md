@@ -72,7 +72,7 @@ sequenceDiagram
 
 ## Google Calendar Service
 
-The Google Calendar Service automates the synchronization of booking reservations by periodically retrieving events from
+The `GoogleCalendarService` automates the synchronization of booking reservations by periodically retrieving events from
 a designated Google Calendar. It supports both full and incremental synchronization by leveraging sync tokens, ensuring
 that only new or changed events are fetched after the initial sync.
 
@@ -94,7 +94,7 @@ sequenceDiagram
     participant Application
     participant GoogleCalendarService as Google Calendar Service
     participant SyncCheckpointService as Sync Checkpoint Service
-    participant SyncCheckpointRepository as SyncCheckpointRepository
+    participant SyncCheckpointRepository as Sync Checkpoint Repository
     participant sync_checkpoint as db:sync_checkpoint
     participant Calendar as Calendar (Google)
     participant ReservationRepository as Reservation Repository
@@ -130,7 +130,7 @@ sequenceDiagram
 
 ## Guest Service
 
-The GuestService is responsible for managing guest information within the application. It reads guest data from a
+The `GuestService` is responsible for managing guest information within the application. It reads guest data from a
 designated JSON file, then processes and updates the internal guest database accordingly. As it processes the guests, it
 ensures that new guests are added, existing guests are updated if their details have changed, and unchanged records are
 left as-is.
@@ -156,7 +156,8 @@ sequenceDiagram
 
 ## Vehicle Trip Service
 
-The VehicleTripService manages the synchronization and storage of vehicle trip data within the application. It provides
+The `VehicleTripService` manages the synchronization and storage of vehicle trip data within the application. It
+provides
 two main functions:
 
 1. `insertVehicleTripsFromFile`:
@@ -200,7 +201,7 @@ sequenceDiagram
     participant Application
     participant VehicleTripService as Vehicle Trip Service
     participant SyncCheckpointService as Sync Checkpoint Service
-    participant SyncCheckpointRepository as SyncCheckpointRepository
+    participant SyncCheckpointRepository as Sync Checkpoint Repository
     participant sync_checkpoint as db:sync_checkpoint
     participant VehicleTrips as Http Vehicle Trips (External)
     participant VehicleTripRepository as Vehicle Trip Repository
@@ -236,5 +237,55 @@ sequenceDiagram
 ```
 
 ## Check In/Out Sensor Service
+
+The `CheckInOutSensorService` manages the retrieval and storage of check-in and check-out sensor data, primarily for
+tracking occupancy and usage over time. It connects to an InfluxDB time-series database, running queries within specific
+time ranges to fetch sensor state changes (such as "checked in" or "checked out").
+The service supports both full and incremental synchronization based on a checkpoint system, ensuring only new or
+unprocessed sensor records are fetched and persisted. After fetching the data, it adds or updates records in the
+internal database and updates the checkpoint to the newest processed event, maintaining efficient and accurate
+synchronization with the external sensor data source.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Application
+    participant CheckInOutSensorService as Check In/Out Sensor Service
+    participant SyncCheckpointService as Sync Checkpoint Service
+    participant SyncCheckpointRepository as Sync Checkpoint Repository
+    participant sync_checkpoint as db:sync_checkpoint
+    participant InfluxDb as Influx DB (external)
+    participant CheckInOutSensorRepository as Check In/Out Sensor Repository
+    participant check_in_out_sensor as db:check_in_out_sensor
+    
+    Application->>CheckInOutSensorService: fetch check on/out
+    activate CheckInOutSensorService
+    
+    CheckInOutSensorService->>SyncCheckpointService: checkpoint for check in/out sensor
+    SyncCheckpointService->>SyncCheckpointRepository: checkpoint by id
+    SyncCheckpointRepository->>sync_checkpoint: checkpoint by id
+    sync_checkpoint-->>SyncCheckpointRepository: checkpoint
+    SyncCheckpointRepository-->>SyncCheckpointService: checkpoint
+    SyncCheckpointService-->>CheckInOutSensorService: checkpoint
+    
+    alt is checkpoint null
+        CheckInOutSensorService->>InfluxDb: read all check in/out sensor data (full sync)
+        InfluxDb-->>CheckInOutSensorService: all check in/out sensor data
+    else
+        CheckInOutSensorService->>InfluxDb: read new check in/out sensor data (incremental sync)
+        InfluxDb-->>CheckInOutSensorService: new check in/out sensor data
+    end
+    
+    CheckInOutSensorService->>CheckInOutSensorRepository: add/update check in/out sensor data
+    CheckInOutSensorRepository->>check_in_out_sensor: add/update check in/out sensor data
+    CheckInOutSensorRepository-->>CheckInOutSensorService: persistence result
+    
+    CheckInOutSensorService->>SyncCheckpointService: add/update checkpoint for InfluxDB check in/out sensor data
+    SyncCheckpointService->>SyncCheckpointRepository: add/update checkpoint
+    SyncCheckpointRepository->>sync_checkpoint: add/update checkpoint
+    SyncCheckpointRepository-->>SyncCheckpointService: persistence result
+    
+    deactivate CheckInOutSensorService
+```
 
 ## Check In/Out Service
