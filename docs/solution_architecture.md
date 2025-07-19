@@ -289,3 +289,97 @@ sequenceDiagram
 ```
 
 ## Check In/Out Service
+
+The `CheckInOutService` orchestrates the detection and recording of guests’ check-in and check-out times for cabin
+reservations. It integrates data from reservations, check in/out sensor data, and vehicle trips to determine the most
+accurate check-in and check-out events for each reservation.
+
+The function `updateCheckInOutStatusForAllReservations` updates the check-in and check-out status for all reservations
+by:
+
+- Fetching all existing reservations, check in/out sensor data (by date), and relevant vehicle trips.
+- For each reservation, attempt to determine check-in and check-out times through the following data sources (in
+  priority order):
+    1. vehicle trip
+    2. check in/out sensor data, and
+    3. reservation calendar times
+- Persisting any new or updated check-in/out details with the reservation record.
+
+By systematically synthesizing information from multiple sources, the service aims to ensure reservation records have
+the most accurate and up-to-date check-in and check-out statuses possible.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Application
+    participant CheckInOutService as Check In/Out Service
+    participant ReservationRepository as Reservation Repository
+    participant CheckInOutSensorRepository as Check In/Out Sensor Repository
+    participant VehicleTripRepository as Vehicle Trip Repository
+    participant CabinVehicleTrip as Cabin Vehicle Trip
+    
+    Application->>CheckInOutService: update check in/out status for all reservations
+    activate CheckInOutService
+    
+    CheckInOutService->>ReservationRepository: all reservations
+    ReservationRepository-->>CheckInOutService: reservations
+    
+    CheckInOutService->>CheckInOutSensorRepository: all check in/outs
+    CheckInOutSensorRepository-->>CheckInOutService: all check in/outs
+    
+    CheckInOutService->>VehicleTripRepository: all vehicle trips
+    VehicleTripRepository-->>CheckInOutService: all vehicle trips
+    
+    CheckInOutService->>CabinVehicleTrip: find cabin trips with extra stops
+    CabinVehicleTrip-->>CheckInOutService: vehicle trips
+    
+    loop every reservation
+        CheckInOutService->>CheckInOutService: create check in
+        CheckInOutService->>ReservationRepository: set check in
+        ReservationRepository-->>CheckInOutService: persistence result
+        
+        CheckInOutService->>CheckInOutService: create check out
+        CheckInOutService->>ReservationRepository: set check out
+        ReservationRepository-->>CheckInOutService: persistence result
+    end
+    
+    deactivate CheckInOutService
+```
+
+### Rules
+
+#### Check-In Time Determination Logic
+
+When automatically determining the check-in time for a reservation, the system follows a priority order based on
+available data sources:
+
+1. **Vehicle Trip Data**:
+   If there is a vehicle trip record that likely represents the guest's arrival at the cabin, and the trip's end time is
+   available, this time is used as the check-in time. The source is recorded as "Vehicle Trip".
+2. **Check-In Sensor Data**:
+   If no suitable vehicle trip is found, but there is a check-in sensor event matching the reservation
+   and providing a check-in timestamp, this is used as the check-in time. The source is recorded as "Check-In Sensor".
+3. **Reservation Start Time**:
+   If neither a relevant vehicle trip nor a sensor event is available, the check-in time defaults to the reservation's
+   scheduled start time. The source is indicated as "Calendar Event".
+
+This order ensures that the system uses the **most precise and reliable check-in information available**, falling back
+on the calendar when primary sources are missing.
+
+### Check-Out Time Determination Logic
+
+When automatically determining the check-out time for a reservation, the system follows a prioritized set of rules to
+choose the most accurate and relevant timestamp:
+
+1. **Vehicle Trip Data**:
+   If there is a vehicle trip that likely corresponds to the guest's departure from the cabin, and the trip's start time
+   is available, this time is used as the check-out time. The source is labeled as "Vehicle Trip".
+2. **Check-Out Sensor Data**:
+   If no suitable vehicle trip is found, but a check-out sensor event provides a check-out time for the
+   reservation, this timestamp is selected as the check-out time. The source is labeled as "Check-Our Sensor".
+3. **Reservation End Time**:
+   If neither a relevant vehicle trip nor a matching sensor event is available, the system defaults to using the
+   reservation's scheduled end time as the check-out time. The source is indicated as "Calendar Event".
+
+This logic ensures that the system always records the check-out time using the **best available evidence**, giving
+priority to real-world events and falling back on the original reservation details when necessary.
