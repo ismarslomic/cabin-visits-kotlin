@@ -366,7 +366,7 @@ available data sources:
 This order ensures that the system uses the **most precise and reliable check-in information available**, falling back
 on the calendar when primary sources are missing.
 
-### Check-Out Time Determination Logic
+#### Check-Out Time Determination Logic
 
 When automatically determining the check-out time for a reservation, the system follows a prioritized set of rules to
 choose the most accurate and relevant timestamp:
