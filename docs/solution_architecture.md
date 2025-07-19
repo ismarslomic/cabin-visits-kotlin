@@ -3,7 +3,7 @@
 ```mermaid
 sequenceDiagram
     autonumber
-    participant InitialLoad as Initial load
+    participant InitialLoad as Application: initial load
     participant GuestService as Guest Service
     participant VehicleTripService as Vehicle Trip Service
     participant CheckInOutSensorService as Check In Out Sensor Service
@@ -23,7 +23,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    participant BackgroundSync as Background Sync
+    participant BackgroundSync as Application: background sync
     participant VehicleTripService as Vehicle Trip Service
     participant CheckInOutSensorService as Check In Out Sensor Service
     participant CheckInOutService as Check In Out Service
@@ -59,6 +59,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
+    participant Application
     participant GoogleCalendarService as Google Calendar Service
     participant SyncCheckpointService as Sync Checkpoint Service
     participant SyncCheckpointRepository as SyncCheckpointRepository
@@ -67,6 +68,8 @@ sequenceDiagram
     participant ReservationRepository as Reservation Repository
     participant reservation as db:reservation
    
+    Application->>GoogleCalendarService: fetch google calendar events
+    activate GoogleCalendarService
     GoogleCalendarService->>SyncCheckpointService: checkpoint for Google Calendar events
     SyncCheckpointService->>SyncCheckpointRepository: checkpoint by id
     SyncCheckpointRepository->>sync_checkpoint: checkpoint by id
@@ -90,9 +93,29 @@ sequenceDiagram
     SyncCheckpointService->>SyncCheckpointRepository: add/update checkpoint
     SyncCheckpointRepository->>sync_checkpoint: add/update checkpoint
     SyncCheckpointRepository-->>SyncCheckpointService: persistence result
+    deactivate GoogleCalendarService
 ```
 
 ## Guest Service
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Application
+    participant GuestService as Guest Service
+    participant guestFile as file:guests.json
+    participant GuestRepository as Guest Repository
+    participant guest as db:guest
+
+    Application->>GuestService: insert guests from file
+    activate GuestService
+    GuestService->>guestFile: read guests from json file
+    guestFile-->>GuestService: guests
+    GuestService->>GuestRepository: add/update guests
+    GuestRepository->>guest: add/update guests
+    GuestRepository-->>GuestService: persistence result
+    deactivate GuestService
+```
 
 ## Vehicle Trip Service
 

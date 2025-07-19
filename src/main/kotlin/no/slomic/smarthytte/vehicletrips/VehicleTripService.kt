@@ -21,7 +21,7 @@ import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.PersistenceResults
 import no.slomic.smarthytte.common.osloDateNow
-import no.slomic.smarthytte.common.readVehicleTripFromJsonFile
+import no.slomic.smarthytte.common.readVehicleTripsFromJsonFile
 import no.slomic.smarthytte.common.toOsloDate
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
@@ -51,7 +51,7 @@ class VehicleTripService(
 
         val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
-        val tripsFromFile: List<VehicleTripResponse> = readVehicleTripFromJsonFile(filePath)
+        val tripsFromFile: List<VehicleTripResponse> = readVehicleTripsFromJsonFile(filePath)
         for (trip in tripsFromFile) {
             persistenceResults.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
         }
