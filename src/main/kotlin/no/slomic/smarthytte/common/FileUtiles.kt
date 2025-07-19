@@ -10,14 +10,14 @@ fun readContentFromFile(filePath: String): String {
     return file.readText()
 }
 
-fun readGuestFromJsonFile(filePath: String): List<Guest> {
+fun readGuestsFromJsonFile(filePath: String): List<Guest> {
     val jsonStringFromFile = readContentFromFile(filePath)
     val json = Json { prettyPrint = true }
 
     return json.decodeFromString(jsonStringFromFile)
 }
 
-fun readVehicleTripFromJsonFile(filePath: String): List<VehicleTripResponse> {
+fun readVehicleTripsFromJsonFile(filePath: String): List<VehicleTripResponse> {
     val jsonStringFromFile = readContentFromFile(filePath)
     val json = Json { prettyPrint = true }
 

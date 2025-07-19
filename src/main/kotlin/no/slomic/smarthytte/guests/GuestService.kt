@@ -3,7 +3,7 @@ package no.slomic.smarthytte.guests
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
-import no.slomic.smarthytte.common.readGuestFromJsonFile
+import no.slomic.smarthytte.common.readGuestsFromJsonFile
 import no.slomic.smarthytte.properties.GuestPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 
@@ -17,7 +17,7 @@ class GuestService(private val guestRepository: GuestRepository) {
 
         val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
-        val guestsFromFile: List<Guest> = readGuestFromJsonFile(filePath)
+        val guestsFromFile: List<Guest> = readGuestsFromJsonFile(filePath)
         for (guest in guestsFromFile) {
             persistenceResults.add(guestRepository.addOrUpdate(guest))
         }
