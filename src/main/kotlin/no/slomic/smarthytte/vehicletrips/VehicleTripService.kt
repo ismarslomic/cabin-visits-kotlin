@@ -45,6 +45,7 @@ class VehicleTripService(
     private val userAgent = vehicleTripProperties.userAgent
     private val referrer = vehicleTripProperties.referrer
     private val localeKeyValue = vehicleTripProperties.locale
+    private val pageSize = vehicleTripProperties.pageSize
 
     suspend fun insertVehicleTripsFromFile() {
         logger.info("Reading vehicle trips from file $filePath and updating database..")
@@ -61,7 +62,7 @@ class VehicleTripService(
         val noActionCount = persistenceResults.count { it == PersistenceResult.NO_ACTION }
 
         logger.info(
-            "Updating vehicle trips in database complete. " +
+            "Reading vehicle trips from file complete. " +
                 "Total trips in file: ${tripsFromFile.size}, added: $addedCount, " +
                 "updated: $updatedCount, no actions: $noActionCount",
         )
@@ -86,7 +87,7 @@ class VehicleTripService(
         }
 
         logger.info(
-            "Fetching vehicle trips complete. " +
+            "Fetching vehicle trips from external source complete. " +
                 "Total trips in response: ${vehicleTrips.size}, added: ${persistenceResults.addedCount}, " +
                 "updated: ${persistenceResults.updatedCount}, no actions: ${persistenceResults.noActionCount}",
         )
@@ -136,6 +137,7 @@ class VehicleTripService(
                         fromDate = fromDate,
                         toDate = toDate,
                         currentPage = currentPage,
+                        pageSize = pageSize,
                     )
 
                     val response: GetVehicleTripsResponse = httpClient.post(tripsUrl) {
@@ -152,6 +154,11 @@ class VehicleTripService(
                     vehicleTrips.addAll(response.journeys.map { it.toInternal() })
 
                     totalNumberOfPages = response.totalNumberOfPages
+
+                    logger.info(
+                        "Fetched ${response.journeys.size} vehicle trips between $fromDate - $toDate " +
+                            "(page $currentPage of $totalNumberOfPages)",
+                    )
                 } while (currentPage < totalNumberOfPages)
             } else {
                 logger.error("Authentication to the vehicle trip service failed with status: ${loginResponse.status}")

@@ -13,4 +13,5 @@ data class VehicleTripProperties(
     val userAgent: String,
     val referrer: String,
     val locale: String,
+    val pageSize: Int,
 )

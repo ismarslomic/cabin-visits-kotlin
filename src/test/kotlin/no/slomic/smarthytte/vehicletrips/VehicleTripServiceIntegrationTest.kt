@@ -41,6 +41,7 @@ class VehicleTripServiceIntegrationTest :
                 userAgent = "Wget/1.21.4",
                 referrer = "http://my-vehicle-api.com/trips",
                 locale = "locale=nb_NO",
+                pageSize = 100,
             ),
         )
 

@@ -27,7 +27,7 @@ class GetVehicleTripsRequestTest :
             {
                 "fetchJourneys": true,
                 "currentPage": 1,
-                "pageSize": 20,
+                "pageSize": 50,
                 "sorting": ["START_DATE-asc"],
                 "fromDateInUserFormat": "01.02.2025",
                 "toDateInUserFormat": "05.02.2025",
