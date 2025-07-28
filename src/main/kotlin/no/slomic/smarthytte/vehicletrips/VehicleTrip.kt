@@ -5,6 +5,9 @@ import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.toUtcDate
 import kotlin.time.Duration
 
+const val HOME_CITY_NAME = "Oslo"
+const val CABIN_CITY_NAME = "Ullsåk"
+
 data class VehicleTrip(
     val averageEnergyConsumption: Double,
     val averageEnergyConsumptionUnit: String,
@@ -30,15 +33,24 @@ data class VehicleTrip(
     val extraStops: List<String> = listOf(),
     val notionId: String? = null,
 ) {
-    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = endDate == utcDate && endCity == ULLSAK_CITY_NAME
+    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = endDate == utcDate && endCity == CABIN_CITY_NAME
 
-    fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = startDate == utcDate && startCity == ULLSAK_CITY_NAME
+    fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = startDate == utcDate && startCity == CABIN_CITY_NAME
 
     private val startDate: LocalDate
         get() = startTime.toUtcDate()
 
     private val endDate: LocalDate
         get() = endTime.toUtcDate()
+
+    val isToCabin: Boolean
+        get() = endCity == CABIN_CITY_NAME
+
+    val isFromHome: Boolean
+        get() = startCity == HOME_CITY_NAME
+
+    val isFromCabin: Boolean
+        get() = startCity == CABIN_CITY_NAME
 
     override fun toString(): String {
         val extraStopCityNames =
@@ -59,8 +71,26 @@ data class VehicleTrip(
     }
 }
 
-data class OsloUllsakVehicleTrip(
-    val fromOsloToUllsak: VehicleTrip,
-    val fromUllsakToOslo: VehicleTrip?,
-    val lastIndex: Int,
-)
+/**
+ * Represents the vehicle trips to the cabin and back.
+ */
+data class CabinVehicleTrip(
+    /**
+     * The vehicle trip from Home to Cabin, including extra stops.
+     */
+    val toCabin: VehicleTrip,
+    /**
+     * The vehicle trip from Cabin to Home, including extra stops.
+     * Null if the cabin visit is active and not yet completed.
+     */
+    val fromCabin: VehicleTrip?,
+    /**
+     * The index of the [fromCabin] trip if not null, otherwise the [toCabin] trip in the list of trips.
+     */
+    val indexInTempList: Int,
+) {
+    /**
+     * Checks if this vehicle trip to cabin is still active or is completed.
+     */
+    val isActive: Boolean get() = fromCabin == null
+}

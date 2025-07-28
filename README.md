@@ -45,7 +45,6 @@ with the `-e` option:
 | `VEHICLE_TRIP_REFERRER`                      | Yes      | N/A                    | Referrer HTTP header for vehicle trip API requests.                                                                                                                                                                                        |
 | `VEHICLE_TRIP_LOCALE`                        | Yes      | N/A                    | Locale header for requests (e.g., `nb_NO`, dictates language/formatting).                                                                                                                                                                  |
 | `VEHICLE_TRIP_PAGE_SIZE`                     | No       | 200                    | Determines the number of vehicle trip records to fetch per page when syncing vehicle trip data from the API. Defaults to `200`. Adjusting this value can help manage paging performance and memory usage when dealing with large datasets. |
-|
 
 ```bash
 docker run --rm -p 8079:8079 --env-file .env ismarslomic/cabin-visits-kotlin:main

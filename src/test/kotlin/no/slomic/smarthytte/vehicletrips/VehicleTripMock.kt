@@ -5,11 +5,11 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
 fun createTrip(
-    id: String = UUID.randomUUID().toString(),
     startCity: String,
     endCity: String,
     startTime: String,
     endTime: String,
+    id: String = UUID.randomUUID().toString(),
 ): VehicleTrip {
     val startTimestamp: Instant = Instant.parse(startTime)
     val endTimestamp: Instant = Instant.parse(endTime)
