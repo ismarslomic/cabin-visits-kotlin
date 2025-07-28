@@ -7,7 +7,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Instant
 
-class CabinVehicleTripTest :
+class CabinVehicleTripListTest :
     ShouldSpec({
         val homeCity = "Oslo"
         val cabinCity = "Ullsåk"
@@ -42,7 +42,7 @@ class CabinVehicleTripTest :
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
@@ -61,7 +61,7 @@ class CabinVehicleTripTest :
                     createTrip(nesoddtangen, homeCity, "2025-01-01T11:00:00+01:00", "2025-01-01T12:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 0
             }
@@ -77,7 +77,7 @@ class CabinVehicleTripTest :
                     createTrip(golCity, cabinCity, "2025-01-01T16:00:00+01:00", "2025-01-01T17:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
@@ -98,7 +98,7 @@ class CabinVehicleTripTest :
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
@@ -118,7 +118,7 @@ class CabinVehicleTripTest :
                     createTrip(cabinCity, homeCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 2
 
@@ -138,7 +138,7 @@ class CabinVehicleTripTest :
                     createTrip(homeCity, cabinCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
@@ -173,7 +173,7 @@ class CabinVehicleTripTest :
                     createTrip(hemsedalCity, cabinCity, "2025-01-03T14:01:00+01:00", "2025-01-03T14:10:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
@@ -198,7 +198,7 @@ class CabinVehicleTripTest :
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
@@ -220,7 +220,7 @@ class CabinVehicleTripTest :
                     createTrip(cabinCity, homeCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 2
 
@@ -239,7 +239,7 @@ class CabinVehicleTripTest :
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
             }
@@ -256,7 +256,7 @@ class CabinVehicleTripTest :
                     createTrip(sjusjoenCity, homeCity, "2025-01-02T15:00:00+01:00", "2025-01-02T17:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 2
 
@@ -282,7 +282,7 @@ class CabinVehicleTripTest :
                     createTrip(cabinCity, homeCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 2
 
@@ -304,7 +304,7 @@ class CabinVehicleTripTest :
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 2
 
@@ -326,7 +326,7 @@ class CabinVehicleTripTest :
                     createTrip(cabinCity, homeCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
@@ -345,7 +345,7 @@ class CabinVehicleTripTest :
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
             }
@@ -363,7 +363,7 @@ class CabinVehicleTripTest :
                         createTrip(nesoddtangen, homeCity, "2025-01-03T12:00:00+01:00", "2025-01-03T15:00:00+01:00"),
                     )
 
-                    val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                    val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                     homeCabinTrips shouldHaveSize 2
 
@@ -389,7 +389,7 @@ class CabinVehicleTripTest :
                     createTrip(nesoddtangen, homeCity, "2025-01-03T12:00:00+01:00", "2025-01-03T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = findCabinVehicleTrips(trips)
+                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 

@@ -9,9 +9,9 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
+import no.slomic.smarthytte.vehicletrips.CabinVehicleTripList
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
-import no.slomic.smarthytte.vehicletrips.findCabinVehicleTrips
 
 class CheckInOutService(
     private val reservationRepository: ReservationRepository,
@@ -27,19 +27,19 @@ class CheckInOutService(
         val checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>> =
             checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
         val allVehicleTrips: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
-        val cabinVehicleTrips: List<VehicleTrip> = findCabinVehicleTrips(allVehicleTrips)
+        val cabinVehicleTripList: List<VehicleTrip> = CabinVehicleTripList(allVehicleTrips).cabinTrips
 
         val checkInPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         val checkOutPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         allReservations.forEach { reservation ->
             val checkIn: CheckIn? = if (reservation.hasStarted) {
-                createCheckIn(reservation, checkInOutSensorsByDate, cabinVehicleTrips)
+                createCheckIn(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
             } else {
                 null
             }
 
             val checkOut: CheckOut? = if (reservation.hasEnded) {
-                createCheckOut(reservation, checkInOutSensorsByDate, cabinVehicleTrips)
+                createCheckOut(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
             } else {
                 null
             }
