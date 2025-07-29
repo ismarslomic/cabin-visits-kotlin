@@ -5,23 +5,34 @@ import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventDateTime
 import com.google.api.services.calendar.model.Events
+import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
+import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.utils.getResourceFilePath
 
 class GoogleCalendarServiceTest :
-    BaseDbTest({
+    StringSpec({
+        val testDbSetup = TestDbSetup()
+
+        beforeTest {
+            testDbSetup.setupDb()
+        }
+
+        afterTest {
+            testDbSetup.teardownDb()
+        }
+
         val mockCalendarApiClient = mockk<Calendar>(relaxed = true)
         val mockEventsList = mockk<Calendar.Events.List>(relaxed = true)
         val reservationRepository: ReservationRepository = SqliteReservationRepository()

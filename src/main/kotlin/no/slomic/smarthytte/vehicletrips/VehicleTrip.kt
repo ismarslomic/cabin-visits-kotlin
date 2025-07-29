@@ -30,15 +30,24 @@ data class VehicleTrip(
     val extraStops: List<String> = listOf(),
     val notionId: String? = null,
 ) {
-    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = endDate == utcDate && endCity == ULLSAK_CITY_NAME
+    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = endDate == utcDate && endCity == CABIN_CITY_NAME
 
-    fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = startDate == utcDate && startCity == ULLSAK_CITY_NAME
+    fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = startDate == utcDate && startCity == CABIN_CITY_NAME
 
     private val startDate: LocalDate
         get() = startTime.toUtcDate()
 
     private val endDate: LocalDate
         get() = endTime.toUtcDate()
+
+    val isToCabin: Boolean
+        get() = endCity == CABIN_CITY_NAME
+
+    val isFromHome: Boolean
+        get() = startCity == HOME_CITY_NAME
+
+    val isFromCabin: Boolean
+        get() = startCity == CABIN_CITY_NAME
 
     override fun toString(): String {
         val extraStopCityNames =
@@ -58,9 +67,3 @@ data class VehicleTrip(
         return str
     }
 }
-
-data class OsloUllsakVehicleTrip(
-    val fromOsloToUllsak: VehicleTrip,
-    val fromUllsakToOslo: VehicleTrip?,
-    val lastIndex: Int,
-)

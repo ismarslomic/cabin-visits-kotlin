@@ -2,6 +2,7 @@
 
 package no.slomic.smarthytte.vehicletrips
 
+import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
@@ -19,16 +20,26 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.common.readContentFromFile
 import no.slomic.smarthytte.properties.VehicleTripProperties
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
+import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.utils.getResourceFilePath
 
 class VehicleTripServiceIntegrationTest :
-    BaseDbTest({
+    StringSpec({
+        val testDbSetup = TestDbSetup()
+
+        beforeTest {
+            testDbSetup.setupDb()
+        }
+
+        afterTest {
+            testDbSetup.teardownDb()
+        }
+
         val propertiesHolder = VehicleTripPropertiesHolder(
             vehicleTrip = VehicleTripProperties(
                 filePath = getResourceFilePath("vehicleTrips.json"),
@@ -41,6 +52,7 @@ class VehicleTripServiceIntegrationTest :
                 userAgent = "Wget/1.21.4",
                 referrer = "http://my-vehicle-api.com/trips",
                 locale = "locale=nb_NO",
+                pageSize = 100,
             ),
         )
 

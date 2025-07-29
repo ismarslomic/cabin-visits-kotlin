@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.reservations
 
+import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.equality.shouldBeEqualToComparingFields
@@ -8,7 +9,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock
-import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
@@ -18,6 +18,7 @@ import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -77,7 +78,17 @@ val guestAmira = Guest(
 )
 
 class ReservationRepositoryTest :
-    BaseDbTest({
+    StringSpec({
+        val testDbSetup = TestDbSetup()
+
+        beforeTest {
+            testDbSetup.setupDb()
+        }
+
+        afterTest {
+            testDbSetup.teardownDb()
+        }
+
         val repository: ReservationRepository = SqliteReservationRepository()
 
         "add or update with new id should add new reservation" {

@@ -9,9 +9,9 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
+import no.slomic.smarthytte.vehicletrips.CabinVehicleTripList
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
-import no.slomic.smarthytte.vehicletrips.findCabinTripsWithExtraStops
 
 class CheckInOutService(
     private val reservationRepository: ReservationRepository,
@@ -20,6 +20,23 @@ class CheckInOutService(
 ) {
     private val logger: Logger = KtorSimpleLogger(CheckInOutService::class.java.name)
 
+    /**
+     * Updates the check-in and check-out status for all reservations.
+     *
+     * For each reservation in the system:
+     * - If the reservation has started, attempts to create and persist a check-in entry.
+     * - If the reservation has ended, attempts to create and persist a check-out entry.
+     * For both actions, tracks and logs the results (updated or no action).
+     *
+     * The process uses data from the reservation repository, check-in/out sensors, and vehicle trips.
+     *
+     * This function is intended for system-wide status synchronization,
+     * such as a scheduled job or maintenance action.
+     *
+     * @see ReservationRepository.allReservations
+     * @see CheckInOutSensorRepository.allCheckInOuts
+     * @see VehicleTripRepository.allVehicleTrips
+     */
     suspend fun updateCheckInOutStatusForAllReservations() {
         logger.info("Updating check in/out status for all reservations...")
 
@@ -27,23 +44,19 @@ class CheckInOutService(
         val checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>> =
             checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
         val allVehicleTrips: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
-        val homeCabinTrips: List<VehicleTrip> = findCabinTripsWithExtraStops(allVehicleTrips)
+        val cabinVehicleTripList: List<VehicleTrip> = CabinVehicleTripList(allVehicleTrips).cabinTrips
 
         val checkInPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         val checkOutPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         allReservations.forEach { reservation ->
             val checkIn: CheckIn? = if (reservation.hasStarted) {
-                createCheckIn(reservation, checkInOutSensorsByDate, homeCabinTrips)
+                createCheckIn(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
             } else {
                 null
             }
 
             val checkOut: CheckOut? = if (reservation.hasEnded) {
-                createCheckOut(
-                    reservation,
-                    checkInOutSensorsByDate,
-                    homeCabinTrips,
-                )
+                createCheckOut(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
             } else {
                 null
             }
@@ -76,9 +89,9 @@ class CheckInOutService(
     private fun createCheckIn(
         reservation: Reservation,
         checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>>,
-        homeCabinTrips: List<VehicleTrip>,
+        cabinVehicleTrips: List<VehicleTrip>,
     ): CheckIn {
-        val vehicleTrip: VehicleTrip? = findArrivalAtCabinTrip(homeCabinTrips, reservation)
+        val vehicleTrip: VehicleTrip? = findArrivalAtCabinTrip(cabinVehicleTrips, reservation)
         val checkInOutSensor: CheckInOutSensor? = findCheckInFromSensor(checkInOutSensorsByDate, reservation)
         val timeFromCheckInSensor: Instant? = checkInOutSensor?.time
         val timeFromVehicleTrip: Instant? = vehicleTrip?.endTime
@@ -108,9 +121,9 @@ class CheckInOutService(
     private fun createCheckOut(
         reservation: Reservation,
         checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>>,
-        homeCabinTrips: List<VehicleTrip>,
+        cabinVehicleTrips: List<VehicleTrip>,
     ): CheckOut {
-        val vehicleTrip: VehicleTrip? = findDepartureFromCabinTrip(homeCabinTrips, reservation)
+        val vehicleTrip: VehicleTrip? = findDepartureFromCabinTrip(cabinVehicleTrips, reservation)
         val checkInOutSensor: CheckInOutSensor? = findCheckOutFromSensor(checkInOutSensorsByDate, reservation)
         val timeFromCheckInSensor: Instant? = checkInOutSensor?.time
         val timeFromVehicleTrip: Instant? = vehicleTrip?.startTime
@@ -137,16 +150,19 @@ class CheckInOutService(
         }
     }
 
-    private fun findArrivalAtCabinTrip(homeCabinTrips: List<VehicleTrip>, reservation: Reservation): VehicleTrip? {
+    private fun findArrivalAtCabinTrip(cabinVehicleTrips: List<VehicleTrip>, reservation: Reservation): VehicleTrip? {
         val reservationStartDate: LocalDate = reservation.startDate
-        val checkInTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasArrivedCabinAt(reservationStartDate) }
+        val checkInTrip: VehicleTrip? = cabinVehicleTrips.firstOrNull { it.hasArrivedCabinAt(reservationStartDate) }
 
         return checkInTrip
     }
 
-    private fun findDepartureFromCabinTrip(homeCabinTrips: List<VehicleTrip>, reservation: Reservation): VehicleTrip? {
+    private fun findDepartureFromCabinTrip(
+        cabinVehicleTrips: List<VehicleTrip>,
+        reservation: Reservation,
+    ): VehicleTrip? {
         val reservationEndDate: LocalDate = reservation.endDate
-        val checkOutTrip: VehicleTrip? = homeCabinTrips.firstOrNull { it.hasDepartedCabinAt(reservationEndDate) }
+        val checkOutTrip: VehicleTrip? = cabinVehicleTrips.firstOrNull { it.hasDepartedCabinAt(reservationEndDate) }
 
         return checkOutTrip
     }

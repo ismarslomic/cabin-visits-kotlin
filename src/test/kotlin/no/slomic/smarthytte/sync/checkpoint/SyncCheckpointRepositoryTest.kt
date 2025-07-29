@@ -1,15 +1,26 @@
 package no.slomic.smarthytte.sync.checkpoint
 
+import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class SyncCheckpointRepositoryTest :
-    BaseDbTest({
+    StringSpec({
+        val testDbSetup = TestDbSetup()
+
+        beforeTest {
+            testDbSetup.setupDb()
+        }
+
+        afterTest {
+            testDbSetup.teardownDb()
+        }
+
         val repository: SyncCheckpointRepository = SqliteSyncCheckpointRepository()
         val checkPointId = "foo-bar"
         val checkPointValue = "12345"

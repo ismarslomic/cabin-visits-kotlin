@@ -47,3 +47,4 @@ vehicle-trip:
   user-agent: ${VEHICLE_TRIP_USER_AGENT}
   referrer: ${VEHICLE_TRIP_REFERRER}
   locale: ${VEHICLE_TRIP_LOCALE}
+  page-size: ${VEHICLE_TRIP_PAGE_SIZE:-200}

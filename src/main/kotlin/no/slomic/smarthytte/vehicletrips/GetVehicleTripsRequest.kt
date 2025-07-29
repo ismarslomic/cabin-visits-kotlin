@@ -36,7 +36,7 @@ data class GetVehicleTripsRequest(
     }
 }
 
-fun createRequest(fromDate: LocalDate, toDate: LocalDate, currentPage: Int = 1, pageSize: Int = 20) =
+fun createRequest(fromDate: LocalDate, toDate: LocalDate, currentPage: Int = 1, pageSize: Int = 50) =
     GetVehicleTripsRequest(
         fromDateInUserFormat = fromDate.format(GetVehicleTripsRequest.NORWEGIAN_DATE_FORMAT),
         toDateInUserFormat = toDate.format(GetVehicleTripsRequest.NORWEGIAN_DATE_FORMAT),

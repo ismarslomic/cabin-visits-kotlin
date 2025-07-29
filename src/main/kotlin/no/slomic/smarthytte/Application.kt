@@ -215,7 +215,7 @@ suspend fun isWithinReservationWindow(reservationRepository: ReservationReposito
         val windowStart = reservation.startTime.minus(1.days)
         val windowEnd = reservation.endTime.plus(1.days)
 
-        return now >= windowStart && now <= windowEnd
+        now >= windowStart && now <= windowEnd
     }
 }
 
