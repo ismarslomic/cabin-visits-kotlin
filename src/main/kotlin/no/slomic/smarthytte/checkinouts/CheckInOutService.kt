@@ -20,6 +20,23 @@ class CheckInOutService(
 ) {
     private val logger: Logger = KtorSimpleLogger(CheckInOutService::class.java.name)
 
+    /**
+     * Updates the check-in and check-out status for all reservations.
+     *
+     * For each reservation in the system:
+     * - If the reservation has started, attempts to create and persist a check-in entry.
+     * - If the reservation has ended, attempts to create and persist a check-out entry.
+     * For both actions, tracks and logs the results (updated or no action).
+     *
+     * The process uses data from the reservation repository, check-in/out sensors, and vehicle trips.
+     *
+     * This function is intended for system-wide status synchronization,
+     * such as a scheduled job or maintenance action.
+     *
+     * @see ReservationRepository.allReservations
+     * @see CheckInOutSensorRepository.allCheckInOuts
+     * @see VehicleTripRepository.allVehicleTrips
+     */
     suspend fun updateCheckInOutStatusForAllReservations() {
         logger.info("Updating check in/out status for all reservations...")
 

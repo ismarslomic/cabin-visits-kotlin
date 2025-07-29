@@ -1,12 +1,23 @@
 package no.slomic.smarthytte.sync.checkpoint
 
+import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Instant
-import no.slomic.smarthytte.BaseDbTest
+import no.slomic.smarthytte.utils.TestDbSetup
 
 class SyncCheckpointServiceTest :
-    BaseDbTest({
+    StringSpec({
+        val testDbSetup = TestDbSetup()
+
+        beforeTest {
+            testDbSetup.setupDb()
+        }
+
+        afterTest {
+            testDbSetup.teardownDb()
+        }
+
         lateinit var repository: SyncCheckpointRepository
         lateinit var syncCheckpointService: SyncCheckpointService
         val googleCalendarEventsCheckpoint = "google-calendar-checkpoint"

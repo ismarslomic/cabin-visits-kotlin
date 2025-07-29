@@ -3,6 +3,7 @@ package no.slomic.smarthytte.sensors.checkinouts
 import com.influxdb.client.kotlin.InfluxDBClientKotlin
 import com.influxdb.client.kotlin.QueryKotlinApi
 import com.influxdb.query.FluxRecord
+import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -12,12 +13,12 @@ import io.mockk.mockkObject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
-import no.slomic.smarthytte.BaseDbTest
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
+import no.slomic.smarthytte.utils.TestDbSetup
 
 data class MockFluxRecord(val time: Instant, val value: String)
 
@@ -39,7 +40,17 @@ fun emitMockRecords(records: List<MockFluxRecord>): Channel<FluxRecord> {
 }
 
 class CheckInOutSensorServiceTest :
-    BaseDbTest({
+    StringSpec({
+        val testDbSetup = TestDbSetup()
+
+        beforeTest {
+            testDbSetup.setupDb()
+        }
+
+        afterTest {
+            testDbSetup.teardownDb()
+        }
+
         val influxDbPropertiesHolder = InfluxDbPropertiesHolder(
             influxDb = InfluxDbProperties(
                 url = "http://localhost:8086",
