@@ -1,7 +1,9 @@
 package no.slomic.smarthytte.vehicletrips
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import no.slomic.smarthytte.common.toUtcDate
 import kotlin.time.Duration
 
@@ -30,7 +32,8 @@ data class VehicleTrip(
     val extraStops: List<String> = listOf(),
     val notionId: String? = null,
 ) {
-    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = endDate == utcDate && endCity == CABIN_CITY_NAME
+    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean =
+        (endDate == utcDate || endDate == utcDate.plus(1, DateTimeUnit.DAY)) && endCity == CABIN_CITY_NAME
 
     fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = startDate == utcDate && startCity == CABIN_CITY_NAME
 
