@@ -37,31 +37,36 @@ class CabinVehicleTripListTest :
          */
 
         context("Home to Cabin trip is a trip where startCity = homeCity and endCity = cabinCity") {
-            should("should find Home to Cabin trip given startCity = homeCity and endCity = cabinCity") {
+            should("should find Home to Cabin trip when correct startCity and endCity") {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-01T12:00:00+01:00",
-                    endTimestamp = "2025-01-01T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
                 )
             }
+
             should("should return empty list when no Home to Cabin trip is found") {
                 val trips = listOf(
                     createTrip(homeCity, nesoddtangen, "2025-01-01T10:00:00+01:00", "2025-01-01T11:00:00+01:00"),
                     createTrip(nesoddtangen, homeCity, "2025-01-01T11:00:00+01:00", "2025-01-01T12:00:00+01:00"),
+                    createTrip(cabinCity, hemsedalCity, "2025-01-02T11:00:00+01:00", "2025-01-02T12:00:00+01:00"),
+                    createTrip(hemsedalCity, cabinCity, "2025-01-02T12:00:00+01:00", "2025-01-02T13:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 0
             }
@@ -70,24 +75,26 @@ class CabinVehicleTripListTest :
         context(
             "Home to Cabin trips can contain extra stops",
         ) {
-            should("should find Home to Cabin trip given extra stops after departure and before arrival") {
+            should("should find Home to Cabin trip when extra stops after departure and before arrival to Cabin") {
                 val trips = listOf(
                     createTrip(homeCity, sjusjoenCity, "2025-01-01T12:00:00+01:00", "2025-01-01T14:00:00+01:00"),
                     createTrip(sjusjoenCity, golCity, "2025-01-01T14:00:00+01:00", "2025-01-01T16:00:00+01:00"),
                     createTrip(golCity, cabinCity, "2025-01-01T16:00:00+01:00", "2025-01-01T17:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(sjusjoenCity, golCity),
-                    startTimestamp = "2025-01-01T12:00:00+01:00",
-                    endTimestamp = "2025-01-01T17:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(sjusjoenCity, golCity, cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T17:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
                 )
             }
         }
@@ -98,65 +105,74 @@ class CabinVehicleTripListTest :
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-01T12:00:00+01:00",
-                    endTimestamp = "2025-01-01T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
                 )
             }
 
-            should("should find Home to Cabin trip with Cabin to Home trip after it") {
+            should("should find Home to Cabin trip when Cabin to Home trip after it") {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                     createTrip(cabinCity, homeCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
-                homeCabinTrips shouldHaveSize 2
+                homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-01T12:00:00+01:00",
-                    endTimestamp = "2025-01-01T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 1,
+                    expectedFromCabinTripsEndCities = listOf(homeCity),
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
+                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
                 )
             }
 
-            should("should find Home to Cabin trip with Cabin to Home trip before it") {
+            should("should only find Home to Cabin trip when a Cabin to Home trip before it") {
                 val trips = listOf(
                     createTrip(cabinCity, homeCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                     createTrip(homeCity, cabinCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-02T12:00:00+01:00",
-                    endTimestamp = "2025-01-02T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-02T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-02T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
                 )
             }
         }
 
         context(
-            "Trips at Cabin occurred after a Home to Cabin trip should be ignored",
+            "Trips at Cabin occurred after a Home to Cabin trip should be found and counted as at the Cabin",
         ) {
-            should("should find Home to Cabin trip and ignore the trips at cabin after arrival") {
+            should(
+                "should find Home to Cabin trip and the trips at the Cabin even when missing the Cabin to home trip",
+            ) {
                 val trips = listOf(
                     createTrip(homeCity, golCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                     createTrip(golCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
@@ -173,17 +189,19 @@ class CabinVehicleTripListTest :
                     createTrip(hemsedalCity, cabinCity, "2025-01-03T14:01:00+01:00", "2025-01-03T14:10:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(golCity),
-                    startTimestamp = "2025-01-01T12:00:00+01:00",
-                    endTimestamp = "2025-01-01T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(golCity, cabinCity),
+                    expectedAtCabinTripsSize = 11,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
                 )
             }
         }
@@ -191,64 +209,80 @@ class CabinVehicleTripListTest :
         context(
             "Trips at Home occurred before the Home to Cabin trip should be ignored",
         ) {
-            should("should find Home to Cabin trip and ignore the trips at home before the departure from Home") {
+            should("should find Home to Cabin trip and ignore the trips at home before the departure to Cabin") {
                 val trips = listOf(
                     createTrip(homeCity, nesoddtangen, "2025-01-01T10:00:00+01:00", "2025-01-01T11:00:00+01:00"),
                     createTrip(nesoddtangen, homeCity, "2025-01-01T11:00:00+01:00", "2025-01-01T12:00:00+01:00"),
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-01T12:00:00+01:00",
-                    endTimestamp = "2025-01-01T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
                 )
             }
         }
 
         context("Cabin to Home trip is a trip where startCity = cabinCity and endCity = homeCity") {
-            should("should find Cabin to Home trip given correct startCity, endCity and Home to Cabin trip before it") {
+            should("should find Cabin to Home trip given correct start and end city and preceding Home to Cabin trip") {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                     createTrip(cabinCity, homeCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
-                homeCabinTrips shouldHaveSize 2
+                homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[1],
-                    startCity = cabinCity,
-                    endCity = homeCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-02T12:00:00+01:00",
-                    endTimestamp = "2025-01-02T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 1,
+                    expectedFromCabinTripsEndCities = listOf(homeCity),
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
+                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
                 )
             }
 
-            should("should return Home to Cabin trip only when no Cabin to Home trip exists") {
+            should("should find Home to Cabin even if Cabin to Home trip is missing") {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
+
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
+                )
             }
         }
 
         context(
             "Cabin to Home trips can contain extra stops (after leaving the Cabin and before arriving at Home)",
         ) {
-            should("should find Cabin to Home trip given extra stops after departure and before arrival") {
+            should("should find Cabin to Home trip with intermediate stops") {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                     createTrip(cabinCity, lillehammerCity, "2025-01-02T12:00:00+01:00", "2025-01-02T14:00:00+01:00"),
@@ -256,17 +290,20 @@ class CabinVehicleTripListTest :
                     createTrip(sjusjoenCity, homeCity, "2025-01-02T15:00:00+01:00", "2025-01-02T17:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
-                homeCabinTrips shouldHaveSize 2
+                homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[1],
-                    startCity = cabinCity,
-                    endCity = homeCity,
-                    extraStops = listOf(lillehammerCity, sjusjoenCity),
-                    startTimestamp = "2025-01-02T12:00:00+01:00",
-                    endTimestamp = "2025-01-02T17:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 3,
+                    expectedFromCabinTripsEndCities = listOf(lillehammerCity, sjusjoenCity, homeCity),
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
+                    expectedFromCabinEnd = "2025-01-02T17:00:00+01:00",
                 )
             }
         }
@@ -275,79 +312,96 @@ class CabinVehicleTripListTest :
             "Cabin to Home trip can only exist with a corresponding Home to Cabin trip (before the Home to Cabin trip)",
         ) {
             should(
-                "should find Cabin to Home trip given Home to Cabin trip occurred before it",
+                "should find Cabin to Home trip if preceded by Home to Cabin trip",
             ) {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                     createTrip(cabinCity, homeCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
-                homeCabinTrips shouldHaveSize 2
+                homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[1],
-                    startCity = cabinCity,
-                    endCity = homeCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-02T12:00:00+01:00",
-                    endTimestamp = "2025-01-02T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 1,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
+                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
                 )
             }
 
             should(
-                "should find Cabin to Home trip given Home to Cabin trip occurred before it even unsorted list",
+                "should find Cabin to Home trip after Home to Cabin trip, even with unsorted trips",
             ) {
                 val trips = listOf(
                     createTrip(cabinCity, homeCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
-                homeCabinTrips shouldHaveSize 2
+                homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[1],
-                    startCity = cabinCity,
-                    endCity = homeCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-02T12:00:00+01:00",
-                    endTimestamp = "2025-01-02T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 1,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
+                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
                 )
             }
 
             should(
-                "should return Home to Cabin trip only given no Cabin to Home trip before it",
+                "should find Home to Cabin trip only if earlier Cabin to Home trip exists",
             ) {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-02T12:00:00+01:00", "2025-01-02T15:00:00+01:00"),
                     createTrip(cabinCity, homeCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-02T12:00:00+01:00",
-                    endTimestamp = "2025-01-02T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-02T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-02T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
                 )
             }
 
-            should("should return Home to Cabin trip only when no Cabin to Home trip exists") {
+            should("should find Home to Cabin trip only if Cabin to Home is absent") {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
+
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
+                )
             }
 
             context(
@@ -363,17 +417,19 @@ class CabinVehicleTripListTest :
                         createTrip(nesoddtangen, homeCity, "2025-01-03T12:00:00+01:00", "2025-01-03T15:00:00+01:00"),
                     )
 
-                    val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                    val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
-                    homeCabinTrips shouldHaveSize 2
+                    homeCabinTrips shouldHaveSize 1
 
-                    assertTrip(
-                        vehicleTrip = homeCabinTrips[1],
-                        startCity = cabinCity,
-                        endCity = homeCity,
-                        extraStops = listOf(),
-                        startTimestamp = "2025-01-02T12:00:00+01:00",
-                        endTimestamp = "2025-01-02T15:00:00+01:00",
+                    assertCabinTrip(
+                        actual = homeCabinTrips[0],
+                        expectedToCabinTripsEndCities = listOf(cabinCity),
+                        expectedAtCabinTripsSize = 0,
+                        expectedFromCabinTripsSize = 1,
+                        expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                        expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                        expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
+                        expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
                     )
                 }
             }
@@ -389,34 +445,85 @@ class CabinVehicleTripListTest :
                     createTrip(nesoddtangen, homeCity, "2025-01-03T12:00:00+01:00", "2025-01-03T15:00:00+01:00"),
                 )
 
-                val homeCabinTrips: List<VehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertTrip(
-                    vehicleTrip = homeCabinTrips[0],
-                    startCity = homeCity,
-                    endCity = cabinCity,
-                    extraStops = listOf(),
-                    startTimestamp = "2025-01-01T12:00:00+01:00",
-                    endTimestamp = "2025-01-01T15:00:00+01:00",
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
+                )
+            }
+
+            context("Cabin trips missing Cabin to Home trip should not stop processing new Cabin trips") {
+                val trips = listOf(
+                    createTrip(homeCity, golCity, "2025-01-01T12:00:00+01:00", "2025-01-01T14:00:00+01:00"),
+                    createTrip(golCity, cabinCity, "2025-01-01T14:15:00+01:00", "2025-01-01T15:15:00+01:00"),
+
+                    createTrip(homeCity, golCity, "2025-01-05T12:00:00+01:00", "2025-01-05T14:00:00+01:00"),
+                    createTrip(golCity, cabinCity, "2025-01-05T14:30:00+01:00", "2025-01-05T15:45:00+01:00"),
+
+                    createTrip(cabinCity, hemsedalCity, "2025-01-06T11:00:00+01:00", "2025-01-06T12:00:00+01:00"),
+                    createTrip(hemsedalCity, cabinCity, "2025-01-06T11:00:00+01:00", "2025-01-06T12:00:00+01:00"),
+
+                    createTrip(cabinCity, homeCity, "2025-01-07T12:00:00+01:00", "2025-01-07T15:00:00+01:00"),
+                )
+
+                val homeCabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+
+                homeCabinTrips shouldHaveSize 2
+
+                assertCabinTrip(
+                    actual = homeCabinTrips[0],
+                    expectedToCabinTripsEndCities = listOf(golCity, cabinCity),
+                    expectedAtCabinTripsSize = 0,
+                    expectedFromCabinTripsSize = 0,
+                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-01T15:15:00+01:00",
+                    expectedFromCabinStart = null,
+                    expectedFromCabinEnd = null,
+                )
+
+                assertCabinTrip(
+                    actual = homeCabinTrips[1],
+                    expectedToCabinTripsEndCities = listOf(golCity, cabinCity),
+                    expectedAtCabinTripsSize = 2,
+                    expectedFromCabinTripsSize = 1,
+                    expectedToCabinStart = "2025-01-05T12:00:00+01:00",
+                    expectedToCabinEnd = "2025-01-05T15:45:00+01:00",
+                    expectedFromCabinStart = "2025-01-07T12:00:00+01:00",
+                    expectedFromCabinEnd = "2025-01-07T15:00:00+01:00",
                 )
             }
         }
     })
 
-@Suppress("LongParameterList")
-fun assertTrip(
-    vehicleTrip: VehicleTrip,
-    startCity: String,
-    endCity: String,
-    extraStops: List<String>,
-    startTimestamp: String,
-    endTimestamp: String,
+fun assertCabinTrip(
+    actual: CabinVehicleTrip,
+    expectedToCabinTripsEndCities: List<String>,
+    expectedAtCabinTripsSize: Int,
+    expectedFromCabinTripsSize: Int,
+    expectedToCabinStart: String?,
+    expectedToCabinEnd: String?,
+    expectedFromCabinStart: String?,
+    expectedFromCabinEnd: String?,
+    expectedFromCabinTripsEndCities: List<String>? = null,
 ) {
-    vehicleTrip.startCity shouldBe startCity
-    vehicleTrip.endCity shouldBe endCity
-    vehicleTrip.extraStops shouldBe extraStops
-    vehicleTrip.startTime shouldBe Instant.parse(startTimestamp)
-    vehicleTrip.endTime shouldBe Instant.parse(endTimestamp)
+    actual.toCabinTrips.map { it.endCity } shouldBe expectedToCabinTripsEndCities
+    actual.atCabinTrips shouldHaveSize expectedAtCabinTripsSize
+    actual.fromCabinTrips shouldHaveSize expectedFromCabinTripsSize
+    actual.toCabinStartTimestamp shouldBe expectedToCabinStart?.let { Instant.parse(it) }
+    actual.toCabinEndTimestamp shouldBe expectedToCabinEnd?.let { Instant.parse(it) }
+    actual.fromCabinStartTimestamp shouldBe expectedFromCabinStart?.let { Instant.parse(it) }
+    actual.fromCabinEndTimestamp shouldBe expectedFromCabinEnd?.let { Instant.parse(it) }
+
+    if (expectedFromCabinTripsEndCities != null) {
+        actual.fromCabinTrips.map { it.endCity } shouldBe expectedFromCabinTripsEndCities
+    }
 }
