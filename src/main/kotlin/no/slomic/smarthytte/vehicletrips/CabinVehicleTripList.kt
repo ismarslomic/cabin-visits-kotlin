@@ -53,60 +53,65 @@ class CabinVehicleTripList(private val allVehicleTrips: List<VehicleTrip>) {
         return result
     }
 
+    /**
+     * Classifies a list of trips that form a round trip into a structured cabin visit.
+     *
+     * A cabin visit consists of three consecutive legs in the given roundTrip:
+     * 1) toCabin: leaving home and arriving at the cabin (possibly with intermediate stops).
+     * 2) atCabin: local driving while staying at or around the cabin (no definitive progress towards home).
+     * 3) fromCabin: the journey that leaves the cabin and ultimately returns home
+     * (can include intermediate stops).
+     *
+     * Rules and assumptions used:
+     * - We only consider sequences that start from [homeCity] and first reach [cabinCity].
+     * - Departure from the cabin (start of fromCabin) begins with the first trip that starts at the cabin and whose
+     *   next key stop (endCity of a future trip that is either cabin or home) is home; or a direct cabin -> home trip.
+     * - Trips that neither start nor end at home while we are between arrival and departure are considered atCabin.
+     * - If no valid toCabin leg (home -> ... -> cabin) is present, the roundTrip is not a cabin visit.
+     */
     private fun classifyAsCabinTrip(
         roundTrip: List<VehicleTrip>,
         homeCity: String,
         cabinCity: String,
     ): CabinVehicleTrip? {
-        val toCabin = mutableListOf<VehicleTrip>()
-        val atCabin = mutableListOf<VehicleTrip>()
-        val fromCabin = mutableListOf<VehicleTrip>()
-        var state = "skip"
-        for (trip in roundTrip) {
-            when (state) {
-                "skip" -> {
-                    if (trip.startCity == homeCity) {
-                        toCabin += trip
-                        state = if (trip.endCity == cabinCity) "at" else "to"
-                    }
-                }
+        if (roundTrip.isEmpty()) return null
 
-                "to" -> {
-                    toCabin += trip
-                    if (trip.endCity == cabinCity) state = "at"
-                }
+        // 1) Find and collect the to-cabin leg starting with the first trip that departs from home
+        val startFromHomeIndex = roundTrip.indexOfFirst { it.startCity == homeCity }
 
-                "at" -> {
-                    if (trip.startCity == cabinCity && trip.endCity == homeCity) {
-                        fromCabin += trip
-                        state = "done"
-                    } else if (trip.startCity == cabinCity && trip.endCity != cabinCity) {
-                        val remainingTrips = roundTrip.dropWhile { it != trip }.drop(1)
-                        val nextKeyStop =
-                            remainingTrips.firstOrNull { it.endCity == cabinCity || it.endCity == homeCity }
+        var isValid = startFromHomeIndex != -1
+        var toCabin: List<VehicleTrip> = emptyList()
+        var afterArrivalIndex: Int? = null
 
-                        if (nextKeyStop?.endCity == homeCity) {
-                            // We leave cabin and the next important stop is home -> start fromCabin
-                            fromCabin += trip
-                            state = "from"
-                        } else {
-                            // Either we return to cabin first or there is no home stop ahead -> still at cabin
-                            atCabin += trip
-                        }
-                    } else if (trip.startCity != homeCity && trip.endCity != homeCity) {
-                        atCabin += trip
-                    }
-                }
-
-                "from" -> {
-                    fromCabin += trip
-                    if (trip.endCity == homeCity) state = "done"
-                }
-            }
+        if (isValid) {
+            val collected = collectToCabin(roundTrip, startFromHomeIndex, cabinCity)
+            toCabin = collected.first
+            afterArrivalIndex = collected.second
+            isValid = toCabin.isNotEmpty() && afterArrivalIndex != null
         }
 
+        var atCabin: List<VehicleTrip> = emptyList()
+        var departureStartIndex: Int? = null
+        if (isValid) {
+            val atAndDeparture = collectAtCabinAndFindDeparture(
+                roundTrip,
+                afterArrivalIndex!!,
+                homeCity,
+                cabinCity,
+            )
+            atCabin = atAndDeparture.first
+            departureStartIndex = atAndDeparture.second
+        }
+
+        val fromCabin: List<VehicleTrip> = if (departureStartIndex != null) {
+            collectUntilHome(roundTrip, departureStartIndex, homeCity)
+        } else {
+            emptyList()
+        }
+
+        // Validate the structure of a proper cabin visit
         return if (
-            toCabin.isNotEmpty() &&
+            isValid &&
             toCabin.first().startCity == homeCity &&
             toCabin.last().endCity == cabinCity
         ) {
@@ -118,5 +123,87 @@ class CabinVehicleTripList(private val allVehicleTrips: List<VehicleTrip>) {
         } else {
             null
         }
+    }
+
+    /** Collect trips from [startIndex] until the first trip that ends at [cabinCity] (inclusive). */
+    private fun collectToCabin(
+        trips: List<VehicleTrip>,
+        startIndex: Int,
+        cabinCity: String,
+    ): Pair<List<VehicleTrip>, Int?> {
+        val acc = mutableListOf<VehicleTrip>()
+        var i = startIndex
+        while (i < trips.size) {
+            val t = trips[i]
+            acc += t
+            if (t.endCity == cabinCity) {
+                return acc to (i + 1) // index right after arrival
+            }
+            i++
+        }
+        return emptyList<VehicleTrip>() to null
+    }
+
+    /**
+     * From [fromIndex], collect local movements while staying at/around the cabin and determine
+     * the index where departure towards home begins.
+     */
+    private fun collectAtCabinAndFindDeparture(
+        trips: List<VehicleTrip>,
+        fromIndex: Int,
+        homeCity: String,
+        cabinCity: String,
+    ): Pair<List<VehicleTrip>, Int?> {
+        val atCabin = mutableListOf<VehicleTrip>()
+        var i = fromIndex
+        var departureStartIndex: Int? = null
+
+        while (i < trips.size && departureStartIndex == null) {
+            val t = trips[i]
+
+            val directDeparture = t.startCity == cabinCity && t.endCity == homeCity
+            val leavingCabin = t.startCity == cabinCity && t.endCity != cabinCity
+
+            if (directDeparture) {
+                departureStartIndex = i
+            } else if (leavingCabin) {
+                val nextKeyStop = trips.asSequence()
+                    .drop(i + 1)
+                    .firstOrNull { it.endCity == cabinCity || it.endCity == homeCity }
+
+                if (nextKeyStop?.endCity == homeCity) {
+                    // We left a cabin, and the next significant stop is home => this trip starts the departure
+                    departureStartIndex = i
+                } else {
+                    // We either return to the cabin later or never hit home in this group => still local driving
+                    atCabin += t
+                }
+            } else {
+                val isLocalMovement = t.startCity != homeCity && t.endCity != homeCity
+                if (isLocalMovement) {
+                    atCabin += t
+                } else if (t.endCity == homeCity) {
+                    // We encountered a trip that ends at home before an explicit departure from the cabin
+                    departureStartIndex = i
+                }
+            }
+
+            i++
+        }
+
+        return atCabin to departureStartIndex
+    }
+
+    /** Collect trips starting at [startIndex] until the first one that ends at [homeCity] (inclusive). */
+    private fun collectUntilHome(trips: List<VehicleTrip>, startIndex: Int, homeCity: String): List<VehicleTrip> {
+        val acc = mutableListOf<VehicleTrip>()
+        var i = startIndex
+        while (i < trips.size) {
+            val t = trips[i]
+            acc += t
+            if (t.endCity == homeCity) break
+            i++
+        }
+        return acc
     }
 }
