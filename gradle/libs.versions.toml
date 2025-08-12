@@ -14,7 +14,7 @@ kotlinter = "5.2.0"
 ktor = "3.2.3"
 logback = "1.5.18"
 mockk = "1.14.5"
-prometheus = "1.15.2"
+prometheus = "1.15.3"
 sqlite = "3.50.3.0"
 versions = "0.52.0"
 
