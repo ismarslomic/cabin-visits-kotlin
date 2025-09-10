@@ -3,10 +3,10 @@ package no.slomic.smarthytte.properties
 import com.sksamuel.hoplite.ConfigException
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.extensions.system.withEnvironment
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.utils.withTestEnvironment
 
 class AppPropertiesTest :
     BehaviorSpec({
@@ -53,7 +53,7 @@ class AppPropertiesTest :
                 "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
                 "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
             )
-            withEnvironment(requiredEnvVars) {
+            withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {
                     val googleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
 
@@ -155,7 +155,7 @@ class AppPropertiesTest :
                 )
                 val requiredAndOptionalEnvVars = requiredEnvVars + optionalEnvVars
 
-                withEnvironment(requiredAndOptionalEnvVars) {
+                withTestEnvironment(requiredAndOptionalEnvVars) {
                     When("reading google properties") {
                         val googleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
                         val syncFromDateTime = googleCalendarProperties.syncFromDateTime
@@ -191,7 +191,7 @@ class AppPropertiesTest :
             val envVars = mapOf(
                 "GOOGLE_CALENDAR_ID" to envVarCalendarId,
             )
-            withEnvironment(envVars) {
+            withTestEnvironment(envVars) {
                 When("reading google properties") {
                     Then("ConfigException should be thrown") {
                         val exception = shouldThrowExactly<ConfigException> {
@@ -208,7 +208,7 @@ class AppPropertiesTest :
             val envVars = mapOf(
                 "GOOGLE_CREDENTIALS_FILE_PATH" to envVarCredentialsFilePath,
             )
-            withEnvironment(envVars) {
+            withTestEnvironment(envVars) {
                 When("reading google properties") {
                     Then("ConfigException should be thrown") {
                         val exception = shouldThrowExactly<ConfigException> {
