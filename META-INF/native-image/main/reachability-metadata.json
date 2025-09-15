@@ -103,186 +103,6 @@
       ]
     },
     {
-      "type": "com.google.api.client.googleapis.services.AbstractGoogleClientRequest",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.client.http.GenericUrl",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.client.http.HttpHeaders",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "setAccept",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setAcceptEncoding",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setAge",
-          "parameterTypes": [
-            "java.lang.Long"
-          ]
-        },
-        {
-          "name": "setAuthenticate",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setAuthorization",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setAuthorization",
-          "parameterTypes": [
-            "java.util.List"
-          ]
-        },
-        {
-          "name": "setCacheControl",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setContentEncoding",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setContentLength",
-          "parameterTypes": [
-            "java.lang.Long"
-          ]
-        },
-        {
-          "name": "setContentMD5",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setContentRange",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setContentType",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setCookie",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setDate",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setETag",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setExpires",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setIfMatch",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setIfModifiedSince",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setIfNoneMatch",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setIfRange",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setIfUnmodifiedSince",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLastModified",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLocation",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setMimeVersion",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setRange",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setRetryAfter",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setUserAgent",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
       "type": "com.google.api.client.json.GenericJson",
       "allDeclaredFields": true,
       "methods": [
@@ -293,149 +113,8 @@
       ]
     },
     {
-      "type": "com.google.api.client.json.webtoken.JsonWebSignature$Header",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.client.json.webtoken.JsonWebToken$Header",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.client.json.webtoken.JsonWebToken$Payload",
-      "allDeclaredFields": true
-    },
-    {
       "type": "com.google.api.client.util.GenericData",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.Calendar$Events$List",
       "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.services.calendar.CalendarRequest",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.EventReminder",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Events",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setAccessRole",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setDefaultReminders",
-          "parameterTypes": [
-            "java.util.List"
-          ]
-        },
-        {
-          "name": "setDescription",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEtag",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setItems",
-          "parameterTypes": [
-            "java.util.List"
-          ]
-        },
-        {
-          "name": "setKind",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setNextSyncToken",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSummary",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setTimeZone",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setUpdated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.common.util.concurrent.AbstractFuture",
-      "fields": [
-        {
-          "name": "listeners"
-        },
-        {
-          "name": "value"
-        },
-        {
-          "name": "waiters"
-        }
-      ]
-    },
-    {
-      "type": "com.google.common.util.concurrent.AbstractFuture$Waiter",
-      "fields": [
-        {
-          "name": "next"
-        },
-        {
-          "name": "thread"
-        }
-      ]
     },
     {
       "type": "com.ibm.lang.management.OperatingSystemMXBean"
@@ -727,25 +406,7 @@
       ]
     },
     {
-      "type": "com.sun.crypto.provider.DHParameters",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.crypto.provider.HmacCore$HmacSHA384",
       "methods": [
         {
           "name": "<init>",
@@ -790,15 +451,6 @@
       ]
     },
     {
-      "type": "com.sun.crypto.provider.TlsMasterSecretGenerator",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "com.sun.management.GarbageCollectionNotificationInfo"
     },
     {
@@ -826,9 +478,6 @@
           "parameterTypes": []
         }
       ]
-    },
-    {
-      "type": "io.grpc.override.ContextStorageOverride"
     },
     {
       "type": "io.ktor.client.HttpClient",
@@ -924,6 +573,9 @@
       "type": "io.ktor.server.metrics.micrometer.CallMeasure"
     },
     {
+      "type": "io.ktor.server.routing.RoutingCall"
+    },
+    {
       "type": "io.ktor.server.routing.RoutingRoot"
     },
     {
@@ -958,18 +610,6 @@
           "name": "rotating"
         }
       ]
-    },
-    {
-      "type": "io.opencensus.impl.trace.TraceComponentImpl"
-    },
-    {
-      "type": "io.opencensus.impllite.trace.TraceComponentImplLite"
-    },
-    {
-      "type": "io.opentelemetry.opencensusshim.OpenTelemetryContextManager"
-    },
-    {
-      "type": "io.opentelemetry.opencensusshim.OpenTelemetryTraceComponentImpl"
     },
     {
       "type": "io.prometheus.metrics.expositionformats.internal.PrometheusProtobufWriterImpl",
@@ -1191,22 +831,7 @@
       "type": "java.security.KeyStoreSpi"
     },
     {
-      "type": "java.security.interfaces.ECPrivateKey"
-    },
-    {
-      "type": "java.security.interfaces.ECPublicKey"
-    },
-    {
-      "type": "java.security.interfaces.RSAPrivateKey"
-    },
-    {
-      "type": "java.security.interfaces.RSAPublicKey"
-    },
-    {
       "type": "java.sql.Date"
-    },
-    {
-      "type": "java.sql.ResultSet"
     },
     {
       "type": "java.sql.Timestamp"
@@ -1409,6 +1034,9 @@
       ]
     },
     {
+      "type": "kotlin.reflect.jvm.internal.impl.km.jvm.internal.JvmMetadataExtensions"
+    },
+    {
       "type": "kotlin.reflect.jvm.internal.impl.load.java.ErasedOverridabilityCondition"
     },
     {
@@ -1416,10 +1044,6 @@
     },
     {
       "type": "kotlin.reflect.jvm.internal.impl.load.java.JavaIncompatibilityRulesOverridabilityCondition"
-    },
-    {
-      "type": "kotlin.reflect.jvm.internal.impl.resolve.scopes.DescriptorKindFilter",
-      "allPublicFields": true
     },
     {
       "type": "kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsLoaderImpl"
@@ -1838,7 +1462,8 @@
             "int",
             "java.lang.String",
             "java.lang.String",
-            "java.lang.String"
+            "java.lang.String",
+            "int"
           ]
         }
       ]
@@ -1850,28 +1475,6 @@
           "name": "<init>",
           "parameterTypes": [
             "no.slomic.smarthytte.properties.VehicleTripProperties"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.reservations.ReservationEntity",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorEntity",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
           ]
         }
       ]
@@ -1997,7 +1600,17 @@
           "parameterTypes": []
         },
         {
+          "name": "getUndoFilename",
+          "parameterTypes": []
+        },
+        {
           "name": "setScriptFilename",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setUndoFilename",
           "parameterTypes": [
             "java.lang.String"
           ]
@@ -2035,7 +1648,7 @@
       "type": "org.flywaydb.core.internal.proprietaryStubs.AuthCommandExtensionStub"
     },
     {
-      "type": "org.flywaydb.core.internal.proprietaryStubs.CommandExtensionStub"
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CheckCommandExtensionStub"
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.DeployCommandExtensionStub"
@@ -2062,6 +1675,9 @@
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.PrepareCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.UndoCommandExtensionStub"
     },
     {
       "type": "org.flywaydb.core.internal.publishing.PublishingConfigurationExtension",
@@ -2112,52 +1728,6 @@
       "type": "org.jetbrains.exposed.jdbc.ExposedConnectionImpl"
     },
     {
-      "type": "org.jetbrains.exposed.sql.ColumnType",
-      "methods": [
-        {
-          "name": "getNullable",
-          "parameterTypes": []
-        },
-        {
-          "name": "setNullable",
-          "parameterTypes": [
-            "boolean"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.jetbrains.exposed.sql.IColumnType"
-    },
-    {
-      "type": "org.jetbrains.exposed.sql.StringColumnType",
-      "methods": [
-        {
-          "name": "getCollate",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "org.jetbrains.exposed.sql.VarCharColumnType",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "int",
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "getColLength",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "org.jetbrains.exposed.sql.statements.api.PreparedStatementApi"
-    },
-    {
       "type": "org.slf4j.Logger"
     },
     {
@@ -2165,10 +1735,6 @@
     },
     {
       "type": "org.slf4j.spi.SLF4JServiceProvider"
-    },
-    {
-      "type": "sun.misc.Unsafe",
-      "allDeclaredFields": true
     },
     {
       "type": "sun.security.pkcs12.PKCS12KeyStore",
@@ -2181,42 +1747,6 @@
     },
     {
       "type": "sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.provider.DSA$SHA224withDSA",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.provider.DSA$SHA256withDSA",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.provider.JavaKeyStore$DualFormatJKS",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.provider.JavaKeyStore$JKS",
       "methods": [
         {
           "name": "<init>",
@@ -2245,42 +1775,6 @@
       ]
     },
     {
-      "type": "sun.security.provider.SHA2$SHA224",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.provider.SHA2$SHA256",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.provider.SHA5$SHA384",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.provider.SHA5$SHA512",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "sun.security.provider.X509Factory",
       "methods": [
         {
@@ -2290,70 +1784,7 @@
       ]
     },
     {
-      "type": "sun.security.provider.certpath.PKIXCertPathValidator",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.rsa.PSSParameters",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "sun.security.rsa.RSAKeyFactory$Legacy",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.rsa.RSAPSSSignature",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.rsa.RSASignature$SHA224withRSA",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.rsa.RSASignature$SHA256withRSA",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.ssl.KeyManagerFactoryImpl$SunX509",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "sun.security.ssl.SSLContextImpl$DefaultSSLContext",
       "methods": [
         {
           "name": "<init>",
@@ -2568,9 +1999,6 @@
       "glob": "META-INF/services/java.lang.System$LoggerFinder"
     },
     {
-      "glob": "META-INF/services/java.net.spi.InetAddressResolverProvider"
-    },
-    {
       "glob": "META-INF/services/java.net.spi.URLStreamHandlerProvider"
     },
     {
@@ -2584,6 +2012,9 @@
     },
     {
       "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.builtins.BuiltInsLoader"
+    },
+    {
+      "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.km.internal.extensions.MetadataExtensions"
     },
     {
       "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition"
@@ -2619,12 +2050,6 @@
       "glob": "com/google/api/client/googleapis/google.p12"
     },
     {
-      "glob": "com/google/api/client/http/google-http-client.properties"
-    },
-    {
-      "glob": "com/google/auth/oauth2/google-auth-library.properties"
-    },
-    {
       "glob": "db/callback"
     },
     {
@@ -2632,30 +2057,6 @@
     },
     {
       "glob": "db/migration/V1.0__initial_schema.sql"
-    },
-    {
-      "glob": "kotlin/annotation/annotation.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/collections/collections.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/concurrent/atomics/atomics.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/coroutines/coroutines.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/internal/internal.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/kotlin.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/ranges/ranges.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/reflect/reflect.kotlin_builtins"
     },
     {
       "glob": "logback-test.scmo"
