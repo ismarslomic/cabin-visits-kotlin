@@ -4,7 +4,7 @@ exposed = "0.61.0"
 flyway = "11.13.1"
 googleCalendarService = "v3-rev20250404-2.0.0"
 googleOauthClient = "1.39.1"
-graalvm = "0.11.0"
+graalvm = "0.11.1"
 hoplite = "2.9.0"
 influxdb = "7.3.0"
 jacoco = "0.8.13"
@@ -16,7 +16,7 @@ logback = "1.5.18"
 mockk = "1.14.5"
 prometheus = "1.15.4"
 sqlite = "3.50.3.0"
-versions = "0.52.0"
+versions = "0.53.0"
 
 [libraries]
 exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version.ref = "exposed" }
