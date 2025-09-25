@@ -46,16 +46,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
 
             should("should return empty list when no Home to Cabin trip is found") {
@@ -86,16 +85,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(sjusjoenCity, golCity, cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T17:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(sjusjoenCity, golCity, cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T17:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
         }
 
@@ -109,16 +107,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
 
             should("should find Home to Cabin trip when Cabin to Home trip after it") {
@@ -131,17 +128,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 1,
-                    expectedFromCabinTripsEndCities = listOf(homeCity),
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
-                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 1
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                    fromCabinEnd = Instant.parse("2025-01-02T15:00:00+01:00")
+                }
             }
 
             should("should only find Home to Cabin trip when a Cabin to Home trip before it") {
@@ -154,16 +149,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-02T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-02T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-02T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
         }
 
@@ -193,16 +187,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(golCity, cabinCity),
-                    expectedAtCabinTripsSize = 11,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(golCity, cabinCity)
+                    atCabinTripsSize = 11
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
         }
 
@@ -220,16 +213,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
         }
 
@@ -244,17 +236,16 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 1,
-                    expectedFromCabinTripsEndCities = listOf(homeCity),
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
-                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 1
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                    fromCabinEnd = Instant.parse("2025-01-02T15:00:00+01:00")
+                    fromCabinTripsEndCities = listOf(homeCity)
+                }
             }
 
             should("should find Home to Cabin even if Cabin to Home trip is missing") {
@@ -266,16 +257,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
         }
 
@@ -294,17 +284,16 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 3,
-                    expectedFromCabinTripsEndCities = listOf(lillehammerCity, sjusjoenCity, homeCity),
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
-                    expectedFromCabinEnd = "2025-01-02T17:00:00+01:00",
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 3
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                    fromCabinEnd = Instant.parse("2025-01-02T17:00:00+01:00")
+                    fromCabinTripsEndCities = listOf(lillehammerCity, sjusjoenCity, homeCity)
+                }
             }
         }
 
@@ -323,16 +312,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 1,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
-                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 1
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                    fromCabinEnd = Instant.parse("2025-01-02T15:00:00+01:00")
+                }
             }
 
             should(
@@ -347,16 +335,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 1,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
-                    expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 1
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                    fromCabinEnd = Instant.parse("2025-01-02T15:00:00+01:00")
+                }
             }
 
             should(
@@ -371,16 +358,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-02T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-02T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-02T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
 
             should("should find Home to Cabin trip only if Cabin to Home is absent") {
@@ -392,16 +378,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
 
             context(
@@ -421,16 +406,15 @@ class CabinVehicleTripListTest :
 
                     homeCabinTrips shouldHaveSize 1
 
-                    assertCabinTrip(
-                        actual = homeCabinTrips[0],
-                        expectedToCabinTripsEndCities = listOf(cabinCity),
-                        expectedAtCabinTripsSize = 0,
-                        expectedFromCabinTripsSize = 1,
-                        expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                        expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                        expectedFromCabinStart = "2025-01-02T12:00:00+01:00",
-                        expectedFromCabinEnd = "2025-01-02T15:00:00+01:00",
-                    )
+                    assertCabinTrip(homeCabinTrips[0]) {
+                        toCabinTripsEndCities = listOf(cabinCity)
+                        atCabinTripsSize = 0
+                        fromCabinTripsSize = 1
+                        toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                        toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                        fromCabinStart = Instant.parse("2025-01-02T12:00:00+01:00")
+                        fromCabinEnd = Instant.parse("2025-01-02T15:00:00+01:00")
+                    }
                 }
             }
 
@@ -449,16 +433,15 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 1
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:00:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(actual = homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
             }
 
             context("Cabin trips missing Cabin to Home trip should not stop processing new Cabin trips") {
@@ -479,51 +462,52 @@ class CabinVehicleTripListTest :
 
                 homeCabinTrips shouldHaveSize 2
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[0],
-                    expectedToCabinTripsEndCities = listOf(golCity, cabinCity),
-                    expectedAtCabinTripsSize = 0,
-                    expectedFromCabinTripsSize = 0,
-                    expectedToCabinStart = "2025-01-01T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-01T15:15:00+01:00",
-                    expectedFromCabinStart = null,
-                    expectedFromCabinEnd = null,
-                )
+                assertCabinTrip(actual = homeCabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(golCity, cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:15:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
 
-                assertCabinTrip(
-                    actual = homeCabinTrips[1],
-                    expectedToCabinTripsEndCities = listOf(golCity, cabinCity),
-                    expectedAtCabinTripsSize = 2,
-                    expectedFromCabinTripsSize = 1,
-                    expectedToCabinStart = "2025-01-05T12:00:00+01:00",
-                    expectedToCabinEnd = "2025-01-05T15:45:00+01:00",
-                    expectedFromCabinStart = "2025-01-07T12:00:00+01:00",
-                    expectedFromCabinEnd = "2025-01-07T15:00:00+01:00",
-                )
+                assertCabinTrip(homeCabinTrips[1]) {
+                    toCabinTripsEndCities = listOf(golCity, cabinCity)
+                    atCabinTripsSize = 2
+                    fromCabinTripsSize = 1
+                    toCabinStart = Instant.parse("2025-01-05T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-05T15:45:00+01:00")
+                    fromCabinStart = Instant.parse("2025-01-07T12:00:00+01:00")
+                    fromCabinEnd = Instant.parse("2025-01-07T15:00:00+01:00")
+                }
             }
         }
     })
 
-fun assertCabinTrip(
-    actual: CabinVehicleTrip,
-    expectedToCabinTripsEndCities: List<String>,
-    expectedAtCabinTripsSize: Int,
-    expectedFromCabinTripsSize: Int,
-    expectedToCabinStart: String?,
-    expectedToCabinEnd: String?,
-    expectedFromCabinStart: String?,
-    expectedFromCabinEnd: String?,
-    expectedFromCabinTripsEndCities: List<String>? = null,
-) {
-    actual.toCabinTrips.map { it.endCity } shouldBe expectedToCabinTripsEndCities
-    actual.atCabinTrips shouldHaveSize expectedAtCabinTripsSize
-    actual.fromCabinTrips shouldHaveSize expectedFromCabinTripsSize
-    actual.toCabinStartTimestamp shouldBe expectedToCabinStart?.let { Instant.parse(it) }
-    actual.toCabinEndTimestamp shouldBe expectedToCabinEnd?.let { Instant.parse(it) }
-    actual.fromCabinStartTimestamp shouldBe expectedFromCabinStart?.let { Instant.parse(it) }
-    actual.fromCabinEndTimestamp shouldBe expectedFromCabinEnd?.let { Instant.parse(it) }
+class CabinTripExpectation {
+    var toCabinTripsEndCities: List<String> = emptyList()
+    var atCabinTripsSize: Int = 0
+    var fromCabinTripsSize: Int = 0
+    var toCabinStart: Instant? = null
+    var toCabinEnd: Instant? = null
+    var fromCabinStart: Instant? = null
+    var fromCabinEnd: Instant? = null
+    var fromCabinTripsEndCities: List<String>? = null
+}
 
-    if (expectedFromCabinTripsEndCities != null) {
-        actual.fromCabinTrips.map { it.endCity } shouldBe expectedFromCabinTripsEndCities
+fun assertCabinTrip(actual: CabinVehicleTrip, block: CabinTripExpectation.() -> Unit) {
+    val expected = CabinTripExpectation().apply(block)
+
+    actual.toCabinTrips.map { it.endCity } shouldBe expected.toCabinTripsEndCities
+    actual.atCabinTrips shouldHaveSize expected.atCabinTripsSize
+    actual.fromCabinTrips shouldHaveSize expected.fromCabinTripsSize
+    actual.toCabinStartTimestamp shouldBe expected.toCabinStart
+    actual.toCabinEndTimestamp shouldBe expected.toCabinEnd
+    actual.fromCabinStartTimestamp shouldBe expected.fromCabinStart
+    actual.fromCabinEndTimestamp shouldBe expected.fromCabinEnd
+
+    expected.fromCabinTripsEndCities?.let { expectedEndCityName ->
+        actual.fromCabinTrips.map { it.endCity } shouldBe expectedEndCityName
     }
 }
