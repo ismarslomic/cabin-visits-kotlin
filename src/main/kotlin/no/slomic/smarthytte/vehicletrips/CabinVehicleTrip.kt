@@ -1,28 +1,60 @@
 package no.slomic.smarthytte.vehicletrips
 
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
+import no.slomic.smarthytte.common.toUtcDate
+
 const val HOME_CITY_NAME = "Oslo"
 const val CABIN_CITY_NAME = "Ullsåk"
 
-/**
- * Represents the vehicle trips to the cabin and back.
- */
 data class CabinVehicleTrip(
-    /**
-     * The vehicle trip from Home to Cabin, including extra stops.
-     */
-    val toCabin: VehicleTrip,
-    /**
-     * The vehicle trip from Cabin to Home, including extra stops.
-     * Null if the cabin visit is active and not yet completed.
-     */
-    val fromCabin: VehicleTrip?,
-    /**
-     * The index of the [fromCabin] trip if not null, otherwise the [toCabin] trip in the list of trips.
-     */
-    val indexInTempList: Int,
+    val toCabinTrips: List<VehicleTrip>,
+    val atCabinTrips: List<VehicleTrip>,
+    val fromCabinTrips: List<VehicleTrip>,
 ) {
-    /**
-     * Checks if this vehicle trip to cabin is still active or is completed.
-     */
-    val isActive: Boolean get() = fromCabin == null
+    val toCabinStartTimestamp: Instant? get() = toCabinTrips.firstOrNull()?.startTime
+    val toCabinEndTimestamp: Instant? get() = toCabinTrips.lastOrNull()?.endTime
+    val toCabinEndDate: LocalDate? get() = toCabinEndTimestamp?.toUtcDate()
+    val fromCabinStartTimestamp: Instant? get() = fromCabinTrips.firstOrNull()?.startTime
+    val fromCabinStartDate: LocalDate? get() = fromCabinStartTimestamp?.toUtcDate()
+    val fromCabinEndTimestamp: Instant? get() = fromCabinTrips.lastOrNull()?.endTime
+
+    val toCabinTripId: String?
+        get() =
+            when (toCabinTrips.size) {
+                0 -> {
+                    null
+                }
+
+                1 -> {
+                    toCabinTrips.first().id
+                }
+
+                else -> {
+                    "${toCabinTrips.first().id}-${toCabinTrips.last().id}"
+                }
+            }
+
+    val fromCabinTripId: String?
+        get() =
+            when (fromCabinTrips.size) {
+                0 -> {
+                    null
+                }
+
+                1 -> {
+                    fromCabinTrips.first().id
+                }
+
+                else -> {
+                    "${fromCabinTrips.first().id}-${fromCabinTrips.last().id}"
+                }
+            }
+
+    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean =
+        toCabinEndDate != null && (toCabinEndDate == utcDate || toCabinEndDate == utcDate.plus(1, DateTimeUnit.DAY))
+
+    fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = fromCabinStartDate == utcDate
 }
