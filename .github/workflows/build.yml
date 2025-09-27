@@ -23,6 +23,8 @@ jobs:
   build-native-image:
     name: Build GraalVM native image
 
+    # Pin runner to a specific Ubuntu image for reproducibility and to avoid unexpected breakages from ubuntu-latest changes
+    # Update intentionally after verifying builds on the new image (see https://github.com/actions/runner-images/releases)
     runs-on: ubuntu-24.04
 
     steps:
@@ -87,7 +89,10 @@ jobs:
     # Run only if build-native-image completes successfully
     needs: build-native-image
 
-    runs-on: ubuntu-24.04
+    # Build on native ARM64 runner for speed; avoid ubuntu-latest to prevent surprise image switches.
+    # If you need to upgrade, test the Docker/GraalVM build on the new runner image first.
+    runs-on: ubuntu-24.04-arm64
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repository
@@ -113,10 +118,6 @@ jobs:
             org.opencontainers.image.vendor=ismarslomic
             org.opencontainers.image.description=HTTP endpoints to receive data from different sources to collect all data belonging to a visit at Slomic Smarthytte and store it to a database.
 
-      # Setup QEMU for building various versions of container
-      # https://github.com/docker/setup-qemu-action
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       # Setup Buildx before building container
       # https://github.com/docker/setup-buildx-action
@@ -143,6 +144,8 @@ jobs:
           platforms: linux/arm64/v8
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Show image digest from docker build
       - name: Image Digest
