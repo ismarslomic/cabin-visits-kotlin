@@ -26,7 +26,11 @@ RUN ./gradlew nativeCompile --no-daemon
 FROM gcr.io/distroless/cc-debian12:nonroot
 
 WORKDIR /
+# Copy the native binary
 COPY --from=builder /workspace/build/native/nativeCompile/graalvm-server /graalvm-server
+# Provide zlib (libz) required by the binary at runtime. Distroless images don't include it.
+# Copy both the symlink and the actual file from the builder image and place them under a standard search path.
+COPY --from=builder /usr/lib64/libz.so.1* /lib/
 
 EXPOSE 8079
 USER nonroot
