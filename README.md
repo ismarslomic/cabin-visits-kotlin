@@ -46,8 +46,33 @@ with the `-e` option:
 | `VEHICLE_TRIP_LOCALE`                        | Yes      | N/A                    | Locale header for requests (e.g., `nb_NO`, dictates language/formatting).                                                                                                                                                                  |
 | `VEHICLE_TRIP_PAGE_SIZE`                     | No       | 200                    | Determines the number of vehicle trip records to fetch per page when syncing vehicle trip data from the API. Defaults to `200`. Adjusting this value can help manage paging performance and memory usage when dealing with large datasets. |
 
+Run the app with Docker:
+
 ```bash
-docker run --rm -p 8079:8079 --env-file .env ismarslomic/cabin-visits-kotlin:main
+docker run --rm -p 8079:8079 --env-file .env ismarslomic/cabin-visits-kotlin:1.0.0
+```
+
+Or use Docker Compose:
+
+Note: make sure the folder /data and the sqlite db file on the host is writable
+
+```yaml
+services:
+  cabin-visits:
+    container_name: cabin-visits
+    image: ismarslomic/cabin-visits-kotlin:1.0.0
+    ports:
+      - 8079:8079 # port for REST API
+    volumes:
+      - ./config:/config # the google credentials file
+      - ./data:/data # sqlite db file, guests.json file, vehicle trips and the summary-to-guest mapping file
+    env_file:
+      - .env
+    restart: unless-stopped
+```
+
+```bash
+docker compose up  -d
 ```
 
 ## HTTP API
