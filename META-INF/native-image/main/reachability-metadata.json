@@ -145,6 +145,12 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setAuthorization",
+          "parameterTypes": [
             "java.util.List"
           ]
         },
@@ -739,6 +745,15 @@
       ]
     },
     {
+      "type": "com.sun.crypto.provider.HmacCore$HmacSHA256",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "com.sun.crypto.provider.HmacCore$HmacSHA384",
       "methods": [
         {
@@ -833,6 +848,17 @@
       ]
     },
     {
+      "type": "io.ktor.client.HttpClientConfig"
+    },
+    {
+      "type": "io.ktor.client.call.HttpClientCall",
+      "fields": [
+        {
+          "name": "received"
+        }
+      ]
+    },
+    {
       "type": "io.ktor.client.content.ProgressListener"
     },
     {
@@ -840,6 +866,20 @@
       "fields": [
         {
           "name": "closed"
+        }
+      ]
+    },
+    {
+      "type": "io.ktor.client.engine.HttpClientEngineCapability"
+    },
+    {
+      "type": "io.ktor.client.engine.HttpClientEngineConfig"
+    },
+    {
+      "type": "io.ktor.client.engine.cio.Endpoint",
+      "fields": [
+        {
+          "name": "connections"
         }
       ]
     },
@@ -854,6 +894,9 @@
     },
     {
       "type": "io.ktor.client.plugins.cookies.HttpCookies"
+    },
+    {
+      "type": "io.ktor.client.request.ResponseAdapter"
     },
     {
       "type": "io.ktor.http.ContentType"
@@ -906,6 +949,23 @@
       ]
     },
     {
+      "type": "io.ktor.network.sockets.SocketBase",
+      "fields": [
+        {
+          "name": "actualCloseFlag"
+        },
+        {
+          "name": "closeFlag"
+        },
+        {
+          "name": "readerJob"
+        },
+        {
+          "name": "writerJob"
+        }
+      ]
+    },
+    {
       "type": "io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider"
     },
     {
@@ -945,6 +1005,28 @@
         },
         {
           "name": "removedRef"
+        }
+      ]
+    },
+    {
+      "type": "io.ktor.util.reflect.TypeInfo"
+    },
+    {
+      "type": "io.ktor.utils.io.ByteChannel",
+      "fields": [
+        {
+          "name": "_closedCause"
+        },
+        {
+          "name": "suspensionSlot"
+        }
+      ]
+    },
+    {
+      "type": "io.ktor.utils.io.pool.DefaultPool",
+      "fields": [
+        {
+          "name": "top"
         }
       ]
     },
@@ -1101,14 +1183,6 @@
       "type": "java.lang.StringBuilder"
     },
     {
-      "type": "java.lang.Thread",
-      "fields": [
-        {
-          "name": "threadLocalRandomProbe"
-        }
-      ]
-    },
-    {
       "type": "java.lang.Void",
       "fields": [
         {
@@ -1222,26 +1296,13 @@
       "type": "java.util.LinkedHashMap"
     },
     {
+      "type": "java.util.List"
+    },
+    {
+      "type": "java.util.Map"
+    },
+    {
       "type": "java.util.SortedSet"
-    },
-    {
-      "type": "java.util.concurrent.atomic.AtomicBoolean",
-      "fields": [
-        {
-          "name": "value"
-        }
-      ]
-    },
-    {
-      "type": "java.util.concurrent.atomic.Striped64",
-      "fields": [
-        {
-          "name": "base"
-        },
-        {
-          "name": "cellsBusy"
-        }
-      ]
     },
     {
       "type": "javax.management.ObjectName"
@@ -1391,6 +1452,9 @@
       "type": "kotlin.collections.Map"
     },
     {
+      "type": "kotlin.collections.MutableMap"
+    },
+    {
       "type": "kotlin.collections.Set"
     },
     {
@@ -1465,6 +1529,14 @@
         },
         {
           "name": "_queue$volatile"
+        }
+      ]
+    },
+    {
+      "type": "kotlinx.coroutines.InvokeOnCancelling",
+      "fields": [
+        {
+          "name": "_invoked$volatile"
         }
       ]
     },
@@ -1665,6 +1737,14 @@
         },
         {
           "name": "tail$volatile"
+        }
+      ]
+    },
+    {
+      "type": "kotlinx.io.RefCountingCopyTracker",
+      "fields": [
+        {
+          "name": "copyCount"
         }
       ]
     },
@@ -1885,6 +1965,40 @@
           "parameterTypes": [
             "org.jetbrains.exposed.dao.id.EntityID"
           ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsRequest",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsRequest$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
         }
       ]
     },
@@ -2679,15 +2793,15 @@
     },
     {
       "module": "java.base",
-      "glob": "jdk/internal/icu/impl/data/icudt74b/nfc.nrm"
+      "glob": "jdk/internal/icu/impl/data/icudt76b/nfc.nrm"
     },
     {
       "module": "java.base",
-      "glob": "jdk/internal/icu/impl/data/icudt74b/nfkc.nrm"
+      "glob": "jdk/internal/icu/impl/data/icudt76b/nfkc.nrm"
     },
     {
       "module": "java.base",
-      "glob": "jdk/internal/icu/impl/data/icudt74b/uprops.icu"
+      "glob": "jdk/internal/icu/impl/data/icudt76b/uprops.icu"
     },
     {
       "module": "java.base",

@@ -23,6 +23,8 @@ jobs:
   build-native-image:
     name: Build GraalVM native image
 
+    # Pin runner to a specific Ubuntu image for reproducibility and to avoid unexpected breakages from ubuntu-latest changes
+    # Update intentionally after verifying builds on the new image (see https://github.com/actions/runner-images/releases)
     runs-on: ubuntu-24.04
 
     steps:
@@ -35,9 +37,9 @@ jobs:
         uses: graalvm/setup-graalvm@v1
         with:
           native-image-musl: true # sets up musl to build static binaries with GraalVM Native Image
-          version: "23.0.2" # Adjust to your required GraalVM version
+          version: "24" # Adjusted to GraalVM v24
           distribution: "graalvm" # GraalVM distribution
-          java-version: "23" # Or the appropriate Java version
+          java-version: "24" # Use Java 24 to match GraalVM v24
 
       # Set up Gradle
       - name: Set up Gradle
@@ -80,24 +82,6 @@ jobs:
           sarif_file: ${{ github.workspace }}/build/reports/detekt/detekt.sarif
           checkout_path: ${{ github.workspace }}
 
-      # Build the GraalVM native image with Gradle
-      - name: Build GraalVM native image
-        run: |
-          ./gradlew nativeCompile -PnativeBuildArgs="--static,--libc=musl,-march=compatibility" --no-daemon
-          mkdir -p output
-          cp ./build/native/nativeCompile/graalvm-server output/graalvm-server
-          cp ./Dockerfile output/Dockerfile
-          cp ./README.md output/README.md 
-
-      # Upload complied GraalVM native image as artifact for accessing in the 'containerize' job
-      - name: Upload native image as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: graalvm-native-image # Name of the artifact to upload
-          path: output/ # A file, directory or wildcard pattern that describes what to upload
-          if-no-files-found: error # Fail the action with an error message
-          retention-days: 1 # Duration after which artifact will expire in days
-          overwrite: true # If true, an artifact with a matching name will be deleted before a new one is uploaded
 
   containerize:
     name: Containerize & push Docker Hub
@@ -105,22 +89,14 @@ jobs:
     # Run only if build-native-image completes successfully
     needs: build-native-image
 
-    runs-on: ubuntu-24.04
+    # Build on native ARM64 runner for speed; avoid ubuntu-latest to prevent surprise image switches.
+    # If you need to upgrade, test the Docker/GraalVM build on the new runner image first.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
 
     steps:
-      # Download the GraalVM native image compiled in the 'build-native-image' job
-      - name: Download native image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: graalvm-native-image # Name of the artifact to download
-          path: native-image/ # Destination path. Supports basic tilde expansion.
-
-      # Build the GraalVM native image with Gradle
-      - name: Make the native image executable
-        run: chmod +x native-image/graalvm-server
-
-      - name: Log downloaded files
-        run: ls -R native-image/
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       # Extract metadata (tags, labels, image name) from GIT to use in Docker Build Push step
       # https://github.com/docker/metadata-action
@@ -142,10 +118,6 @@ jobs:
             org.opencontainers.image.vendor=ismarslomic
             org.opencontainers.image.description=HTTP endpoints to receive data from different sources to collect all data belonging to a visit at Slomic Smarthytte and store it to a database.
 
-      # Setup QEMU for building various versions of container
-      # https://github.com/docker/setup-qemu-action
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       # Setup Buildx before building container
       # https://github.com/docker/setup-buildx-action
@@ -166,12 +138,14 @@ jobs:
       - name: Build & Push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: native-image/
-          file: native-image/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/arm64/v8
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Show image digest from docker build
       - name: Image Digest
@@ -182,8 +156,7 @@ jobs:
       - name: Update image description in Docker Hub
         uses: peter-evans/dockerhub-description@v4
         with:
-          readme-filepath: native-image/README.md # Path to the repository readme.
+          readme-filepath: README.md # Path to the repository readme.
           username: ${{ secrets.DOCKER_HUB_USERNAME }} # Docker Hub username
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} # Docker Hub password
           repository: ${{ env.IMAGE_NAME }} # Docker Hub repository
-          short-description: ${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }} # Docker Hub repository short description.
