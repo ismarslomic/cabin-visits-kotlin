@@ -9,8 +9,9 @@ WORKDIR /workspace
 # Leverage Docker layer caching for dependencies
 COPY gradle gradle
 COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
-RUN chmod +x gradlew \
-    && ./gradlew --no-daemon --version
+# Install xargs (provided by findutils) required by Gradle wrapper
+RUN microdnf install -y findutils && microdnf clean all
+RUN chmod +x gradlew && ./gradlew --no-daemon --version
 
 # Copy sources
 COPY src src
