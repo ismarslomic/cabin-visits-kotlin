@@ -5,6 +5,8 @@ flyway = "11.13.1"
 googleCalendarService = "v3-rev20250404-2.0.0"
 googleOauthClient = "1.39.1"
 graalvm = "0.11.1"
+# We must use v9.x.x since v8.x.x is only compatible with ktor v2.x.x
+graphql = "9.0.0-alpha.8"
 hoplite = "2.9.0"
 influxdb = "7.3.0"
 jacoco = "0.8.13"
@@ -26,6 +28,7 @@ exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kot
 flyway = { group = "org.flywaydb", name = "flyway-core", version.ref = "flyway" }
 google-calendar-api = { group = "com.google.apis", name = "google-api-services-calendar", version.ref = "googleCalendarService" }
 google-oauth = { group = "com.google.auth", name = "google-auth-library-oauth2-http", version.ref = "googleOauthClient" }
+graphql-server = { group = "com.expediagroup", name = "graphql-kotlin-ktor-server", version.ref = "graphql" }
 hoplite-yaml = { group = "com.sksamuel.hoplite", name = "hoplite-yaml", version.ref = "hoplite" }
 influxdb-client = { group = "com.influxdb", name = "influxdb-client-kotlin", version.ref = "influxdb" }
 kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
@@ -55,6 +58,7 @@ metrics = ["ktor-micrometer-metrics", "micrometer-registry-prometheus"]
 [plugins]
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm" }
+graphql = { id = "com.expediagroup.graphql", version.ref = "graphql" }
 jacoco = { id = "jacoco" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

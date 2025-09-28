@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.jacoco)
     alias(libs.plugins.detekt)
     alias(libs.plugins.graalvm)
+    alias(libs.plugins.graphql)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinter)
@@ -36,6 +37,7 @@ dependencies {
     implementation(libs.hoplite.yaml)
     implementation(libs.influxdb.client)
     implementation(libs.logback.classic)
+    implementation(libs.graphql.server)
 
     testImplementation(libs.bundles.kotest)
     testImplementation(libs.ktor.server.test)
