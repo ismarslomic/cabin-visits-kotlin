@@ -329,6 +329,196 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "setCreated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setCreator",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Creator"
+          ]
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEnd",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setEtag",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEventType",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setHtmlLink",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setICalUID",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setId",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setKind",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocation",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setOrganizer",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Organizer"
+          ]
+        },
+        {
+          "name": "setReminders",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Reminders"
+          ]
+        },
+        {
+          "name": "setSequence",
+          "parameterTypes": [
+            "java.lang.Integer"
+          ]
+        },
+        {
+          "name": "setStart",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setStatus",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSummary",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setUpdated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Creator",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Organizer",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDisplayName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSelf",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Reminders",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setUseDefault",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventDateTime",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDateTime",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setTimeZone",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -745,15 +935,6 @@
       ]
     },
     {
-      "type": "com.sun.crypto.provider.HmacCore$HmacSHA256",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "com.sun.crypto.provider.HmacCore$HmacSHA384",
       "methods": [
         {
@@ -848,17 +1029,6 @@
       ]
     },
     {
-      "type": "io.ktor.client.HttpClientConfig"
-    },
-    {
-      "type": "io.ktor.client.call.HttpClientCall",
-      "fields": [
-        {
-          "name": "received"
-        }
-      ]
-    },
-    {
       "type": "io.ktor.client.content.ProgressListener"
     },
     {
@@ -866,20 +1036,6 @@
       "fields": [
         {
           "name": "closed"
-        }
-      ]
-    },
-    {
-      "type": "io.ktor.client.engine.HttpClientEngineCapability"
-    },
-    {
-      "type": "io.ktor.client.engine.HttpClientEngineConfig"
-    },
-    {
-      "type": "io.ktor.client.engine.cio.Endpoint",
-      "fields": [
-        {
-          "name": "connections"
         }
       ]
     },
@@ -894,9 +1050,6 @@
     },
     {
       "type": "io.ktor.client.plugins.cookies.HttpCookies"
-    },
-    {
-      "type": "io.ktor.client.request.ResponseAdapter"
     },
     {
       "type": "io.ktor.http.ContentType"
@@ -949,23 +1102,6 @@
       ]
     },
     {
-      "type": "io.ktor.network.sockets.SocketBase",
-      "fields": [
-        {
-          "name": "actualCloseFlag"
-        },
-        {
-          "name": "closeFlag"
-        },
-        {
-          "name": "readerJob"
-        },
-        {
-          "name": "writerJob"
-        }
-      ]
-    },
-    {
       "type": "io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider"
     },
     {
@@ -1005,28 +1141,6 @@
         },
         {
           "name": "removedRef"
-        }
-      ]
-    },
-    {
-      "type": "io.ktor.util.reflect.TypeInfo"
-    },
-    {
-      "type": "io.ktor.utils.io.ByteChannel",
-      "fields": [
-        {
-          "name": "_closedCause"
-        },
-        {
-          "name": "suspensionSlot"
-        }
-      ]
-    },
-    {
-      "type": "io.ktor.utils.io.pool.DefaultPool",
-      "fields": [
-        {
-          "name": "top"
         }
       ]
     },
@@ -1296,12 +1410,6 @@
       "type": "java.util.LinkedHashMap"
     },
     {
-      "type": "java.util.List"
-    },
-    {
-      "type": "java.util.Map"
-    },
-    {
       "type": "java.util.SortedSet"
     },
     {
@@ -1452,9 +1560,6 @@
       "type": "kotlin.collections.Map"
     },
     {
-      "type": "kotlin.collections.MutableMap"
-    },
-    {
       "type": "kotlin.collections.Set"
     },
     {
@@ -1529,14 +1634,6 @@
         },
         {
           "name": "_queue$volatile"
-        }
-      ]
-    },
-    {
-      "type": "kotlinx.coroutines.InvokeOnCancelling",
-      "fields": [
-        {
-          "name": "_invoked$volatile"
         }
       ]
     },
@@ -1737,14 +1834,6 @@
         },
         {
           "name": "tail$volatile"
-        }
-      ]
-    },
-    {
-      "type": "kotlinx.io.RefCountingCopyTracker",
-      "fields": [
-        {
-          "name": "copyCount"
         }
       ]
     },
@@ -1965,40 +2054,6 @@
           "parameterTypes": [
             "org.jetbrains.exposed.dao.id.EntityID"
           ]
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsRequest",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsRequest$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsResponse",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsResponse$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
         }
       ]
     },
@@ -2226,6 +2281,15 @@
     },
     {
       "type": "org.flywaydb.core.internal.resource.CoreResourceTypeProvider"
+    },
+    {
+      "type": "org.flywaydb.core.internal.scanner.classpath.ClasspathLocationHandlerImpl"
+    },
+    {
+      "type": "org.flywaydb.core.internal.scanner.cloud.s3.AwsS3LocationHandler"
+    },
+    {
+      "type": "org.flywaydb.core.internal.scanner.filesystem.FilesystemLocationHandler"
     },
     {
       "type": "org.flywaydb.core.internal.schemahistory.BaseAppliedMigration"
