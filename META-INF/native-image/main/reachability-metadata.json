@@ -325,7 +325,6 @@
     {
       "type": "com.google.api.services.calendar.model.Event",
       "allDeclaredFields": true,
-      "allDeclaredMethods": true,
       "methods": [
         {
           "name": "<init>",
