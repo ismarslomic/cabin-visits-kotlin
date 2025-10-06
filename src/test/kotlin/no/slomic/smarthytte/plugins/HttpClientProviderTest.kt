@@ -28,7 +28,7 @@ class HttpClientProviderTest {
         assertNotNull(client, "HttpClient should be initialized")
 
         // Perform a basic configuration check
-        val response: HttpResponse = client.get("https://httpbin.org/get")
+        val response: HttpResponse = client.get("https://httpbingo.org/get")
         assertEquals(
             expected = HttpStatusCode.OK,
             actual = response.status,
@@ -41,7 +41,7 @@ class HttpClientProviderTest {
         val client = HttpClientProvider.client
 
         // Test that cookies are handled (validation requires a response with cookies set for testing)
-        val response: HttpResponse = client.get("https://httpbin.org/cookies/set?testCookie=foobar")
+        val response: HttpResponse = client.get("https://postman-echo.com/cookies/set?testCookie=foobar")
         assertEquals(
             expected = HttpStatusCode.OK,
             actual = response.status,
@@ -64,7 +64,7 @@ class HttpClientProviderTest {
         val client = HttpClientProvider.client
 
         // Send a request to an endpoint that includes unknown JSON keys
-        val response: HttpResponse = client.get("https://httpbin.org/json")
+        val response: HttpResponse = client.get("https://httpbingo.org/json")
         assertEquals(
             HttpStatusCode.OK,
             actual = response.status,
