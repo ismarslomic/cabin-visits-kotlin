@@ -23,12 +23,12 @@ fun Application.configureDatabases() {
     log.info("Initializing database..")
 
     // Use flyway to migrate database structure according to scripts located in src/main/resources/db/migration
-    val flyway = Flyway.configure()
+    Flyway
+        .configure()
         .dataSource(dataSource)
         .validateMigrationNaming(true)
         .load()
-
-    flyway.migrate()
+        .migrate()
 
     // Make an Exposed connection to the database
     Database.connect(datasource = dataSource)
