@@ -103,6 +103,7 @@ graalvmNative {
                 "-H:+ReportExceptionStackTraces",
                 "-H:IncludeResources=application.yml",
                 "-H:IncludeResources=application-development.yml",
+                "--enable-native-access=ALL-UNNAMED",
                 "-H:ConfigurationFileDirectories=$mainConfigurationFilesPath",
             )
         }
