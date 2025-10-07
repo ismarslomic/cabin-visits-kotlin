@@ -164,6 +164,7 @@ graalvmNative {
         jvmArgs(
             "--add-opens=java.base/java.util=ALL-UNNAMED",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--enable-native-access=ALL-UNNAMED",
         )
     }
 }
@@ -189,6 +190,7 @@ tasks.withType<Test>().configureEach {
     jvmArgs(
         "--add-opens=java.base/java.util=ALL-UNNAMED",
         "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--enable-native-access=ALL-UNNAMED",
         // Run the Native Image Agent as part of the test task in Gradle to collect the metadata for native test image,
         // However, there is a known issue with the JvmMockKGateway and bytebuddy that is currently unresolved,
         // see https://github.com/mockk/mockk/issues/1022
