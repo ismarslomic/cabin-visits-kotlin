@@ -323,6 +323,242 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "setCreated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setCreator",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Creator"
+          ]
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEnd",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setEtag",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEventType",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setExtendedProperties",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$ExtendedProperties"
+          ]
+        },
+        {
+          "name": "setGuestsCanInviteOthers",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        },
+        {
+          "name": "setGuestsCanSeeOtherGuests",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        },
+        {
+          "name": "setHtmlLink",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setICalUID",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setId",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setKind",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocation",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setOrganizer",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Organizer"
+          ]
+        },
+        {
+          "name": "setReminders",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Reminders"
+          ]
+        },
+        {
+          "name": "setSequence",
+          "parameterTypes": [
+            "java.lang.Integer"
+          ]
+        },
+        {
+          "name": "setStart",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setStatus",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSummary",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setTransparency",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setUpdated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setVisibility",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Creator",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$ExtendedProperties",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Organizer",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDisplayName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSelf",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Reminders",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setUseDefault",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventDateTime",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDate",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setDateTime",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setTimeZone",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
