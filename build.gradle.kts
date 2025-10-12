@@ -105,6 +105,9 @@ graalvmNative {
                 "-H:+ReportExceptionStackTraces",
                 "-H:IncludeResources=application.yml",
                 "-H:IncludeResources=application-development.yml",
+                "-H:IncludeResources=db/migration/.*",
+                "-H:IncludeResources=db/migration-index.txt",
+                "--enable-native-access=ALL-UNNAMED",
                 "-H:ConfigurationFileDirectories=$mainConfigurationFilesPath",
             )
         }
@@ -165,6 +168,7 @@ graalvmNative {
         jvmArgs(
             "--add-opens=java.base/java.util=ALL-UNNAMED",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--enable-native-access=ALL-UNNAMED",
         )
     }
 }
@@ -190,6 +194,7 @@ tasks.withType<Test>().configureEach {
     jvmArgs(
         "--add-opens=java.base/java.util=ALL-UNNAMED",
         "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--enable-native-access=ALL-UNNAMED",
         // Run the Native Image Agent as part of the test task in Gradle to collect the metadata for native test image,
         // However, there is a known issue with the JvmMockKGateway and bytebuddy that is currently unresolved,
         // see https://github.com/mockk/mockk/issues/1022
@@ -241,4 +246,42 @@ tasks.withType<DependencyUpdatesTask> {
     rejectVersionIf {
         isNonStable(candidate.version) && !isNonStable(currentVersion)
     }
+}
+
+// Generate an index of Flyway migration scripts for use in GraalVM native image where classpath scanning is limited
+// See https://github.com/flyway/flyway/issues/2927 and https://github.com/flyway/flyway/issues/3509
+val migrationDir = layout.projectDirectory.dir("src/main/resources/db/migration")
+val generatedResourcesDir = layout.buildDirectory.dir("generated/resources/main")
+
+val generateMigrationIndex by tasks.registering {
+    description = "Generates an index file listing all Flyway SQL migration resources"
+    group = "build setup"
+
+    // Inputs/outputs for up-to-date checks
+    inputs.dir(migrationDir)
+    val outputFile = generatedResourcesDir.map { it.file("db/migration-index.txt") }
+    outputs.file(outputFile)
+
+    doLast {
+        val dir = migrationDir.asFile
+        val files = dir.listFiles { f -> f.isFile && f.name.matches(Regex(".*\\.(sql|cql|txt)")) }?.sortedBy { it.name }
+            ?: emptyList()
+        val outFile = outputFile.get().asFile
+        outFile.parentFile.mkdirs()
+        // Each line is a classpath-relative resource path (without scheme), e.g. db/migration/V1__init.sql
+        val content = files.joinToString(separator = System.lineSeparator()) { "db/migration/${it.name}" }
+        outFile.writeText(content)
+    }
+}
+
+// Make the generated resources part of the main resources
+sourceSets {
+    named("main") {
+        resources.srcDir(generatedResourcesDir)
+    }
+}
+
+// Ensure the index is generated before resources are processed
+tasks.named<ProcessResources>("processResources") {
+    dependsOn(generateMigrationIndex)
 }

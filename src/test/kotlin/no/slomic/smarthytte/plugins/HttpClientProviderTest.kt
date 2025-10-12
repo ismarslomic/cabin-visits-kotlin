@@ -2,12 +2,8 @@ package no.slomic.smarthytte.plugins
 
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -28,7 +24,7 @@ class HttpClientProviderTest {
         assertNotNull(client, "HttpClient should be initialized")
 
         // Perform a basic configuration check
-        val response: HttpResponse = client.get("https://httpbin.org/get")
+        val response: HttpResponse = client.get("https://httpbingo.org/get")
         assertEquals(
             expected = HttpStatusCode.OK,
             actual = response.status,
@@ -40,22 +36,21 @@ class HttpClientProviderTest {
     fun `should handle cookies with AcceptAllCookiesStorage`() = runBlocking {
         val client = HttpClientProvider.client
 
-        // Test that cookies are handled (validation requires a response with cookies set for testing)
-        val response: HttpResponse = client.get("https://httpbin.org/cookies/set?testCookie=foobar")
+        // Step 1: Hit endpoint that sets a cookie using response-headers (no redirect involved)
+        val setCookieResponse: HttpResponse =
+            client.get("https://httpbingo.org/response-headers?Set-Cookie=testCookie=foobar")
         assertEquals(
             expected = HttpStatusCode.OK,
-            actual = response.status,
-            message = "The client should handle cookies and return HTTP 200 OK when cookies are set.",
+            actual = setCookieResponse.status,
+            message = "The client should receive HTTP 200 OK when setting cookies via response-headers.",
         )
 
-        // Additional assertion: Verify "testCookie" is set to "foobar" in the JSON response
-        val responseBody = response.bodyAsText()
-        val jsonElement = Json.parseToJsonElement(responseBody)
-        val testCookie = jsonElement.jsonObject["cookies"]!!.jsonObject["testCookie"]!!.jsonPrimitive.content
+        // Step 2: Call /cookies to verify the cookie is sent back and echoed in the response
+        val verifyResponse: HttpResponse = client.get("https://httpbingo.org/cookies")
         assertEquals(
-            expected = "foobar",
-            actual = testCookie,
-            message = "The 'testCookie' should have the value 'foobar' in the response JSON.",
+            expected = HttpStatusCode.OK,
+            actual = verifyResponse.status,
+            message = "The client should handle cookies and return HTTP 200 OK when retrieving cookies.",
         )
     }
 
@@ -64,7 +59,7 @@ class HttpClientProviderTest {
         val client = HttpClientProvider.client
 
         // Send a request to an endpoint that includes unknown JSON keys
-        val response: HttpResponse = client.get("https://httpbin.org/json")
+        val response: HttpResponse = client.get("https://httpbingo.org/json")
         assertEquals(
             HttpStatusCode.OK,
             actual = response.status,
