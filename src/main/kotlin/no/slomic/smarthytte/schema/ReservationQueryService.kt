@@ -8,7 +8,7 @@ import no.slomic.smarthytte.schema.models.Reservation
 @Suppress("unused")
 class ReservationQueryService(private val reservationRepository: ReservationRepository) : Query {
 
-    @GraphQLDescription("Get all reservations")
+    @GraphQLDescription("Get all reservations ordered latest reservations first")
     suspend fun allReservations(): List<Reservation> =
         reservationRepository.allReservations(sortByLatestReservation = true).map { it.toGql() }
 
