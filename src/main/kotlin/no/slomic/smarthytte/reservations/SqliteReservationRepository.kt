@@ -15,8 +15,12 @@ import org.jetbrains.exposed.sql.SizedCollection
 class SqliteReservationRepository : ReservationRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteReservationRepository::class.java.name)
 
-    override suspend fun allReservations(): List<Reservation> = suspendTransaction {
-        ReservationEntity.all().sortedBy { it.startTime }.map(::daoToModel)
+    override suspend fun allReservations(sortByLatestReservation: Boolean): List<Reservation> = suspendTransaction {
+        if (sortByLatestReservation) {
+            ReservationEntity.all().sortedByDescending { it.startTime }.map(::daoToModel)
+        } else {
+            ReservationEntity.all().sortedBy { it.startTime }.map(::daoToModel)
+        }
     }
 
     override suspend fun reservationById(id: String): Reservation? = suspendTransaction {
