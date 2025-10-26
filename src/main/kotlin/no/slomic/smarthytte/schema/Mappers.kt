@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.schema
 
+import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.checkinouts.CheckIn as CheckInDomain
 import no.slomic.smarthytte.checkinouts.CheckInOutSource as CheckInOutSourceDomain
 import no.slomic.smarthytte.checkinouts.CheckOut as CheckOutDomain
@@ -29,25 +30,25 @@ fun GenderDomain.toGql(): GenderGql = when (this) {
 
 fun ReservationDomain.toGql(): ReservationGql = ReservationGql(
     id = id,
-    startTime = startTime,
-    endTime = endTime,
+    startTime = startTime.toIsoUtcString(),
+    endTime = endTime.toIsoUtcString(),
     guestIds = guestIds,
     summary = summary,
     description = description,
-    sourceCreatedTime = sourceCreatedTime,
-    sourceUpdatedTime = sourceUpdatedTime,
+    sourceCreatedTime = sourceCreatedTime?.toIsoUtcString(),
+    sourceUpdatedTime = sourceUpdatedTime?.toIsoUtcString(),
     checkIn = checkIn?.toGql(),
     checkOut = checkOut?.toGql(),
 )
 
 fun CheckInDomain.toGql(): CheckInGql = CheckInGql(
-    time = time,
+    time = time.toIsoUtcString(),
     sourceName = sourceName.toGql(),
     sourceId = sourceId,
 )
 
 fun CheckOutDomain.toGql(): CheckOutGql = CheckOutGql(
-    time = time,
+    time = time.toIsoUtcString(),
     sourceName = sourceName.toGql(),
     sourceId = sourceId,
 )

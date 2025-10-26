@@ -57,6 +57,11 @@ graalvmNative {
             verbose = true // Add verbose output, defaults to false
             imageName.set("graalvm-server")
 
+            // enable using reachability metadata repository
+            metadataRepository {
+                enabled.set(true)
+            }
+
             // Support adding additional build arguments as CLI argument -PnativeBuildArgs
             val additionalArgs: List<String> =
                 project.findProperty("nativeBuildArgs")?.toString()?.split(",") ?: emptyList()
@@ -170,6 +175,12 @@ graalvmNative {
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--enable-native-access=ALL-UNNAMED",
         )
+    }
+}
+
+graphql {
+    graalVm {
+        packages = listOf("no.slomic.smarthytte.schema")
     }
 }
 
