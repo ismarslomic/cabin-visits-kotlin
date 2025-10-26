@@ -18,6 +18,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.plugins.configureGraphQL
@@ -117,13 +118,13 @@ class GraphQLEndpointReservationsTest :
 
                 val first = reservations.first().jsonObject
                 first["id"]!!.jsonPrimitive.content shouldBe "r2"
-                first["startTime"]!!.jsonPrimitive.content shouldBe r2.startTime.toString()
-                first["endTime"]!!.jsonPrimitive.content shouldBe r2.endTime.toString()
+                first["startTime"]!!.jsonPrimitive.content shouldBe r2.startTime.toIsoUtcString()
+                first["endTime"]!!.jsonPrimitive.content shouldBe r2.endTime.toIsoUtcString()
                 first["guestIds"]!!.jsonArray.map { it.jsonPrimitive.content } shouldContainInOrder r2.guestIds
                 first["summary"]!!.jsonPrimitive.content shouldBe (r2.summary!!)
                 first["description"]!!.jsonPrimitive.content shouldBe (r2.description!!)
-                first["sourceCreatedTime"]!!.jsonPrimitive.content shouldBe r2.sourceCreatedTime!!.toString()
-                first["sourceUpdatedTime"]!!.jsonPrimitive.content shouldBe r2.sourceUpdatedTime!!.toString()
+                first["sourceCreatedTime"]!!.jsonPrimitive.content shouldBe r2.sourceCreatedTime!!.toIsoUtcString()
+                first["sourceUpdatedTime"]!!.jsonPrimitive.content shouldBe r2.sourceUpdatedTime!!.toIsoUtcString()
                 first["checkIn"] shouldBe JsonNull
                 first["checkOut"] shouldBe JsonNull
 
@@ -179,12 +180,12 @@ class GraphQLEndpointReservationsTest :
                     listOf(guestLena.id)
 
                 val checkIn = reservation["checkIn"]!!.jsonObject
-                checkIn["time"]!!.jsonPrimitive.content shouldBe domainCheckIn.time.truncatedToMillis().toString()
+                checkIn["time"]!!.jsonPrimitive.content shouldBe domainCheckIn.time.toIsoUtcString()
                 checkIn["sourceId"]!!.jsonPrimitive.content shouldBe domainCheckIn.sourceId
                 checkIn["sourceName"]!!.jsonPrimitive.content shouldBe "CHECK_IN_SENSOR"
 
                 val checkOut = reservation["checkOut"]!!.jsonObject
-                checkOut["time"]!!.jsonPrimitive.content shouldBe domainCheckOut.time.truncatedToMillis().toString()
+                checkOut["time"]!!.jsonPrimitive.content shouldBe domainCheckOut.time.toIsoUtcString()
                 checkOut["sourceId"]!!.jsonPrimitive.content shouldBe domainCheckOut.sourceId
                 checkOut["sourceName"]!!.jsonPrimitive.content shouldBe "CHECK_IN_SENSOR"
             }
