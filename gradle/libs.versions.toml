@@ -15,7 +15,7 @@ ktor = "3.3.2"
 logback = "1.5.20"
 mockk = "1.14.6"
 prometheus = "1.16.0"
-sqlite = "3.50.3.0"
+sqlite = "3.51.0.0"
 versions = "0.53.0"
 
 [libraries]
