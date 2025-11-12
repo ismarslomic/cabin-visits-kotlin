@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.jacoco)
     alias(libs.plugins.detekt)
     alias(libs.plugins.graalvm)
+    alias(libs.plugins.graphql)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinter)
@@ -36,6 +37,7 @@ dependencies {
     implementation(libs.hoplite.yaml)
     implementation(libs.influxdb.client)
     implementation(libs.logback.classic)
+    implementation(libs.graphql.server)
 
     testImplementation(libs.bundles.kotest)
     testImplementation(libs.ktor.server.test)
@@ -54,6 +56,11 @@ graalvmNative {
             fallback = false // Sets the fallback mode of native-image, defaults to false
             verbose = true // Add verbose output, defaults to false
             imageName.set("graalvm-server")
+
+            // enable using reachability metadata repository
+            metadataRepository {
+                enabled.set(true)
+            }
 
             // Support adding additional build arguments as CLI argument -PnativeBuildArgs
             val additionalArgs: List<String> =
@@ -168,6 +175,12 @@ graalvmNative {
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--enable-native-access=ALL-UNNAMED",
         )
+    }
+}
+
+graphql {
+    graalVm {
+        packages = listOf("no.slomic.smarthytte.schema")
     }
 }
 
