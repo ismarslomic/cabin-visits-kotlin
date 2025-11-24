@@ -7,6 +7,24 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Instant
 
+/**
+ * Rules:
+ * 1. Home to Cabin trip is a trip where startCity = homeCity and endCity = cabinCity
+ * 2. Home to Cabin trips can contain extra stops (occurred after leaving Home and before arriving at the Cabin)
+ * 3. Home to Cabin trip can exist without Cabin to Home trip
+ * 4. Cabin to Home trip is a trip where startCity = cabinCity and endCity = homeCity
+ * 5. Cabin to Home trips can contain extra stops (occurred after leaving the Cabin and before arriving at Home)
+ * 6. Cabin to Home trip can only exist with a corresponding Home to Cabin trip (before the Home to Cabin trip,
+ * in the past)
+ * 7. Trips at Cabin (for instance, Cabin to Hemsedal and Hemsedal to Cabin) occurred after a Home to Cabin
+ * trip should be ignored
+ * 8. Trips at Home (for instance, Home to Nesoddtangen and Nesoddtangen to Home), occurred after the
+ * Cabin to Home trip should be ignored
+ * 8. Trips at Home (for instance, Home to Nesoddtangen and Nesoddtangen to Home), occurred before the
+ * Home to Cabin trip should be ignored
+ * 9. Trips at Home occurred after arriving at the Cabin without a corresponding Cabin to Home trip should be
+ * ignored (this is considered an exception and randomly happens).
+ */
 class CabinVehicleTripListTest :
     ShouldSpec({
         val homeCity = "Oslo"
@@ -16,25 +34,6 @@ class CabinVehicleTripListTest :
         val nesoddtangen = "Nesoddtangen"
         val lillehammerCity = "Lillehammer"
         val sjusjoenCity = "Sjusjoen"
-
-        /**
-         * Rules:
-         * 1. Home to Cabin trip is a trip where startCity = homeCity and endCity = cabinCity
-         * 2. Home to Cabin trips can contain extra stops (occurred after leaving Home and before arriving at the Cabin)
-         * 3. Home to Cabin trip can exist without Cabin to Home trip
-         * 4. Cabin to Home trip is a trip where startCity = cabinCity and endCity = homeCity
-         * 5. Cabin to Home trips can contain extra stops (occurred after leaving the Cabin and before arriving at Home)
-         * 6. Cabin to Home trip can only exist with a corresponding Home to Cabin trip (before the Home to Cabin trip,
-         * in the past)
-         * 7. Trips at Cabin (for instance, Cabin to Hemsedal and Hemsedal to Cabin) occurred after a Home to Cabin
-         * trip should be ignored
-         * 8. Trips at Home (for instance, Home to Nesoddtangen and Nesoddtangen to Home), occurred after the
-         * Cabin to Home trip should be ignored
-         * 8. Trips at Home (for instance, Home to Nesoddtangen and Nesoddtangen to Home), occurred before the
-         * Home to Cabin trip should be ignored
-         * 9. Trips at Home occurred after arriving at the Cabin without a corresponding Cabin to Home trip should be
-         * ignored (this is considered an exception and randomly happens).
-         */
 
         context("Home to Cabin trip is a trip where startCity = homeCity and endCity = cabinCity") {
             should("should find Home to Cabin trip when correct startCity and endCity") {
@@ -71,9 +70,7 @@ class CabinVehicleTripListTest :
             }
         }
 
-        context(
-            "Home to Cabin trips can contain extra stops",
-        ) {
+        context("Home to Cabin trips can contain extra stops") {
             should("should find Home to Cabin trip when extra stops after departure and before arrival to Cabin") {
                 val trips = listOf(
                     createTrip(homeCity, sjusjoenCity, "2025-01-01T12:00:00+01:00", "2025-01-01T14:00:00+01:00"),
@@ -161,9 +158,7 @@ class CabinVehicleTripListTest :
             }
         }
 
-        context(
-            "Trips at Cabin occurred after a Home to Cabin trip should be found and counted as at the Cabin",
-        ) {
+        context("Trips at Cabin occurred after a Home to Cabin trip should be found and counted as at the Cabin") {
             should(
                 "should find Home to Cabin trip and the trips at the Cabin even when missing the Cabin to home trip",
             ) {
@@ -199,9 +194,7 @@ class CabinVehicleTripListTest :
             }
         }
 
-        context(
-            "Trips at Home occurred before the Home to Cabin trip should be ignored",
-        ) {
+        context("Trips at Home occurred before the Home to Cabin trip should be ignored") {
             should("should find Home to Cabin trip and ignore the trips at home before the departure to Cabin") {
                 val trips = listOf(
                     createTrip(homeCity, nesoddtangen, "2025-01-01T10:00:00+01:00", "2025-01-01T11:00:00+01:00"),
@@ -269,9 +262,7 @@ class CabinVehicleTripListTest :
             }
         }
 
-        context(
-            "Cabin to Home trips can contain extra stops (after leaving the Cabin and before arriving at Home)",
-        ) {
+        context("Cabin to Home trips can contain extra stops (after leaving the Cabin and before arriving at Home)") {
             should("should find Cabin to Home trip with intermediate stops") {
                 val trips = listOf(
                     createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
