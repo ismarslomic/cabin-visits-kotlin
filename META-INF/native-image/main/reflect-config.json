@@ -3,5 +3,10 @@
     "name": "kotlinx.coroutines.ExecutorCoroutineDispatcher$Key",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
+  },
+  {
+    "name": "java.lang.Module",
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
   }
 ]

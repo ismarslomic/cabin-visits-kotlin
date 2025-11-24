@@ -1,6 +1,18 @@
 {
   "reflection": [
     {
+      "type": "[Lcom.fasterxml.jackson.databind.deser.Deserializers;"
+    },
+    {
+      "type": "[Lcom.fasterxml.jackson.databind.deser.KeyDeserializers;"
+    },
+    {
+      "type": "[Lcom.fasterxml.jackson.databind.deser.ValueInstantiators;"
+    },
+    {
+      "type": "[Lcom.fasterxml.jackson.databind.ser.Serializers;"
+    },
+    {
       "type": "[Lio.ktor.network.selector.SelectInterest;"
     },
     {
@@ -94,6 +106,21 @@
       "type": "ch.qos.logback.core.spi.ContextAware"
     },
     {
+      "type": "com.expediagroup.graphql.generator.annotations.GraphQLDescription",
+      "methods": [
+        {
+          "name": "value",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.expediagroup.graphql.server.ktor.GraphQL"
+    },
+    {
+      "type": "com.expediagroup.graphql.server.operations.Query"
+    },
+    {
       "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
       "methods": [
         {
@@ -138,6 +165,12 @@
         },
         {
           "name": "setAuthenticate",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setAuthorization",
           "parameterTypes": [
             "java.lang.String"
           ]
@@ -1290,7 +1323,19 @@
       ]
     },
     {
+      "type": "java.io.Closeable"
+    },
+    {
+      "type": "java.io.InputStream"
+    },
+    {
+      "type": "java.io.Serializable"
+    },
+    {
       "type": "java.lang.AbstractStringBuilder"
+    },
+    {
+      "type": "java.lang.AutoCloseable"
     },
     {
       "type": "java.lang.Boolean",
@@ -1321,7 +1366,12 @@
     },
     {
       "type": "java.lang.Class",
+      "allDeclaredFields": true,
       "methods": [
+        {
+          "name": "getModule",
+          "parameterTypes": []
+        },
         {
           "name": "isRecord",
           "parameterTypes": []
@@ -1331,6 +1381,10 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "java.lang.ClassLoader",
+      "allDeclaredFields": true
     },
     {
       "type": "java.lang.ClassValue"
@@ -1360,6 +1414,18 @@
       ]
     },
     {
+      "type": "java.lang.Enum",
+      "methods": [
+        {
+          "name": "valueOf",
+          "parameterTypes": [
+            "java.lang.Class",
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
       "type": "java.lang.Float",
       "fields": [
         {
@@ -1376,10 +1442,47 @@
       ]
     },
     {
+      "type": "java.lang.Iterable"
+    },
+    {
       "type": "java.lang.Long",
       "fields": [
         {
           "name": "TYPE"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Module",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "getLayer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.ModuleLayer",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "boot",
+          "parameterTypes": []
+        },
+        {
+          "name": "configuration",
+          "parameterTypes": []
+        },
+        {
+          "name": "findLoader",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "parents",
+          "parameterTypes": []
         }
       ]
     },
@@ -1399,6 +1502,35 @@
       ]
     },
     {
+      "type": "java.lang.StackWalker",
+      "methods": [
+        {
+          "name": "forEach",
+          "parameterTypes": [
+            "java.util.function.Consumer"
+          ]
+        },
+        {
+          "name": "getInstance",
+          "parameterTypes": [
+            "java.lang.StackWalker$Option"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.StackWalker$Option"
+    },
+    {
+      "type": "java.lang.StackWalker$StackFrame",
+      "methods": [
+        {
+          "name": "getDeclaringClass",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "java.lang.String",
       "fields": [
         {
@@ -1411,6 +1543,15 @@
     },
     {
       "type": "java.lang.StringBuilder"
+    },
+    {
+      "type": "java.lang.System",
+      "methods": [
+        {
+          "name": "getSecurityManager",
+          "parameterTypes": []
+        }
+      ]
     },
     {
       "type": "java.lang.Void",
@@ -1439,6 +1580,15 @@
       ]
     },
     {
+      "type": "java.lang.constant.Constable"
+    },
+    {
+      "type": "java.lang.invoke.TypeDescriptor"
+    },
+    {
+      "type": "java.lang.invoke.TypeDescriptor$OfField"
+    },
+    {
       "type": "java.lang.management.MemoryUsage",
       "methods": [
         {
@@ -1448,6 +1598,95 @@
           ]
         }
       ]
+    },
+    {
+      "type": "java.lang.module.Configuration",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "modules",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.module.ModuleDescriptor",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "name",
+          "parameterTypes": []
+        },
+        {
+          "name": "packages",
+          "parameterTypes": []
+        },
+        {
+          "name": "rawVersion",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.module.ModuleReader",
+      "methods": [
+        {
+          "name": "list",
+          "parameterTypes": []
+        },
+        {
+          "name": "open",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.module.ModuleReference",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "descriptor",
+          "parameterTypes": []
+        },
+        {
+          "name": "location",
+          "parameterTypes": []
+        },
+        {
+          "name": "open",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.module.ResolvedModule",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "reference",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.reflect.AccessibleObject",
+      "methods": [
+        {
+          "name": "canAccess",
+          "parameterTypes": [
+            "java.lang.Object"
+          ]
+        },
+        {
+          "name": "trySetAccessible",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.reflect.AnnotatedElement"
     },
     {
       "type": "java.lang.reflect.Constructor"
@@ -1462,6 +1701,9 @@
       ]
     },
     {
+      "type": "java.lang.reflect.GenericDeclaration"
+    },
+    {
       "type": "java.lang.reflect.Parameter",
       "methods": [
         {
@@ -1472,6 +1714,9 @@
     },
     {
       "type": "java.lang.reflect.RecordComponent"
+    },
+    {
+      "type": "java.lang.reflect.Type"
     },
     {
       "type": "java.math.BigDecimal"
@@ -1486,10 +1731,29 @@
       "type": "java.nio.charset.Charset"
     },
     {
+      "type": "java.security.AccessController",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "doPrivileged",
+          "parameterTypes": [
+            "java.security.PrivilegedAction"
+          ]
+        }
+      ]
+    },
+    {
       "type": "java.security.AlgorithmParametersSpi"
     },
     {
       "type": "java.security.KeyStoreSpi"
+    },
+    {
+      "type": "java.security.PrivilegedAction"
+    },
+    {
+      "type": "java.security.SecureClassLoader",
+      "allDeclaredFields": true
     },
     {
       "type": "java.security.interfaces.ECPrivateKey"
@@ -1517,6 +1781,9 @@
       "allDeclaredFields": true
     },
     {
+      "type": "java.util.Collection"
+    },
+    {
       "type": "java.util.Date"
     },
     {
@@ -1532,13 +1799,93 @@
       "type": "java.util.Map"
     },
     {
+      "type": "java.util.Optional",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "get",
+          "parameterTypes": []
+        },
+        {
+          "name": "isPresent",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "java.util.SortedSet"
+    },
+    {
+      "type": "java.util.function.Consumer"
+    },
+    {
+      "type": "java.util.stream.AbstractPipeline",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.util.stream.BaseStream"
+    },
+    {
+      "type": "java.util.stream.Collector"
+    },
+    {
+      "type": "java.util.stream.Collectors",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "toList",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.util.stream.PipelineHelper",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.util.stream.ReferencePipeline",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.util.stream.ReferencePipeline$Head",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "java.util.stream.Stream",
+      "methods": [
+        {
+          "name": "collect",
+          "parameterTypes": [
+            "java.util.stream.Collector"
+          ]
+        }
+      ]
     },
     {
       "type": "javax.management.ObjectName"
     },
     {
       "type": "jdk.internal.ValueBased"
+    },
+    {
+      "type": "jdk.internal.loader.BuiltinClassLoader",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "jdk.internal.loader.ClassLoaders$AppClassLoader",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "jdk.internal.loader.ClassLoaders$PlatformClassLoader",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "jdk.internal.module.ModuleReferenceImpl",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "jdk.internal.module.SystemModuleFinders$SystemModuleReader",
+      "allDeclaredFields": true
     },
     {
       "type": "jdk.internal.vm.annotation.IntrinsicCandidate"
@@ -1583,10 +1930,16 @@
       "type": "kotlin.DoubleArray"
     },
     {
+      "type": "kotlin.Enum"
+    },
+    {
       "type": "kotlin.Float"
     },
     {
       "type": "kotlin.FloatArray"
+    },
+    {
+      "type": "kotlin.Function"
     },
     {
       "type": "kotlin.Int"
@@ -1674,6 +2027,12 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "kotlin.collections.Collection"
+    },
+    {
+      "type": "kotlin.collections.Iterable"
     },
     {
       "type": "kotlin.collections.List"
@@ -1971,6 +2330,9 @@
       ]
     },
     {
+      "type": "kotlinx.datetime.Instant"
+    },
+    {
       "type": "kotlinx.io.RefCountingCopyTracker",
       "fields": [
         {
@@ -1988,6 +2350,9 @@
           ]
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.guests.GuestRepository"
     },
     {
       "type": "no.slomic.smarthytte.properties.CheckInProperties",
@@ -2177,6 +2542,54 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.reservations.ReservationRepository"
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.GuestsQueryService",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.ReservationQueryService",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.models.CheckIn"
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.models.CheckInOutSource",
+      "fields": [
+        {
+          "name": "CALENDAR_EVENT"
+        },
+        {
+          "name": "CHECK_IN_SENSOR"
+        },
+        {
+          "name": "VEHICLE_TRIP"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.models.CheckOut"
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.models.Gender",
+      "fields": [
+        {
+          "name": "FEMALE"
+        },
+        {
+          "name": "MALE"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.models.Guest"
+    },
+    {
+      "type": "no.slomic.smarthytte.schema.models.Reservation"
+    },
+    {
       "type": "no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorEntity",
       "methods": [
         {
@@ -2242,6 +2655,258 @@
           ]
         }
       ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.AntClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.ClassGraphClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.CxfContainerClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.EquinoxClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.EquinoxContextFinderClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.FallbackClassLoaderHandler"
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.FelixClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.JBossClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.JPMSClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        },
+        {
+          "name": "findClassLoaderOrder",
+          "parameterTypes": [
+            "java.lang.ClassLoader",
+            "nonapi.io.github.classgraph.classpath.ClassLoaderOrder",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        },
+        {
+          "name": "findClasspathOrder",
+          "parameterTypes": [
+            "java.lang.ClassLoader",
+            "nonapi.io.github.classgraph.classpath.ClasspathOrder",
+            "nonapi.io.github.classgraph.scanspec.ScanSpec",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.OSGiDefaultClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.ParentLastDelegationOrderTestClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.PlexusClassWorldsClassRealmClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.QuarkusClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.SpringBootRestartClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.TomcatWebappClassLoaderBaseHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.URLClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.UnoOneJarClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.WeblogicClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.WebsphereLibertyClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.classloaderhandler.WebsphereTraditionalClassLoaderHandler",
+      "methods": [
+        {
+          "name": "canHandle",
+          "parameterTypes": [
+            "java.lang.Class",
+            "nonapi.io.github.classgraph.utils.LogNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "nonapi.io.github.classgraph.scanspec.ScanSpec",
+      "allDeclaredFields": true
     },
     {
       "type": "org.flywaydb.core.api.migration.baseline.BaselineAppliedMigration"
@@ -2415,6 +3080,10 @@
       "type": "org.flywaydb.core.internal.proprietaryStubs.ModelCommandExtensionStub"
     },
     {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.OfflinePermitConfigurationExtensionStub",
+      "allDeclaredFields": true
+    },
+    {
       "type": "org.flywaydb.core.internal.proprietaryStubs.PATTokenConfigurationExtensionStub",
       "allDeclaredFields": true
     },
@@ -2538,7 +3207,15 @@
     },
     {
       "type": "sun.misc.Unsafe",
-      "allDeclaredFields": true
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "invokeCleaner",
+          "parameterTypes": [
+            "java.nio.ByteBuffer"
+          ]
+        }
+      ]
     },
     {
       "type": "sun.security.pkcs12.PKCS12KeyStore",
@@ -2913,6 +3590,20 @@
           "com.influxdb.client.service.QueryService"
         ]
       }
+    },
+    {
+      "type": {
+        "proxy": [
+          "java.security.PrivilegedAction"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "java.util.function.Consumer"
+        ]
+      }
     }
   ],
   "resources": [
@@ -3001,10 +3692,13 @@
       "glob": "db/callback"
     },
     {
-      "glob": "db/migration"
+      "glob": "db/migration-index.txt"
     },
     {
       "glob": "db/migration/V1.0__initial_schema.sql"
+    },
+    {
+      "glob": "graphql-graphiql.html"
     },
     {
       "glob": "logback-test.scmo"

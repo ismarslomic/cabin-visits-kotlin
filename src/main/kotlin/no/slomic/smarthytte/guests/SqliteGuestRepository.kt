@@ -11,6 +11,14 @@ import org.jetbrains.exposed.dao.id.EntityID
 class SqliteGuestRepository : GuestRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteGuestRepository::class.java.name)
 
+    override suspend fun allGuests(): List<Guest> = suspendTransaction {
+        GuestEntity.all().sortedBy { it.firstName }.map(::daoToModel)
+    }
+
+    override suspend fun guestById(id: String): Guest? = suspendTransaction {
+        GuestEntity.findById(id)?.let { daoToModel(it) }
+    }
+
     override suspend fun addOrUpdate(guest: Guest): PersistenceResult = suspendTransaction {
         val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
         val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
