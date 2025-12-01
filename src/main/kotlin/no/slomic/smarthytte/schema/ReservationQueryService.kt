@@ -9,6 +9,8 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.schema.models.GuestVisitStats
 import no.slomic.smarthytte.schema.models.MonthCount
 import no.slomic.smarthytte.schema.models.MonthReservationStats
 import no.slomic.smarthytte.schema.models.MonthStay
@@ -18,7 +20,10 @@ import kotlin.math.round
 import java.time.temporal.WeekFields
 
 @Suppress("unused")
-class ReservationQueryService(private val reservationRepository: ReservationRepository) : Query {
+class ReservationQueryService(
+    private val reservationRepository: ReservationRepository,
+    private val guestRepository: GuestRepository,
+) : Query {
 
     @GraphQLDescription("Get all reservations ordered latest reservations first")
     suspend fun allReservations(): List<Reservation> =
@@ -40,6 +45,7 @@ class ReservationQueryService(private val reservationRepository: ReservationRepo
         ) years: List<Int>? = null,
     ): List<YearReservationStats> {
         val reservations = reservationRepository.allReservations(sortByLatestReservation = true)
+        val guestsById = guestRepository.allGuests().associateBy { it.id }
 
         // Group by calendar year using reservation start date
         val byYear: Map<Int, List<no.slomic.smarthytte.reservations.Reservation>> =
@@ -52,7 +58,7 @@ class ReservationQueryService(private val reservationRepository: ReservationRepo
 
             // Build counts by month and compute monthly stats
             val countsByMonth = computeCountsByMonth(yearReservations)
-            val monthStats = buildMonthStats(year, yearReservations, reservations, countsByMonth)
+            val monthStats = buildMonthStats(year, yearReservations, reservations, countsByMonth, guestsById)
 
             // Year-level metrics
             val totalVisitsYear = yearReservations.size
@@ -90,6 +96,22 @@ class ReservationQueryService(private val reservationRepository: ReservationRepo
             val monthFewest = countsByMonth.minByOrNull { it.value }?.let { (m, c) -> MonthCount(m, monthNameOf(m), c) }
             val monthWithLongestStay = findMonthWithLongestStay(yearReservations)
 
+            // Per-guest stats for the year
+            val guestYearStats: List<GuestVisitStats> = computeGuestStats(
+                periodStart = jan1,
+                periodEndExclusive = jan1Next,
+                reservations = yearReservations,
+                guestsById = guestsById,
+                ageYear = year,
+            )
+            val prevYearGuests: Set<String> = byYear[year - 1]
+                ?.flatMap { it.guestIds }
+                ?.toSet()
+                ?: emptySet()
+            val newGuests = guestYearStats.filter { it.guestId !in prevYearGuests }.sortedWith(guestStatsComparator())
+            val allGuestsSorted = guestYearStats.sortedWith(guestStatsComparator())
+            val topGuestByDays = allGuestsSorted.maxByOrNull { it.totalStayDays }
+
             YearReservationStats(
                 year = year,
                 totalVisits = totalVisitsYear,
@@ -103,6 +125,9 @@ class ReservationQueryService(private val reservationRepository: ReservationRepo
                 monthFewestVisits = monthFewest,
                 monthWithLongestStay = monthWithLongestStay,
                 months = monthStats,
+                topGuestByDays = topGuestByDays,
+                newGuests = newGuests,
+                guests = allGuestsSorted,
             )
         }
     }
@@ -134,6 +159,7 @@ private fun buildMonthStats(
     yearReservations: List<no.slomic.smarthytte.reservations.Reservation>,
     allReservations: List<no.slomic.smarthytte.reservations.Reservation>,
     countsByMonth: Map<Int, Int>,
+    guestsById: Map<String, no.slomic.smarthytte.guests.Guest>,
 ): List<MonthReservationStats> = (FIRST_MONTH..MONTHS_IN_YEAR).map { month ->
     val monthName = monthNameOf(month)
     val monthlyReservations = yearReservations.filter { it.startDate.monthNumber == month }
@@ -183,6 +209,14 @@ private fun buildMonthStats(
     val ytdAverage = if (monthsSoFar > 0) ytdTotal.toDouble() / monthsSoFar else 0.0
     val comparedToYtdAvg = (totalVisits.toDouble() - ytdAverage).round1()
 
+    val guestMonthStats: List<GuestVisitStats> = computeGuestStats(
+        periodStart = firstOfMonth,
+        periodEndExclusive = firstOfNextMonth,
+        reservations = monthlyReservations,
+        guestsById = guestsById,
+        ageYear = year,
+    ).sortedWith(guestStatsComparator())
+
     MonthReservationStats(
         monthNumber = month,
         monthName = monthName,
@@ -195,6 +229,7 @@ private fun buildMonthStats(
         avgStayDays = avgStay,
         percentDaysOccupied = percentDaysOccupied,
         percentWeeksOccupied = percentWeeksOccupied,
+        guests = guestMonthStats,
     )
 }
 
@@ -241,3 +276,48 @@ private fun LocalDate.isoWeekId(): Pair<Int, Int> {
     val weekOfYear = jd.get(wf.weekOfWeekBasedYear())
     return weekBasedYear to weekOfYear
 }
+
+// --- Guest stats helpers ---
+private fun computeGuestStats(
+    periodStart: LocalDate,
+    periodEndExclusive: LocalDate,
+    reservations: List<no.slomic.smarthytte.reservations.Reservation>,
+    guestsById: Map<String, no.slomic.smarthytte.guests.Guest>,
+    ageYear: Int,
+): List<GuestVisitStats> {
+    if (reservations.isEmpty()) return emptyList()
+
+    val visitsByGuest: Map<String, Int> = reservations
+        .flatMap { r -> r.guestIds.map { it } }
+        .groupingBy { it }
+        .eachCount()
+
+    val stayDaysByGuest: MutableMap<String, Int> = mutableMapOf()
+    reservations.forEach { r ->
+        val overlapStart = maxOf(r.startDate, periodStart)
+        val overlapEndExclusive = minOf(r.endDate, periodEndExclusive)
+        val days = if (overlapStart < overlapEndExclusive) overlapStart.daysUntilSafe(overlapEndExclusive) else 0
+        r.guestIds.forEach { gid ->
+            stayDaysByGuest[gid] = (stayDaysByGuest[gid] ?: 0) + days
+        }
+    }
+
+    return (visitsByGuest.keys + stayDaysByGuest.keys)
+        .toSet()
+        .mapNotNull { gid ->
+            val g = guestsById[gid] ?: return@mapNotNull null
+            GuestVisitStats(
+                guestId = gid,
+                firstName = g.firstName,
+                lastName = g.lastName,
+                age = (ageYear - g.birthYear.toInt()).coerceAtLeast(0),
+                totalVisits = visitsByGuest[gid] ?: 0,
+                totalStayDays = stayDaysByGuest[gid] ?: 0,
+            )
+        }
+}
+
+private fun guestStatsComparator(): Comparator<GuestVisitStats> = compareByDescending<GuestVisitStats> { it.totalStayDays }
+    .thenByDescending { it.totalVisits }
+    .thenBy { it.lastName }
+    .thenBy { it.firstName }

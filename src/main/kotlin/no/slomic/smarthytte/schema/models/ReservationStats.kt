@@ -55,6 +55,15 @@ data class YearReservationStats(
 
     @GraphQLDescription("Monthly statistics for the year")
     val months: List<MonthReservationStats>,
+
+    @GraphQLDescription("Guest who has the highest total number of stay days in this year")
+    val topGuestByDays: GuestVisitStats?,
+
+    @GraphQLDescription("Guests that are new this year (had no visits the previous calendar year)")
+    val newGuests: List<GuestVisitStats>,
+
+    @GraphQLDescription("All guests aggregated for this year")
+    val guests: List<GuestVisitStats>,
 )
 
 @GraphQLDescription("Per-month statistics")
@@ -107,8 +116,27 @@ data class MonthReservationStats(
             "rounded to 1 decimal",
     )
     val percentWeeksOccupied: Double,
+
+    @GraphQLDescription("Guests aggregated for this month")
+    val guests: List<GuestVisitStats>,
 )
 
 data class MonthCount(val monthNumber: Int, val monthName: String, val count: Int)
 
 data class MonthStay(val monthNumber: Int, val monthName: String, val days: Int)
+
+@GraphQLDescription("Per-guest aggregated stats for a given period (year or month)")
+data class GuestVisitStats(
+    @GraphQLDescription("Guest id")
+    val guestId: String,
+    @GraphQLDescription("Guest first name")
+    val firstName: String,
+    @GraphQLDescription("Guest last name")
+    val lastName: String,
+    @GraphQLDescription("Guest age in the given calendar year")
+    val age: Int,
+    @GraphQLDescription("Total number of visits (reservations counted by start date in the period)")
+    val totalVisits: Int,
+    @GraphQLDescription("Total number of stay days within the period (start inclusive, end inclusive)")
+    val totalStayDays: Int,
+)

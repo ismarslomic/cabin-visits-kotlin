@@ -21,7 +21,7 @@ fun Application.configureGraphQL(guestRepository: GuestRepository, reservationRe
             packages = listOf("no.slomic.smarthytte.schema")
             queries = listOf(
                 GuestsQueryService(guestRepository),
-                ReservationQueryService(reservationRepository),
+                ReservationQueryService(reservationRepository, guestRepository),
             )
             typeHierarchy = mapOf()
         }
