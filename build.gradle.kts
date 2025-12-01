@@ -45,6 +45,14 @@ dependencies {
     testImplementation(libs.mockk)
 }
 
+// Opt-in to applying annotations on both parameter and property by default
+// See KT-73255 warning: "This annotation is currently applied to the value parameter only, but in the future
+// it will also be applied to property."
+// Using the compiler flag to make the intent explicit and future-proof across the codebase
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
+}
+
 // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html
 graalvmNative {
     val mainConfigurationFilesPath = "$projectDir/META-INF/native-image/main"
