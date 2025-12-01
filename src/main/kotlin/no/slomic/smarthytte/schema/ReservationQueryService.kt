@@ -84,6 +84,12 @@ class ReservationQueryService(
             val totalStayDays = occupiedDays.size
             val percentDaysOccupied = if (daysInYear > 0) (totalStayDays.toDouble() / daysInYear.toDouble() * PERCENT_FACTOR).round1() else 0.0
 
+            // Compare stay-days to previous 12 months window
+            val startPrev12Months = jan1.minus(DatePeriod(months = MONTHS_IN_YEAR))
+            val occupiedPrev12MonthsDays = computeOccupiedDaysInWindow(reservations, startPrev12Months, jan1)
+            val comparedStayDaysToLast12Months = totalStayDays - occupiedPrev12MonthsDays
+            val averageMonthlyStayDays = (totalStayDays.toDouble() / MONTHS_IN_YEAR.toDouble()).round1()
+
             val allYearDays = jan1.datesUntil(jan1Next).toList()
             val totalWeeksInYear: Int = allYearDays.map { it.isoWeekId() }.toSet().size
             val occupiedWeeks: Int = occupiedDays.map { it.isoWeekId() }.toSet().size
@@ -118,6 +124,8 @@ class ReservationQueryService(
                 comparedToLast12Months = comparedToLast12Months,
                 averageMonthlyVisits = averageMonthlyVisits,
                 totalStayDays = totalStayDays,
+                comparedStayDaysToLast12Months = comparedStayDaysToLast12Months,
+                averageMonthlyStayDays = averageMonthlyStayDays,
                 percentDaysOccupied = percentDaysOccupied,
                 percentWeeksOccupied = percentWeeksOccupied,
                 percentMonthsOccupied = percentMonthsOccupied,
@@ -254,6 +262,25 @@ private fun findMonthWithLongestStay(
         val m = r.startDate.monthNumber
         MonthStay(m, monthNameOf(m), r.startDate.daysUntilSafe(r.endDate))
     }
+
+// Computes number of unique occupied days within [startInclusive, endExclusive)
+private fun computeOccupiedDaysInWindow(
+    reservations: List<no.slomic.smarthytte.reservations.Reservation>,
+    startInclusive: LocalDate,
+    endExclusive: LocalDate,
+): Int {
+    if (startInclusive >= endExclusive) return 0
+    return reservations
+        .asSequence()
+        .map { r ->
+            val start = maxOf(r.startDate, startInclusive)
+            val endEx = minOf(r.endDate, endExclusive)
+            if (start < endEx) start.datesUntil(endEx).toList() else emptyList()
+        }
+        .flatten()
+        .toSet()
+        .size
+}
 private fun List<Int>.averageRounded1(): Double = if (isEmpty()) 0.0 else (sum().toDouble() / size).round1()
 
 private fun Double.round1(): Double = round(this * ONE_DECIMAL_FACTOR) / ONE_DECIMAL_FACTOR

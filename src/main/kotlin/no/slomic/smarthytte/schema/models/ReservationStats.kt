@@ -26,6 +26,15 @@ data class YearReservationStats(
     val totalStayDays: Int,
 
     @GraphQLDescription(
+        "Difference in occupied days compared to the previous 12 months (this year's occupied days minus previous 12 months); " +
+            "positive = increase, negative = decrease",
+    )
+    val comparedStayDaysToLast12Months: Int,
+
+    @GraphQLDescription("Average number of occupied days per month for this year (totalStayDays/12)")
+    val averageMonthlyStayDays: Double,
+
+    @GraphQLDescription(
         "Percentage of occupied days relative to the number of days in the year; " +
             "rounded to 1 decimal",
     )
