@@ -73,6 +73,14 @@ data class YearReservationStats(
 
     @GraphQLDescription("All guests aggregated for this year")
     val guests: List<GuestVisitStats>,
+
+    @GraphQLDescription("Driving time statistics for trips to/from cabin within this calendar year")
+    val drivingTime: DrivingTimeStatsYear?,
+
+    @GraphQLDescription(
+        "Average times of day (Oslo) for departures/arrivals related to cabin trips within this calendar year",
+    )
+    val drivingMoments: DrivingMomentStatsYear?,
 )
 
 @GraphQLDescription("Per-month statistics")
@@ -128,6 +136,14 @@ data class MonthReservationStats(
 
     @GraphQLDescription("Guests aggregated for this month")
     val guests: List<GuestVisitStats>,
+
+    @GraphQLDescription("Driving time statistics for trips to/from cabin within this month")
+    val drivingTime: DrivingTimeStatsMonth?,
+
+    @GraphQLDescription(
+        "Average times of day (Oslo) for departures/arrivals related to cabin trips within this month",
+    )
+    val drivingMoments: DrivingMomentStatsMonth?,
 )
 
 data class MonthCount(val monthNumber: Int, val monthName: String, val count: Int)

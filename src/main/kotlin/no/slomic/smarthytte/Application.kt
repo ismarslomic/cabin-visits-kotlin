@@ -126,7 +126,7 @@ fun Application.module() {
     // checkInOutService.updateCheckInOutStatusForAllReservations()
 
     // Configure GraphQL
-    configureGraphQL(guestRepository, reservationRepository)
+    configureGraphQL(guestRepository, reservationRepository, vehicleTripRepository)
 
     // Configure Ktor routing (after the initial load is completed)
     configureRouting()

@@ -5,24 +5,35 @@ import com.expediagroup.graphql.server.operations.Query
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
-import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.schema.models.DrivingMomentStatsMonth
+import no.slomic.smarthytte.schema.models.DrivingMomentStatsYear
+import no.slomic.smarthytte.schema.models.DrivingTimeStatsMonth
+import no.slomic.smarthytte.schema.models.DrivingTimeStatsYear
 import no.slomic.smarthytte.schema.models.GuestVisitStats
 import no.slomic.smarthytte.schema.models.MonthCount
 import no.slomic.smarthytte.schema.models.MonthReservationStats
 import no.slomic.smarthytte.schema.models.MonthStay
 import no.slomic.smarthytte.schema.models.Reservation
 import no.slomic.smarthytte.schema.models.YearReservationStats
-import kotlin.math.round
+import no.slomic.smarthytte.vehicletrips.CabinVehicleTripList
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import java.time.temporal.WeekFields
+import kotlin.math.round
 
 @Suppress("unused")
 class ReservationQueryService(
     private val reservationRepository: ReservationRepository,
     private val guestRepository: GuestRepository,
+    private val vehicleTripRepository: VehicleTripRepository,
 ) : Query {
 
     @GraphQLDescription("Get all reservations ordered latest reservations first")
@@ -46,6 +57,8 @@ class ReservationQueryService(
     ): List<YearReservationStats> {
         val reservations = reservationRepository.allReservations(sortByLatestReservation = true)
         val guestsById = guestRepository.allGuests().associateBy { it.id }
+        val allTrips = vehicleTripRepository.allVehicleTrips()
+        val cabinTrips = CabinVehicleTripList(allTrips).cabinTrips
 
         // Group by calendar year using reservation start date
         val byYear: Map<Int, List<no.slomic.smarthytte.reservations.Reservation>> =
@@ -58,7 +71,8 @@ class ReservationQueryService(
 
             // Build counts by month and compute monthly stats
             val countsByMonth = computeCountsByMonth(yearReservations)
-            val monthStats = buildMonthStats(year, yearReservations, reservations, countsByMonth, guestsById)
+            val monthStats =
+                buildMonthStats(year, yearReservations, reservations, countsByMonth, guestsById, cabinTrips)
 
             // Year-level metrics
             val totalVisitsYear = yearReservations.size
@@ -82,7 +96,14 @@ class ReservationQueryService(
 
             val daysInYear = jan1.daysUntilSafe(jan1Next)
             val totalStayDays = occupiedDays.size
-            val percentDaysOccupied = if (daysInYear > 0) (totalStayDays.toDouble() / daysInYear.toDouble() * PERCENT_FACTOR).round1() else 0.0
+            val percentDaysOccupied =
+                if (daysInYear >
+                    0
+                ) {
+                    (totalStayDays.toDouble() / daysInYear.toDouble() * PERCENT_FACTOR).round1()
+                } else {
+                    0.0
+                }
 
             // Compare stay-days to previous 12 months window
             val startPrev12Months = jan1.minus(DatePeriod(months = MONTHS_IN_YEAR))
@@ -93,11 +114,19 @@ class ReservationQueryService(
             val allYearDays = jan1.datesUntil(jan1Next).toList()
             val totalWeeksInYear: Int = allYearDays.map { it.isoWeekId() }.toSet().size
             val occupiedWeeks: Int = occupiedDays.map { it.isoWeekId() }.toSet().size
-            val percentWeeksOccupied = if (totalWeeksInYear > 0) (occupiedWeeks.toDouble() / totalWeeksInYear.toDouble() * PERCENT_FACTOR).round1() else 0.0
+            val percentWeeksOccupied =
+                if (totalWeeksInYear >
+                    0
+                ) {
+                    (occupiedWeeks.toDouble() / totalWeeksInYear.toDouble() * PERCENT_FACTOR).round1()
+                } else {
+                    0.0
+                }
 
             val totalMonthsInYear = MONTHS_IN_YEAR
             val occupiedMonths: Int = occupiedDays.map { it.monthNumber }.toSet().size
-            val percentMonthsOccupied = if (totalMonthsInYear > 0) (occupiedMonths.toDouble() / totalMonthsInYear.toDouble() * PERCENT_FACTOR).round1() else 0.0
+            val percentMonthsOccupied =
+                (occupiedMonths.toDouble() / totalMonthsInYear.toDouble() * PERCENT_FACTOR).round1()
             val monthMost = countsByMonth.maxByOrNull { it.value }?.let { (m, c) -> MonthCount(m, monthNameOf(m), c) }
             val monthFewest = countsByMonth.minByOrNull { it.value }?.let { (m, c) -> MonthCount(m, monthNameOf(m), c) }
             val monthWithLongestStay = findMonthWithLongestStay(yearReservations)
@@ -118,6 +147,79 @@ class ReservationQueryService(
             val allGuestsSorted = guestYearStats.sortedWith(guestStatsComparator())
             val topGuestByDays = allGuestsSorted.maxByOrNull { it.totalStayDays }
 
+            // Driving stats for the year
+            val yearDriving = run {
+                val toCabinDurations = cabinTrips
+                    .filter { it.toCabinEndDate?.year == year }
+                    .mapNotNull { it.toCabinTrips.totalDurationMinutes() }
+                val fromCabinDurations = cabinTrips
+                    .filter { it.fromCabinStartDate?.year == year }
+                    .mapNotNull { it.fromCabinTrips.totalDurationMinutes() }
+
+                val avgTo = toCabinDurations.averageOrNullInt()
+                val minTo = toCabinDurations.minOrNull()
+                val maxTo = toCabinDurations.maxOrNull()
+                val avgFrom = fromCabinDurations.averageOrNullInt()
+                val minFrom = fromCabinDurations.minOrNull()
+                val maxFrom = fromCabinDurations.maxOrNull()
+
+                DrivingTimeStatsYear(
+                    year = year,
+                    avgToCabinMinutes = avgTo,
+                    avgToCabin = formatMinutes(avgTo),
+                    minToCabinMinutes = minTo,
+                    minToCabin = formatMinutes(minTo),
+                    maxToCabinMinutes = maxTo,
+                    maxToCabin = formatMinutes(maxTo),
+                    avgFromCabinMinutes = avgFrom,
+                    avgFromCabin = formatMinutes(avgFrom),
+                    minFromCabinMinutes = minFrom,
+                    minFromCabin = formatMinutes(minFrom),
+                    maxFromCabinMinutes = maxFrom,
+                    maxFromCabin = formatMinutes(maxFrom),
+                )
+            }
+
+            // Driving moment (time-of-day) stats for the year (Oslo time)
+            val yearDrivingMoments = run {
+                val depHome: List<Int> = cabinTrips
+                    .mapNotNull { trip ->
+                        val ts = trip.toCabinStartTimestamp ?: return@mapNotNull null
+                        val dt = ts.toLocalDateTime(osloTimeZone)
+                        if (dt.date.year == year) dt.time.minutesOfDay() else null
+                    }
+                val arrCabin: List<Int> = cabinTrips
+                    .mapNotNull { trip ->
+                        val ts = trip.toCabinEndTimestamp ?: return@mapNotNull null
+                        val dt = ts.toLocalDateTime(osloTimeZone)
+                        if (dt.date.year == year) dt.time.minutesOfDay() else null
+                    }
+                val depCabin: List<Int> = cabinTrips
+                    .mapNotNull { trip ->
+                        val ts = trip.fromCabinStartTimestamp ?: return@mapNotNull null
+                        val dt = ts.toLocalDateTime(osloTimeZone)
+                        if (dt.date.year == year) dt.time.minutesOfDay() else null
+                    }
+                val arrHome: List<Int> = cabinTrips
+                    .mapNotNull { trip ->
+                        val ts = trip.fromCabinEndTimestamp ?: return@mapNotNull null
+                        val dt = ts.toLocalDateTime(osloTimeZone)
+                        if (dt.date.year == year) dt.time.minutesOfDay() else null
+                    }
+
+                DrivingMomentStatsYear(
+                    year = year,
+                    avgDepartureHomeMinutes = depHome.averageOrNullInt(),
+                    avgDepartureHome = formatClock(depHome.averageOrNullInt()),
+                    avgArrivalCabinMinutes = arrCabin.averageOrNullInt(),
+                    avgArrivalCabin = formatClock(arrCabin.averageOrNullInt()),
+                    avgDepartureCabinMinutes = depCabin.averageOrNullInt(),
+                    avgDepartureCabin = formatClock(depCabin.averageOrNullInt()),
+                    avgArrivalHomeMinutes = arrHome.averageOrNullInt(),
+                    avgArrivalHome = formatClock(arrHome.averageOrNullInt()),
+                )
+            }
+
             YearReservationStats(
                 year = year,
                 totalVisits = totalVisitsYear,
@@ -136,6 +238,8 @@ class ReservationQueryService(
                 topGuestByDays = topGuestByDays,
                 newGuests = newGuests,
                 guests = allGuestsSorted,
+                drivingTime = yearDriving,
+                drivingMoments = yearDrivingMoments,
             )
         }
     }
@@ -168,6 +272,7 @@ private fun buildMonthStats(
     allReservations: List<no.slomic.smarthytte.reservations.Reservation>,
     countsByMonth: Map<Int, Int>,
     guestsById: Map<String, no.slomic.smarthytte.guests.Guest>,
+    cabinTrips: List<no.slomic.smarthytte.vehicletrips.CabinVehicleTrip>,
 ): List<MonthReservationStats> = (FIRST_MONTH..MONTHS_IN_YEAR).map { month ->
     val monthName = monthNameOf(month)
     val monthlyReservations = yearReservations.filter { it.startDate.monthNumber == month }
@@ -183,7 +288,8 @@ private fun buildMonthStats(
     val lastDayPrevMonth = firstOfMonth.minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
     val startLast30 = firstOfMonth.minus(DatePeriod(days = DAYS_IN_MONTHLY_COMPARE_WINDOW))
 
-    val firstOfNextMonth = if (month == MONTHS_IN_YEAR) LocalDate(year + 1, FIRST_MONTH, 1) else LocalDate(year, month + 1, 1)
+    val firstOfNextMonth =
+        if (month == MONTHS_IN_YEAR) LocalDate(year + 1, FIRST_MONTH, 1) else LocalDate(year, month + 1, 1)
     val allDaysInMonth = firstOfMonth.datesUntil(firstOfNextMonth).toList()
     val daysInMonth = allDaysInMonth.size
     val totalWeeksInMonth = allDaysInMonth.map { it.isoWeekId() }.toSet().size
@@ -197,9 +303,23 @@ private fun buildMonthStats(
         }
         .flatten()
         .toSet()
-    val percentDaysOccupied = if (daysInMonth > 0) (occupiedDaysInMonth.size.toDouble() / daysInMonth.toDouble() * PERCENT_FACTOR).round1() else 0.0
+    val percentDaysOccupied =
+        if (daysInMonth >
+            0
+        ) {
+            (occupiedDaysInMonth.size.toDouble() / daysInMonth.toDouble() * PERCENT_FACTOR).round1()
+        } else {
+            0.0
+        }
     val occupiedWeeksInMonth = occupiedDaysInMonth.map { it.isoWeekId() }.toSet().size
-    val percentWeeksOccupied = if (totalWeeksInMonth > 0) (occupiedWeeksInMonth.toDouble() / totalWeeksInMonth.toDouble() * PERCENT_FACTOR).round1() else 0.0
+    val percentWeeksOccupied =
+        if (totalWeeksInMonth >
+            0
+        ) {
+            (occupiedWeeksInMonth.toDouble() / totalWeeksInMonth.toDouble() * PERCENT_FACTOR).round1()
+        } else {
+            0.0
+        }
 
     val last30DaysCount = allReservations.count { r ->
         val d = r.startDate
@@ -225,6 +345,27 @@ private fun buildMonthStats(
         ageYear = year,
     ).sortedWith(guestStatsComparator())
 
+    // Driving stats for the month
+    val (prevYear, prevMonth) = previousMonth(year, month)
+
+    val toCabinThis = cabinTrips
+        .filter { it.toCabinEndDate?.year == year && it.toCabinEndDate?.monthNumber == month }
+        .mapNotNull { it.toCabinTrips.totalDurationMinutes() }
+    val fromCabinThis = cabinTrips
+        .filter { it.fromCabinStartDate?.year == year && it.fromCabinStartDate?.monthNumber == month }
+        .mapNotNull { it.fromCabinTrips.totalDurationMinutes() }
+    val toCabinPrev = cabinTrips
+        .filter { it.toCabinEndDate?.year == prevYear && it.toCabinEndDate?.monthNumber == prevMonth }
+        .mapNotNull { it.toCabinTrips.totalDurationMinutes() }
+    val fromCabinPrev = cabinTrips
+        .filter { it.fromCabinStartDate?.year == prevYear && it.fromCabinStartDate?.monthNumber == prevMonth }
+        .mapNotNull { it.fromCabinTrips.totalDurationMinutes() }
+
+    val avgToThis = toCabinThis.averageOrNullInt()
+    val avgFromThis = fromCabinThis.averageOrNullInt()
+    val diffTo = avgToThis?.let { at -> toCabinPrev.averageOrNullInt()?.let { at - it } }
+    val diffFrom = avgFromThis?.let { af -> fromCabinPrev.averageOrNullInt()?.let { af - it } }
+
     MonthReservationStats(
         monthNumber = month,
         monthName = monthName,
@@ -238,6 +379,67 @@ private fun buildMonthStats(
         percentDaysOccupied = percentDaysOccupied,
         percentWeeksOccupied = percentWeeksOccupied,
         guests = guestMonthStats,
+        drivingTime = DrivingTimeStatsMonth(
+            monthNumber = month,
+            monthName = monthName,
+            year = year,
+            avgToCabinMinutes = avgToThis,
+            avgToCabin = formatMinutes(avgToThis),
+            minToCabinMinutes = toCabinThis.minOrNull(),
+            minToCabin = formatMinutes(toCabinThis.minOrNull()),
+            maxToCabinMinutes = toCabinThis.maxOrNull(),
+            maxToCabin = formatMinutes(toCabinThis.maxOrNull()),
+            avgFromCabinMinutes = avgFromThis,
+            avgFromCabin = formatMinutes(avgFromThis),
+            minFromCabinMinutes = fromCabinThis.minOrNull(),
+            minFromCabin = formatMinutes(fromCabinThis.minOrNull()),
+            maxFromCabinMinutes = fromCabinThis.maxOrNull(),
+            maxFromCabin = formatMinutes(fromCabinThis.maxOrNull()),
+            diffAvgToCabinMinutesVsPrevMonth = diffTo,
+            diffAvgToCabinVsPrevMonth = formatSignedMinutes(diffTo),
+            diffAvgFromCabinMinutesVsPrevMonth = diffFrom,
+            diffAvgFromCabinVsPrevMonth = formatSignedMinutes(diffFrom),
+        ),
+        drivingMoments = run {
+            val depHome: List<Int> = cabinTrips
+                .mapNotNull { trip ->
+                    val ts = trip.toCabinStartTimestamp ?: return@mapNotNull null
+                    val dt = ts.toLocalDateTime(osloTimeZone)
+                    if (dt.date.year == year && dt.date.monthNumber == month) dt.time.minutesOfDay() else null
+                }
+            val arrCabin: List<Int> = cabinTrips
+                .mapNotNull { trip ->
+                    val ts = trip.toCabinEndTimestamp ?: return@mapNotNull null
+                    val dt = ts.toLocalDateTime(osloTimeZone)
+                    if (dt.date.year == year && dt.date.monthNumber == month) dt.time.minutesOfDay() else null
+                }
+            val depCabin: List<Int> = cabinTrips
+                .mapNotNull { trip ->
+                    val ts = trip.fromCabinStartTimestamp ?: return@mapNotNull null
+                    val dt = ts.toLocalDateTime(osloTimeZone)
+                    if (dt.date.year == year && dt.date.monthNumber == month) dt.time.minutesOfDay() else null
+                }
+            val arrHome: List<Int> = cabinTrips
+                .mapNotNull { trip ->
+                    val ts = trip.fromCabinEndTimestamp ?: return@mapNotNull null
+                    val dt = ts.toLocalDateTime(osloTimeZone)
+                    if (dt.date.year == year && dt.date.monthNumber == month) dt.time.minutesOfDay() else null
+                }
+
+            DrivingMomentStatsMonth(
+                monthNumber = month,
+                monthName = monthName,
+                year = year,
+                avgDepartureHomeMinutes = depHome.averageOrNullInt(),
+                avgDepartureHome = formatClock(depHome.averageOrNullInt()),
+                avgArrivalCabinMinutes = arrCabin.averageOrNullInt(),
+                avgArrivalCabin = formatClock(arrCabin.averageOrNullInt()),
+                avgDepartureCabinMinutes = depCabin.averageOrNullInt(),
+                avgDepartureCabin = formatClock(depCabin.averageOrNullInt()),
+                avgArrivalHomeMinutes = arrHome.averageOrNullInt(),
+                avgArrivalHome = formatClock(arrHome.averageOrNullInt()),
+            )
+        },
     )
 }
 
@@ -281,6 +483,7 @@ private fun computeOccupiedDaysInWindow(
         .toSet()
         .size
 }
+
 private fun List<Int>.averageRounded1(): Double = if (isEmpty()) 0.0 else (sum().toDouble() / size).round1()
 
 private fun Double.round1(): Double = round(this * ONE_DECIMAL_FACTOR) / ONE_DECIMAL_FACTOR
@@ -302,6 +505,44 @@ private fun LocalDate.isoWeekId(): Pair<Int, Int> {
     val weekBasedYear = jd.get(wf.weekBasedYear())
     val weekOfYear = jd.get(wf.weekOfWeekBasedYear())
     return weekBasedYear to weekOfYear
+}
+
+// --- Vehicle trip helpers (duplicated lightweight helpers to avoid cross-module deps) ---
+private fun List<VehicleTrip>.totalDurationMinutes(): Int? =
+    this.map { it.duration }.let { if (it.isEmpty()) null else it.reduce { acc, d -> acc + d }.inWholeMinutes.toInt() }
+
+private fun List<Int>.averageOrNullInt(): Int? = if (isEmpty()) null else (sum().toDouble() / size.toDouble()).toInt()
+
+private fun previousMonth(year: Int, month: Int): Pair<Int, Int> =
+    if (month == 1) Pair(year - 1, 12) else Pair(year, month - 1)
+
+private fun formatMinutes(totalMinutes: Int?): String? = totalMinutes?.let {
+    val abs = kotlin.math.abs(it)
+    val h = abs / 60
+    val m = abs % 60
+    "%02d:%02d".format(h, m)
+}
+
+private fun formatSignedMinutes(diffMinutes: Int?): String? = diffMinutes?.let {
+    val sign = if (it > 0) {
+        "+"
+    } else if (it < 0) {
+        "-"
+    } else {
+        ""
+    }
+    val abs = kotlin.math.abs(it)
+    val h = abs / 60
+    val m = abs % 60
+    sign + "%02d:%02d".format(h, m)
+}
+
+// --- Time-of-day helpers (Oslo minutes-of-day and formatting) ---
+private fun LocalTime.minutesOfDay(): Int = this.hour * 60 + this.minute
+private fun formatClock(minutesOfDay: Int?): String? = minutesOfDay?.let {
+    val h = (it / 60) % 24
+    val m = it % 60
+    "%02d:%02d".format(h, m)
 }
 
 // --- Guest stats helpers ---
@@ -344,7 +585,8 @@ private fun computeGuestStats(
         }
 }
 
-private fun guestStatsComparator(): Comparator<GuestVisitStats> = compareByDescending<GuestVisitStats> { it.totalStayDays }
-    .thenByDescending { it.totalVisits }
-    .thenBy { it.lastName }
-    .thenBy { it.firstName }
+private fun guestStatsComparator(): Comparator<GuestVisitStats> =
+    compareByDescending<GuestVisitStats> { it.totalStayDays }
+        .thenByDescending { it.totalVisits }
+        .thenBy { it.lastName }
+        .thenBy { it.firstName }

@@ -20,12 +20,14 @@ import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.reservations.guestAmira
 import no.slomic.smarthytte.reservations.guestCarlos
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 
 class GraphQLEndpointGuestsTest :
     ShouldSpec({
         val testDb = TestDbSetup()
         val guestRepo = SqliteGuestRepository()
         val reservationRepo = SqliteReservationRepository()
+        val vehicleTripRepo = SqliteVehicleTripRepository()
 
         beforeEach { testDb.setupDb() }
         afterEach { testDb.teardownDb() }
@@ -38,7 +40,7 @@ class GraphQLEndpointGuestsTest :
             testApplication {
                 application {
                     // mount only GraphQL with in-memory DB-backed repos
-                    configureGraphQL(guestRepo, reservationRepo)
+                    configureGraphQL(guestRepo, reservationRepo, vehicleTripRepo)
                 }
 
                 val response = client.post("/graphql") {
@@ -80,7 +82,7 @@ class GraphQLEndpointGuestsTest :
         should("serve guestById over HTTP GraphQL and return null for missing and object for existing") {
             // missing first
             testApplication {
-                application { configureGraphQL(guestRepo, reservationRepo) }
+                application { configureGraphQL(guestRepo, reservationRepo, vehicleTripRepo) }
                 val respMissing = client.post("/graphql") {
                     contentType(ContentType.Application.Json)
                     setBody("""{"query":"{ guestById(id: \"missing\") { id } }"}""")
@@ -96,7 +98,7 @@ class GraphQLEndpointGuestsTest :
             guestRepo.addOrUpdate(guestAmira)
 
             testApplication {
-                application { configureGraphQL(guestRepo, reservationRepo) }
+                application { configureGraphQL(guestRepo, reservationRepo, vehicleTripRepo) }
                 val resp = client.post("/graphql") {
                     contentType(ContentType.Application.Json)
                     setBody(

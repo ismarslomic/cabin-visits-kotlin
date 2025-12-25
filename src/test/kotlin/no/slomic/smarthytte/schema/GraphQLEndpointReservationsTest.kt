@@ -27,6 +27,7 @@ import no.slomic.smarthytte.reservations.guestAmira
 import no.slomic.smarthytte.reservations.guestCarlos
 import no.slomic.smarthytte.reservations.guestLena
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import no.slomic.smarthytte.reservations.checkIn as domainCheckIn
@@ -38,6 +39,7 @@ class GraphQLEndpointReservationsTest :
         val testDb = TestDbSetup()
         val guestRepo = SqliteGuestRepository()
         val reservationRepo = SqliteReservationRepository()
+        val vehicleTripRepo = SqliteVehicleTripRepository()
 
         beforeEach { testDb.setupDb() }
         afterEach { testDb.teardownDb() }
@@ -72,7 +74,7 @@ class GraphQLEndpointReservationsTest :
             reservationRepo.addOrUpdate(r2)
 
             testApplication {
-                application { configureGraphQL(guestRepo, reservationRepo) }
+                application { configureGraphQL(guestRepo, reservationRepo, vehicleTripRepo) }
 
                 val query = """
                     query {
@@ -144,7 +146,7 @@ class GraphQLEndpointReservationsTest :
             reservationRepo.setCheckOut(domainCheckOut, resId)
 
             testApplication {
-                application { configureGraphQL(guestRepo, reservationRepo) }
+                application { configureGraphQL(guestRepo, reservationRepo, vehicleTripRepo) }
 
                 val query = """
                     query {
@@ -193,7 +195,7 @@ class GraphQLEndpointReservationsTest :
 
         should("return null for missing reservationById over HTTP GraphQL") {
             testApplication {
-                application { configureGraphQL(guestRepo, reservationRepo) }
+                application { configureGraphQL(guestRepo, reservationRepo, vehicleTripRepo) }
                 val response = client.post("/graphql") {
                     contentType(ContentType.Application.Json)
                     setBody("""{"query":"{ reservationById(id: \"nope\") { id } }"}""")

@@ -14,14 +14,19 @@ import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.schema.GuestsQueryService
 import no.slomic.smarthytte.schema.ReservationQueryService
+import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 
-fun Application.configureGraphQL(guestRepository: GuestRepository, reservationRepository: ReservationRepository) {
+fun Application.configureGraphQL(
+    guestRepository: GuestRepository,
+    reservationRepository: ReservationRepository,
+    vehicleTripRepository: VehicleTripRepository,
+) {
     install(GraphQL) {
         schema {
             packages = listOf("no.slomic.smarthytte.schema")
             queries = listOf(
                 GuestsQueryService(guestRepository),
-                ReservationQueryService(reservationRepository, guestRepository),
+                ReservationQueryService(reservationRepository, guestRepository, vehicleTripRepository),
             )
             typeHierarchy = mapOf()
         }
