@@ -125,11 +125,15 @@ data class DrivingTimeStatsMonth(
     @GraphQLDescription("Maximum driving time formatted as HH:MM from cabin to home in this month")
     val maxFromCabin: String?,
 
-    @GraphQLDescription("Difference in average minutes from home to cabin vs previous month (this month avg - previous month avg)")
+    @GraphQLDescription(
+        "Difference in average minutes from home to cabin vs previous month (this month avg - previous month avg)",
+    )
     val diffAvgToCabinMinutesVsPrevMonth: Int?,
     @GraphQLDescription("Difference in average time formatted as ±HH:MM from home to cabin vs previous month")
     val diffAvgToCabinVsPrevMonth: String?,
-    @GraphQLDescription("Difference in average minutes from cabin to home vs previous month (this month avg - previous month avg)")
+    @GraphQLDescription(
+        "Difference in average minutes from cabin to home vs previous month (this month avg - previous month avg)",
+    )
     val diffAvgFromCabinMinutesVsPrevMonth: Int?,
     @GraphQLDescription("Difference in average time formatted as ±HH:MM from cabin to home vs previous month")
     val diffAvgFromCabinVsPrevMonth: String?,
