@@ -112,7 +112,7 @@ class GraphQLEndpointReservationsTest :
                 body.shouldContain("\"data\"")
                 body.shouldContain("allReservations")
 
-                val data = Json.Default.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
+                val data = Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
                 val reservations = data["allReservations"]!!.jsonArray
 
                 // sorted by latest startTime: r2, r1
@@ -174,7 +174,7 @@ class GraphQLEndpointReservationsTest :
 
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
-                val data = Json.Default.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
+                val data = Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
                 val reservation = data["reservationById"]!!.jsonObject
 
                 reservation["id"]!!.jsonPrimitive.content shouldBe resId
@@ -205,7 +205,7 @@ class GraphQLEndpointReservationsTest :
                 }
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
-                val data = Json.Default.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
+                val data = Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
                 data["reservationById"] shouldBe JsonNull
             }
         }

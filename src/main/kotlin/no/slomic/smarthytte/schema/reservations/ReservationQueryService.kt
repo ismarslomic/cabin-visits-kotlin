@@ -3,7 +3,6 @@ package no.slomic.smarthytte.schema.reservations
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import no.slomic.smarthytte.reservations.ReservationRepository
-import no.slomic.smarthytte.schema.guests.toGql
 
 class ReservationQueryService(private val reservationRepository: ReservationRepository) : Query {
 

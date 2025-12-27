@@ -47,15 +47,15 @@ class GraphQLEndpointReservationStatsTest :
             // 2024 reservations
             val r2024 = reservation.copy(
                 id = "r2024",
-                startTime = LocalDate(2024, 5, 10).atStartOfDayIn(TimeZone.Companion.UTC),
-                endTime = LocalDate(2024, 5, 15).atStartOfDayIn(TimeZone.Companion.UTC),
+                startTime = LocalDate(2024, 5, 10).atStartOfDayIn(TimeZone.UTC),
+                endTime = LocalDate(2024, 5, 15).atStartOfDayIn(TimeZone.UTC),
                 guestIds = listOf(guestLena.id),
             )
             // 2025 reservations
             val r2025 = reservation.copy(
                 id = "r2025",
-                startTime = LocalDate(2025, 1, 1).atStartOfDayIn(TimeZone.Companion.UTC),
-                endTime = LocalDate(2025, 1, 5).atStartOfDayIn(TimeZone.Companion.UTC),
+                startTime = LocalDate(2025, 1, 1).atStartOfDayIn(TimeZone.UTC),
+                endTime = LocalDate(2025, 1, 5).atStartOfDayIn(TimeZone.UTC),
                 guestIds = listOf(guestLena.id),
             )
 
@@ -87,7 +87,7 @@ class GraphQLEndpointReservationStatsTest :
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
 
-                val root = Json.Default.parseToJsonElement(body).jsonObject
+                val root = Json.parseToJsonElement(body).jsonObject
                 val data = root["data"]!!.jsonObject
                 val stats = data["reservationStats"]!!.jsonArray
 
@@ -119,14 +119,14 @@ class GraphQLEndpointReservationStatsTest :
 
             val r2024 = reservation.copy(
                 id = "r2024",
-                startTime = LocalDate(2024, 5, 10).atStartOfDayIn(TimeZone.Companion.UTC),
-                endTime = LocalDate(2024, 5, 15).atStartOfDayIn(TimeZone.Companion.UTC),
+                startTime = LocalDate(2024, 5, 10).atStartOfDayIn(TimeZone.UTC),
+                endTime = LocalDate(2024, 5, 15).atStartOfDayIn(TimeZone.UTC),
                 guestIds = listOf(guestLena.id),
             )
             val r2025 = reservation.copy(
                 id = "r2025",
-                startTime = LocalDate(2025, 1, 1).atStartOfDayIn(TimeZone.Companion.UTC),
-                endTime = LocalDate(2025, 1, 5).atStartOfDayIn(TimeZone.Companion.UTC),
+                startTime = LocalDate(2025, 1, 1).atStartOfDayIn(TimeZone.UTC),
+                endTime = LocalDate(2025, 1, 5).atStartOfDayIn(TimeZone.UTC),
                 guestIds = listOf(guestLena.id),
             )
 
@@ -154,7 +154,7 @@ class GraphQLEndpointReservationStatsTest :
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
 
-                val root = Json.Default.parseToJsonElement(body).jsonObject
+                val root = Json.parseToJsonElement(body).jsonObject
                 val data = root["data"]!!.jsonObject
                 val stats = data["reservationStats"]!!.jsonArray
 
@@ -184,7 +184,7 @@ class GraphQLEndpointReservationStatsTest :
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
 
-                val root = Json.Default.parseToJsonElement(body).jsonObject
+                val root = Json.parseToJsonElement(body).jsonObject
                 val data = root["data"]!!.jsonObject
                 val stats = data["reservationStats"]!!.jsonArray
 
@@ -197,8 +197,8 @@ class GraphQLEndpointReservationStatsTest :
             guestRepo.addOrUpdate(guestLena)
             val r2025 = reservation.copy(
                 id = "r2025",
-                startTime = LocalDate(2025, 1, 1).atStartOfDayIn(TimeZone.Companion.UTC),
-                endTime = LocalDate(2025, 1, 5).atStartOfDayIn(TimeZone.Companion.UTC),
+                startTime = LocalDate(2025, 1, 1).atStartOfDayIn(TimeZone.UTC),
+                endTime = LocalDate(2025, 1, 5).atStartOfDayIn(TimeZone.UTC),
                 guestIds = listOf(guestLena.id),
             )
             reservationRepo.addOrUpdate(r2025)
@@ -368,7 +368,7 @@ class GraphQLEndpointReservationStatsTest :
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
 
-                val root = Json.Default.parseToJsonElement(body).jsonObject
+                val root = Json.parseToJsonElement(body).jsonObject
                 val data = root["data"]!!.jsonObject
                 val stats = data["reservationStats"]!!.jsonArray
 

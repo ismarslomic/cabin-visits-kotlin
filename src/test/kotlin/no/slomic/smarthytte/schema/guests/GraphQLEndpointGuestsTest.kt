@@ -55,7 +55,7 @@ class GraphQLEndpointGuestsTest :
                 body.shouldContain("\"data\"")
                 body.shouldContain("allGuests")
 
-                val root = Json.Default.parseToJsonElement(body).jsonObject
+                val root = Json.parseToJsonElement(body).jsonObject
                 val data = root["data"]!!.jsonObject
                 val guests = data["allGuests"]!!.jsonArray
 
@@ -89,7 +89,7 @@ class GraphQLEndpointGuestsTest :
                 }
                 respMissing.status.value shouldBe 200
                 val bodyMissing = respMissing.bodyAsText()
-                val rootMissing = Json.Default.parseToJsonElement(bodyMissing).jsonObject
+                val rootMissing = Json.parseToJsonElement(bodyMissing).jsonObject
                 val dataMissing = rootMissing["data"]!!.jsonObject
                 dataMissing["guestById"]!!.jsonPrimitive.isString shouldBe false // null
             }
@@ -107,7 +107,7 @@ class GraphQLEndpointGuestsTest :
                 }
                 resp.status.value shouldBe 200
                 val body = resp.bodyAsText()
-                val data = Json.Default.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
+                val data = Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
 
                 val guest = data["guestById"]!!.jsonObject
                 guest["id"]!!.jsonPrimitive.content shouldBe guestAmira.id
