@@ -5,11 +5,13 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.Month
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import java.time.temporal.WeekFields
 
 const val MINUTES_PER_HOUR: Int = 60
+const val MONTHS_IN_YEAR: Int = 12
 
 /**
  * Calculates the number of days between the current date and the specified end date.
@@ -96,3 +98,29 @@ fun firstDayOfYear(year: Int): LocalDate = LocalDate(year = year, month = Month.
  * @return a [LocalDate] representing January 1st of the year after the provided year.
  */
 fun firstDayOfYearAfter(year: Int): LocalDate = firstDayOfYear(year).plus(DatePeriod(years = 1))
+
+/**
+ * Calculates the first day of the year preceding the given year.
+ *
+ * @param year the reference year for which the first day of the previous year is to be calculated
+ * @return a [LocalDate] representing January 1st of the year before the given year
+ */
+fun firstDayOfYearBefore(year: Int): LocalDate = firstDayOfYear(year).minus(DatePeriod(years = 1))
+
+/**
+ * Calculates the last day of the year preceding the given year.
+ *
+ * @param year the year for which the last day of the previous year is to be calculated
+ * @return a [LocalDate] representing December 31st of the year before the given year
+ */
+fun lastDayOfYearBefore(year: Int): LocalDate = firstDayOfYear(year).minus(DatePeriod(days = 1))
+
+/**
+ * Returns an interval (start and end dates) representing the 12 months immediately preceding
+ * the start of the given [year].
+ *
+ * @param year the year to calculate the previous 12-month interval for
+ * @return a [Pair] where the first element is the start date (Jan 1st of the previous year)
+ * and the second element is the end date (Dec 31st of the previous year)
+ */
+fun lastYearInterval(year: Int): Pair<LocalDate, LocalDate> = firstDayOfYearBefore(year) to lastDayOfYearBefore(year)

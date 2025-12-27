@@ -19,7 +19,7 @@ import no.slomic.smarthytte.common.previousMonth
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.MONTHS_IN_YEAR
+import no.slomic.smarthytte.common.MONTHS_IN_YEAR
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.PERCENT_FACTOR
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageOrNullInt
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageRounded1OrNull
@@ -77,10 +77,10 @@ internal object ReservationStatsEngine {
         return YearReservationStats(
             year = year,
             totalVisits = context.yearReservations.size,
-            comparedToLast12Months = ReservationStatsCalculationUtils.computeComparedToLast12Months(
-                year,
-                context.allReservations,
-                context.yearReservations.size,
+            comparedToLast12Months = ReservationStatsCalculationUtils.diffVisitsCurrentYearWithLast12Months(
+                currentYear = year,
+                totalVisitsCurrentYear = context.yearReservations.size,
+                allReservations = context.allReservations,
             ),
             averageMonthlyVisits = (context.yearReservations.size.toDouble() / MONTHS_IN_YEAR.toDouble()).round1(),
             totalStayDays = occupancy.totalStayDays,

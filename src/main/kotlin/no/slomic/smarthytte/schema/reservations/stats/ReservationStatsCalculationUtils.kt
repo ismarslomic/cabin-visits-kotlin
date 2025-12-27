@@ -5,24 +5,36 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.minus
 import no.slomic.smarthytte.common.daysUntilSafe
+import no.slomic.smarthytte.common.lastYearInterval
 import no.slomic.smarthytte.common.monthNameOf
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.DAYS_IN_MONTHLY_COMPARE_WINDOW
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.DAY_OFFSET_PREVIOUS
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.FIRST_MONTH
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.MONTHS_IN_YEAR
 
 internal object ReservationStatsCalculationUtils {
-    fun computeComparedToLast12Months(year: Int, allReservations: List<Reservation>, totalVisitsYear: Int): Int {
-        val firstOfYear = LocalDate(year, FIRST_MONTH, 1)
-        val startPrev12Months = firstOfYear.minus(DatePeriod(months = MONTHS_IN_YEAR))
-        val endPrev12Months = firstOfYear.minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
-        val prev12MonthsCount = allReservations.count { r ->
-            r.startDate in startPrev12Months..endPrev12Months
+
+    /**
+     * Calculates the difference between the total visits in the current year and the total visits
+     * in the last 12 months based on the provided reservation data.
+     *
+     * @param currentYear the current year for which the difference in visits is being calculated
+     * @param totalVisitsCurrentYear the total number of visits recorded for the current year
+     * @param allReservations a list of all reservations containing information about their start dates
+     * @return the difference between the total visits in the current year and the total visits
+     * in the last 12 months. Positive if more visits in the current year, negative if more in the last 12 months.
+     */
+    fun diffVisitsCurrentYearWithLast12Months(
+        currentYear: Int,
+        totalVisitsCurrentYear: Int,
+        allReservations: List<Reservation>,
+    ): Int {
+        val interval = lastYearInterval(currentYear)
+        val totalVisitsLast12Months = allReservations.count { r ->
+            r.startDate in interval.first..interval.second
         }
-        return totalVisitsYear - prev12MonthsCount
+        return totalVisitsCurrentYear - totalVisitsLast12Months
     }
 
     fun findMonthWithLongestStay(yearReservations: List<Reservation>): MonthStay? = yearReservations

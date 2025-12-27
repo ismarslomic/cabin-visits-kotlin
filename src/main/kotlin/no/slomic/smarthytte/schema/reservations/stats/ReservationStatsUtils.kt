@@ -8,8 +8,6 @@ import no.slomic.smarthytte.reservations.Reservation
 import kotlin.math.abs
 
 internal object ReservationStatsUtils {
-    const val MONTHS_IN_YEAR: Int = 12
-    const val FIRST_MONTH: Int = 1
     const val DAYS_IN_MONTHLY_COMPARE_WINDOW: Int = 30
     const val DAY_OFFSET_PREVIOUS: Int = 1
     const val PERCENT_FACTOR: Double = 100.0

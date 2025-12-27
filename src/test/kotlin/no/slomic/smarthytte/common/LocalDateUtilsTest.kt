@@ -177,7 +177,7 @@ class LocalDateUtilsTest :
                 val year = 2023
 
                 val actualFirstDayOfYear = firstDayOfYear(year)
-                val expectedFirstDayOfYear = LocalDate(year, Month.JANUARY, 1)
+                val expectedFirstDayOfYear = LocalDate(year = year, month = Month.JANUARY, dayOfMonth = 1)
 
                 actualFirstDayOfYear shouldBe expectedFirstDayOfYear
             }
@@ -188,9 +188,44 @@ class LocalDateUtilsTest :
                 val year = 2023
 
                 val actualFirstDayOfYear = firstDayOfYearAfter(year)
-                val expectedFirstDayOfYear = LocalDate(year + 1, Month.JANUARY, 1)
+                val expectedFirstDayOfYear = LocalDate(year = year + 1, month = Month.JANUARY, dayOfMonth = 1)
 
                 actualFirstDayOfYear shouldBe expectedFirstDayOfYear
+            }
+        }
+
+        context("firstDayOfYearBefore") {
+            should("Should return january first of year before given year") {
+                val year = 2023
+
+                val actualFirstDayOfYear = firstDayOfYearBefore(year)
+                val expectedFirstDayOfYear = LocalDate(year = year - 1, month = Month.JANUARY, dayOfMonth = 1)
+
+                actualFirstDayOfYear shouldBe expectedFirstDayOfYear
+            }
+        }
+
+        context("lastDayOfYearBefore") {
+            should("Should return december 31st of year before given year") {
+                val year = 2023
+
+                val actualLastDayOfYear = lastDayOfYearBefore(year)
+                val expectedLastDayOfYear = LocalDate(year = year - 1, month = Month.DECEMBER, dayOfMonth = 31)
+
+                actualLastDayOfYear shouldBe expectedLastDayOfYear
+            }
+        }
+
+        context("lastYearInterval") {
+            should("Should return an interval for the previous year") {
+                val year = 2023
+
+                val actualInterval = lastYearInterval(year)
+                val expectedStartDate = LocalDate(year = year - 1, month = Month.JANUARY, dayOfMonth = 1)
+                val expectedEndDate = LocalDate(year = year - 1, month = Month.DECEMBER, dayOfMonth = 31)
+                val expectedInterval = expectedStartDate to expectedEndDate
+
+                actualInterval shouldBe expectedInterval
             }
         }
     })
