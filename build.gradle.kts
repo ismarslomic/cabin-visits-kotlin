@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.jacoco)
     alias(libs.plugins.detekt)
     alias(libs.plugins.graalvm)
+    alias(libs.plugins.graphql)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinter)
@@ -36,11 +37,20 @@ dependencies {
     implementation(libs.hoplite.yaml)
     implementation(libs.influxdb.client)
     implementation(libs.logback.classic)
+    implementation(libs.graphql.server)
 
     testImplementation(libs.bundles.kotest)
     testImplementation(libs.ktor.server.test)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.mockk)
+}
+
+// Opt-in to applying annotations on both parameter and property by default
+// See KT-73255 warning: "This annotation is currently applied to the value parameter only, but in the future
+// it will also be applied to property."
+// Using the compiler flag to make the intent explicit and future-proof across the codebase
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
 }
 
 // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html
@@ -54,6 +64,11 @@ graalvmNative {
             fallback = false // Sets the fallback mode of native-image, defaults to false
             verbose = true // Add verbose output, defaults to false
             imageName.set("graalvm-server")
+
+            // enable using reachability metadata repository
+            metadataRepository {
+                enabled.set(true)
+            }
 
             // Support adding additional build arguments as CLI argument -PnativeBuildArgs
             val additionalArgs: List<String> =
@@ -168,6 +183,12 @@ graalvmNative {
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--enable-native-access=ALL-UNNAMED",
         )
+    }
+}
+
+graphql {
+    graalVm {
+        packages = listOf("no.slomic.smarthytte.schema")
     }
 }
 
