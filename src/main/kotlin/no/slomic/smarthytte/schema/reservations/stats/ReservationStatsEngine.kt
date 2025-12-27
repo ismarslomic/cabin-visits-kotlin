@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import no.slomic.smarthytte.common.MONTHS_IN_YEAR
 import no.slomic.smarthytte.common.datesUntil
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDateOfNextMonth
@@ -19,7 +20,6 @@ import no.slomic.smarthytte.common.previousMonth
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
-import no.slomic.smarthytte.common.MONTHS_IN_YEAR
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.PERCENT_FACTOR
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageOrNullInt
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageRounded1OrNull
