@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.schema
+package no.slomic.smarthytte.schema.reservations
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldContainInOrder
@@ -23,16 +23,16 @@ import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.plugins.configureGraphQL
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.reservations.checkIn
+import no.slomic.smarthytte.reservations.checkOut
 import no.slomic.smarthytte.reservations.guestAmira
 import no.slomic.smarthytte.reservations.guestCarlos
 import no.slomic.smarthytte.reservations.guestLena
+import no.slomic.smarthytte.reservations.reservation
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
-import no.slomic.smarthytte.reservations.checkIn as domainCheckIn
-import no.slomic.smarthytte.reservations.checkOut as domainCheckOut
-import no.slomic.smarthytte.reservations.reservation as domainReservation
 
 class GraphQLEndpointReservationsTest :
     ShouldSpec({
@@ -51,7 +51,7 @@ class GraphQLEndpointReservationsTest :
             guestRepo.addOrUpdate(guestAmira)
 
             val now = Clock.System.now()
-            val r1 = domainReservation.copy(
+            val r1 = reservation.copy(
                 id = "r1",
                 startTime = now.minus(10.days).truncatedToMillis(),
                 endTime = now.minus(7.days).truncatedToMillis(),
@@ -59,7 +59,7 @@ class GraphQLEndpointReservationsTest :
                 sourceCreatedTime = now.minus(11.days).truncatedToMillis(),
                 sourceUpdatedTime = now.minus(10.days).truncatedToMillis(),
             )
-            val r2 = domainReservation.copy(
+            val r2 = reservation.copy(
                 id = "r2",
                 startTime = now.minus(2.days).truncatedToMillis(),
                 endTime = now.plus(1.days).truncatedToMillis(),
@@ -112,7 +112,7 @@ class GraphQLEndpointReservationsTest :
                 body.shouldContain("\"data\"")
                 body.shouldContain("allReservations")
 
-                val data = Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
+                val data = Json.Default.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
                 val reservations = data["allReservations"]!!.jsonArray
 
                 // sorted by latest startTime: r2, r1
@@ -140,10 +140,10 @@ class GraphQLEndpointReservationsTest :
             // seed guest and reservation
             guestRepo.addOrUpdate(guestLena)
             val resId = "res-with-checks"
-            val res = domainReservation.copy(id = resId, guestIds = listOf(guestLena.id))
+            val res = reservation.copy(id = resId, guestIds = listOf(guestLena.id))
             reservationRepo.addOrUpdate(res)
-            reservationRepo.setCheckIn(domainCheckIn, resId)
-            reservationRepo.setCheckOut(domainCheckOut, resId)
+            reservationRepo.setCheckIn(checkIn, resId)
+            reservationRepo.setCheckOut(checkOut, resId)
 
             testApplication {
                 application { configureGraphQL(guestRepo, reservationRepo, vehicleTripRepo) }
@@ -174,7 +174,7 @@ class GraphQLEndpointReservationsTest :
 
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
-                val data = Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
+                val data = Json.Default.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
                 val reservation = data["reservationById"]!!.jsonObject
 
                 reservation["id"]!!.jsonPrimitive.content shouldBe resId
@@ -182,13 +182,16 @@ class GraphQLEndpointReservationsTest :
                     listOf(guestLena.id)
 
                 val checkIn = reservation["checkIn"]!!.jsonObject
-                checkIn["time"]!!.jsonPrimitive.content shouldBe domainCheckIn.time.toIsoUtcString()
-                checkIn["sourceId"]!!.jsonPrimitive.content shouldBe domainCheckIn.sourceId
+                checkIn["time"]!!.jsonPrimitive.content shouldBe
+                    no.slomic.smarthytte.reservations.checkIn.time.toIsoUtcString()
+                checkIn["sourceId"]!!.jsonPrimitive.content shouldBe no.slomic.smarthytte.reservations.checkIn.sourceId
                 checkIn["sourceName"]!!.jsonPrimitive.content shouldBe "CHECK_IN_SENSOR"
 
                 val checkOut = reservation["checkOut"]!!.jsonObject
-                checkOut["time"]!!.jsonPrimitive.content shouldBe domainCheckOut.time.toIsoUtcString()
-                checkOut["sourceId"]!!.jsonPrimitive.content shouldBe domainCheckOut.sourceId
+                checkOut["time"]!!.jsonPrimitive.content shouldBe
+                    no.slomic.smarthytte.reservations.checkOut.time.toIsoUtcString()
+                checkOut["sourceId"]!!.jsonPrimitive.content shouldBe
+                    no.slomic.smarthytte.reservations.checkOut.sourceId
                 checkOut["sourceName"]!!.jsonPrimitive.content shouldBe "CHECK_IN_SENSOR"
             }
         }
@@ -202,7 +205,7 @@ class GraphQLEndpointReservationsTest :
                 }
                 response.status.value shouldBe 200
                 val body = response.bodyAsText()
-                val data = Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
+                val data = Json.Default.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
                 data["reservationById"] shouldBe JsonNull
             }
         }

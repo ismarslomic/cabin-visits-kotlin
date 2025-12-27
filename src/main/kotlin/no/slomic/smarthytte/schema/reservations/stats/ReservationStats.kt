@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.schema.models
+package no.slomic.smarthytte.schema.reservations.stats
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 
@@ -26,8 +26,8 @@ data class YearReservationStats(
     val totalStayDays: Int,
 
     @GraphQLDescription(
-        "Difference in occupied days compared to the previous 12 months (this year's occupied days minus previous 12 months); " +
-            "positive = increase, negative = decrease",
+        "Difference in occupied days compared to the previous 12 months (this year's occupied days minus " +
+            "previous 12 months); positive = increase, negative = decrease",
     )
     val comparedStayDaysToLast12Months: Int,
 

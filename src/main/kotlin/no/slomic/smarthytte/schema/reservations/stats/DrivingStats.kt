@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.schema.models
+package no.slomic.smarthytte.schema.reservations.stats
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 

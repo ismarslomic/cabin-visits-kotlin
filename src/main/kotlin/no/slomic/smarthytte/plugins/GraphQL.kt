@@ -12,8 +12,9 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.routing.routing
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.reservations.ReservationRepository
-import no.slomic.smarthytte.schema.GuestsQueryService
-import no.slomic.smarthytte.schema.ReservationQueryService
+import no.slomic.smarthytte.schema.guests.GuestsQueryService
+import no.slomic.smarthytte.schema.reservations.ReservationQueryService
+import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsQueryService
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 
 fun Application.configureGraphQL(
@@ -26,7 +27,8 @@ fun Application.configureGraphQL(
             packages = listOf("no.slomic.smarthytte.schema")
             queries = listOf(
                 GuestsQueryService(guestRepository),
-                ReservationQueryService(reservationRepository, guestRepository, vehicleTripRepository),
+                ReservationQueryService(reservationRepository),
+                ReservationStatsQueryService(reservationRepository, guestRepository, vehicleTripRepository),
             )
             typeHierarchy = mapOf()
         }

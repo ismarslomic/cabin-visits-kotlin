@@ -1,9 +1,8 @@
-package no.slomic.smarthytte.schema
+package no.slomic.smarthytte.schema.guests
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import no.slomic.smarthytte.guests.GuestRepository
-import no.slomic.smarthytte.schema.models.Guest
 
 @Suppress("unused")
 class GuestsQueryService(private val guestRepository: GuestRepository) : Query {
