@@ -23,7 +23,7 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.PERCENT_FACTOR
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageOrNullInt
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageRounded1OrNull
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.computeOccupiedDaysInWindow
+import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.countOccupiedDaysInWindow
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatClock
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatMinutes
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatSignedMinutes
@@ -84,8 +84,8 @@ internal object ReservationStatsEngine {
             ),
             averageMonthlyVisits = (context.yearReservations.size.toDouble() / MONTHS_IN_YEAR.toDouble()).round1(),
             totalStayDays = occupancy.totalStayDays,
-            comparedStayDaysToLast12Months = occupancy.totalStayDays - computeOccupiedDaysInWindow(
-                context.allReservations,
+            comparedStayDaysToLast12Months =
+            occupancy.totalStayDays - context.allReservations.countOccupiedDaysInWindow(
                 jan1.minus(DatePeriod(months = MONTHS_IN_YEAR)),
                 jan1,
             ),
