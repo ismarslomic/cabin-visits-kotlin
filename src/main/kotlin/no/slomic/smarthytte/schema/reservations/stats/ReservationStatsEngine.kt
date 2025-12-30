@@ -26,7 +26,6 @@ import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.aver
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.countOccupiedDaysInWindow
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatClock
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatMinutes
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatSignedMinutes
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.guestStatsComparator
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.totalDurationMinutes
@@ -338,9 +337,9 @@ internal object ReservationStatsEngine {
             maxFromCabinMinutes = stats.fromCabinThis.maxOrNull(),
             maxFromCabin = formatMinutes(stats.fromCabinThis.maxOrNull()),
             diffAvgToCabinMinutesVsPrevMonth = stats.diffTo,
-            diffAvgToCabinVsPrevMonth = formatSignedMinutes(stats.diffTo),
+            diffAvgToCabinVsPrevMonth = formatMinutes(stats.diffTo, showSign = true),
             diffAvgFromCabinMinutesVsPrevMonth = stats.diffFrom,
-            diffAvgFromCabinVsPrevMonth = formatSignedMinutes(stats.diffFrom),
+            diffAvgFromCabinVsPrevMonth = formatMinutes(stats.diffFrom, showSign = true),
         )
     }
 

@@ -54,36 +54,25 @@ internal object ReservationStatsUtils {
 
     /**
      * Converts a given total number of minutes (representing a duration) into a formatted time string
-     * in the format "HH:MM".
+     * in the format "HH:MM" or "±HH:MM".
      *
      * This function calculates hours by dividing total minutes by 60 without any upper limit,
      * making it suitable for representing total durations that may exceed 24 hours.
-     * Example: 1500 minutes will be formatted as "25:00".
+     * Example: 1500 minutes will be formatted as "25:00" or "+25:00" if [showSign] is true.
      *
      * @param totalMinutes The total number of minutes to format. If null, the function will return null.
-     * @return A formatted string representing the duration in "HH:MM", or null if the input is null.
+     * @param showSign If true, the result will be prefixed with '+' for positive values and '-' for negative values.
+     * @return A formatted string representing the duration, or null if the input is null.
      */
-    fun formatMinutes(totalMinutes: Int?): String? = totalMinutes?.let {
-        val abs = abs(it)
-        val h = abs / MINUTES_PER_HOUR
-        val m = abs % MINUTES_PER_HOUR
-        "%02d:%02d".format(h, m)
-    }
-
-    /**
-     * Formats a difference in time (duration), given in minutes, into a signed string in the format ±HH:MM.
-     *
-     * Similar to [formatMinutes], this does not limit the number of hours to 24.
-     *
-     * @param diffMinutes The time difference in minutes to format. Can be null.
-     * @return A formatted string representation of the time difference, prefixed with a '+' or '-'
-     * if the value is positive or negative respectively, or null if the input is null.
-     */
-    fun formatSignedMinutes(diffMinutes: Int?): String? = diffMinutes?.let {
-        val sign = if (it > 0) {
-            "+"
-        } else if (it < 0) {
-            "-"
+    fun formatMinutes(totalMinutes: Int?, showSign: Boolean = false): String? = totalMinutes?.let {
+        val sign = if (showSign) {
+            if (it > 0) {
+                "+"
+            } else if (it < 0) {
+                "-"
+            } else {
+                ""
+            }
         } else {
             ""
         }

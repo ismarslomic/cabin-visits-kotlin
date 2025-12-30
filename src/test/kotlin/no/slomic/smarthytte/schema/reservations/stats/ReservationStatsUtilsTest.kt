@@ -14,7 +14,6 @@ import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.coun
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.countOccupiedDaysInWindow
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatClock
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatMinutes
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatSignedMinutes
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.guestStatsComparator
 
 class ReservationStatsUtilsTest :
@@ -121,23 +120,23 @@ class ReservationStatsUtilsTest :
             }
         }
 
-        context("formatSignedMinutes") {
+        context("formatMinutes with showSign = true") {
             should("format positive minutes with + prefix") {
-                formatSignedMinutes(90) shouldBe "+01:30"
-                formatSignedMinutes(1500) shouldBe "+25:00"
+                formatMinutes(90, showSign = true) shouldBe "+01:30"
+                formatMinutes(1500, showSign = true) shouldBe "+25:00"
             }
 
             should("format negative minutes with - prefix") {
-                formatSignedMinutes(-90) shouldBe "-01:30"
-                formatSignedMinutes(-1500) shouldBe "-25:00"
+                formatMinutes(-90, showSign = true) shouldBe "-01:30"
+                formatMinutes(-1500, showSign = true) shouldBe "-25:00"
             }
 
             should("format zero minutes without prefix") {
-                formatSignedMinutes(0) shouldBe "00:00"
+                formatMinutes(0, showSign = true) shouldBe "00:00"
             }
 
             should("handle null input") {
-                formatSignedMinutes(null) shouldBe null
+                formatMinutes(null, showSign = true) shouldBe null
             }
         }
 
