@@ -6,7 +6,7 @@ import kotlinx.datetime.Month
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.countByMonth
+import no.slomic.smarthytte.reservations.countByMonth
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTripList
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 

@@ -20,10 +20,10 @@ import no.slomic.smarthytte.common.previousMonth
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.countOccupiedDaysInWindow
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.PERCENT_FACTOR
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageOrNullInt
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageRounded1OrNull
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.countOccupiedDaysInWindow
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatClock
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatMinutes
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.guestStatsComparator
