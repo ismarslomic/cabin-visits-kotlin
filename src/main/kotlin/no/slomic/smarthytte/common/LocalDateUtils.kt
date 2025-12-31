@@ -10,7 +10,6 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import java.time.temporal.WeekFields
 
-const val MINUTES_PER_HOUR: Int = 60
 const val MONTHS_IN_YEAR: Int = 12
 
 /**

@@ -2,86 +2,10 @@ package no.slomic.smarthytte.schema.reservations.stats
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageOrNullInt
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageRounded1OrNull
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatClock
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatMinutes
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.guestStatsComparator
 
 class ReservationStatsUtilsTest :
     ShouldSpec({
-        context("formatMinutes") {
-            should("format minutes as HH:MM") {
-                formatMinutes(90) shouldBe "01:30"
-                formatMinutes(1500) shouldBe "25:00"
-                formatMinutes(0) shouldBe "00:00"
-            }
-
-            should("handle null input") {
-                formatMinutes(null) shouldBe null
-            }
-
-            should("handle negative minutes by using absolute value") {
-                formatMinutes(-90) shouldBe "01:30"
-            }
-        }
-
-        context("formatMinutes with showSign = true") {
-            should("format positive minutes with + prefix") {
-                formatMinutes(90, showSign = true) shouldBe "+01:30"
-                formatMinutes(1500, showSign = true) shouldBe "+25:00"
-            }
-
-            should("format negative minutes with - prefix") {
-                formatMinutes(-90, showSign = true) shouldBe "-01:30"
-                formatMinutes(-1500, showSign = true) shouldBe "-25:00"
-            }
-
-            should("format zero minutes without prefix") {
-                formatMinutes(0, showSign = true) shouldBe "00:00"
-            }
-
-            should("handle null input") {
-                formatMinutes(null, showSign = true) shouldBe null
-            }
-        }
-
-        context("formatClock") {
-            should("format minutes of day as HH:MM with modulo 24") {
-                formatClock(90) shouldBe "01:30"
-                formatClock(1440) shouldBe "00:00"
-                formatClock(1500) shouldBe "01:00"
-            }
-
-            should("handle null input") {
-                formatClock(null) shouldBe null
-            }
-        }
-
-        context("averageRounded1OrNull") {
-            should("return null for empty list") {
-                emptyList<Int>().averageRounded1OrNull() shouldBe null
-            }
-
-            should("calculate rounded average for list of integers") {
-                listOf(1, 2).averageRounded1OrNull() shouldBe 1.5
-                listOf(1, 2, 4).averageRounded1OrNull() shouldBe 2.3
-                listOf(10).averageRounded1OrNull() shouldBe 10.0
-            }
-        }
-
-        context("averageOrNullInt") {
-            should("return null for empty list") {
-                emptyList<Int>().averageOrNullInt() shouldBe null
-            }
-
-            should("calculate truncated integer average for list of integers") {
-                listOf(1, 2).averageOrNullInt() shouldBe 1 // 1.5 -> 1
-                listOf(1, 2, 4).averageOrNullInt() shouldBe 2 // 2.33 -> 2
-                listOf(10).averageOrNullInt() shouldBe 10
-            }
-        }
-
         context("guestStatsComparator") {
             val guest1 = GuestVisitStats("1", "A", "Z", 30, 5, 10)
             val guest2 = GuestVisitStats("2", "B", "Y", 30, 5, 15) // More stay days

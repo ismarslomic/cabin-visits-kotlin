@@ -6,12 +6,16 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import no.slomic.smarthytte.common.MONTHS_IN_YEAR
+import no.slomic.smarthytte.common.averageOrNullInt
+import no.slomic.smarthytte.common.averageRounded1OrNull
 import no.slomic.smarthytte.common.datesUntil
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDateOfNextMonth
 import no.slomic.smarthytte.common.firstDateOfThisMonth
 import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
+import no.slomic.smarthytte.common.formatClock
+import no.slomic.smarthytte.common.formatMinutes
 import no.slomic.smarthytte.common.isoWeekId
 import no.slomic.smarthytte.common.minutesOfDay
 import no.slomic.smarthytte.common.monthNameOf
@@ -22,10 +26,6 @@ import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.countOccupiedDaysInWindow
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.PERCENT_FACTOR
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageOrNullInt
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.averageRounded1OrNull
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatClock
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.formatMinutes
 import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.guestStatsComparator
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.totalDurationMinutes
