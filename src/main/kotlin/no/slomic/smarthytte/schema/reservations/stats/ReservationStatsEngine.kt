@@ -25,8 +25,6 @@ import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.countOccupiedDaysInWindow
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.PERCENT_FACTOR
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.guestStatsComparator
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.totalDurationMinutes
 
@@ -65,6 +63,8 @@ data class YearOccupancy(
 )
 
 internal object ReservationStatsEngine {
+    private const val PERCENT_FACTOR: Double = 100.0
+
     fun buildYearStats(context: YearStatsContext): YearReservationStats {
         val year = context.year
         val jan1 = firstDayOfYear(year)
@@ -169,8 +169,8 @@ internal object ReservationStatsEngine {
             ?.toSet()
             ?: emptySet()
 
-        val newGuests = guestYearStats.filter { it.guestId !in prevYearGuests }.sortedWith(guestStatsComparator())
-        val allGuestsSorted = guestYearStats.sortedWith(guestStatsComparator())
+        val newGuests = guestYearStats.filter { it.guestId !in prevYearGuests }.sortedWith(GuestVisitStats.COMPARATOR)
+        val allGuestsSorted = guestYearStats.sortedWith(GuestVisitStats.COMPARATOR)
         val topGuestByDays = allGuestsSorted.maxByOrNull { it.totalStayDays }
 
         return YearGuestStats(topGuestByDays, newGuests, allGuestsSorted)

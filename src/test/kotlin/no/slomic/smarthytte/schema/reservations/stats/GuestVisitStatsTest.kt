@@ -2,11 +2,11 @@ package no.slomic.smarthytte.schema.reservations.stats
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.guestStatsComparator
+import no.slomic.smarthytte.schema.reservations.stats.GuestVisitStats.Companion.COMPARATOR
 
-class ReservationStatsUtilsTest :
+class GuestVisitStatsTest :
     ShouldSpec({
-        context("guestStatsComparator") {
+        context("COMPARATOR") {
             val guest1 = GuestVisitStats("1", "A", "Z", 30, 5, 10)
             val guest2 = GuestVisitStats("2", "B", "Y", 30, 5, 15) // More stay days
             val guest3 = GuestVisitStats("3", "C", "X", 30, 10, 10) // More visits, same stay days as guest 1
@@ -16,22 +16,22 @@ class ReservationStatsUtilsTest :
 
             should("sort by totalStayDays descending") {
                 val list = listOf(guest1, guest2)
-                list.sortedWith(guestStatsComparator()) shouldBe listOf(guest2, guest1)
+                list.sortedWith(COMPARATOR) shouldBe listOf(guest2, guest1)
             }
 
             should("sort by totalVisits descending when stay days are equal") {
                 val list = listOf(guest1, guest3)
-                list.sortedWith(guestStatsComparator()) shouldBe listOf(guest3, guest1)
+                list.sortedWith(COMPARATOR) shouldBe listOf(guest3, guest1)
             }
 
             should("sort by lastName ascending when stay days and visits are equal") {
                 val list = listOf(guest1, guest4)
-                list.sortedWith(guestStatsComparator()) shouldBe listOf(guest4, guest1)
+                list.sortedWith(COMPARATOR) shouldBe listOf(guest4, guest1)
             }
 
             should("sort by firstName ascending when stay days, visits, and last name are equal") {
                 val list = listOf(guest4, guest5)
-                list.sortedWith(guestStatsComparator()) shouldBe listOf(guest4, guest5)
+                list.sortedWith(COMPARATOR) shouldBe listOf(guest4, guest5)
             }
 
             should("correctly sort a complex list") {
@@ -43,7 +43,7 @@ class ReservationStatsUtilsTest :
                     guest5, // 10 days, 5 visits, lastName "X", firstName "B"
                     guest1, // 10 days, 5 visits, lastName "Z"
                 )
-                list.sortedWith(guestStatsComparator()) shouldBe expectedOrder
+                list.sortedWith(COMPARATOR) shouldBe expectedOrder
             }
         }
     })

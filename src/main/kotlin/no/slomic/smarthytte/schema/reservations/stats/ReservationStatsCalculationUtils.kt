@@ -10,10 +10,9 @@ import no.slomic.smarthytte.common.monthNameOf
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.DAYS_IN_MONTHLY_COMPARE_WINDOW
-import no.slomic.smarthytte.schema.reservations.stats.ReservationStatsUtils.DAY_OFFSET_PREVIOUS
-
 internal object ReservationStatsCalculationUtils {
+    private const val DAYS_IN_MONTHLY_COMPARE_WINDOW: Int = 30
+    private const val DAY_OFFSET_PREVIOUS: Int = 1
 
     /**
      * Calculates the difference between the total visits in the current year and the total visits
@@ -93,7 +92,7 @@ internal object ReservationStatsCalculationUtils {
         reservations = monthlyReservations,
         guestsById = context.guestsById,
         ageYear = context.year,
-    ).sortedWith(ReservationStatsUtils.guestStatsComparator())
+    ).sortedWith(GuestVisitStats.COMPARATOR)
 
     fun computeMonthComparison(
         context: MonthStatsContext,

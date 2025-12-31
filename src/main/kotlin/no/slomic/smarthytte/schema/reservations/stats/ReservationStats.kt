@@ -164,4 +164,11 @@ data class GuestVisitStats(
     val totalVisits: Int,
     @GraphQLDescription("Total number of stay days within the period (start inclusive, end inclusive)")
     val totalStayDays: Int,
-)
+) {
+    companion object {
+        val COMPARATOR: Comparator<GuestVisitStats> = compareByDescending<GuestVisitStats> { it.totalStayDays }
+            .thenByDescending { it.totalVisits }
+            .thenBy { it.lastName }
+            .thenBy { it.firstName }
+    }
+}
