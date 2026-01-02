@@ -25,6 +25,7 @@ import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.countOccupiedDaysInWindow
+import no.slomic.smarthytte.reservations.diffVisitsCurrentYearWithLast12Months
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.totalDurationMinutes
 
@@ -76,10 +77,9 @@ internal object ReservationStatsEngine {
         return YearReservationStats(
             year = year,
             totalVisits = context.yearReservations.size,
-            comparedToLast12Months = ReservationStatsCalculationUtils.diffVisitsCurrentYearWithLast12Months(
+            comparedToLast12Months = context.allReservations.diffVisitsCurrentYearWithLast12Months(
                 currentYear = year,
-                totalVisitsCurrentYear = context.yearReservations.size,
-                allReservations = context.allReservations,
+                visitsCurrentYear = context.yearReservations.size,
             ),
             averageMonthlyVisits = (context.yearReservations.size.toDouble() / MONTHS_IN_YEAR.toDouble()).round1(),
             totalStayDays = occupancy.totalStayDays,

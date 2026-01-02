@@ -6,6 +6,7 @@ import kotlinx.datetime.Month
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.datesUntil
+import no.slomic.smarthytte.common.lastYearInterval
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
 
@@ -71,3 +72,23 @@ fun List<Reservation>.countOccupiedDaysInWindow(startInclusive: LocalDate, endEx
         .toSet()
         .size
 }
+
+/**
+ * Calculates the difference between the total visits in the current year and the total visits
+ * in the last 12 months.
+ *
+ * @param currentYear the current year for which the difference in visits is being calculated
+ * @param visitsCurrentYear the total number of visits recorded for the current year
+ * @return the difference between the total visits in the current year and the total visits
+ * in the last 12 months. Positive if more visits in the current year, negative if more in the last 12 months.
+ */
+fun List<Reservation>.diffVisitsCurrentYearWithLast12Months(currentYear: Int, visitsCurrentYear: Int): Int {
+    val (start, end) = lastYearInterval(currentYear)
+    val visitsLast12Months = countInInterval(start, end)
+    return visitsCurrentYear - visitsLast12Months
+}
+
+/**
+ * Counts the number of reservations whose start date falls within the given [start] and [end] dates (inclusive).
+ */
+fun List<Reservation>.countInInterval(start: LocalDate, end: LocalDate): Int = count { it.startDate in start..end }

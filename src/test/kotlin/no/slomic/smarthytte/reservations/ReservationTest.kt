@@ -95,4 +95,85 @@ class ReservationTest :
                 reservations.countOccupiedDaysInWindow(start, end) shouldBe 0
             }
         }
+
+        context("countInInterval") {
+            val reservations = listOf(
+                createReservation(
+                    id = "1",
+                    start = LocalDate(2024, Month.JANUARY, 1),
+                    end = LocalDate(2024, Month.JANUARY, 5),
+                ),
+                createReservation(
+                    id = "2",
+                    start = LocalDate(2024, Month.JUNE, 1),
+                    end = LocalDate(2024, Month.JUNE, 5),
+                ),
+                createReservation(
+                    id = "3",
+                    start = LocalDate(2024, Month.DECEMBER, 31),
+                    end = LocalDate(2025, Month.JANUARY, 5),
+                ),
+            )
+
+            should("count reservations starting within the inclusive interval") {
+                val start = LocalDate(2024, Month.JANUARY, 1)
+                val end = LocalDate(2024, Month.DECEMBER, 31)
+                reservations.countInInterval(start, end) shouldBe 3
+            }
+
+            should("exclude reservations starting before the interval") {
+                val start = LocalDate(2024, Month.FEBRUARY, 1)
+                val end = LocalDate(2024, Month.DECEMBER, 31)
+                reservations.countInInterval(start, end) shouldBe 2
+            }
+
+            should("exclude reservations starting after the interval") {
+                val start = LocalDate(2024, Month.JANUARY, 1)
+                val end = LocalDate(2024, Month.NOVEMBER, 30)
+                reservations.countInInterval(start, end) shouldBe 2
+            }
+
+            should("return 0 for an empty list") {
+                emptyList<Reservation>().countInInterval(
+                    LocalDate(2024, Month.JANUARY, 1),
+                    LocalDate(2024, Month.DECEMBER, 31),
+                ) shouldBe 0
+            }
+        }
+
+        context("diffVisitsCurrentYearWithLast12Months") {
+            // lastYearInterval(2024) returns 2023-01-01 to 2023-12-31
+            val reservations = listOf(
+                createReservation(
+                    id = "lastYear1",
+                    start = LocalDate(2023, Month.JANUARY, 1),
+                    end = LocalDate(2023, Month.JANUARY, 5),
+                ),
+                createReservation(
+                    id = "lastYear2",
+                    start = LocalDate(2023, Month.JUNE, 1),
+                    end = LocalDate(2023, Month.JUNE, 5),
+                ),
+                createReservation(
+                    id = "thisYear1",
+                    start = LocalDate(2024, Month.JANUARY, 1),
+                    end = LocalDate(2024, Month.JANUARY, 5),
+                ),
+            )
+
+            should("return positive difference when current year has more visits") {
+                // visitsCurrentYear = 3, last 12 months (2023) has 2. Diff = 3 - 2 = 1
+                reservations.diffVisitsCurrentYearWithLast12Months(2024, 3) shouldBe 1
+            }
+
+            should("return negative difference when last 12 months has more visits") {
+                // visitsCurrentYear = 1, last 12 months (2023) has 2. Diff = 1 - 2 = -1
+                reservations.diffVisitsCurrentYearWithLast12Months(2024, 1) shouldBe -1
+            }
+
+            should("return zero when visits are equal") {
+                // visitsCurrentYear = 2, last 12 months (2023) has 2. Diff = 2 - 2 = 0
+                reservations.diffVisitsCurrentYearWithLast12Months(2024, 2) shouldBe 0
+            }
+        }
     })
