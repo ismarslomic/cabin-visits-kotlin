@@ -6,6 +6,7 @@ import kotlinx.datetime.Month
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.datesUntil
+import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.lastYearInterval
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
@@ -34,6 +35,9 @@ data class Reservation(
 
     val endDate: LocalDate
         get() = endTime.toUtcDate()
+
+    val stayDurationDays: Int
+        get() = startDate.daysUntilSafe(endExclusive = endDate)
 }
 
 /**
@@ -92,3 +96,12 @@ fun List<Reservation>.diffVisitsCurrentYearWithLast12Months(currentYear: Int, vi
  * Counts the number of reservations whose start date falls within the given [start] and [end] dates (inclusive).
  */
 fun List<Reservation>.countInInterval(start: LocalDate, end: LocalDate): Int = count { it.startDate in start..end }
+
+/**
+ * Finds the month with the longest stay duration among the reservations in the list.
+ *
+ * @return A pair containing the month with the longest stay and the duration of the stay in days,
+ *         or `null` if the list is empty.
+ */
+fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxByOrNull { it.stayDurationDays }
+    ?.let { reservation -> reservation.startDate.month to reservation.stayDurationDays }

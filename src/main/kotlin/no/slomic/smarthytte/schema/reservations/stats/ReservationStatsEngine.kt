@@ -26,6 +26,7 @@ import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.countOccupiedDaysInWindow
 import no.slomic.smarthytte.reservations.diffVisitsCurrentYearWithLast12Months
+import no.slomic.smarthytte.reservations.findMonthWithLongestStay
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.totalDurationMinutes
 
@@ -96,9 +97,13 @@ internal object ReservationStatsEngine {
                 ?.let { (m, c) -> MonthCount(monthNumber = m.value, monthName = monthNameOf(m), count = c) },
             monthFewestVisits = context.countsByMonth.minByOrNull { it.value }
                 ?.let { (m, c) -> MonthCount(monthNumber = m.value, monthName = monthNameOf(m), count = c) },
-            monthWithLongestStay = ReservationStatsCalculationUtils.findMonthWithLongestStay(
-                context.yearReservations,
-            ),
+            monthWithLongestStay = context.yearReservations.findMonthWithLongestStay()?.let {
+                MonthStay(
+                    monthNumber = it.first.value,
+                    monthName = monthNameOf(it.first),
+                    days = it.second,
+                )
+            },
             months = context.monthStats,
             topGuestByDays = guestStats.topGuestByDays,
             newGuests = guestStats.newGuests,

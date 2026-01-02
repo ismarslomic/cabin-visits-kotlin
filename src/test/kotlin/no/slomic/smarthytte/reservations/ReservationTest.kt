@@ -176,4 +176,64 @@ class ReservationTest :
                 reservations.diffVisitsCurrentYearWithLast12Months(2024, 2) shouldBe 0
             }
         }
+
+        context("findMonthWithLongestStay") {
+            should("return the month and duration of the longest stay") {
+                val reservations = listOf(
+                    createReservation(
+                        id = "short",
+                        start = LocalDate(2024, Month.JANUARY, 1),
+                        end = LocalDate(2024, Month.JANUARY, 3),
+                    ), // 2 days
+                    createReservation(
+                        id = "long",
+                        start = LocalDate(2024, Month.FEBRUARY, 1),
+                        end = LocalDate(2024, Month.FEBRUARY, 10),
+                    ), // 9 days
+                    createReservation(
+                        id = "medium",
+                        start = LocalDate(2024, Month.MARCH, 1),
+                        end = LocalDate(2024, Month.MARCH, 5),
+                    ), // 4 days
+                )
+
+                val result = reservations.findMonthWithLongestStay()
+                result shouldBe (Month.FEBRUARY to 9)
+            }
+
+            should("return the first longest stay in case of a tie") {
+                val reservations = listOf(
+                    createReservation(
+                        id = "tie1",
+                        start = LocalDate(2024, Month.JANUARY, 1),
+                        end = LocalDate(2024, Month.JANUARY, 5),
+                    ), // 4 days
+                    createReservation(
+                        id = "tie2",
+                        start = LocalDate(2024, Month.FEBRUARY, 1),
+                        end = LocalDate(2024, Month.FEBRUARY, 5),
+                    ), // 4 days
+                )
+
+                val result = reservations.findMonthWithLongestStay()
+                result shouldBe (Month.JANUARY to 4)
+            }
+
+            should("return null for an empty list") {
+                emptyList<Reservation>().findMonthWithLongestStay() shouldBe null
+            }
+
+            should("use the start month if the stay spans multiple months") {
+                val reservations = listOf(
+                    createReservation(
+                        id = "spanning",
+                        start = LocalDate(2024, Month.JANUARY, 30),
+                        end = LocalDate(2024, Month.FEBRUARY, 5),
+                    ), // 6 days
+                )
+
+                val result = reservations.findMonthWithLongestStay()
+                result shouldBe (Month.JANUARY to 6)
+            }
+        }
     })

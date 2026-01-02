@@ -5,20 +5,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.minus
 import no.slomic.smarthytte.common.daysUntilSafe
-import no.slomic.smarthytte.common.monthNameOf
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
+
 internal object ReservationStatsCalculationUtils {
     private const val DAYS_IN_MONTHLY_COMPARE_WINDOW: Int = 30
     private const val DAY_OFFSET_PREVIOUS: Int = 1
-
-    fun findMonthWithLongestStay(yearReservations: List<Reservation>): MonthStay? = yearReservations
-        .maxByOrNull { it.startDate.daysUntilSafe(it.endDate) }
-        ?.let { r ->
-            val m = r.startDate.month
-            MonthStay(m.value, monthNameOf(m), r.startDate.daysUntilSafe(r.endDate))
-        }
 
     fun computeGuestStats(
         periodStart: LocalDate,
