@@ -11,6 +11,22 @@ import no.slomic.smarthytte.common.round1
 private const val DAYS_IN_MONTHLY_COMPARE_WINDOW: Int = 30
 private const val DAY_OFFSET_PREVIOUS: Int = 1
 
+/**
+ * Calculates the differences in visit counts for a given month compared to
+ * the previous 30 days, the same month in the previous year, and the
+ * year-to-date average.
+ *
+ * @param context The context containing statistics, reservations, and other
+ *        data needed for the calculation.
+ * @param month The month for which the visit deltas are being calculated.
+ * @param dates The computed dates related to the given month, such as the
+ *        first day of the month and the first day of the next month.
+ * @param totalVisits The total number of visits recorded for the given month.
+ * @return A `MonthlyVisitDeltas` object containing the calculated deltas:
+ *         - Difference compared to the last 30 days.
+ *         - Difference compared to the same month last year.
+ *         - Difference compared to the year-to-date average.
+ */
 fun calculateMonthlyVisitDeltas(
     context: MonthStatsContext,
     month: Month,
@@ -36,12 +52,12 @@ fun calculateMonthlyVisitDeltas(
     return MonthlyVisitDeltas(
         comparedToLast30Days = totalVisits - prev30DaysCount,
         comparedToSameMonthLastYear = totalVisits - sameMonthLastYearCount,
-        comparedToYtdAvg = (totalVisits.toDouble() - yearToDateAverage).round1(),
+        comparedToYearToDateAverage = (totalVisits.toDouble() - yearToDateAverage).round1(),
     )
 }
 
 data class MonthlyVisitDeltas(
     val comparedToLast30Days: Int,
     val comparedToSameMonthLastYear: Int,
-    val comparedToYtdAvg: Double,
+    val comparedToYearToDateAverage: Double,
 )

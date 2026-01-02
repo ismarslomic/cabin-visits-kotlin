@@ -273,7 +273,7 @@ internal object ReservationStatsEngine {
             totalVisits = monthlyReservations.size,
             comparedToLast30Days = comparison.comparedToLast30Days,
             comparedToSameMonthLastYear = comparison.comparedToSameMonthLastYear,
-            comparedToYearToDateAverage = comparison.comparedToYtdAvg,
+            comparedToYearToDateAverage = comparison.comparedToYearToDateAverage,
             minStayDays = monthlyReservations.map { it.startDate.daysUntilSafe(it.endDate) }.minOrNull(),
             maxStayDays = monthlyReservations.map { it.startDate.daysUntilSafe(it.endDate) }.maxOrNull(),
             avgStayDays = monthlyReservations.map { it.startDate.daysUntilSafe(it.endDate) }

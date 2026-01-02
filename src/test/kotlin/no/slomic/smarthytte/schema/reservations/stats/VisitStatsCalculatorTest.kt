@@ -75,7 +75,7 @@ class VisitStatsCalculatorTest :
                 // YTD Total: 2 (Jan) + 4 (Feb) + 3 (Mar) = 9
                 // YTD Average (up to March): 9 / 3 = 3.0
                 // comparedToYtdAvg: 3 - 3.0 = 0.0
-                result.comparedToYtdAvg shouldBe 0.0
+                result.comparedToYearToDateAverage shouldBe 0.0
             }
 
             should("handle leap year correctly in last 30 days window") {

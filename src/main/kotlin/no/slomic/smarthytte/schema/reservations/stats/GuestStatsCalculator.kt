@@ -7,7 +7,17 @@ import no.slomic.smarthytte.reservations.stayDaysByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
 
 /**
- * Aggregates and sorts guest statistics for a specific month.
+ * Calculates monthly guest visit statistics based on a given context, set of dates, and a list of reservations.
+ *
+ * The method aggregates guest-specific statistics such as total visits and total stay days within the provided
+ * time period, leveraging the provided reservations and context data. The resulting statistics are sorted
+ * in descending order by total stay days, followed by total visits, and then by the guest's last name and first name.
+ *
+ * @param context the context containing year-specific and global reservation data, guest mappings, and other statistics
+ * @param dates the time period details, including the start date (inclusive) and the end date (exclusive) of the month
+ * @param monthlyReservations the list of reservations relevant to the specific month for which statistics are calculated
+ * @return a sorted list of per-guest visit statistics, including details such as guest name, age, total visits,
+ * and total stay days within the specified month
  */
 fun calculateMonthlyGuestStats(
     context: MonthStatsContext,
@@ -22,7 +32,21 @@ fun calculateMonthlyGuestStats(
 ).sortedWith(GuestVisitStats.COMPARATOR)
 
 /**
- * Internal helper to aggregate raw reservation data into guest visit statistics.
+ * Internal helper to aggregate raw reservation data into guest visit statistics for a specified time period based
+ * on reservations and guest data.
+ *
+ * The method computes the number of visits and the total stay days for each guest during the specified period.
+ * Guests are identified using their IDs from the reservations and mapped to their corresponding data from the
+ * `guestsById` map. If a guest ID in the reservations is not found in the `guestsById` map, that guest is
+ * excluded from the results.
+ *
+ * @param periodStart the start date of the period (inclusive) for which statistics are aggregated
+ * @param periodEndExclusive the end date of the period (exclusive) for which statistics are aggregated
+ * @param reservations the list of reservations used to calculate visit and stay day statistics
+ * @param guestsById a map of guest IDs to their respective `Guest` objects
+ * @param ageYear the calendar year used to calculate the age of each guest
+ * @return a list of aggregated statistics for each guest, containing their ID, name, age, total visits, and total
+ * stay days
  */
 fun aggregateGuestVisitStats(
     periodStart: LocalDate,
