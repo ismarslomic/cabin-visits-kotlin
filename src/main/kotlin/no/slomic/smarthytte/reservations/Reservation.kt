@@ -38,6 +38,20 @@ data class Reservation(
 
     val stayDurationDays: Int
         get() = startDate.daysUntilSafe(endExclusive = endDate)
+
+    /**
+     * Calculates the number of days a reservation overlaps with a given period.
+     *
+     * @param periodStart the start date of the period (inclusive)
+     * @param periodEndExclusive the end date of the period (exclusive)
+     * @return the number of days the reservation overlaps with the specified period,
+     * or 0 if there is no overlap
+     */
+    fun stayDurationDaysInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
+        val overlapStart = maxOf(startDate, periodStart)
+        val overlapEndExclusive = minOf(endDate, periodEndExclusive)
+        return if (overlapStart < overlapEndExclusive) overlapStart.daysUntilSafe(overlapEndExclusive) else 0
+    }
 }
 
 /**
@@ -62,19 +76,15 @@ fun List<Reservation>.countByMonth(): Map<Month, Int> =
  */
 fun List<Reservation>.countOccupiedDaysInWindow(startInclusive: LocalDate, endExclusive: LocalDate): Int {
     if (startInclusive >= endExclusive) return 0
-    return this
-        .asSequence()
-        .flatMap { r ->
-            val start = maxOf(r.startDate, startInclusive)
-            val endEx = minOf(r.endDate, endExclusive)
-            if (start < endEx) {
-                start.datesUntil(endEx).toList()
-            } else {
-                emptyList()
-            }
+    return this.asSequence().flatMap { r ->
+        val start = maxOf(r.startDate, startInclusive)
+        val endEx = minOf(r.endDate, endExclusive)
+        if (start < endEx) {
+            start.datesUntil(endEx).toList()
+        } else {
+            emptyList()
         }
-        .toSet()
-        .size
+    }.toSet().size
 }
 
 /**
@@ -105,3 +115,28 @@ fun List<Reservation>.countInInterval(start: LocalDate, end: LocalDate): Int = c
  */
 fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxByOrNull { it.stayDurationDays }
     ?.let { reservation -> reservation.startDate.month to reservation.stayDurationDays }
+
+/**
+ * Aggregates the total visits (reservations) per guest from a list of reservations.
+ *
+ * Each guest ID from the reservations in the list is extracted, and
+ * the total number of visits for each guest is computed.
+ *
+ * @return a map where the keys are guest IDs (as strings) and the values
+ * are the counts of how many times each guest ID appears in the reservations.
+ */
+fun List<Reservation>.visitsByGuest(): Map<String, Int> = this.flatMap { it.guestIds }.groupingBy { it }.eachCount()
+
+/**
+ * Calculates the total number of stay days for each guest within a given period based on reservations.
+ *
+ * @param periodStart the start date of the period (inclusive) for which the stay days are calculated
+ * @param periodEndExclusive the end date of the period (exclusive) for which the stay days are calculated
+ * @return a map where the keys are guest IDs, and the values are the total number of stay days for each guest
+ * within the specified period
+ */
+fun List<Reservation>.stayDaysByGuest(periodStart: LocalDate, periodEndExclusive: LocalDate): Map<String, Int> =
+    this.flatMap { reservation ->
+        val days = reservation.stayDurationDaysInPeriod(periodStart, periodEndExclusive)
+        reservation.guestIds.map { it to days }
+    }.groupingBy { it.first }.fold(0) { acc, element -> acc + element.second }

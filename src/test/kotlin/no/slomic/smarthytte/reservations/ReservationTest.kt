@@ -236,4 +236,147 @@ class ReservationTest :
                 result shouldBe (Month.JANUARY to 6)
             }
         }
+
+        context("stayDurationDaysInPeriod") {
+            val reservation = createReservation(
+                id = "1",
+                start = LocalDate(2024, Month.JANUARY, 10),
+                end = LocalDate(2024, Month.JANUARY, 20),
+            ) // 10 days: Jan 10-19
+
+            should("calculate full duration when period covers the entire reservation") {
+                val start = LocalDate(2024, Month.JANUARY, 1)
+                val end = LocalDate(2024, Month.JANUARY, 31)
+                reservation.stayDurationDaysInPeriod(start, end) shouldBe 10
+            }
+
+            should("calculate partial duration when period overlaps with start") {
+                val start = LocalDate(2024, Month.JANUARY, 1)
+                val end = LocalDate(2024, Month.JANUARY, 15)
+                // Overlap: Jan 10, 11, 12, 13, 14 (5 days)
+                reservation.stayDurationDaysInPeriod(start, end) shouldBe 5
+            }
+
+            should("calculate partial duration when period overlaps with end") {
+                val start = LocalDate(2024, Month.JANUARY, 15)
+                val end = LocalDate(2024, Month.JANUARY, 31)
+                // Overlap: Jan 15, 16, 17, 18, 19 (5 days)
+                reservation.stayDurationDaysInPeriod(start, end) shouldBe 5
+            }
+
+            should("return 0 when period is completely before reservation") {
+                val start = LocalDate(2024, Month.JANUARY, 1)
+                val end = LocalDate(2024, Month.JANUARY, 5)
+                reservation.stayDurationDaysInPeriod(start, end) shouldBe 0
+            }
+
+            should("return 0 when period is completely after reservation") {
+                val start = LocalDate(2024, Month.JANUARY, 25)
+                val end = LocalDate(2024, Month.JANUARY, 31)
+                reservation.stayDurationDaysInPeriod(start, end) shouldBe 0
+            }
+
+            should("calculate partial duration when period is inside reservation") {
+                val start = LocalDate(2024, Month.JANUARY, 12)
+                val end = LocalDate(2024, Month.JANUARY, 15)
+                // Overlap: Jan 12, 13, 14 (3 days)
+                reservation.stayDurationDaysInPeriod(start, end) shouldBe 3
+            }
+        }
+
+        context("visitsByGuest") {
+            should("count total visits per guest across reservations") {
+                val reservations = listOf(
+                    Reservation(
+                        "1",
+                        LocalDate(2024, 1, 1).atTime(0, 0).toInstant(TimeZone.UTC),
+                        LocalDate(2024, 1, 5).atTime(0, 0).toInstant(TimeZone.UTC),
+                        listOf("g1", "g2"),
+                    ),
+                    Reservation(
+                        "2",
+                        LocalDate(2024, 1, 10).atTime(0, 0).toInstant(TimeZone.UTC),
+                        LocalDate(2024, 1, 15).atTime(0, 0).toInstant(TimeZone.UTC),
+                        listOf("g1", "g3"),
+                    ),
+                )
+
+                val result = reservations.visitsByGuest()
+                result["g1"] shouldBe 2
+                result["g2"] shouldBe 1
+                result["g3"] shouldBe 1
+                result.size shouldBe 3
+            }
+
+            should("return empty map for empty reservations list") {
+                emptyList<Reservation>().visitsByGuest() shouldBe emptyMap()
+            }
+        }
+
+        context("stayDaysByGuest") {
+            should("calculate total stay days per guest in a period") {
+                val periodStart = LocalDate(2024, Month.JANUARY, 1)
+                val periodEnd = LocalDate(2024, Month.JANUARY, 31)
+
+                val reservations = listOf(
+                    Reservation(
+                        "1",
+                        LocalDate(2024, 1, 1).atTime(0, 0).toInstant(TimeZone.UTC),
+                        LocalDate(2024, 1, 6).atTime(0, 0).toInstant(TimeZone.UTC),
+                        listOf("g1", "g2"),
+                    ), // 5 days
+                    Reservation(
+                        "2",
+                        LocalDate(2024, 1, 10).atTime(0, 0).toInstant(TimeZone.UTC),
+                        LocalDate(2024, 1, 15).atTime(0, 0).toInstant(TimeZone.UTC),
+                        listOf("g1", "g3"),
+                    ), // 5 days
+                )
+
+                val result = reservations.stayDaysByGuest(periodStart, periodEnd)
+                result["g1"] shouldBe 10
+                result["g2"] shouldBe 5
+                result["g3"] shouldBe 5
+            }
+
+            should("respect period boundaries for guest stay days") {
+                val periodStart = LocalDate(2024, Month.JANUARY, 3)
+                val periodEnd = LocalDate(2024, Month.JANUARY, 12)
+
+                val reservations = listOf(
+                    Reservation(
+                        "1",
+                        LocalDate(2024, 1, 1).atTime(0, 0).toInstant(TimeZone.UTC),
+                        LocalDate(2024, 1, 6).atTime(0, 0).toInstant(TimeZone.UTC),
+                        listOf("g1"),
+                    ), // In period: Jan 3, 4, 5 (3 days)
+                    Reservation(
+                        "2",
+                        LocalDate(2024, 1, 10).atTime(0, 0).toInstant(TimeZone.UTC),
+                        LocalDate(2024, 1, 15).atTime(0, 0).toInstant(TimeZone.UTC),
+                        listOf("g1"),
+                    ), // In period: Jan 10, 11 (2 days)
+                )
+
+                val result = reservations.stayDaysByGuest(periodStart, periodEnd)
+                result["g1"] shouldBe 5
+            }
+
+            should("return empty map when no guest stays in period") {
+                val periodStart = LocalDate(2024, Month.FEBRUARY, 1)
+                val periodEnd = LocalDate(2024, Month.FEBRUARY, 28)
+
+                val reservations = listOf(
+                    Reservation(
+                        "1",
+                        LocalDate(2024, 1, 1).atTime(0, 0).toInstant(TimeZone.UTC),
+                        LocalDate(2024, 1, 6).atTime(0, 0).toInstant(TimeZone.UTC),
+                        listOf("g1"),
+                    ),
+                )
+
+                val result = reservations.stayDaysByGuest(periodStart, periodEnd)
+                result shouldBe mapOf("g1" to 0)
+            }
+        }
     })

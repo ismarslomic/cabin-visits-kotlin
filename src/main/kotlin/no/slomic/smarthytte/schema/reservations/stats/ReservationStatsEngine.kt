@@ -162,7 +162,7 @@ internal object ReservationStatsEngine {
     )
 
     private fun computeYearGuestStats(context: YearStatsContext, jan1: LocalDate, jan1Next: LocalDate): YearGuestStats {
-        val guestYearStats: List<GuestVisitStats> = ReservationStatsCalculationUtils.computeGuestStats(
+        val guestYearStats: List<GuestVisitStats> = aggregateGuestVisitStats(
             periodStart = jan1,
             periodEndExclusive = jan1Next,
             reservations = context.yearReservations,
@@ -260,7 +260,7 @@ internal object ReservationStatsEngine {
         val monthlyReservations = context.yearReservations.filter { it.startDate.month == month }
         val dates = MonthDates(context.year, month)
         val occupancy = computeMonthOccupancy(context.allReservations, dates)
-        val comparison = ReservationStatsCalculationUtils.computeMonthComparison(
+        val comparison = calculateMonthlyVisitDeltas(
             context = context,
             month = month,
             dates = dates,
@@ -280,7 +280,7 @@ internal object ReservationStatsEngine {
                 .averageRounded1OrNull(),
             percentDaysOccupied = occupancy.percentDaysOccupied,
             percentWeeksOccupied = occupancy.percentWeeksOccupied,
-            guests = ReservationStatsCalculationUtils.computeMonthGuestStats(context, dates, monthlyReservations),
+            guests = calculateMonthlyGuestStats(context, dates, monthlyReservations),
             drivingTime = computeMonthDrivingStats(context.year, month, context.cabinTrips),
             drivingMoments = computeMonthDrivingMomentStats(context.year, month, context.cabinTrips),
         )
