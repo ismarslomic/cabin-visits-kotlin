@@ -58,3 +58,15 @@ data class CabinVehicleTrip(
 
     fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = fromCabinStartDate == utcDate
 }
+
+/**
+ * Computes the total duration of all trips in minutes or null if empty
+ */
+fun List<VehicleTrip>.totalDurationMinutes(): Int? = this.map { it.duration }
+    .let {
+        if (it.isEmpty()) {
+            null
+        } else {
+            it.reduce { acc, d -> acc + d }.inWholeMinutes.toInt()
+        }
+    }
