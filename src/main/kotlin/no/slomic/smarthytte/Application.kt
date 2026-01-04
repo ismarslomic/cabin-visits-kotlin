@@ -19,10 +19,12 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.toLocalDateTime
 import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.checkinouts.CheckInOutService
+import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.GuestService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
+import no.slomic.smarthytte.plugins.configureGraphQL
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
@@ -85,6 +87,7 @@ fun Application.module() {
     val reservationRepository: ReservationRepository = SqliteReservationRepository()
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
     val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
+    val guestRepository: GuestRepository = SqliteGuestRepository()
 
     // Initialize services
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
@@ -104,6 +107,7 @@ fun Application.module() {
             checkInOutSensorService,
             googleCalendarService,
             checkInOutService,
+            guestRepository,
         )
     }
 
@@ -120,6 +124,9 @@ fun Application.module() {
     // launchSyncGoogleCalendarTask(googleCalendarService)
     // NOTE!: the method below reads all reservations and updates their check in/out status.
     // checkInOutService.updateCheckInOutStatusForAllReservations()
+
+    // Configure GraphQL
+    configureGraphQL(guestRepository, reservationRepository, vehicleTripRepository)
 
     // Configure Ktor routing (after the initial load is completed)
     configureRouting()
@@ -141,10 +148,11 @@ suspend fun Application.initialLoad(
     checkInOutSensorService: CheckInOutSensorService,
     googleCalendarService: GoogleCalendarService,
     checkInOutService: CheckInOutService,
+    guestRepository: GuestRepository,
 ) {
     log.info("Starting initial load...")
 
-    val guestService = GuestService(guestRepository = SqliteGuestRepository())
+    val guestService = GuestService(guestRepository = guestRepository)
 
     // The following data are decoupled from each other and could potentially be parallelized
     guestService.insertGuestsFromFile()

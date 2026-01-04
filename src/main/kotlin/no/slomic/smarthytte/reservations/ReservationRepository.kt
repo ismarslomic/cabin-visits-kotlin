@@ -5,7 +5,7 @@ import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
 
 interface ReservationRepository {
-    suspend fun allReservations(): List<Reservation>
+    suspend fun allReservations(sortByLatestReservation: Boolean = false): List<Reservation>
     suspend fun reservationById(id: String): Reservation?
     suspend fun addOrUpdate(reservation: Reservation): PersistenceResult
     suspend fun deleteReservation(id: String): PersistenceResult

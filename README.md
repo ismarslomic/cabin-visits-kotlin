@@ -86,3 +86,9 @@ curl http://localhost:8079
 ```bash
 curl http://localhost:8079/metrics
 ```
+
+## GraphQL API
+
+GraphiQL: http://localhost:8079/graphiql
+
+SDL: http://localhost:8079/sdl

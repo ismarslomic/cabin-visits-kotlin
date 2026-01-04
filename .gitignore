@@ -24,6 +24,7 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.output.txt
 
 ### NetBeans ###
 /nbproject/private/
@@ -46,3 +47,6 @@ secrets
 
 ### Local data folder
 data
+
+### Local docker folder
+docker
