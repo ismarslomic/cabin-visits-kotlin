@@ -55,16 +55,12 @@ class VisitStatsCalculatorTest :
 
                 val allReservations = last30DaysReservations + sameMonthLastYearReservations
 
-                val context = MonthStatsContext(
-                    year = year,
-                    yearReservations = emptyList(),
+                val result = calculateMonthlyVisitDeltas(
                     allReservations = allReservations,
                     countsByMonth = countsByMonth,
-                    guestsById = emptyMap(),
-                    cabinTrips = emptyList(),
+                    dates = dates,
+                    totalVisits = totalVisits,
                 )
-
-                val result = calculateMonthlyVisitDeltas(context, month, dates, totalVisits)
 
                 // comparedToLast30Days: 3 - 2 = 1
                 result.comparedToLast30Days shouldBe 1
@@ -97,16 +93,12 @@ class VisitStatsCalculatorTest :
                     ), // Outside (too late for this count)
                 )
 
-                val context = MonthStatsContext(
-                    year = year,
-                    yearReservations = emptyList(),
+                val result = calculateMonthlyVisitDeltas(
                     allReservations = reservations,
                     countsByMonth = emptyMap(),
-                    guestsById = emptyMap(),
-                    cabinTrips = emptyList(),
+                    dates = dates,
+                    totalVisits = 0,
                 )
-
-                val result = calculateMonthlyVisitDeltas(context, month, dates, 0)
                 result.comparedToLast30Days shouldBe -3 // 0 - 3
             }
         }

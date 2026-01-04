@@ -23,15 +23,16 @@ import no.slomic.smarthytte.reservations.visitsByGuest
  * and total stay days within the specified month
  */
 fun calculateMonthlyGuestStats(
-    context: MonthStatsContext,
+    year: Int,
+    guestsById: Map<String, Guest>,
     dates: MonthDates,
     monthlyReservations: List<Reservation>,
 ): List<GuestVisitStats> = aggregateGuestVisitStats(
     periodStart = dates.firstOfMonth,
     periodEndExclusive = dates.firstOfNextMonth,
     reservations = monthlyReservations,
-    guestsById = context.guestsById,
-    ageYear = context.year,
+    guestsById = guestsById,
+    ageYear = year,
 ).sortedWith(GuestVisitStats.COMPARATOR)
 
 data class YearGuestStats(
@@ -40,18 +41,23 @@ data class YearGuestStats(
     val allGuestsSorted: List<GuestVisitStats>,
 )
 
-fun computeYearGuestStats(context: YearStatsContext): YearGuestStats {
-    val jan1 = firstDayOfYear(context.year)
-    val jan1Next = firstDayOfYearAfter(context.year)
+fun computeYearGuestStats(
+    year: Int,
+    yearReservations: List<Reservation>,
+    guestsById: Map<String, Guest>,
+    byYear: Map<Int, List<Reservation>>,
+): YearGuestStats {
+    val jan1 = firstDayOfYear(year)
+    val jan1Next = firstDayOfYearAfter(year)
 
     val guestYearStats: List<GuestVisitStats> = aggregateGuestVisitStats(
         periodStart = jan1,
         periodEndExclusive = jan1Next,
-        reservations = context.yearReservations,
-        guestsById = context.guestsById,
-        ageYear = context.year,
+        reservations = yearReservations,
+        guestsById = guestsById,
+        ageYear = year,
     )
-    val prevYearGuests: Set<String> = context.byYear[context.year - 1]
+    val prevYearGuests: Set<String> = byYear[year - 1]
         ?.flatMap { it.guestIds }
         ?.toSet()
         ?: emptySet()

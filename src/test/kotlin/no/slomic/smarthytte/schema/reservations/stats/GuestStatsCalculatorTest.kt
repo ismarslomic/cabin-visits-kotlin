@@ -88,16 +88,12 @@ class GuestStatsCalculatorTest :
                     createReservation("1", LocalDate(2024, 1, 1), LocalDate(2024, 1, 6), listOf("g1")), // 5 days
                     createReservation("2", LocalDate(2024, 1, 10), LocalDate(2024, 1, 20), listOf("g2")), // 10 days
                 )
-                val context = MonthStatsContext(
+                val result = calculateMonthlyGuestStats(
                     year = 2024,
-                    yearReservations = reservations,
-                    allReservations = reservations,
-                    countsByMonth = emptyMap(),
                     guestsById = guestsById,
-                    cabinTrips = emptyList(),
+                    dates = dates,
+                    monthlyReservations = reservations,
                 )
-
-                val result = calculateMonthlyGuestStats(context, dates, reservations)
 
                 result shouldHaveSize 2
                 // Sorted by totalStayDays descending by GuestVisitStats.COMPARATOR
