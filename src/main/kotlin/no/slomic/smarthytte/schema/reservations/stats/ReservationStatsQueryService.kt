@@ -69,7 +69,7 @@ class ReservationStatsQueryService(
                 percentWeeksOccupied = occupancy.percentWeeksOccupied,
                 guests = calculateMonthlyGuestStats(year, guestsById, dates, monthlyRes),
                 drivingTime = calculateMonthDrivingTimeStats(year, month, cabinTrips),
-                drivingMoments = computeMonthDrivingMomentStats(year, month, cabinTrips),
+                drivingMoments = calculateMonthDrivingMomentStats(year, month, cabinTrips),
             )
         }
 
@@ -108,7 +108,7 @@ class ReservationStatsQueryService(
                 newGuests = guestStats.newGuests,
                 guests = guestStats.allGuestsSorted,
                 drivingTime = calculateYearDrivingTimeStats(year, cabinTrips),
-                drivingMoments = computeYearDrivingMomentStats(year, cabinTrips),
+                drivingMoments = calculateYearDrivingMomentStats(year, cabinTrips),
             )
         }
 

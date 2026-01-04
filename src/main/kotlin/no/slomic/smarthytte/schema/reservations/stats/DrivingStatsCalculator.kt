@@ -1,15 +1,16 @@
 package no.slomic.smarthytte.schema.reservations.stats
 
 import kotlinx.datetime.Month
-import kotlinx.datetime.toLocalDateTime
 import no.slomic.smarthytte.common.averageOrNullInt
 import no.slomic.smarthytte.common.formatClock
 import no.slomic.smarthytte.common.formatMinutes
-import no.slomic.smarthytte.common.minutesOfDay
 import no.slomic.smarthytte.common.monthNameOf
-import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.previousMonth
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
+import no.slomic.smarthytte.vehicletrips.arrivalCabinMinutes
+import no.slomic.smarthytte.vehicletrips.arrivalHomeMinutes
+import no.slomic.smarthytte.vehicletrips.departureCabinMinutes
+import no.slomic.smarthytte.vehicletrips.departureHomeMinutes
 import no.slomic.smarthytte.vehicletrips.fromCabinDurations
 import no.slomic.smarthytte.vehicletrips.toCabinDurations
 
@@ -103,27 +104,21 @@ fun calculateMonthDrivingTimeStats(year: Int, month: Month, cabinTrips: List<Cab
     )
 }
 
-fun computeYearDrivingMomentStats(year: Int, cabinTrips: List<CabinVehicleTrip>): DrivingMomentStatsYear {
-    val depHome: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.toCabinStartTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year) it.time.minutesOfDay() else null
-        }
-    }
-    val arrCabin: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.toCabinEndTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year) it.time.minutesOfDay() else null
-        }
-    }
-    val depCabin: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.fromCabinStartTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year) it.time.minutesOfDay() else null
-        }
-    }
-    val arrHome: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.fromCabinEndTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year) it.time.minutesOfDay() else null
-        }
-    }
+/**
+ * Calculates the yearly driving moment statistics based on the provided cabin trips.
+ * These statistics include the average departure and arrival times (both in minutes since
+ * midnight and formatted as "HH:MM") for trips to and from the cabin within the specified year.
+ *
+ * @param year The calendar year for which the statistics should be calculated.
+ * @param cabinTrips A list of `CabinVehicleTrip` instances representing the trips to and from the cabin.
+ * @return A `DrivingMomentStatsYear` object containing the calculated average departure and arrival
+ *         times for the specified year.
+ */
+fun calculateYearDrivingMomentStats(year: Int, cabinTrips: List<CabinVehicleTrip>): DrivingMomentStatsYear {
+    val depHome: List<Int> = cabinTrips.departureHomeMinutes(year)
+    val arrCabin: List<Int> = cabinTrips.arrivalCabinMinutes(year)
+    val depCabin: List<Int> = cabinTrips.departureCabinMinutes(year)
+    val arrHome: List<Int> = cabinTrips.arrivalHomeMinutes(year)
 
     return DrivingMomentStatsYear(
         year = year,
@@ -138,31 +133,15 @@ fun computeYearDrivingMomentStats(year: Int, cabinTrips: List<CabinVehicleTrip>)
     )
 }
 
-fun computeMonthDrivingMomentStats(
+fun calculateMonthDrivingMomentStats(
     year: Int,
     month: Month,
     cabinTrips: List<CabinVehicleTrip>,
 ): DrivingMomentStatsMonth {
-    val depHome: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.toCabinStartTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year && it.date.month == month) it.time.minutesOfDay() else null
-        }
-    }
-    val arrCabin: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.toCabinEndTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year && it.date.month == month) it.time.minutesOfDay() else null
-        }
-    }
-    val depCabin: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.fromCabinStartTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year && it.date.month == month) it.time.minutesOfDay() else null
-        }
-    }
-    val arrHome: List<Int> = cabinTrips.mapNotNull { trip ->
-        trip.fromCabinEndTimestamp?.toLocalDateTime(osloTimeZone)?.let {
-            if (it.date.year == year && it.date.month == month) it.time.minutesOfDay() else null
-        }
-    }
+    val depHome = cabinTrips.departureHomeMinutes(year, month)
+    val arrCabin = cabinTrips.arrivalCabinMinutes(year, month)
+    val depCabin = cabinTrips.departureCabinMinutes(year, month)
+    val arrHome = cabinTrips.arrivalHomeMinutes(year, month)
 
     return DrivingMomentStatsMonth(
         monthNumber = month.value,

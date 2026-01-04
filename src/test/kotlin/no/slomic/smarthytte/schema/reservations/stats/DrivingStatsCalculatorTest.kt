@@ -2,6 +2,7 @@ package no.slomic.smarthytte.schema.reservations.stats
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.Instant
 import no.slomic.smarthytte.vehicletrips.CABIN_CITY_NAME
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.HOME_CITY_NAME
@@ -18,21 +19,21 @@ class DrivingStatsCalculatorTest :
         ): CabinVehicleTrip {
             val monthStr = month.toString().padStart(2, '0')
             val toTrips = toCabinDurations.map {
+                val startTime = Instant.parse("$year-$monthStr-01T10:00:00Z")
                 createTrip(
                     HOME_CITY_NAME,
                     CABIN_CITY_NAME,
-                    "$year-$monthStr-01T10:00:00Z",
-                    "$year-$monthStr-01T11:00:00Z",
-                    it.minutes,
+                    startTime,
+                    startTime + it.minutes,
                 )
             }
             val fromTrips = fromCabinDurations.map {
+                val startTime = Instant.parse("$year-$monthStr-01T15:00:00Z")
                 createTrip(
                     CABIN_CITY_NAME,
                     HOME_CITY_NAME,
-                    "$year-$monthStr-01T15:00:00Z",
-                    "$year-$monthStr-01T16:00:00Z",
-                    it.minutes,
+                    startTime,
+                    startTime + it.minutes,
                 )
             }
             return CabinVehicleTrip(
@@ -137,9 +138,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 HOME_CITY_NAME,
                                 CABIN_CITY_NAME,
-                                "2023-12-31T23:00:00Z",
-                                "2024-01-01T01:00:00Z",
-                                100.minutes,
+                                Instant.parse("2023-12-31T23:00:00Z"),
+                                Instant.parse("2024-01-01T01:00:00Z"),
                             ),
                         ),
                         atCabinTrips = emptyList(),
@@ -147,9 +147,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 CABIN_CITY_NAME,
                                 HOME_CITY_NAME,
-                                "2024-01-01T10:00:00Z",
-                                "2024-01-01T12:00:00Z",
-                                120.minutes,
+                                Instant.parse("2024-01-01T10:00:00Z"),
+                                Instant.parse("2024-01-01T12:00:00Z"),
                             ),
                         ),
                     ),
@@ -160,9 +159,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 HOME_CITY_NAME,
                                 CABIN_CITY_NAME,
-                                "2024-12-31T23:00:00Z",
-                                "2025-01-01T01:00:00Z",
-                                200.minutes,
+                                Instant.parse("2024-12-31T23:00:00Z"),
+                                Instant.parse("2025-01-01T02:20:00Z"),
                             ),
                         ),
                         atCabinTrips = emptyList(),
@@ -170,9 +168,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 CABIN_CITY_NAME,
                                 HOME_CITY_NAME,
-                                "2024-12-31T23:00:00Z",
-                                "2025-01-01T02:00:00Z",
-                                140.minutes,
+                                Instant.parse("2024-12-31T23:00:00Z"),
+                                Instant.parse("2025-01-01T01:20:00Z"),
                             ),
                         ),
                     ),
@@ -201,9 +198,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 HOME_CITY_NAME,
                                 CABIN_CITY_NAME,
-                                "2024-01-01T08:00:00Z", // 09:00 Oslo (Winter)
-                                "2024-01-01T10:00:00Z", // 11:00 Oslo
-                                120.minutes,
+                                Instant.parse("2024-01-01T08:00:00Z"), // 09:00 Oslo (Winter)
+                                Instant.parse("2024-01-01T10:00:00Z"), // 11:00 Oslo
                             ),
                         ),
                         atCabinTrips = emptyList(),
@@ -211,9 +207,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 CABIN_CITY_NAME,
                                 HOME_CITY_NAME,
-                                "2024-01-02T15:00:00Z", // 16:00 Oslo
-                                "2024-01-02T17:00:00Z", // 18:00 Oslo
-                                120.minutes,
+                                Instant.parse("2024-01-02T15:00:00Z"), // 16:00 Oslo
+                                Instant.parse("2024-01-02T17:00:00Z"), // 18:00 Oslo
                             ),
                         ),
                     ),
@@ -222,9 +217,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 HOME_CITY_NAME,
                                 CABIN_CITY_NAME,
-                                "2024-01-03T10:00:00Z", // 11:00 Oslo
-                                "2024-01-03T12:00:00Z", // 13:00 Oslo
-                                120.minutes,
+                                Instant.parse("2024-01-03T10:00:00Z"), // 11:00 Oslo
+                                Instant.parse("2024-01-03T12:00:00Z"), // 13:00 Oslo
                             ),
                         ),
                         atCabinTrips = emptyList(),
@@ -232,15 +226,14 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 CABIN_CITY_NAME,
                                 HOME_CITY_NAME,
-                                "2024-01-04T17:00:00Z", // 18:00 Oslo
-                                "2024-01-04T19:00:00Z", // 20:00 Oslo
-                                120.minutes,
+                                Instant.parse("2024-01-04T17:00:00Z"), // 18:00 Oslo
+                                Instant.parse("2024-01-04T19:00:00Z"), // 20:00 Oslo
                             ),
                         ),
                     ),
                 )
 
-                val result = computeYearDrivingMomentStats(year, trips)
+                val result = calculateYearDrivingMomentStats(year, trips)
 
                 result.year shouldBe year
                 // Departure Home: 09:00 and 11:00. Avg: 10:00 (600 minutes)
@@ -272,7 +265,7 @@ class DrivingStatsCalculatorTest :
                     createCabinVehicleTrip(toCabinDurations = listOf(60), year = 2024, month = 2),
                 )
 
-                val result = computeMonthDrivingMomentStats(year, month, trips)
+                val result = calculateMonthDrivingMomentStats(year, month, trips)
 
                 result.monthNumber shouldBe 3
                 result.year shouldBe 2024
@@ -284,7 +277,7 @@ class DrivingStatsCalculatorTest :
             should("return empty stats when no trips in month") {
                 val year = 2024
                 val month = kotlinx.datetime.Month.MARCH
-                val result = computeMonthDrivingMomentStats(year, month, emptyList())
+                val result = calculateMonthDrivingMomentStats(year, month, emptyList())
 
                 result.avgDepartureHomeMinutes shouldBe null
                 result.avgDepartureHome shouldBe null
@@ -415,9 +408,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 CABIN_CITY_NAME,
                                 HOME_CITY_NAME,
-                                "2024-03-31T23:00:00Z",
-                                "2024-04-01T02:00:00Z",
-                                150.minutes,
+                                Instant.parse("2024-03-31T23:00:00Z"),
+                                Instant.parse("2024-04-01T01:30:00Z"),
                             ),
                         ),
                     ),
@@ -429,9 +421,8 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 CABIN_CITY_NAME,
                                 HOME_CITY_NAME,
-                                "2024-02-29T23:00:00Z",
-                                "2024-03-01T02:00:00Z",
-                                100.minutes,
+                                Instant.parse("2024-02-29T23:00:00Z"),
+                                Instant.parse("2024-03-01T02:00:00Z"),
                             ),
                         ),
                     ),

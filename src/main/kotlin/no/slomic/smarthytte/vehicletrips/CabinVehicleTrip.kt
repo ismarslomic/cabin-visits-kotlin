@@ -5,6 +5,9 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import no.slomic.smarthytte.common.minutesOfDay
+import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.toUtcDate
 
 const val HOME_CITY_NAME = "Oslo"
@@ -77,7 +80,7 @@ fun List<VehicleTrip>.totalDurationMinutes(): Int? = this.map { it.duration }
     }
 
 /**
- * Extracts a list of total driving durations in minutes for all trips _to the cabin_
+ * Calculates the total driving duration in minutes for all trips _to the cabin_
  * that started within the specified [year].
  *
  * @param year The calendar year to filter trips by their start date.
@@ -87,7 +90,7 @@ fun List<CabinVehicleTrip>.toCabinDurations(year: Int): List<Int> = this.filter 
     .mapNotNull { it.toCabinTrips.totalDurationMinutes() }
 
 /**
- * Extracts a list of total driving durations in minutes for all trips _to the cabin_
+ * Calculates the total driving duration in minutes for all trips _to the cabin_
  * that started within the specified [year] and [month].
  *
  * @param year The calendar year to filter trips by their start date.
@@ -99,7 +102,7 @@ fun List<CabinVehicleTrip>.toCabinDurations(year: Int, month: Month): List<Int> 
         .mapNotNull { it.toCabinTrips.totalDurationMinutes() }
 
 /**
- * Extracts a list of total driving durations in minutes for all trips _from the cabin_
+ * Calculates the total driving duration in minutes for all trips _from the cabin_
  * that started within the specified [year].
  *
  * @param year The calendar year to filter trips by their start date.
@@ -110,7 +113,7 @@ fun List<CabinVehicleTrip>.fromCabinDurations(year: Int): List<Int> =
         .mapNotNull { it.fromCabinTrips.totalDurationMinutes() }
 
 /**
- * Extracts a list of total driving durations in minutes for all trips _from the cabin_
+ * Calculates the total driving duration in minutes for all trips _from the cabin_
  * that started within the specified [year] and [month].
  *
  * @param year The calendar year to filter trips by their start date.
@@ -120,3 +123,80 @@ fun List<CabinVehicleTrip>.fromCabinDurations(year: Int): List<Int> =
 fun List<CabinVehicleTrip>.fromCabinDurations(year: Int, month: Month): List<Int> =
     this.filter { it.fromCabinStartDate?.year == year && it.fromCabinStartDate?.month == month }
         .mapNotNull { it.fromCabinTrips.totalDurationMinutes() }
+
+/**
+ * Calculates the departure times from home in minutes since midnight for all trips to the cabin
+ * that occurred within the specified [year] and optionally [month].
+ *
+ * The departure time is represented as minutes since midnight in the Oslo time zone.
+ *
+ * @param year The calendar year to filter trips by.
+ * @param month The optional month to filter trips by.
+ * @return A list of integers representing departure minutes since midnight for each qualifying trip.
+ */
+fun List<CabinVehicleTrip>.departureHomeMinutes(year: Int, month: Month? = null): List<Int> =
+    this.mapMoments(year, month) { it.toCabinStartTimestamp }
+
+/**
+ * Calculates the arrival times at the cabin in minutes since midnight for all trips to the cabin
+ * that occurred within the specified [year] and optionally [month].
+ *
+ * The arrival time is represented as minutes since midnight in the Oslo time zone.
+ *
+ * @param year The calendar year to filter trips by.
+ * @param month The optional month to filter trips by.
+ * @return A list of integers representing arrival minutes since midnight for each qualifying trip.
+ */
+fun List<CabinVehicleTrip>.arrivalCabinMinutes(year: Int, month: Month? = null): List<Int> =
+    this.mapMoments(year, month) { it.toCabinEndTimestamp }
+
+/**
+ * Calculates the departure times from the cabin in minutes since midnight for all trips from the cabin
+ * that occurred within the specified [year] and optionally [month].
+ *
+ * The departure time is represented as minutes since midnight in the Oslo time zone.
+ *
+ * @param year The calendar year to filter trips by.
+ * @param month The optional month to filter trips by.
+ * @return A list of integers representing departure minutes since midnight for each qualifying trip.
+ */
+fun List<CabinVehicleTrip>.departureCabinMinutes(year: Int, month: Month? = null): List<Int> =
+    this.mapMoments(year, month) { it.fromCabinStartTimestamp }
+
+/**
+ * Calculates the arrival times at home in minutes since midnight for all trips from the cabin
+ * that occurred within the specified [year] and optionally [month].
+ *
+ * The arrival time is represented as minutes since midnight in the Oslo time zone.
+ *
+ * @param year The calendar year to filter trips by.
+ * @param month The optional month to filter trips by.
+ * @return A list of integers representing arrival minutes since midnight for each qualifying trip.
+ */
+fun List<CabinVehicleTrip>.arrivalHomeMinutes(year: Int, month: Month? = null): List<Int> =
+    this.mapMoments(year, month) { it.fromCabinEndTimestamp }
+
+/**
+ * Calculates the time-of-day moments in minutes since midnight for cabin vehicle trips
+ * based on a selected timestamp, filtered by [year] and optionally [month].
+ *
+ * The filtering is performed based on the date of the selected timestamp in the Oslo time zone.
+ *
+ * @param year The calendar year to filter the moments by.
+ * @param month The optional month to filter the moments by.
+ * @param timestampSelector A function that selects the relevant [Instant] from a [CabinVehicleTrip].
+ * @return A list of integers representing minutes since midnight for each qualifying trip's selected moment.
+ */
+private fun List<CabinVehicleTrip>.mapMoments(
+    year: Int,
+    month: Month?,
+    timestampSelector: (CabinVehicleTrip) -> Instant?,
+): List<Int> = this.mapNotNull { trip ->
+    timestampSelector(trip)?.toLocalDateTime(osloTimeZone)?.let { dt ->
+        if (dt.date.year == year && (month == null || dt.date.month == month)) {
+            dt.time.minutesOfDay()
+        } else {
+            null
+        }
+    }
+}

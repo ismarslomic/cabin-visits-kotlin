@@ -8,6 +8,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -205,14 +206,14 @@ class GraphQLEndpointReservationStatsTest :
             val tripToCabin = createTrip(
                 startCity = HOME_CITY_NAME,
                 endCity = CABIN_CITY_NAME,
-                startTime = "2025-01-01T08:00:00Z",
-                endTime = "2025-01-01T11:00:00Z",
+                startTime = Instant.parse("2025-01-01T08:00:00Z"),
+                endTime = Instant.parse("2025-01-01T11:00:00Z"),
             )
             val tripFromCabin = createTrip(
                 startCity = CABIN_CITY_NAME,
                 endCity = HOME_CITY_NAME,
-                startTime = "2025-01-05T15:00:00Z",
-                endTime = "2025-01-05T18:30:00Z",
+                startTime = Instant.parse("2025-01-05T15:00:00Z"),
+                endTime = Instant.parse("2025-01-05T18:30:00Z"),
             )
             vehicleTripRepo.addOrUpdate(tripToCabin)
             vehicleTripRepo.addOrUpdate(tripFromCabin)

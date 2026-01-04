@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -12,8 +13,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 val vehicleTrip = createTrip(
     startCity = "osloCity",
     endCity = "osloCity",
-    startTime = "2025-01-01T11:15:00+01:00",
-    endTime = "2025-01-01T11:22:00+01:00",
+    startTime = Instant.parse("2025-01-01T11:15:00+01:00"),
+    endTime = Instant.parse("2025-01-01T11:22:00+01:00"),
 )
 
 class VehicleTripRepositoryTest :

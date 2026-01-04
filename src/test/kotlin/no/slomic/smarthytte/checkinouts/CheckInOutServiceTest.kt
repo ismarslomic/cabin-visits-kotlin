@@ -5,7 +5,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
@@ -408,8 +407,8 @@ data class CheckInOutScenario(
         createTrip(
             startCity = HOME_CITY_NAME,
             endCity = CABIN_CITY_NAME,
-            startTime = reservation.startTime.minus(3.hours).toIsoUtcString(),
-            endTime = reservation.startTime.plus(3.hours).toIsoUtcString(),
+            startTime = reservation.startTime.minus(3.hours),
+            endTime = reservation.startTime.plus(3.hours),
             id = UUID.randomUUID().toString(),
         )
     } else {
@@ -420,8 +419,8 @@ data class CheckInOutScenario(
         createTrip(
             startCity = CABIN_CITY_NAME,
             endCity = HOME_CITY_NAME,
-            startTime = reservation.endTime.plus(5.minutes).toIsoUtcString(),
-            endTime = reservation.endTime.plus(3.hours).toIsoUtcString(),
+            startTime = reservation.endTime.plus(5.minutes),
+            endTime = reservation.endTime.plus(3.hours),
             id = UUID.randomUUID().toString(),
         )
     } else {
