@@ -3,10 +3,11 @@ package no.slomic.smarthytte.vehicletrips
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Month
-import kotlin.time.Duration.Companion.minutes
 
 class CabinVehicleTripTest :
     ShouldSpec({
+        val golCityName = "Gol"
+
         context("List<VehicleTrip>.totalDurationMinutes") {
             should("return null for empty list") {
                 val trips = emptyList<VehicleTrip>()
@@ -16,11 +17,11 @@ class CabinVehicleTripTest :
             should("return total duration for single trip") {
                 val trips = listOf(
                     createTrip(
-                        "Oslo",
-                        "Ullsåk",
+                        HOME_CITY_NAME,
+                        CABIN_CITY_NAME,
                         "2024-01-01T10:00:00Z",
-                        "2024-01-01T11:00:00Z",
-                    ).copy(duration = 65.minutes),
+                        "2024-01-01T11:05:00Z",
+                    ),
                 )
                 trips.totalDurationMinutes() shouldBe 65
             }
@@ -28,17 +29,17 @@ class CabinVehicleTripTest :
             should("return sum of durations for multiple trips") {
                 val trips = listOf(
                     createTrip(
-                        "Oslo",
-                        "Gol",
+                        HOME_CITY_NAME,
+                        golCityName,
                         "2024-01-01T10:00:00Z",
                         "2024-01-01T11:00:00Z",
-                    ).copy(duration = 60.minutes),
+                    ),
                     createTrip(
-                        "Gol",
-                        "Ullsåk",
+                        golCityName,
+                        CABIN_CITY_NAME,
                         "2024-01-01T11:15:00Z",
                         "2024-01-01T11:45:00Z",
-                    ).copy(duration = 30.minutes),
+                    ),
                 )
                 trips.totalDurationMinutes() shouldBe 90
             }
@@ -48,57 +49,57 @@ class CabinVehicleTripTest :
             val trip2024Jan = CabinVehicleTrip(
                 toCabinTrips = listOf(
                     createTrip(
-                        "Oslo",
-                        "Ullsåk",
+                        HOME_CITY_NAME,
+                        CABIN_CITY_NAME,
                         "2024-01-01T10:00:00Z",
                         "2024-01-01T12:00:00Z",
-                    ).copy(duration = 120.minutes),
+                    ),
                 ),
                 fromCabinTrips = listOf(
                     createTrip(
-                        "Ullsåk",
-                        "Oslo",
+                        CABIN_CITY_NAME,
+                        HOME_CITY_NAME,
                         "2024-01-02T10:00:00Z",
-                        "2024-01-02T12:00:00Z",
-                    ).copy(duration = 110.minutes),
+                        "2024-01-02T11:50:00Z",
+                    ),
                 ),
                 atCabinTrips = emptyList(),
             )
             val trip2024Feb = CabinVehicleTrip(
                 toCabinTrips = listOf(
                     createTrip(
-                        "Oslo",
-                        "Ullsåk",
+                        HOME_CITY_NAME,
+                        CABIN_CITY_NAME,
                         "2024-02-01T10:00:00Z",
-                        "2024-02-01T12:00:00Z",
-                    ).copy(duration = 130.minutes),
+                        "2024-02-01T12:10:00Z",
+                    ),
                 ),
                 fromCabinTrips = listOf(
                     createTrip(
-                        "Ullsåk",
-                        "Oslo",
+                        CABIN_CITY_NAME,
+                        HOME_CITY_NAME,
                         "2024-02-02T10:00:00Z",
-                        "2024-02-02T12:00:00Z",
-                    ).copy(duration = 125.minutes),
+                        "2024-02-02T12:05:00Z",
+                    ),
                 ),
                 atCabinTrips = emptyList(),
             )
             val trip2023Dec = CabinVehicleTrip(
                 toCabinTrips = listOf(
                     createTrip(
-                        "Oslo",
-                        "Ullsåk",
+                        HOME_CITY_NAME,
+                        CABIN_CITY_NAME,
                         "2023-12-31T10:00:00Z",
-                        "2023-12-31T12:00:00Z",
-                    ).copy(duration = 140.minutes),
+                        "2023-12-31T12:20:00Z",
+                    ),
                 ),
                 fromCabinTrips = listOf(
                     createTrip(
-                        "Ullsåk",
-                        "Oslo",
+                        CABIN_CITY_NAME,
+                        HOME_CITY_NAME,
                         "2024-01-01T10:00:00Z",
-                        "2024-01-01T12:00:00Z",
-                    ).copy(duration = 135.minutes),
+                        "2024-01-01T12:15:00Z",
+                    ),
                 ),
                 atCabinTrips = emptyList(),
             )
@@ -106,11 +107,11 @@ class CabinVehicleTripTest :
             val tripSpanningYears = CabinVehicleTrip(
                 toCabinTrips = listOf(
                     createTrip(
-                        "Oslo",
-                        "Ullsåk",
+                        HOME_CITY_NAME,
+                        CABIN_CITY_NAME,
                         "2025-12-31T22:00:00Z",
                         "2026-01-01T01:00:00Z",
-                    ).copy(duration = 180.minutes),
+                    ),
                 ),
                 fromCabinTrips = emptyList(),
                 atCabinTrips = emptyList(),
@@ -120,11 +121,11 @@ class CabinVehicleTripTest :
                 toCabinTrips = emptyList(),
                 fromCabinTrips = listOf(
                     createTrip(
-                        "Ullsåk",
-                        "Oslo",
+                        CABIN_CITY_NAME,
+                        HOME_CITY_NAME,
                         "2025-12-31T23:00:00Z",
                         "2026-01-01T02:00:00Z",
-                    ).copy(duration = 180.minutes),
+                    ),
                 ),
                 atCabinTrips = emptyList(),
             )

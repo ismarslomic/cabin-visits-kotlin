@@ -27,8 +27,6 @@ import no.slomic.smarthytte.vehicletrips.CABIN_CITY_NAME
 import no.slomic.smarthytte.vehicletrips.HOME_CITY_NAME
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.createTrip
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
 
 class GraphQLEndpointReservationStatsTest :
     ShouldSpec({
@@ -209,13 +207,13 @@ class GraphQLEndpointReservationStatsTest :
                 endCity = CABIN_CITY_NAME,
                 startTime = "2025-01-01T08:00:00Z",
                 endTime = "2025-01-01T11:00:00Z",
-            ).copy(duration = 3.hours)
+            )
             val tripFromCabin = createTrip(
                 startCity = CABIN_CITY_NAME,
                 endCity = HOME_CITY_NAME,
                 startTime = "2025-01-05T15:00:00Z",
                 endTime = "2025-01-05T18:30:00Z",
-            ).copy(duration = 210.minutes)
+            )
             vehicleTripRepo.addOrUpdate(tripToCabin)
             vehicleTripRepo.addOrUpdate(tripFromCabin)
 

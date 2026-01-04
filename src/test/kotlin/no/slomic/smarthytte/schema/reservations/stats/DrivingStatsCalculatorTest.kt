@@ -2,44 +2,14 @@ package no.slomic.smarthytte.schema.reservations.stats
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.vehicletrips.CABIN_CITY_NAME
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.HOME_CITY_NAME
-import no.slomic.smarthytte.vehicletrips.VehicleTrip
-import java.util.*
-import kotlin.time.Duration
+import no.slomic.smarthytte.vehicletrips.createTrip
 import kotlin.time.Duration.Companion.minutes
 
 class DrivingStatsCalculatorTest :
     ShouldSpec({
-        fun createTrip(
-            startCity: String,
-            endCity: String,
-            startTime: String,
-            endTime: String,
-            duration: Duration = 60.minutes,
-        ): VehicleTrip = VehicleTrip(
-            averageEnergyConsumption = 0.0,
-            averageEnergyConsumptionUnit = "",
-            averageSpeed = 0.0,
-            distance = 0.0,
-            distanceUnit = "",
-            duration = duration,
-            durationUnit = "",
-            endAddress = "",
-            endCity = endCity,
-            endTime = Instant.parse(endTime),
-            energyRegenerated = 0.0,
-            energyRegeneratedUnit = "",
-            id = UUID.randomUUID().toString(),
-            speedUnit = "",
-            startAddress = "",
-            startCity = startCity,
-            startTime = Instant.parse(startTime),
-            totalDistance = 0.0,
-        )
-
         fun createCabinVehicleTrip(
             toCabinDurations: List<Int> = emptyList(),
             fromCabinDurations: List<Int> = emptyList(),

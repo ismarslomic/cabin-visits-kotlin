@@ -2,13 +2,14 @@ package no.slomic.smarthytte.vehicletrips
 
 import kotlinx.datetime.Instant
 import java.util.UUID
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration
 
 fun createTrip(
     startCity: String,
     endCity: String,
     startTime: String,
     endTime: String,
+    duration: Duration? = null,
     id: String = UUID.randomUUID().toString(),
 ): VehicleTrip {
     val startTimestamp: Instant = Instant.parse(startTime)
@@ -20,7 +21,7 @@ fun createTrip(
         averageSpeed = 0.0,
         distance = 0.0,
         distanceUnit = "",
-        duration = 5.minutes,
+        duration = duration ?: (endTimestamp - startTimestamp),
         durationUnit = "",
         endAddress = "",
         endCity = endCity,
