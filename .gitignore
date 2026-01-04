@@ -47,3 +47,6 @@ secrets
 
 ### Local data folder
 data
+
+### Local docker folder
+docker
