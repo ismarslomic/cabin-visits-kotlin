@@ -1,6 +1,40 @@
 package no.slomic.smarthytte.schema.reservations.stats
 
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
+import no.slomic.smarthytte.common.firstDateOfNextMonth
+import no.slomic.smarthytte.common.firstDateOfThisMonth
+import no.slomic.smarthytte.guests.Guest
+import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
+
+data class MonthStatsContext(
+    val year: Int,
+    val yearReservations: List<Reservation>,
+    val allReservations: List<Reservation>,
+    val countsByMonth: Map<Month, Int>,
+    val guestsById: Map<String, Guest>,
+    val cabinTrips: List<CabinVehicleTrip>,
+)
+
+data class YearStatsContext(
+    val year: Int,
+    val yearReservations: List<Reservation>,
+    val allReservations: List<Reservation>,
+    val countsByMonth: Map<Month, Int>,
+    val guestsById: Map<String, Guest>,
+    val monthStats: List<MonthReservationStats>,
+    val cabinTrips: List<CabinVehicleTrip>,
+    val byYear: Map<Int, List<Reservation>>,
+)
+
+data class MonthDates(
+    val year: Int,
+    val month: Month,
+    val firstOfMonth: LocalDate = firstDateOfThisMonth(year, month),
+    val firstOfNextMonth: LocalDate = firstDateOfNextMonth(year, month),
+)
 
 @GraphQLDescription("Statistics for reservations grouped by year with months as children")
 data class YearReservationStats(

@@ -1,6 +1,8 @@
 package no.slomic.smarthytte.schema.reservations.stats
 
 import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.common.firstDayOfYear
+import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.stayDaysByGuest
@@ -15,7 +17,8 @@ import no.slomic.smarthytte.reservations.visitsByGuest
  *
  * @param context the context containing year-specific and global reservation data, guest mappings, and other statistics
  * @param dates the time period details, including the start date (inclusive) and the end date (exclusive) of the month
- * @param monthlyReservations the list of reservations relevant to the specific month for which statistics are calculated
+ * @param monthlyReservations the list of reservations relevant to the specific month for which statistics are
+ * calculated
  * @return a sorted list of per-guest visit statistics, including details such as guest name, age, total visits,
  * and total stay days within the specified month
  */
@@ -30,6 +33,35 @@ fun calculateMonthlyGuestStats(
     guestsById = context.guestsById,
     ageYear = context.year,
 ).sortedWith(GuestVisitStats.COMPARATOR)
+
+data class YearGuestStats(
+    val topGuestByDays: GuestVisitStats?,
+    val newGuests: List<GuestVisitStats>,
+    val allGuestsSorted: List<GuestVisitStats>,
+)
+
+fun computeYearGuestStats(context: YearStatsContext): YearGuestStats {
+    val jan1 = firstDayOfYear(context.year)
+    val jan1Next = firstDayOfYearAfter(context.year)
+
+    val guestYearStats: List<GuestVisitStats> = aggregateGuestVisitStats(
+        periodStart = jan1,
+        periodEndExclusive = jan1Next,
+        reservations = context.yearReservations,
+        guestsById = context.guestsById,
+        ageYear = context.year,
+    )
+    val prevYearGuests: Set<String> = context.byYear[context.year - 1]
+        ?.flatMap { it.guestIds }
+        ?.toSet()
+        ?: emptySet()
+
+    val newGuests = guestYearStats.filter { it.guestId !in prevYearGuests }.sortedWith(GuestVisitStats.COMPARATOR)
+    val allGuestsSorted = guestYearStats.sortedWith(GuestVisitStats.COMPARATOR)
+    val topGuestByDays = allGuestsSorted.maxByOrNull { it.totalStayDays }
+
+    return YearGuestStats(topGuestByDays, newGuests, allGuestsSorted)
+}
 
 /**
  * Internal helper to aggregate raw reservation data into guest visit statistics for a specified time period based

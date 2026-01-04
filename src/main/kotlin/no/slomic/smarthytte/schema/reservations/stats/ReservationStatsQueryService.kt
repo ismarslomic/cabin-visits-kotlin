@@ -43,7 +43,7 @@ class ReservationStatsQueryService(
 
             // Build counts by month and compute monthly stats
             val countsByMonth: Map<Month, Int> = yearReservations.countByMonth()
-            val monthStats = ReservationStatsEngine.buildMonthStats(
+            val monthStats = buildMonthStats(
                 MonthStatsContext(
                     year = year,
                     yearReservations = yearReservations,
@@ -54,7 +54,7 @@ class ReservationStatsQueryService(
                 ),
             )
 
-            ReservationStatsEngine.buildYearStats(
+            buildYearStats(
                 YearStatsContext(
                     year = year,
                     yearReservations = yearReservations,
