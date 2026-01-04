@@ -63,7 +63,7 @@ data class DrivingTimeStatsYear(
     @GraphQLDescription("Calendar year for these stats")
     val year: Int,
 
-    @GraphQLDescription("Average driving time in minutes from home to cabin across all trips that arrived this year")
+    @GraphQLDescription("Average driving time in minutes from home to cabin across all trips that departed this year")
     val avgToCabinMinutes: Int?,
     @GraphQLDescription("Average driving time formatted as HH:MM from home to cabin")
     val avgToCabin: String?,
@@ -99,7 +99,7 @@ data class DrivingTimeStatsMonth(
     @GraphQLDescription("Calendar year for this month")
     val year: Int,
 
-    @GraphQLDescription("Average driving time in minutes from home to cabin for trips that arrived this month")
+    @GraphQLDescription("Average driving time in minutes from home to cabin for trips that departed this month")
     val avgToCabinMinutes: Int?,
     @GraphQLDescription("Average driving time formatted as HH:MM from home to cabin for this month")
     val avgToCabin: String?,

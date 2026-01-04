@@ -44,13 +44,15 @@ class DrivingStatsCalculatorTest :
             toCabinDurations: List<Int> = emptyList(),
             fromCabinDurations: List<Int> = emptyList(),
             year: Int = 2024,
+            month: Int = 1,
         ): CabinVehicleTrip {
+            val monthStr = month.toString().padStart(2, '0')
             val toTrips = toCabinDurations.map {
                 createTrip(
                     HOME_CITY_NAME,
                     CABIN_CITY_NAME,
-                    "$year-01-01T10:00:00Z",
-                    "$year-01-01T11:00:00Z",
+                    "$year-$monthStr-01T10:00:00Z",
+                    "$year-$monthStr-01T11:00:00Z",
                     it.minutes,
                 )
             }
@@ -58,8 +60,8 @@ class DrivingStatsCalculatorTest :
                 createTrip(
                     CABIN_CITY_NAME,
                     HOME_CITY_NAME,
-                    "$year-01-01T15:00:00Z",
-                    "$year-01-01T16:00:00Z",
+                    "$year-$monthStr-01T15:00:00Z",
+                    "$year-$monthStr-01T16:00:00Z",
                     it.minutes,
                 )
             }
@@ -70,10 +72,10 @@ class DrivingStatsCalculatorTest :
             )
         }
 
-        context("calculateYearDrivingStats") {
+        context("alculateYearDrivingTimeStats") {
             should("return empty stats when no trips are provided") {
                 val year = 2024
-                val result = calculateYearDrivingStats(year, emptyList())
+                val result = calculateYearDrivingTimeStats(year, emptyList())
 
                 result.year shouldBe year
                 result.avgToCabinMinutes shouldBe null
@@ -94,7 +96,7 @@ class DrivingStatsCalculatorTest :
                     createCabinVehicleTrip(toCabinDurations = listOf(140), year = 2025),
                 )
 
-                val result = calculateYearDrivingStats(year, trips)
+                val result = calculateYearDrivingTimeStats(year, trips)
 
                 result.year shouldBe year
                 result.avgToCabinMinutes shouldBe 120
@@ -122,7 +124,7 @@ class DrivingStatsCalculatorTest :
                     ),
                 )
 
-                val result = calculateYearDrivingStats(year, trips)
+                val result = calculateYearDrivingTimeStats(year, trips)
 
                 result.year shouldBe year
                 // To Cabin: 100, 120, 140. Avg: 120, Min: 100, Max: 140
@@ -149,16 +151,17 @@ class DrivingStatsCalculatorTest :
                     createCabinVehicleTrip(toCabinDurations = listOf(101), year = year),
                 )
 
-                val result = calculateYearDrivingStats(year, trips)
+                val result = calculateYearDrivingTimeStats(year, trips)
 
                 // (100 + 101) / 2 = 100.5 -> should be 100 (toInt() truncates)
                 result.avgToCabinMinutes shouldBe 100
             }
 
-            should("use toCabinEndDate for filtering toCabin and fromCabinStartDate for filtering fromCabin") {
+            should("use toCabinStartDate for filtering toCabin and fromCabinStartDate for filtering fromCabin") {
                 val year = 2024
                 val trips = listOf(
-                    // toCabin ends in 2024, but starts in 2023
+                    // toCabin ends in 2024, but starts in 2023 (exclude from 2024)
+                    // fromCabin starts in 2024 (include in 2024)
                     CabinVehicleTrip(
                         toCabinTrips = listOf(
                             createTrip(
@@ -166,7 +169,7 @@ class DrivingStatsCalculatorTest :
                                 CABIN_CITY_NAME,
                                 "2023-12-31T23:00:00Z",
                                 "2024-01-01T01:00:00Z",
-                                120.minutes,
+                                100.minutes,
                             ),
                         ),
                         atCabinTrips = emptyList(),
@@ -180,7 +183,8 @@ class DrivingStatsCalculatorTest :
                             ),
                         ),
                     ),
-                    // toCabin ends in 2025, fromCabin starts in 2024
+                    // toCabin ends in 2025, but starts in 2024 (include in 2024)
+                    // fromCabin ends in 2025, but starts in 2024 (include in 2024)
                     CabinVehicleTrip(
                         toCabinTrips = listOf(
                             createTrip(
@@ -188,7 +192,7 @@ class DrivingStatsCalculatorTest :
                                 CABIN_CITY_NAME,
                                 "2024-12-31T23:00:00Z",
                                 "2025-01-01T01:00:00Z",
-                                120.minutes,
+                                200.minutes,
                             ),
                         ),
                         atCabinTrips = emptyList(),
@@ -196,25 +200,25 @@ class DrivingStatsCalculatorTest :
                             createTrip(
                                 CABIN_CITY_NAME,
                                 HOME_CITY_NAME,
-                                "2024-12-31T10:00:00Z",
-                                "2024-12-31T12:00:00Z",
-                                120.minutes,
+                                "2024-12-31T23:00:00Z",
+                                "2025-01-01T02:00:00Z",
+                                140.minutes,
                             ),
                         ),
                     ),
                 )
 
-                val result = calculateYearDrivingStats(year, trips)
+                val result = calculateYearDrivingTimeStats(year, trips)
 
-                // toCabin: only the first one ends in 2024
-                result.avgToCabinMinutes shouldBe 120
-                result.minToCabinMinutes shouldBe 120
-                result.maxToCabinMinutes shouldBe 120
+                // toCabin: only the second one starts in 2024
+                result.avgToCabinMinutes shouldBe 200
+                result.minToCabinMinutes shouldBe 200
+                result.maxToCabinMinutes shouldBe 200
 
-                // fromCabin: both start in 2024
-                result.avgFromCabinMinutes shouldBe 120
+                // fromCabin: both start in 2024. Avg: (120 + 140) / 2 = 130
+                result.avgFromCabinMinutes shouldBe 130
                 result.minFromCabinMinutes shouldBe 120
-                result.maxFromCabinMinutes shouldBe 120
+                result.maxFromCabinMinutes shouldBe 140
             }
         }
 
@@ -287,45 +291,56 @@ class DrivingStatsCalculatorTest :
             }
         }
 
-        context("computeMonthDrivingStats") {
+        context("computeMonthDrivingMomentStats") {
+            should("calculate average moments for the specific month correctly") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.MARCH
+                val trips = listOf(
+                    // Trip in March: Departure Home 11:00 Oslo (10:00 UTC)
+                    createCabinVehicleTrip(toCabinDurations = listOf(60), year = 2024, month = 3),
+                    // Trip in February (should be ignored)
+                    createCabinVehicleTrip(toCabinDurations = listOf(60), year = 2024, month = 2),
+                )
+
+                val result = computeMonthDrivingMomentStats(year, month, trips)
+
+                result.monthNumber shouldBe 3
+                result.year shouldBe 2024
+                // 10:00 UTC on 2024-03-01 is 11:00 Oslo. 11*60 = 660 minutes.
+                result.avgDepartureHomeMinutes shouldBe 660
+                result.avgDepartureHome shouldBe "11:00"
+            }
+
+            should("return empty stats when no trips in month") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.MARCH
+                val result = computeMonthDrivingMomentStats(year, month, emptyList())
+
+                result.avgDepartureHomeMinutes shouldBe null
+                result.avgDepartureHome shouldBe null
+            }
+        }
+
+        context("calculateMonthDrivingTimeStats") {
             should("calculate monthly stats and differences correctly") {
                 val year = 2024
                 val month = kotlinx.datetime.Month.MARCH
                 val trips = listOf(
-                    // Current month (March 2024)
                     createCabinVehicleTrip(
                         toCabinDurations = listOf(120),
                         fromCabinDurations = listOf(110),
                         year = year,
-                    ).let {
-                        // Update dates to March
-                        it.copy(
-                            toCabinTrips = it.toCabinTrips.map { t ->
-                                t.copy(endTime = Instant.parse("2024-03-15T12:00:00Z"))
-                            },
-                            fromCabinTrips = it.fromCabinTrips.map { t ->
-                                t.copy(startTime = Instant.parse("2024-03-17T10:00:00Z"))
-                            },
-                        )
-                    },
-                    // Previous month (February 2024)
+                        month = 3,
+                    ),
                     createCabinVehicleTrip(
                         toCabinDurations = listOf(100),
                         fromCabinDurations = listOf(90),
                         year = year,
-                    ).let {
-                        it.copy(
-                            toCabinTrips = it.toCabinTrips.map { t ->
-                                t.copy(endTime = Instant.parse("2024-02-15T12:00:00Z"))
-                            },
-                            fromCabinTrips = it.fromCabinTrips.map { t ->
-                                t.copy(startTime = Instant.parse("2024-02-17T10:00:00Z"))
-                            },
-                        )
-                    },
+                        month = 2,
+                    ),
                 )
 
-                val result = computeMonthDrivingStats(year, month, trips)
+                val result = calculateMonthDrivingTimeStats(year, month, trips)
 
                 result.monthNumber shouldBe 3
                 result.year shouldBe 2024
@@ -339,6 +354,122 @@ class DrivingStatsCalculatorTest :
                 // Diff vs prev month: 110 - 90 = 20
                 result.diffAvgFromCabinMinutesVsPrevMonth shouldBe 20
                 result.diffAvgFromCabinVsPrevMonth shouldBe "+00:20"
+            }
+
+            should("handle January correctly (previous month in previous year)") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.JANUARY
+                val trips = listOf(
+                    createCabinVehicleTrip(toCabinDurations = listOf(120), year = 2024, month = 1),
+                    createCabinVehicleTrip(toCabinDurations = listOf(100), year = 2023, month = 12),
+                )
+
+                val result = calculateMonthDrivingTimeStats(year, month, trips)
+
+                result.monthNumber shouldBe 1
+                result.year shouldBe 2024
+                result.avgToCabinMinutes shouldBe 120
+                result.diffAvgToCabinMinutesVsPrevMonth shouldBe 20
+                result.diffAvgToCabinVsPrevMonth shouldBe "+00:20"
+            }
+
+            should("handle empty current month") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.MARCH
+                val trips = listOf(
+                    createCabinVehicleTrip(toCabinDurations = listOf(100), year = 2024, month = 2),
+                )
+
+                val result = calculateMonthDrivingTimeStats(year, month, trips)
+
+                result.avgToCabinMinutes shouldBe null
+                result.diffAvgToCabinMinutesVsPrevMonth shouldBe null
+                result.diffAvgToCabinVsPrevMonth shouldBe null
+            }
+
+            should("handle empty previous month") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.MARCH
+                val trips = listOf(
+                    createCabinVehicleTrip(toCabinDurations = listOf(120), year = 2024, month = 3),
+                )
+
+                val result = calculateMonthDrivingTimeStats(year, month, trips)
+
+                result.avgToCabinMinutes shouldBe 120
+                result.diffAvgToCabinMinutesVsPrevMonth shouldBe null
+                result.diffAvgToCabinVsPrevMonth shouldBe null
+            }
+
+            should("handle negative differences") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.MARCH
+                val trips = listOf(
+                    createCabinVehicleTrip(toCabinDurations = listOf(100), year = 2024, month = 3),
+                    createCabinVehicleTrip(toCabinDurations = listOf(120), year = 2024, month = 2),
+                )
+
+                val result = calculateMonthDrivingTimeStats(year, month, trips)
+
+                result.diffAvgToCabinMinutesVsPrevMonth shouldBe -20
+                result.diffAvgToCabinVsPrevMonth shouldBe "-00:20"
+            }
+
+            should("handle multiple trips in both months") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.MARCH
+                val trips = listOf(
+                    // March: 100, 120. Avg: 110
+                    createCabinVehicleTrip(toCabinDurations = listOf(100), year = 2024, month = 3),
+                    createCabinVehicleTrip(toCabinDurations = listOf(120), year = 2024, month = 3),
+                    // Feb: 80, 100. Avg: 90
+                    createCabinVehicleTrip(toCabinDurations = listOf(80), year = 2024, month = 2),
+                    createCabinVehicleTrip(toCabinDurations = listOf(100), year = 2024, month = 2),
+                )
+
+                val result = calculateMonthDrivingTimeStats(year, month, trips)
+
+                result.avgToCabinMinutes shouldBe 110
+                result.diffAvgToCabinMinutesVsPrevMonth shouldBe 20 // 110 - 90
+            }
+
+            should("use start dates for monthly filtering of both toCabin and fromCabin") {
+                val year = 2024
+                val month = kotlinx.datetime.Month.MARCH
+                val trips = listOf(
+                    // fromCabin starts in March, ends in April -> include in March
+                    CabinVehicleTrip(
+                        toCabinTrips = emptyList(),
+                        atCabinTrips = emptyList(),
+                        fromCabinTrips = listOf(
+                            createTrip(
+                                CABIN_CITY_NAME,
+                                HOME_CITY_NAME,
+                                "2024-03-31T23:00:00Z",
+                                "2024-04-01T02:00:00Z",
+                                150.minutes,
+                            ),
+                        ),
+                    ),
+                    // fromCabin starts in February, ends in March -> exclude from March
+                    CabinVehicleTrip(
+                        toCabinTrips = emptyList(),
+                        atCabinTrips = emptyList(),
+                        fromCabinTrips = listOf(
+                            createTrip(
+                                CABIN_CITY_NAME,
+                                HOME_CITY_NAME,
+                                "2024-02-29T23:00:00Z",
+                                "2024-03-01T02:00:00Z",
+                                100.minutes,
+                            ),
+                        ),
+                    ),
+                )
+
+                val result = calculateMonthDrivingTimeStats(year, month, trips)
+
+                result.avgFromCabinMinutes shouldBe 150
             }
         }
     })
