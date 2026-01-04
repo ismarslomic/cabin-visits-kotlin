@@ -107,7 +107,7 @@ class ReservationStatsQueryService(
                 topGuestByDays = guestStats.topGuestByDays,
                 newGuests = guestStats.newGuests,
                 guests = guestStats.allGuestsSorted,
-                drivingTime = computeYearDrivingStats(year, cabinTrips),
+                drivingTime = calculateYearDrivingStats(year, cabinTrips),
                 drivingMoments = computeYearDrivingMomentStats(year, cabinTrips),
             )
         }

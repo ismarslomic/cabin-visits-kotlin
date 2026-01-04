@@ -12,7 +12,17 @@ import no.slomic.smarthytte.common.previousMonth
 import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
 import no.slomic.smarthytte.vehicletrips.totalDurationMinutes
 
-fun computeYearDrivingStats(year: Int, cabinTrips: List<CabinVehicleTrip>): DrivingTimeStatsYear {
+/**
+ * Calculates driving time statistics for a given calendar year based on (vehicle) trips to and from the cabin.
+ *
+ * The method processes the provided list of trips, filtering them by the specified year and calculating
+ * average, minimum, and maximum driving durations for trips to the cabin and trips from the cabin.
+ *
+ * @param year The calendar year for which the driving statistics are to be calculated.
+ * @param cabinTrips A list of cabin vehicle trips that include details about trips to and from the cabin.
+ * @return A [DrivingTimeStatsYear] object containing the calculated driving statistics for the specified year.
+ */
+fun calculateYearDrivingStats(year: Int, cabinTrips: List<CabinVehicleTrip>): DrivingTimeStatsYear {
     val toCabinDurations = cabinTrips
         .filter { it.toCabinEndDate?.year == year }
         .mapNotNull { it.toCabinTrips.totalDurationMinutes() }
@@ -20,27 +30,29 @@ fun computeYearDrivingStats(year: Int, cabinTrips: List<CabinVehicleTrip>): Driv
         .filter { it.fromCabinStartDate?.year == year }
         .mapNotNull { it.fromCabinTrips.totalDurationMinutes() }
 
-    val avgTo = toCabinDurations.averageOrNullInt()
-    val minTo = toCabinDurations.minOrNull()
-    val maxTo = toCabinDurations.maxOrNull()
-    val avgFrom = fromCabinDurations.averageOrNullInt()
-    val minFrom = fromCabinDurations.minOrNull()
-    val maxFrom = fromCabinDurations.maxOrNull()
+    fun getStats(durations: List<Int>) = object {
+        val avg = durations.averageOrNullInt()
+        val min = durations.minOrNull()
+        val max = durations.maxOrNull()
+    }
+
+    val to = getStats(toCabinDurations)
+    val from = getStats(fromCabinDurations)
 
     return DrivingTimeStatsYear(
         year = year,
-        avgToCabinMinutes = avgTo,
-        avgToCabin = formatMinutes(avgTo),
-        minToCabinMinutes = minTo,
-        minToCabin = formatMinutes(minTo),
-        maxToCabinMinutes = maxTo,
-        maxToCabin = formatMinutes(maxTo),
-        avgFromCabinMinutes = avgFrom,
-        avgFromCabin = formatMinutes(avgFrom),
-        minFromCabinMinutes = minFrom,
-        minFromCabin = formatMinutes(minFrom),
-        maxFromCabinMinutes = maxFrom,
-        maxFromCabin = formatMinutes(maxFrom),
+        avgToCabinMinutes = to.avg,
+        avgToCabin = formatMinutes(to.avg),
+        minToCabinMinutes = to.min,
+        minToCabin = formatMinutes(to.min),
+        maxToCabinMinutes = to.max,
+        maxToCabin = formatMinutes(to.max),
+        avgFromCabinMinutes = from.avg,
+        avgFromCabin = formatMinutes(from.avg),
+        minFromCabinMinutes = from.min,
+        minFromCabin = formatMinutes(from.min),
+        maxFromCabinMinutes = from.max,
+        maxFromCabin = formatMinutes(from.max),
     )
 }
 
