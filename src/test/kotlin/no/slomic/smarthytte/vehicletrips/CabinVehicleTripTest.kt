@@ -179,50 +179,58 @@ class CabinVehicleTripTest :
             }
 
             context("moment-based extension functions") {
-                should("departureHomeMinutes filters correctly and returns minutes since midnight in Oslo time") {
-                    allTrips.departureHomeMinutes(2024) shouldBe listOf(660, 660)
-                    allTrips.departureHomeMinutes(2023) shouldBe listOf(660)
-                    allTrips.departureHomeMinutes(2025) shouldBe listOf(1380)
-                    allTrips.departureHomeMinutes(2026) shouldBe emptyList()
+                should(
+                    "avgDepartureHomeMinutes filters correctly and returns avg minutes since midnight in Oslo time",
+                ) {
+                    allTrips.avgDepartureHomeMinutes(2024) shouldBe 660
+                    allTrips.avgDepartureHomeMinutes(2023) shouldBe 660
+                    allTrips.avgDepartureHomeMinutes(2025) shouldBe 1380
+                    allTrips.avgDepartureHomeMinutes(2026) shouldBe null
                 }
 
-                should("arrivalCabinMinutes filters correctly and returns minutes since midnight in Oslo time") {
-                    allTrips.arrivalCabinMinutes(2024) shouldBe listOf(780, 790)
-                    allTrips.arrivalCabinMinutes(2023) shouldBe listOf(800)
-                    allTrips.arrivalCabinMinutes(2026) shouldBe listOf(120)
-                    allTrips.arrivalCabinMinutes(2025) shouldBe emptyList()
+                should(
+                    "avgArrivalCabinMinutes filters correctly and returns avg minutes since midnight in Oslo time",
+                ) {
+                    allTrips.avgArrivalCabinMinutes(2024) shouldBe 785
+                    allTrips.avgArrivalCabinMinutes(2023) shouldBe 800
+                    allTrips.avgArrivalCabinMinutes(2026) shouldBe 120
+                    allTrips.avgArrivalCabinMinutes(2025) shouldBe null
                 }
 
-                should("departureCabinMinutes filters correctly and returns minutes since midnight in Oslo time") {
-                    allTrips.departureCabinMinutes(2024) shouldBe listOf(660, 660, 660)
-                    allTrips.departureCabinMinutes(2026) shouldBe listOf(0)
-                    allTrips.departureCabinMinutes(2025) shouldBe emptyList()
-                    allTrips.departureCabinMinutes(2023) shouldBe emptyList()
+                should(
+                    "avgDepartureCabinMinutes filters correctly and returns avg minutes since midnight in Oslo time",
+                ) {
+                    allTrips.avgDepartureCabinMinutes(2024) shouldBe 660
+                    allTrips.avgDepartureCabinMinutes(2026) shouldBe 0
+                    allTrips.avgDepartureCabinMinutes(2025) shouldBe null
+                    allTrips.avgDepartureCabinMinutes(2023) shouldBe null
                 }
 
-                should("arrivalHomeMinutes filters correctly and returns minutes since midnight in Oslo time") {
-                    allTrips.arrivalHomeMinutes(2024) shouldBe listOf(770, 785, 795)
-                    allTrips.arrivalHomeMinutes(2026) shouldBe listOf(180)
-                    allTrips.arrivalHomeMinutes(2025) shouldBe emptyList()
-                    allTrips.arrivalHomeMinutes(2023) shouldBe emptyList()
+                should(
+                    "avgArrivalHomeMinutes filters correctly and returns avg minutes since midnight in Oslo time",
+                ) {
+                    allTrips.avgArrivalHomeMinutes(2024) shouldBe 783
+                    allTrips.avgArrivalHomeMinutes(2026) shouldBe 180
+                    allTrips.avgArrivalHomeMinutes(2025) shouldBe null
+                    allTrips.avgArrivalHomeMinutes(2023) shouldBe null
                 }
 
                 should("handle month filtering for moments correctly") {
-                    allTrips.departureHomeMinutes(2024, Month.JANUARY) shouldBe listOf(660)
-                    allTrips.departureHomeMinutes(2024, Month.FEBRUARY) shouldBe listOf(660)
-                    allTrips.departureHomeMinutes(2023, Month.DECEMBER) shouldBe listOf(660)
-                    allTrips.departureHomeMinutes(2025, Month.DECEMBER) shouldBe listOf(1380)
+                    allTrips.avgDepartureHomeMinutes(2024, Month.JANUARY) shouldBe 660
+                    allTrips.avgDepartureHomeMinutes(2024, Month.FEBRUARY) shouldBe 660
+                    allTrips.avgDepartureHomeMinutes(2023, Month.DECEMBER) shouldBe 660
+                    allTrips.avgDepartureHomeMinutes(2025, Month.DECEMBER) shouldBe 1380
 
-                    allTrips.arrivalCabinMinutes(2026, Month.JANUARY) shouldBe listOf(120)
-                    allTrips.departureCabinMinutes(2026, Month.JANUARY) shouldBe listOf(0)
-                    allTrips.arrivalHomeMinutes(2026, Month.JANUARY) shouldBe listOf(180)
+                    allTrips.avgArrivalCabinMinutes(2026, Month.JANUARY) shouldBe 120
+                    allTrips.avgDepartureCabinMinutes(2026, Month.JANUARY) shouldBe 0
+                    allTrips.avgArrivalHomeMinutes(2026, Month.JANUARY) shouldBe 180
                 }
 
                 should("handle empty list of cabin trips for moments") {
-                    emptyList<CabinVehicleTrip>().departureHomeMinutes(2024) shouldBe emptyList()
-                    emptyList<CabinVehicleTrip>().arrivalCabinMinutes(2024) shouldBe emptyList()
-                    emptyList<CabinVehicleTrip>().departureCabinMinutes(2024) shouldBe emptyList()
-                    emptyList<CabinVehicleTrip>().arrivalHomeMinutes(2024) shouldBe emptyList()
+                    emptyList<CabinVehicleTrip>().avgDepartureHomeMinutes(2024) shouldBe null
+                    emptyList<CabinVehicleTrip>().avgArrivalCabinMinutes(2024) shouldBe null
+                    emptyList<CabinVehicleTrip>().avgDepartureCabinMinutes(2024) shouldBe null
+                    emptyList<CabinVehicleTrip>().avgArrivalHomeMinutes(2024) shouldBe null
                 }
             }
         }

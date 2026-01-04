@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import no.slomic.smarthytte.common.averageOrNullInt
 import no.slomic.smarthytte.common.minutesOfDay
 import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.toUtcDate
@@ -125,59 +126,59 @@ fun List<CabinVehicleTrip>.fromCabinDurations(year: Int, month: Month): List<Int
         .mapNotNull { it.fromCabinTrips.totalDurationMinutes() }
 
 /**
- * Calculates the departure times from home in minutes since midnight for all trips to the cabin
+ * Calculates the average departure time from home in minutes since midnight for all trips to the cabin
  * that occurred within the specified [year] and optionally [month].
  *
  * The departure time is represented as minutes since midnight in the Oslo time zone.
  *
  * @param year The calendar year to filter trips by.
  * @param month The optional month to filter trips by.
- * @return A list of integers representing departure minutes since midnight for each qualifying trip.
+ * @return The average departure minutes since midnight for all qualifying trips, or null if no trips found.
  */
-fun List<CabinVehicleTrip>.departureHomeMinutes(year: Int, month: Month? = null): List<Int> =
-    this.mapMoments(year, month) { it.toCabinStartTimestamp }
+fun List<CabinVehicleTrip>.avgDepartureHomeMinutes(year: Int, month: Month? = null): Int? =
+    this.averageMoment(year, month) { it.toCabinStartTimestamp }
 
 /**
- * Calculates the arrival times at the cabin in minutes since midnight for all trips to the cabin
+ * Calculates the average arrival time at the cabin in minutes since midnight for all trips to the cabin
  * that occurred within the specified [year] and optionally [month].
  *
  * The arrival time is represented as minutes since midnight in the Oslo time zone.
  *
  * @param year The calendar year to filter trips by.
  * @param month The optional month to filter trips by.
- * @return A list of integers representing arrival minutes since midnight for each qualifying trip.
+ * @return The average arrival minutes since midnight for all qualifying trips, or null if no trips found.
  */
-fun List<CabinVehicleTrip>.arrivalCabinMinutes(year: Int, month: Month? = null): List<Int> =
-    this.mapMoments(year, month) { it.toCabinEndTimestamp }
+fun List<CabinVehicleTrip>.avgArrivalCabinMinutes(year: Int, month: Month? = null): Int? =
+    this.averageMoment(year, month) { it.toCabinEndTimestamp }
 
 /**
- * Calculates the departure times from the cabin in minutes since midnight for all trips from the cabin
+ * Calculates the average departure time from the cabin in minutes since midnight for all trips from the cabin
  * that occurred within the specified [year] and optionally [month].
  *
  * The departure time is represented as minutes since midnight in the Oslo time zone.
  *
  * @param year The calendar year to filter trips by.
  * @param month The optional month to filter trips by.
- * @return A list of integers representing departure minutes since midnight for each qualifying trip.
+ * @return The average departure minutes since midnight for all qualifying trips, or null if no trips found.
  */
-fun List<CabinVehicleTrip>.departureCabinMinutes(year: Int, month: Month? = null): List<Int> =
-    this.mapMoments(year, month) { it.fromCabinStartTimestamp }
+fun List<CabinVehicleTrip>.avgDepartureCabinMinutes(year: Int, month: Month? = null): Int? =
+    this.averageMoment(year, month) { it.fromCabinStartTimestamp }
 
 /**
- * Calculates the arrival times at home in minutes since midnight for all trips from the cabin
+ * Calculates the average arrival time at home in minutes since midnight for all trips from the cabin
  * that occurred within the specified [year] and optionally [month].
  *
  * The arrival time is represented as minutes since midnight in the Oslo time zone.
  *
  * @param year The calendar year to filter trips by.
  * @param month The optional month to filter trips by.
- * @return A list of integers representing arrival minutes since midnight for each qualifying trip.
+ * @return The average arrival minutes since midnight for all qualifying trips, or null if no trips found.
  */
-fun List<CabinVehicleTrip>.arrivalHomeMinutes(year: Int, month: Month? = null): List<Int> =
-    this.mapMoments(year, month) { it.fromCabinEndTimestamp }
+fun List<CabinVehicleTrip>.avgArrivalHomeMinutes(year: Int, month: Month? = null): Int? =
+    this.averageMoment(year, month) { it.fromCabinEndTimestamp }
 
 /**
- * Calculates the time-of-day moments in minutes since midnight for cabin vehicle trips
+ * Calculates the average time-of-day moment in minutes since midnight for cabin vehicle trips
  * based on a selected timestamp, filtered by [year] and optionally [month].
  *
  * The filtering is performed based on the date of the selected timestamp in the Oslo time zone.
@@ -185,13 +186,13 @@ fun List<CabinVehicleTrip>.arrivalHomeMinutes(year: Int, month: Month? = null): 
  * @param year The calendar year to filter the moments by.
  * @param month The optional month to filter the moments by.
  * @param timestampSelector A function that selects the relevant [Instant] from a [CabinVehicleTrip].
- * @return A list of integers representing minutes since midnight for each qualifying trip's selected moment.
+ * @return The average minutes since midnight for qualifying trips' selected moments, or null if no trips found.
  */
-private fun List<CabinVehicleTrip>.mapMoments(
+private fun List<CabinVehicleTrip>.averageMoment(
     year: Int,
     month: Month?,
     timestampSelector: (CabinVehicleTrip) -> Instant?,
-): List<Int> = this.mapNotNull { trip ->
+): Int? = this.mapNotNull { trip ->
     timestampSelector(trip)?.toLocalDateTime(osloTimeZone)?.let { dt ->
         if (dt.date.year == year && (month == null || dt.date.month == month)) {
             dt.time.minutesOfDay()
@@ -199,4 +200,4 @@ private fun List<CabinVehicleTrip>.mapMoments(
             null
         }
     }
-}
+}.averageOrNullInt()
