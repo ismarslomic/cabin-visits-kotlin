@@ -10,20 +10,32 @@ import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.GuestEntity
 import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.dao.with
 import org.jetbrains.exposed.sql.SizedCollection
+import org.jetbrains.exposed.sql.insertIgnore
 
+@Suppress("TooManyFunctions")
 class SqliteReservationRepository : ReservationRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteReservationRepository::class.java.name)
 
     override suspend fun allReservations(): List<Reservation> = suspendTransaction {
-        ReservationEntity.all().sortedBy { it.startTime }.map(::daoToModel)
+        val reservationEntities = ReservationEntity.all()
+            .with(ReservationEntity::guests, ReservationEntity::vehicleTrips)
+            .sortedBy { it.startTime }
+
+        val tripTypes = fetchTripTypes(reservationEntities.map { it.id })
+
+        reservationEntities.map { daoToModel(it, tripTypes) }
     }
 
     override suspend fun reservationById(id: String): Reservation? = suspendTransaction {
-        val entityId: EntityID<String> = EntityID(id, ReservationTable)
-        val storedReservation: ReservationEntity? = ReservationEntity.findById(entityId)
+        val entityId = EntityID(id, ReservationTable)
+        val storedReservation = ReservationEntity.findById(entityId)
 
-        storedReservation?.let { daoToModel(it) }
+        storedReservation?.let {
+            val tripTypes = fetchTripTypes(listOf(it.id))
+            daoToModel(it, tripTypes)
+        }
     }
 
     override suspend fun addOrUpdate(reservation: Reservation): PersistenceResult = suspendTransaction {
@@ -34,6 +46,36 @@ class SqliteReservationRepository : ReservationRepository {
             addReservation(reservation)
         } else {
             updateReservation(reservation)
+        }
+    }
+
+    override suspend fun addVehicleTripLink(
+        reservationId: String,
+        vehicleTripId: String,
+        type: ReservationVehicleTripType,
+    ): PersistenceResult = suspendTransaction {
+        logger.trace(
+            "Adding link between vehicle trip with id: {} (type: {}) and the Reservation with id: {}",
+            vehicleTripId,
+            type,
+            reservationId,
+        )
+
+        // Since ReservationVehicleTripTable is a pure join table, and we don't have any Entity,
+        // we use the insertIgnore, which either inserts the row or ignores the inserting if the unique
+        // constraint is violated
+        val result = ReservationVehicleTripTable.insertIgnore {
+            it[this.reservationId] = reservationId
+            it[this.vehicleTripId] = vehicleTripId
+            it[this.tripType] = type.name
+        }
+
+        if (result.insertedCount > 0) {
+            logger.trace("Link between vehicle trip and reservation created successfully")
+            PersistenceResult.ADDED
+        } else {
+            logger.trace("Vehicle trip already linked to the reservation")
+            PersistenceResult.NO_ACTION
         }
     }
 
@@ -48,7 +90,7 @@ class SqliteReservationRepository : ReservationRepository {
         val wasDeleted: Boolean = storedReservation != null
         val summary: String? = storedReservation?.summary
 
-        return@suspendTransaction if (wasDeleted) {
+        if (wasDeleted) {
             logger.trace("Deleted reservation with id: $id and summary: $summary")
             PersistenceResult.DELETED
         } else {
@@ -204,5 +246,21 @@ class SqliteReservationRepository : ReservationRepository {
             )
             PersistenceResult.NO_ACTION
         }
+    }
+
+    /**
+     * Fetches classification metadata (TO/AT/FROM) for vehicle trips associated with the given reservations.
+     *
+     * @return A map where the key is the Vehicle Trip ID and the value is the Trip Type string.
+     */
+    private fun fetchTripTypes(reservationIds: List<EntityID<String>>): Map<String, String> {
+        if (reservationIds.isEmpty()) return emptyMap()
+
+        return ReservationVehicleTripTable
+            .select(ReservationVehicleTripTable.vehicleTripId, ReservationVehicleTripTable.tripType)
+            .where { ReservationVehicleTripTable.reservationId inList reservationIds }
+            .associate {
+                it[ReservationVehicleTripTable.vehicleTripId].value to it[ReservationVehicleTripTable.tripType]
+            }
     }
 }

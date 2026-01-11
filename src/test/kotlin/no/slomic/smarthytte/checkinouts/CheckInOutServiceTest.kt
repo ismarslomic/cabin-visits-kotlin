@@ -1,6 +1,7 @@
 package no.slomic.smarthytte.checkinouts
 
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.datetime.Clock
@@ -135,6 +136,16 @@ class CheckInOutServiceTest :
                         } else {
                             actualReservation.checkOut shouldBe null
                         }
+
+                        if (scenario.hasCheckInTrip || scenario.hasCheckOutTrip) {
+                            actualReservation.cabinVehicleTrip.shouldNotBeNull()
+                            if (scenario.hasCheckInTrip) {
+                                actualReservation.cabinVehicleTrip.toCabinTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasCheckOutTrip) {
+                                actualReservation.cabinVehicleTrip.fromCabinTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                        }
                     }
                 }
             }
@@ -226,6 +237,16 @@ class CheckInOutServiceTest :
                             actualReservation.checkOut!!.sourceName shouldBe scenario.expectedCheckOutSource
                         } else {
                             actualReservation.checkOut shouldBe null
+                        }
+
+                        if (scenario.hasCheckInTrip || scenario.hasCheckOutTrip) {
+                            actualReservation.cabinVehicleTrip.shouldNotBeNull()
+                            if (scenario.hasCheckInTrip) {
+                                actualReservation.cabinVehicleTrip.toCabinTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasCheckOutTrip) {
+                                actualReservation.cabinVehicleTrip.fromCabinTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
                         }
                     }
                 }
@@ -322,6 +343,16 @@ class CheckInOutServiceTest :
                             actualReservation.checkOut!!.sourceName shouldBe scenario.expectedCheckOutSource
                         } else {
                             actualReservation.checkOut shouldBe null
+                        }
+
+                        if (scenario.hasCheckInTrip || scenario.hasCheckOutTrip) {
+                            actualReservation.cabinVehicleTrip.shouldNotBeNull()
+                            if (scenario.hasCheckInTrip) {
+                                actualReservation.cabinVehicleTrip.toCabinTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasCheckOutTrip) {
+                                actualReservation.cabinVehicleTrip.fromCabinTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
                         }
                     }
                 }

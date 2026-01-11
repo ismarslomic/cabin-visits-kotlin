@@ -7,9 +7,13 @@ import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
 import no.slomic.smarthytte.guests.GuestEntity
+import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
+import no.slomic.smarthytte.vehicletrips.VehicleTripEntity
+import no.slomic.smarthytte.vehicletrips.daoToModel
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
 object ReservationTable : BaseIdTable<String>(name = "reservation") {
@@ -40,6 +44,7 @@ class ReservationEntity(id: EntityID<String>) : BaseEntity<String>(id, Reservati
     var summary: String? by ReservationTable.summary
     var description: String? by ReservationTable.description
     var guests by GuestEntity via ReservationGuestTable
+    var vehicleTrips by VehicleTripEntity via ReservationVehicleTripTable
     var sourceCreatedTime: Instant? by ReservationTable.sourceCreatedTime
     var sourceUpdatedTime: Instant? by ReservationTable.sourceUpdatedTime
     var notionId: String? by ReservationTable.notionId
@@ -51,7 +56,22 @@ class ReservationEntity(id: EntityID<String>) : BaseEntity<String>(id, Reservati
     var checkOutSourceId: String? by ReservationTable.checkOutSourceId
 }
 
-fun daoToModel(dao: ReservationEntity) = Reservation(
+/**
+ * Maps a [ReservationEntity] DAO to a [Reservation] domain model.
+ *
+ * @param dao The Exposed DAO entity representing the reservation.
+ * @param tripTypes A map containing the classification metadata for vehicle trips associated with this reservation.
+ * The map keys are the **Vehicle Trip IDs**, and the values are the **trip types**
+ * (names from [ReservationVehicleTripType]).
+ * This parameter is required because the join table [ReservationVehicleTripTable] contains metadata (leg type) that
+ * isn't automatically available through the standard many-to-many DAO reference.
+ *
+ * Providing this map allows for efficient bulk loading of trip categories and avoids the N+1 query problem during
+ * mapping.
+ *
+ * @return A populated [Reservation] domain object with categorized vehicle trips.
+ */
+fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap()): Reservation = Reservation(
     id = dao.id.value,
     summary = dao.summary,
     description = dao.description,
@@ -75,4 +95,35 @@ fun daoToModel(dao: ReservationEntity) = Reservation(
             sourceId = dao.checkOutSourceId!!,
         )
     },
+    cabinVehicleTrip = vehicleTripDaosToCabinVehicleTrip(dao.vehicleTrips, tripTypes),
 )
+
+/**
+ * Converts a collection of VehicleTripEntity instances into a CabinVehicleTrip instance by filtering
+ * and categorizing the trips based on their type mappings provided in the input.
+ *
+ * @param vehicleTrips A collection of VehicleTripEntity representing vehicle trip data.
+ * @param tripTypes A mapping of trip IDs to their corresponding type names (e.g., TO_CABIN, AT_CABIN, FROM_CABIN).
+ * @return A CabinVehicleTrip instance containing categorized trips (to cabin, at cabin, from cabin),
+ *         or null if no trips are found for the provided vehicleTrips.
+ */
+private fun vehicleTripDaosToCabinVehicleTrip(
+    vehicleTrips: SizedIterable<VehicleTripEntity>,
+    tripTypes: Map<String, String>,
+): CabinVehicleTrip? {
+    val toCabinTrips = vehicleTrips
+        .filter { tripTypes[it.id.value] == ReservationVehicleTripType.TO_CABIN.name }
+        .map { daoToModel(it) }
+    val atCabinTrips = vehicleTrips
+        .filter { tripTypes[it.id.value] == ReservationVehicleTripType.AT_CABIN.name }
+        .map { daoToModel(it) }
+    val fromCabinTrips = vehicleTrips
+        .filter { tripTypes[it.id.value] == ReservationVehicleTripType.FROM_CABIN.name }
+        .map { daoToModel(it) }
+
+    return if (toCabinTrips.isEmpty() && atCabinTrips.isEmpty() && fromCabinTrips.isEmpty()) {
+        null
+    } else {
+        CabinVehicleTrip(toCabinTrips, atCabinTrips, fromCabinTrips)
+    }
+}
