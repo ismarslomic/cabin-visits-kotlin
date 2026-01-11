@@ -61,12 +61,21 @@ internal data class CabinVehicleTrip(
                 }
             }
 
-    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean = toCabinEndDate != null && (
-        toCabinEndDate == utcDate || toCabinEndDate == utcDate.plus(
-            1,
-            DateTimeUnit.DAY,
-        )
-        )
+    /**
+     * Determines whether the cabin has been arrived at on a given UTC date.
+     *
+     * @param utcDate the date to check against the cabin arrival date.
+     * @return `true` if the `toCabinEndDate` is not null and matches either the provided date
+     *         or the day after it; otherwise, `false`.
+     */
+    fun hasArrivedCabinAt(utcDate: LocalDate): Boolean =
+        toCabinEndDate != null && (toCabinEndDate == utcDate || toCabinEndDate == utcDate.plus(1, DateTimeUnit.DAY))
 
+    /**
+     * Determines whether the cabin has been departed on the specified UTC date.
+     *
+     * @param utcDate the date to check against the cabin departure date.
+     * @return `true` if the cabin was departed on the provided date; otherwise, `false`.
+     */
     fun hasDepartedCabinAt(utcDate: LocalDate): Boolean = fromCabinStartDate == utcDate
 }
