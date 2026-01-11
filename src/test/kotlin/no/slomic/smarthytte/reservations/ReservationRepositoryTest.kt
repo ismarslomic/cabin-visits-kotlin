@@ -9,9 +9,11 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock
+import no.slomic.smarthytte.checkinouts.CABIN_CITY_NAME
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
+import no.slomic.smarthytte.checkinouts.HOME_CITY_NAME
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.Gender
@@ -19,6 +21,9 @@ import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.createTrip
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -32,6 +37,9 @@ val reservation = Reservation(
     startTime = now.truncatedToMillis(),
     endTime = now.plus(2.days).truncatedToMillis(),
     guestIds = listOf(),
+    toCabinVehicleTrips = listOf(),
+    atCabinVehicleTrips = listOf(),
+    fromCabinVehicleTrips = listOf(),
     summary = "Test reservation",
     description = null,
     sourceCreatedTime = now.minus(1.days).truncatedToMillis(),
@@ -369,6 +377,90 @@ class ReservationRepositoryTest :
                 val allReservationGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
                 allReservationGuests.shouldBeEmpty()
             }
+        }
+
+        "adding vehicle trip link to the reservation should store link to intermediate table" {
+            val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
+            val tripToCabin = createTrip(
+                startCity = HOME_CITY_NAME,
+                endCity = CABIN_CITY_NAME,
+                startTime = "2025-01-01T10:00:00Z",
+                endTime = "2025-01-01T12:00:00Z",
+                id = "trip1",
+            )
+            vehicleTripRepository.addOrUpdate(tripToCabin)
+
+            repository.addOrUpdate(reservation)
+
+            val persistenceResult = repository.addVehicleTripLink(
+                reservationId = reservation.id,
+                vehicleTripId = tripToCabin.id,
+                type = ReservationVehicleTripType.TO_CABIN,
+            )
+            persistenceResult shouldBe PersistenceResult.ADDED
+
+            transaction {
+                val allReservationTrips = ReservationVehicleTripTable.selectAll().toList()
+                allReservationTrips shouldHaveSize 1
+
+                val link = allReservationTrips.first()
+                link[ReservationVehicleTripTable.reservationId].value shouldBe reservation.id
+                link[ReservationVehicleTripTable.vehicleTripId].value shouldBe tripToCabin.id
+                link[ReservationVehicleTripTable.tripType] shouldBe ReservationVehicleTripType.TO_CABIN.name
+            }
+        }
+
+        "reading reservation should include linked vehicle trips categorized by type" {
+            val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
+            val tripToCabin =
+                createTrip(HOME_CITY_NAME, CABIN_CITY_NAME, "2025-01-01T10:00:00Z", "2025-01-01T12:00:00Z", "trip1")
+            val tripAtCabin =
+                createTrip(CABIN_CITY_NAME, "store", "2025-01-02T10:00:00Z", "2025-01-02T11:00:00Z", "trip2")
+            val tripFromCabin =
+                createTrip(CABIN_CITY_NAME, HOME_CITY_NAME, "2025-01-03T10:00:00Z", "2025-01-03T12:00:00Z", "trip3")
+
+            vehicleTripRepository.addOrUpdate(tripToCabin)
+            vehicleTripRepository.addOrUpdate(tripAtCabin)
+            vehicleTripRepository.addOrUpdate(tripFromCabin)
+
+            repository.addOrUpdate(reservation)
+            repository.addVehicleTripLink(reservation.id, tripToCabin.id, ReservationVehicleTripType.TO_CABIN)
+            repository.addVehicleTripLink(reservation.id, tripAtCabin.id, ReservationVehicleTripType.AT_CABIN)
+            repository.addVehicleTripLink(reservation.id, tripFromCabin.id, ReservationVehicleTripType.FROM_CABIN)
+
+            val readReservation = repository.reservationById(reservation.id)
+            readReservation.shouldNotBeNull()
+            readReservation.toCabinVehicleTrips shouldHaveSize 1
+            readReservation.toCabinVehicleTrips.first().id shouldBe tripToCabin.id
+
+            readReservation.atCabinVehicleTrips shouldHaveSize 1
+            readReservation.atCabinVehicleTrips.first().id shouldBe tripAtCabin.id
+
+            readReservation.fromCabinVehicleTrips shouldHaveSize 1
+            readReservation.fromCabinVehicleTrips.first().id shouldBe tripFromCabin.id
+
+            val allReservations = repository.allReservations()
+            allReservations shouldHaveSize 1
+            val reservationFromList = allReservations.first()
+            reservationFromList.toCabinVehicleTrips shouldHaveSize 1
+            reservationFromList.atCabinVehicleTrips shouldHaveSize 1
+            reservationFromList.fromCabinVehicleTrips shouldHaveSize 1
+        }
+
+        "reading reservation without linked vehicle trips should return empty vehicle trip lists" {
+            repository.addOrUpdate(reservation)
+
+            val readReservation = repository.reservationById(reservation.id)
+            readReservation.shouldNotBeNull()
+            readReservation.toCabinVehicleTrips.shouldBeEmpty()
+            readReservation.atCabinVehicleTrips.shouldBeEmpty()
+            readReservation.fromCabinVehicleTrips.shouldBeEmpty()
+
+            val allReservations = repository.allReservations()
+            allReservations shouldHaveSize 1
+            readReservation.toCabinVehicleTrips.shouldBeEmpty()
+            readReservation.atCabinVehicleTrips.shouldBeEmpty()
+            readReservation.fromCabinVehicleTrips.shouldBeEmpty()
         }
     })
 

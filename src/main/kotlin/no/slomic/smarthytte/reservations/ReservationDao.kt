@@ -7,9 +7,16 @@ import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
 import no.slomic.smarthytte.guests.GuestEntity
+import no.slomic.smarthytte.reservations.ReservationVehicleTripType.AT_CABIN
+import no.slomic.smarthytte.reservations.ReservationVehicleTripType.FROM_CABIN
+import no.slomic.smarthytte.reservations.ReservationVehicleTripType.TO_CABIN
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import no.slomic.smarthytte.vehicletrips.VehicleTripEntity
+import no.slomic.smarthytte.vehicletrips.daoToModel
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
 object ReservationTable : BaseIdTable<String>(name = "reservation") {
@@ -40,6 +47,7 @@ class ReservationEntity(id: EntityID<String>) : BaseEntity<String>(id, Reservati
     var summary: String? by ReservationTable.summary
     var description: String? by ReservationTable.description
     var guests by GuestEntity via ReservationGuestTable
+    var vehicleTrips by VehicleTripEntity via ReservationVehicleTripTable
     var sourceCreatedTime: Instant? by ReservationTable.sourceCreatedTime
     var sourceUpdatedTime: Instant? by ReservationTable.sourceUpdatedTime
     var notionId: String? by ReservationTable.notionId
@@ -51,13 +59,31 @@ class ReservationEntity(id: EntityID<String>) : BaseEntity<String>(id, Reservati
     var checkOutSourceId: String? by ReservationTable.checkOutSourceId
 }
 
-fun daoToModel(dao: ReservationEntity) = Reservation(
+/**
+ * Maps a [ReservationEntity] DAO to a [Reservation] domain model.
+ *
+ * @param dao The Exposed DAO entity representing the reservation.
+ * @param tripTypes A map containing the classification metadata for vehicle trips associated with this reservation.
+ * The map keys are the **Vehicle Trip IDs**, and the values are the **trip types**
+ * (names from [ReservationVehicleTripType]).
+ * This parameter is required because the join table [ReservationVehicleTripTable] contains metadata (leg type) that
+ * isn't automatically available through the standard many-to-many DAO reference.
+ *
+ * Providing this map allows for efficient bulk loading of trip categories and avoids the N+1 query problem during
+ * mapping.
+ *
+ * @return A populated [Reservation] domain object with categorized vehicle trips.
+ */
+fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap()): Reservation = Reservation(
     id = dao.id.value,
     summary = dao.summary,
     description = dao.description,
     startTime = dao.startTime,
     endTime = dao.endTime,
     guestIds = listOf(),
+    toCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, TO_CABIN),
+    atCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, AT_CABIN),
+    fromCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, FROM_CABIN),
     sourceCreatedTime = dao.sourceCreatedTime,
     sourceUpdatedTime = dao.sourceUpdatedTime,
     notionId = dao.notionId,
@@ -76,3 +102,20 @@ fun daoToModel(dao: ReservationEntity) = Reservation(
         )
     },
 )
+
+/**
+ * Converts a collection of `VehicleTripEntity` objects to a list of `VehicleTrip` objects, filtering based on the
+ * provided trip types and the specified trip type.
+ *
+ * @param vehicleTrips a collection of `VehicleTripEntity` objects to be converted.
+ * @param tripTypes a map where the key represents a vehicle trip ID and the value corresponds to a trip type name.
+ * @param tripType the specific trip type to filter the vehicle trips.
+ * @return a list of `VehicleTrip` objects that match the provided trip type or an empty list if no matches are found.
+ */
+private fun daoToModel(
+    vehicleTrips: SizedIterable<VehicleTripEntity>,
+    tripTypes: Map<String, String>,
+    tripType: ReservationVehicleTripType,
+): List<VehicleTrip> = vehicleTrips
+    .filter { tripTypes[it.id.value] == tripType.name }
+    .map { daoToModel(it) }

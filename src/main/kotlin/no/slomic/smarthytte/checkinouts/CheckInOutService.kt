@@ -7,10 +7,9 @@ import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.ReservationVehicleTripType
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
-import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
-import no.slomic.smarthytte.vehicletrips.CabinVehicleTripList
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 
@@ -50,6 +49,25 @@ class CheckInOutService(
         val checkInPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         val checkOutPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         allReservations.forEach { reservation ->
+            val cabinVehicleTrip: CabinVehicleTrip? = findCabinTrip(cabinVehicleTripList, reservation)
+
+            // Link all trips associated with this cabin visit to the reservation
+            cabinVehicleTrip?.let { cvt ->
+                cvt.toCabinTrips.forEach {
+                    reservationRepository.addVehicleTripLink(reservation.id, it.id, ReservationVehicleTripType.TO_CABIN)
+                }
+                cvt.atCabinTrips.forEach {
+                    reservationRepository.addVehicleTripLink(reservation.id, it.id, ReservationVehicleTripType.AT_CABIN)
+                }
+                cvt.fromCabinTrips.forEach {
+                    reservationRepository.addVehicleTripLink(
+                        reservation.id,
+                        it.id,
+                        ReservationVehicleTripType.FROM_CABIN,
+                    )
+                }
+            }
+
             val checkIn: CheckIn? = if (reservation.hasStarted) {
                 createCheckIn(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
             } else {
@@ -171,6 +189,14 @@ class CheckInOutService(
             cabinVehicleTrips.firstOrNull { it.hasDepartedCabinAt(reservationEndDate) }
 
         return checkOutTrip
+    }
+
+    private fun findCabinTrip(cabinVehicleTrips: List<CabinVehicleTrip>, reservation: Reservation): CabinVehicleTrip? {
+        val cabinVehicleTrip: CabinVehicleTrip? = cabinVehicleTrips.firstOrNull {
+            it.hasArrivedCabinAt(reservation.startDate) || it.hasDepartedCabinAt(reservation.endDate)
+        }
+
+        return cabinVehicleTrip
     }
 
     private fun findCheckInFromSensor(

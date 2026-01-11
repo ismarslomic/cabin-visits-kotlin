@@ -6,6 +6,12 @@ import no.slomic.smarthytte.common.PersistenceResult
 
 interface ReservationRepository {
     suspend fun allReservations(): List<Reservation>
+    suspend fun addVehicleTripLink(
+        reservationId: String,
+        vehicleTripId: String,
+        type: ReservationVehicleTripType,
+    ): PersistenceResult
+
     suspend fun reservationById(id: String): Reservation?
     suspend fun addOrUpdate(reservation: Reservation): PersistenceResult
     suspend fun deleteReservation(id: String): PersistenceResult

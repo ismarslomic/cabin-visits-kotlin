@@ -14,8 +14,6 @@ import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInStatus
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
 import no.slomic.smarthytte.utils.TestDbSetup
-import no.slomic.smarthytte.vehicletrips.CABIN_CITY_NAME
-import no.slomic.smarthytte.vehicletrips.HOME_CITY_NAME
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
@@ -118,6 +116,10 @@ class CheckInOutServiceTest :
                             vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!)
                         }
 
+                        if (scenario.hasAtCabinTrip) {
+                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!)
+                        }
+
                         // Execute logic
                         service.updateCheckInOutStatusForAllReservations()
 
@@ -134,6 +136,18 @@ class CheckInOutServiceTest :
                             actualReservation.checkOut shouldNotBe null
                         } else {
                             actualReservation.checkOut shouldBe null
+                        }
+
+                        if (scenario.hasCheckInTrip || scenario.hasCheckOutTrip) {
+                            if (scenario.hasCheckInTrip) {
+                                actualReservation.toCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasCheckOutTrip) {
+                                actualReservation.fromCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasAtCabinTrip) {
+                                actualReservation.atCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
                         }
                     }
                 }
@@ -208,6 +222,10 @@ class CheckInOutServiceTest :
                             vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!)
                         }
 
+                        if (scenario.hasAtCabinTrip) {
+                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!)
+                        }
+
                         // Execute logic
                         service.updateCheckInOutStatusForAllReservations()
 
@@ -226,6 +244,18 @@ class CheckInOutServiceTest :
                             actualReservation.checkOut!!.sourceName shouldBe scenario.expectedCheckOutSource
                         } else {
                             actualReservation.checkOut shouldBe null
+                        }
+
+                        if (scenario.hasCheckInTrip || scenario.hasCheckOutTrip) {
+                            if (scenario.hasCheckInTrip) {
+                                actualReservation.toCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasCheckOutTrip) {
+                                actualReservation.fromCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasAtCabinTrip) {
+                                actualReservation.atCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
                         }
                     }
                 }
@@ -304,6 +334,10 @@ class CheckInOutServiceTest :
                             vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!)
                         }
 
+                        if (scenario.hasAtCabinTrip) {
+                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!)
+                        }
+
                         // Execute logic
                         service.updateCheckInOutStatusForAllReservations()
 
@@ -322,6 +356,18 @@ class CheckInOutServiceTest :
                             actualReservation.checkOut!!.sourceName shouldBe scenario.expectedCheckOutSource
                         } else {
                             actualReservation.checkOut shouldBe null
+                        }
+
+                        if (scenario.hasCheckInTrip || scenario.hasCheckOutTrip) {
+                            if (scenario.hasCheckInTrip) {
+                                actualReservation.toCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasCheckOutTrip) {
+                                actualReservation.fromCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
+                            if (scenario.hasAtCabinTrip) {
+                                actualReservation.atCabinVehicleTrips shouldNotBe emptyList<VehicleTrip>()
+                            }
                         }
                     }
                 }
@@ -344,6 +390,7 @@ data class CheckInOutScenario(
     val hasCheckOutTrip: Boolean,
     val expectedCheckInSet: Boolean,
     val expectedCheckOutSet: Boolean,
+    val hasAtCabinTrip: Boolean = false,
     val expectedCheckInSource: CheckInOutSource? = null,
     val expectedCheckOutSource: CheckInOutSource? = null,
 ) {
@@ -352,6 +399,7 @@ data class CheckInOutScenario(
     val checkOutSensor: CheckInOutSensor? = createCheckOutSensor()
     val checkInTrip: VehicleTrip? = createCheckInTrip()
     val checkOutTrip: VehicleTrip? = createCheckOutTrip()
+    val atCabinTrip: VehicleTrip? = createAtCabinTrip()
 
     fun describe(): String = "${reservationState.name}, " +
         "sensor: [in:$hasCheckInSensor, out:$hasCheckOutSensor], " +
@@ -410,6 +458,18 @@ data class CheckInOutScenario(
             endCity = CABIN_CITY_NAME,
             startTime = reservation.startTime.minus(3.hours).toIsoUtcString(),
             endTime = reservation.startTime.plus(3.hours).toIsoUtcString(),
+            id = UUID.randomUUID().toString(),
+        )
+    } else {
+        null
+    }
+
+    private fun createAtCabinTrip(): VehicleTrip? = if (hasAtCabinTrip) {
+        createTrip(
+            startCity = CABIN_CITY_NAME,
+            endCity = "Hemsedal",
+            startTime = reservation.startTime.minus(4.hours).toIsoUtcString(),
+            endTime = reservation.startTime.plus(5.minutes).toIsoUtcString(),
             id = UUID.randomUUID().toString(),
         )
     } else {

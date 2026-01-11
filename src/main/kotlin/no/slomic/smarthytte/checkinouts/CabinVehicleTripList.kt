@@ -1,6 +1,15 @@
-package no.slomic.smarthytte.vehicletrips
+package no.slomic.smarthytte.checkinouts
 
-class CabinVehicleTripList(private val allVehicleTrips: List<VehicleTrip>) {
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
+
+/**
+ * A domain-specific wrapper for processing a list of raw [VehicleTrip]s into categorized cabin visits.
+ *
+ * It provides the logic to group sequential trips into round trips and classify them as [CabinVehicleTrip]s.
+ * This helps [CheckInOutService] match vehicle movements against reservation rules to determine
+ * actual arrival and departure events.
+ */
+internal class CabinVehicleTripList(private val allVehicleTrips: List<VehicleTrip>) {
     val cabinTrips: List<CabinVehicleTrip>
 
     init {
