@@ -1,11 +1,10 @@
-@file:Suppress("ktlint:standard:max-line-length")
-
-package no.slomic.smarthytte.vehicletrips
+package no.slomic.smarthytte.checkinouts
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Instant
+import no.slomic.smarthytte.vehicletrips.createTrip
 
 /**
  * Rules:
@@ -487,7 +486,7 @@ class CabinTripExpectation {
     var fromCabinTripsEndCities: List<String>? = null
 }
 
-fun assertCabinTrip(actual: CabinVehicleTrip, block: CabinTripExpectation.() -> Unit) {
+internal fun assertCabinTrip(actual: CabinVehicleTrip, block: CabinTripExpectation.() -> Unit) {
     val expected = CabinTripExpectation().apply(block)
 
     actual.toCabinTrips.map { it.endCity } shouldBe expected.toCabinTripsEndCities

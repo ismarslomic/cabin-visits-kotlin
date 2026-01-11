@@ -10,8 +10,6 @@ import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
-import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
-import no.slomic.smarthytte.vehicletrips.CabinVehicleTripList
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 

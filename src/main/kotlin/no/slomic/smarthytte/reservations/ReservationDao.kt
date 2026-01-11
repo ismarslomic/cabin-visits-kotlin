@@ -7,7 +7,10 @@ import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
 import no.slomic.smarthytte.guests.GuestEntity
-import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
+import no.slomic.smarthytte.reservations.ReservationVehicleTripType.AT_CABIN
+import no.slomic.smarthytte.reservations.ReservationVehicleTripType.FROM_CABIN
+import no.slomic.smarthytte.reservations.ReservationVehicleTripType.TO_CABIN
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripEntity
 import no.slomic.smarthytte.vehicletrips.daoToModel
 import org.jetbrains.exposed.dao.EntityClass
@@ -78,6 +81,9 @@ fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap
     startTime = dao.startTime,
     endTime = dao.endTime,
     guestIds = listOf(),
+    toCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, TO_CABIN),
+    atCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, AT_CABIN),
+    fromCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, FROM_CABIN),
     sourceCreatedTime = dao.sourceCreatedTime,
     sourceUpdatedTime = dao.sourceUpdatedTime,
     notionId = dao.notionId,
@@ -95,35 +101,21 @@ fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap
             sourceId = dao.checkOutSourceId!!,
         )
     },
-    cabinVehicleTrip = vehicleTripDaosToCabinVehicleTrip(dao.vehicleTrips, tripTypes),
 )
 
 /**
- * Converts a collection of VehicleTripEntity instances into a CabinVehicleTrip instance by filtering
- * and categorizing the trips based on their type mappings provided in the input.
+ * Converts a collection of `VehicleTripEntity` objects to a list of `VehicleTrip` objects, filtering based on the
+ * provided trip types and the specified trip type.
  *
- * @param vehicleTrips A collection of VehicleTripEntity representing vehicle trip data.
- * @param tripTypes A mapping of trip IDs to their corresponding type names (e.g., TO_CABIN, AT_CABIN, FROM_CABIN).
- * @return A CabinVehicleTrip instance containing categorized trips (to cabin, at cabin, from cabin),
- *         or null if no trips are found for the provided vehicleTrips.
+ * @param vehicleTrips a collection of `VehicleTripEntity` objects to be converted.
+ * @param tripTypes a map where the key represents a vehicle trip ID and the value corresponds to a trip type name.
+ * @param tripType the specific trip type to filter the vehicle trips.
+ * @return a list of `VehicleTrip` objects that match the provided trip type or an empty list if no matches are found.
  */
-private fun vehicleTripDaosToCabinVehicleTrip(
+private fun daoToModel(
     vehicleTrips: SizedIterable<VehicleTripEntity>,
     tripTypes: Map<String, String>,
-): CabinVehicleTrip? {
-    val toCabinTrips = vehicleTrips
-        .filter { tripTypes[it.id.value] == ReservationVehicleTripType.TO_CABIN.name }
-        .map { daoToModel(it) }
-    val atCabinTrips = vehicleTrips
-        .filter { tripTypes[it.id.value] == ReservationVehicleTripType.AT_CABIN.name }
-        .map { daoToModel(it) }
-    val fromCabinTrips = vehicleTrips
-        .filter { tripTypes[it.id.value] == ReservationVehicleTripType.FROM_CABIN.name }
-        .map { daoToModel(it) }
-
-    return if (toCabinTrips.isEmpty() && atCabinTrips.isEmpty() && fromCabinTrips.isEmpty()) {
-        null
-    } else {
-        CabinVehicleTrip(toCabinTrips, atCabinTrips, fromCabinTrips)
-    }
-}
+    tripType: ReservationVehicleTripType,
+): List<VehicleTrip> = vehicleTrips
+    .filter { tripTypes[it.id.value] == tripType.name }
+    .map { daoToModel(it) }

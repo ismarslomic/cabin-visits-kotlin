@@ -9,9 +9,11 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock
+import no.slomic.smarthytte.checkinouts.CABIN_CITY_NAME
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
+import no.slomic.smarthytte.checkinouts.HOME_CITY_NAME
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.Gender
@@ -19,8 +21,6 @@ import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.utils.TestDbSetup
-import no.slomic.smarthytte.vehicletrips.CABIN_CITY_NAME
-import no.slomic.smarthytte.vehicletrips.HOME_CITY_NAME
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.createTrip
@@ -37,11 +37,13 @@ val reservation = Reservation(
     startTime = now.truncatedToMillis(),
     endTime = now.plus(2.days).truncatedToMillis(),
     guestIds = listOf(),
+    toCabinVehicleTrips = listOf(),
+    atCabinVehicleTrips = listOf(),
+    fromCabinVehicleTrips = listOf(),
     summary = "Test reservation",
     description = null,
     sourceCreatedTime = now.minus(1.days).truncatedToMillis(),
     sourceUpdatedTime = now.minus(5.hours).truncatedToMillis(),
-    cabinVehicleTrip = null,
 )
 
 val checkIn = CheckIn(
@@ -428,33 +430,37 @@ class ReservationRepositoryTest :
 
             val readReservation = repository.reservationById(reservation.id)
             readReservation.shouldNotBeNull()
-            readReservation.cabinVehicleTrip.shouldNotBeNull()
-            readReservation.cabinVehicleTrip.toCabinTrips shouldHaveSize 1
-            readReservation.cabinVehicleTrip.toCabinTrips.first().id shouldBe tripToCabin.id
-            readReservation.cabinVehicleTrip.atCabinTrips shouldHaveSize 1
-            readReservation.cabinVehicleTrip.atCabinTrips.first().id shouldBe tripAtCabin.id
-            readReservation.cabinVehicleTrip.fromCabinTrips shouldHaveSize 1
-            readReservation.cabinVehicleTrip.fromCabinTrips.first().id shouldBe tripFromCabin.id
+            readReservation.toCabinVehicleTrips shouldHaveSize 1
+            readReservation.toCabinVehicleTrips.first().id shouldBe tripToCabin.id
+
+            readReservation.atCabinVehicleTrips shouldHaveSize 1
+            readReservation.atCabinVehicleTrips.first().id shouldBe tripAtCabin.id
+
+            readReservation.fromCabinVehicleTrips shouldHaveSize 1
+            readReservation.fromCabinVehicleTrips.first().id shouldBe tripFromCabin.id
 
             val allReservations = repository.allReservations()
             allReservations shouldHaveSize 1
             val reservationFromList = allReservations.first()
-            reservationFromList.cabinVehicleTrip.shouldNotBeNull()
-            reservationFromList.cabinVehicleTrip.toCabinTrips shouldHaveSize 1
-            reservationFromList.cabinVehicleTrip.atCabinTrips shouldHaveSize 1
-            reservationFromList.cabinVehicleTrip.fromCabinTrips shouldHaveSize 1
+            reservationFromList.toCabinVehicleTrips shouldHaveSize 1
+            reservationFromList.atCabinVehicleTrips shouldHaveSize 1
+            reservationFromList.fromCabinVehicleTrips shouldHaveSize 1
         }
 
-        "reading reservation without linked vehicle trips should return null cabinVehicleTrip" {
+        "reading reservation without linked vehicle trips should return empty vehicle trip lists" {
             repository.addOrUpdate(reservation)
 
             val readReservation = repository.reservationById(reservation.id)
             readReservation.shouldNotBeNull()
-            readReservation.cabinVehicleTrip.shouldBeNull()
+            readReservation.toCabinVehicleTrips.shouldBeEmpty()
+            readReservation.atCabinVehicleTrips.shouldBeEmpty()
+            readReservation.fromCabinVehicleTrips.shouldBeEmpty()
 
             val allReservations = repository.allReservations()
             allReservations shouldHaveSize 1
-            allReservations.first().cabinVehicleTrip.shouldBeNull()
+            readReservation.toCabinVehicleTrips.shouldBeEmpty()
+            readReservation.atCabinVehicleTrips.shouldBeEmpty()
+            readReservation.fromCabinVehicleTrips.shouldBeEmpty()
         }
     })
 

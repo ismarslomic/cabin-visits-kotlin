@@ -1,7 +1,9 @@
-package no.slomic.smarthytte.vehicletrips
+package no.slomic.smarthytte.checkinouts
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import no.slomic.smarthytte.vehicletrips.createTrip
 
 class GroupTripsByRoundTripTest :
     ShouldSpec({

@@ -6,14 +6,16 @@ import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
-import no.slomic.smarthytte.vehicletrips.CabinVehicleTrip
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
 
 data class Reservation(
     val id: String,
     val startTime: Instant,
     val endTime: Instant,
     val guestIds: List<String>,
-    val cabinVehicleTrip: CabinVehicleTrip? = null,
+    val toCabinVehicleTrips: List<VehicleTrip> = emptyList(),
+    val atCabinVehicleTrips: List<VehicleTrip> = emptyList(),
+    val fromCabinVehicleTrips: List<VehicleTrip> = emptyList(),
     val summary: String? = null,
     val description: String? = null,
     val sourceCreatedTime: Instant? = null,
