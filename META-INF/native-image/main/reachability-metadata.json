@@ -7,6 +7,9 @@
       "type": "[Ljava.lang.String;"
     },
     {
+      "type": "android.os.Build$VERSION"
+    },
+    {
       "type": "apple.security.AppleProvider",
       "methods": [
         {
@@ -17,15 +20,6 @@
     },
     {
       "type": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "ch.qos.logback.classic.joran.SerializedModelConfigurator",
       "methods": [
         {
           "name": "<init>",
@@ -323,242 +317,6 @@
         {
           "name": "<init>",
           "parameterTypes": []
-        },
-        {
-          "name": "setCreated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setCreator",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Creator"
-          ]
-        },
-        {
-          "name": "setDescription",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEnd",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setEtag",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEventType",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setExtendedProperties",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$ExtendedProperties"
-          ]
-        },
-        {
-          "name": "setGuestsCanInviteOthers",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        },
-        {
-          "name": "setGuestsCanSeeOtherGuests",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        },
-        {
-          "name": "setHtmlLink",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setICalUID",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setId",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setKind",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLocation",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setOrganizer",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Organizer"
-          ]
-        },
-        {
-          "name": "setReminders",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Reminders"
-          ]
-        },
-        {
-          "name": "setSequence",
-          "parameterTypes": [
-            "java.lang.Integer"
-          ]
-        },
-        {
-          "name": "setStart",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setStatus",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSummary",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setTransparency",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setUpdated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setVisibility",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Creator",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setEmail",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$ExtendedProperties",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Organizer",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setDisplayName",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEmail",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSelf",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Reminders",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setUseDefault",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.EventDateTime",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setDate",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setDateTime",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setTimeZone",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
         }
       ]
     },
@@ -643,21 +401,21 @@
       ]
     },
     {
-      "type": "com.google.common.util.concurrent.AbstractFuture",
+      "type": "com.google.common.util.concurrent.AbstractFutureState",
       "fields": [
         {
-          "name": "listeners"
+          "name": "listenersField"
         },
         {
-          "name": "value"
+          "name": "valueField"
         },
         {
-          "name": "waiters"
+          "name": "waitersField"
         }
       ]
     },
     {
-      "type": "com.google.common.util.concurrent.AbstractFuture$Waiter",
+      "type": "com.google.common.util.concurrent.AbstractFutureState$Waiter",
       "fields": [
         {
           "name": "next"
@@ -1114,6 +872,15 @@
       ]
     },
     {
+      "type": "io.ktor.client.plugins.HttpRetryDelayContext"
+    },
+    {
+      "type": "io.ktor.client.plugins.HttpRetryModifyRequestContext"
+    },
+    {
+      "type": "io.ktor.client.plugins.HttpRetryShouldRetryContext"
+    },
+    {
       "type": "io.ktor.client.plugins.HttpSend"
     },
     {
@@ -1126,7 +893,16 @@
       "type": "io.ktor.client.plugins.cookies.HttpCookies"
     },
     {
+      "type": "io.ktor.client.request.HttpRequest"
+    },
+    {
+      "type": "io.ktor.client.request.HttpRequestBuilder"
+    },
+    {
       "type": "io.ktor.client.request.ResponseAdapter"
+    },
+    {
+      "type": "io.ktor.client.statement.HttpResponse"
     },
     {
       "type": "io.ktor.http.ContentType"
@@ -1290,6 +1066,9 @@
       ]
     },
     {
+      "type": "java.io.Serializable"
+    },
+    {
       "type": "java.lang.AbstractStringBuilder"
     },
     {
@@ -1439,6 +1218,9 @@
       ]
     },
     {
+      "type": "java.lang.invoke.VarHandle"
+    },
+    {
       "type": "java.lang.management.MemoryUsage",
       "methods": [
         {
@@ -1507,9 +1289,6 @@
       "type": "java.sql.Date"
     },
     {
-      "type": "java.sql.ResultSet"
-    },
-    {
       "type": "java.sql.Timestamp"
     },
     {
@@ -1524,12 +1303,6 @@
     },
     {
       "type": "java.util.LinkedHashMap"
-    },
-    {
-      "type": "java.util.List"
-    },
-    {
-      "type": "java.util.Map"
     },
     {
       "type": "java.util.SortedSet"
@@ -1571,6 +1344,9 @@
       "type": "kotlin.CharSequence"
     },
     {
+      "type": "kotlin.Cloneable"
+    },
+    {
       "type": "kotlin.Comparable"
     },
     {
@@ -1587,6 +1363,18 @@
     },
     {
       "type": "kotlin.FloatArray"
+    },
+    {
+      "type": "kotlin.Function0"
+    },
+    {
+      "type": "kotlin.Function1"
+    },
+    {
+      "type": "kotlin.Function2"
+    },
+    {
+      "type": "kotlin.Function3"
     },
     {
       "type": "kotlin.Int"
@@ -1658,6 +1446,9 @@
       "type": "kotlin.String"
     },
     {
+      "type": "kotlin.Throwable"
+    },
+    {
       "type": "kotlin.Unit"
     },
     {
@@ -1676,19 +1467,25 @@
       ]
     },
     {
+      "type": "kotlin.collections.HashMap"
+    },
+    {
+      "type": "kotlin.collections.LinkedHashMap"
+    },
+    {
       "type": "kotlin.collections.List"
     },
     {
       "type": "kotlin.collections.Map"
     },
     {
-      "type": "kotlin.collections.MutableMap"
-    },
-    {
       "type": "kotlin.collections.Set"
     },
     {
       "type": "kotlin.jvm.internal.DefaultConstructorMarker"
+    },
+    {
+      "type": "kotlin.reflect.KProperty"
     },
     {
       "type": "kotlin.reflect.jvm.internal.ReflectionFactoryImpl",
@@ -1719,6 +1516,9 @@
       "type": "kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsLoaderImpl"
     },
     {
+      "type": "kotlin.time.Instant"
+    },
+    {
       "type": "kotlinx.coroutines.CancellableContinuationImpl",
       "fields": [
         {
@@ -1745,6 +1545,14 @@
       "fields": [
         {
           "name": "_handled$volatile"
+        }
+      ]
+    },
+    {
+      "type": "kotlinx.coroutines.DispatchedCoroutine",
+      "fields": [
+        {
+          "name": "_decision$volatile"
         }
       ]
     },
@@ -1979,12 +1787,18 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.checkinouts.CheckInOutSource"
+    },
+    {
+      "type": "no.slomic.smarthytte.common.BaseEntity"
+    },
+    {
       "type": "no.slomic.smarthytte.guests.GuestEntity",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
+            "org.jetbrains.exposed.v1.core.dao.id.EntityID"
           ]
         }
       ]
@@ -2167,14 +1981,25 @@
     },
     {
       "type": "no.slomic.smarthytte.reservations.ReservationEntity",
+      "fields": [
+        {
+          "name": "guests$delegate"
+        },
+        {
+          "name": "vehicleTrips$delegate"
+        }
+      ],
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
+            "org.jetbrains.exposed.v1.core.dao.id.EntityID"
           ]
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationEntity$Companion"
     },
     {
       "type": "no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorEntity",
@@ -2182,7 +2007,7 @@
         {
           "name": "<init>",
           "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
+            "org.jetbrains.exposed.v1.core.dao.id.EntityID"
           ]
         }
       ]
@@ -2193,7 +2018,7 @@
         {
           "name": "<init>",
           "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
+            "org.jetbrains.exposed.v1.core.dao.id.EntityID"
           ]
         }
       ]
@@ -2238,7 +2063,7 @@
         {
           "name": "<init>",
           "parameterTypes": [
-            "org.jetbrains.exposed.dao.id.EntityID"
+            "org.jetbrains.exposed.v1.core.dao.id.EntityID"
           ]
         }
       ]
@@ -2310,56 +2135,6 @@
       "allDeclaredFields": true
     },
     {
-      "type": "org.flywaydb.core.internal.configuration.extensions.DeployScriptFilenameConfigurationExtension",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "getScriptFilename",
-          "parameterTypes": []
-        },
-        {
-          "name": "setScriptFilename",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.flywaydb.core.internal.configuration.extensions.PrepareScriptFilenameConfigurationExtension",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "getScriptFilename",
-          "parameterTypes": []
-        },
-        {
-          "name": "getUndoFilename",
-          "parameterTypes": []
-        },
-        {
-          "name": "setScriptFilename",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setUndoFilename",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
       "type": "org.flywaydb.core.internal.configuration.resolvers.EnvironmentProvisionerNone"
     },
     {
@@ -2415,6 +2190,10 @@
       "type": "org.flywaydb.core.internal.proprietaryStubs.ModelCommandExtensionStub"
     },
     {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.OfflinePermitConfigurationExtensionStub",
+      "allDeclaredFields": true
+    },
+    {
       "type": "org.flywaydb.core.internal.proprietaryStubs.PATTokenConfigurationExtensionStub",
       "allDeclaredFields": true
     },
@@ -2461,28 +2240,16 @@
       "type": "org.flywaydb.core.internal.scanner.classpath.ClasspathLocationHandlerImpl"
     },
     {
-      "type": "org.flywaydb.core.internal.scanner.cloud.s3.AwsS3LocationHandler"
-    },
-    {
       "type": "org.flywaydb.core.internal.scanner.filesystem.FilesystemLocationHandler"
     },
     {
       "type": "org.flywaydb.core.internal.schemahistory.BaseAppliedMigration"
     },
     {
-      "type": "org.jetbrains.exposed.dao.DaoEntityIDFactory"
+      "type": "org.jetbrains.exposed.v1.core.Column"
     },
     {
-      "type": "org.jetbrains.exposed.dao.EntityLifecycleInterceptor"
-    },
-    {
-      "type": "org.jetbrains.exposed.dao.id.EntityID"
-    },
-    {
-      "type": "org.jetbrains.exposed.jdbc.ExposedConnectionImpl"
-    },
-    {
-      "type": "org.jetbrains.exposed.sql.ColumnType",
+      "type": "org.jetbrains.exposed.v1.core.ColumnType",
       "methods": [
         {
           "name": "getNullable",
@@ -2497,10 +2264,16 @@
       ]
     },
     {
-      "type": "org.jetbrains.exposed.sql.IColumnType"
+      "type": "org.jetbrains.exposed.v1.core.CompositeColumn"
     },
     {
-      "type": "org.jetbrains.exposed.sql.StringColumnType",
+      "type": "org.jetbrains.exposed.v1.core.IColumnType"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.core.ResultRow"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.core.StringColumnType",
       "methods": [
         {
           "name": "getCollate",
@@ -2509,7 +2282,10 @@
       ]
     },
     {
-      "type": "org.jetbrains.exposed.sql.VarCharColumnType",
+      "type": "org.jetbrains.exposed.v1.core.Table"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.core.VarCharColumnType",
       "methods": [
         {
           "name": "<init>",
@@ -2525,7 +2301,55 @@
       ]
     },
     {
-      "type": "org.jetbrains.exposed.sql.statements.api.PreparedStatementApi"
+      "type": "org.jetbrains.exposed.v1.core.dao.id.CompositeID"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.core.dao.id.EntityID"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.core.dao.id.IdTable"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.core.statements.api.PreparedStatementApi"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.core.statements.api.RowApi"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.DaoEntityIDFactory"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.Entity"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.EntityBatchUpdate"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.EntityClass"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.EntityFieldWithTransform"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.EntityLifecycleInterceptor"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.InnerTableLink"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.OptionalReference"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.dao.Reference"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.jdbc.Database"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.jdbc.ExposedConnectionImpl"
+    },
+    {
+      "type": "org.jetbrains.exposed.v1.jdbc.SizedIterable"
     },
     {
       "type": "org.slf4j.Logger"
@@ -2535,10 +2359,6 @@
     },
     {
       "type": "org.slf4j.spi.SLF4JServiceProvider"
-    },
-    {
-      "type": "sun.misc.Unsafe",
-      "allDeclaredFields": true
     },
     {
       "type": "sun.security.pkcs12.PKCS12KeyStore",
@@ -2968,13 +2788,13 @@
       "glob": "META-INF/services/org.flywaydb.core.extensibility.Plugin"
     },
     {
-      "glob": "META-INF/services/org.jetbrains.exposed.dao.id.EntityIDFactory"
+      "glob": "META-INF/services/org.jetbrains.exposed.v1.core.dao.id.EntityIDFactory"
     },
     {
-      "glob": "META-INF/services/org.jetbrains.exposed.sql.DatabaseConnectionAutoRegistration"
+      "glob": "META-INF/services/org.jetbrains.exposed.v1.core.statements.GlobalStatementInterceptor"
     },
     {
-      "glob": "META-INF/services/org.jetbrains.exposed.sql.statements.GlobalStatementInterceptor"
+      "glob": "META-INF/services/org.jetbrains.exposed.v1.jdbc.DatabaseConnectionAutoRegistration"
     },
     {
       "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
@@ -3001,19 +2821,16 @@
       "glob": "db/callback"
     },
     {
-      "glob": "db/migration"
+      "glob": "db/migration-index.txt"
     },
     {
       "glob": "db/migration/V1.0__initial_schema.sql"
     },
     {
-      "glob": "logback-test.scmo"
+      "glob": "db/migration/V1.1__new_table_reservation_vehicle_trip.sql"
     },
     {
       "glob": "logback-test.xml"
-    },
-    {
-      "glob": "logback.scmo"
     },
     {
       "glob": "logback.xml"
