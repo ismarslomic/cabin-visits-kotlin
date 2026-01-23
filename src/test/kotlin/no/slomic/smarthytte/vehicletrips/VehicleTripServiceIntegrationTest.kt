@@ -83,7 +83,7 @@ class VehicleTripServiceIntegrationTest :
                                 val currentPage: Int = jsonElement.jsonObject["currentPage"]!!.jsonPrimitive.int
                                 respond(
                                     content = if (currentPage == 1) vehicleTripsPage1 else vehicleTripsPage2,
-                                    status = HttpStatusCode.Companion.OK,
+                                    status = HttpStatusCode.OK,
                                     headers = headersOf(HttpHeaders.ContentType, "application/json"),
                                 )
                             }
@@ -91,7 +91,7 @@ class VehicleTripServiceIntegrationTest :
                             request.url.toString() == propertiesHolder.vehicleTrip.loginUrl -> {
                                 respond(
                                     content = "",
-                                    status = HttpStatusCode.Companion.OK,
+                                    status = HttpStatusCode.OK,
                                     headers = headersOf(HttpHeaders.ContentType, "text/html"),
                                 )
                             }
