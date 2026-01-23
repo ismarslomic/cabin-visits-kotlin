@@ -2,7 +2,6 @@ package no.slomic.smarthytte.checkinouts
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.reservations.Reservation
@@ -12,6 +11,7 @@ import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
+import kotlin.time.Instant
 
 class CheckInOutService(
     private val reservationRepository: ReservationRepository,

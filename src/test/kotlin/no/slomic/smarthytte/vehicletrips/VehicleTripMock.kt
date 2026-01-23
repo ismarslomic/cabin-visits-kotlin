@@ -1,8 +1,8 @@
 package no.slomic.smarthytte.vehicletrips
 
-import kotlinx.datetime.Instant
-import java.util.UUID
+import java.util.*
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 fun createTrip(
     startCity: String,

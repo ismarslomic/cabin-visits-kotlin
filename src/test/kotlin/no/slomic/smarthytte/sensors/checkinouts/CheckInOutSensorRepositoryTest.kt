@@ -5,10 +5,10 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.utils.TestDbSetup
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import kotlin.time.Instant
 
 val checkInSensor = CheckInOutSensor(
     id = "foo-bar",

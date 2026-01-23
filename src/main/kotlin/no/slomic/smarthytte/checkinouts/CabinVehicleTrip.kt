@@ -1,11 +1,11 @@
 package no.slomic.smarthytte.checkinouts
 
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import kotlin.time.Instant
 
 const val HOME_CITY_NAME = "Oslo"
 const val CABIN_CITY_NAME = "Ullsåk"

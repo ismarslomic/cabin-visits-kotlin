@@ -27,7 +27,7 @@ data class GetVehicleTripsRequest(
     companion object {
         // Format: dd.mm.yyyy
         val NORWEGIAN_DATE_FORMAT = LocalDate.Format {
-            dayOfMonth(padding = Padding.ZERO)
+            day(padding = Padding.ZERO)
             char('.')
             monthNumber(padding = Padding.ZERO)
             char('.')

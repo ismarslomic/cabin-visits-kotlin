@@ -31,7 +31,7 @@ object StringToLocalDateSerde : KSerializer<LocalDate> {
         val dateString = decoder.decodeString()
 
         val customFormat = LocalDate.Format {
-            dayOfMonth(padding = Padding.ZERO)
+            day(padding = Padding.ZERO)
             char('.')
             monthNumber(padding = Padding.ZERO)
             char('.')

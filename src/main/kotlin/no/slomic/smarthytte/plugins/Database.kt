@@ -5,8 +5,8 @@ import io.ktor.server.application.log
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.slf4j.Logger
 import org.sqlite.SQLiteDataSource
 import java.io.File

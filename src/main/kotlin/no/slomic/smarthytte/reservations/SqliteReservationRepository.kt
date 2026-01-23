@@ -2,17 +2,19 @@ package no.slomic.smarthytte.reservations
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.datetime.Clock
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.GuestEntity
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.with
-import org.jetbrains.exposed.sql.SizedCollection
-import org.jetbrains.exposed.sql.insertIgnore
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.dao.with
+import org.jetbrains.exposed.v1.jdbc.SizedCollection
+import org.jetbrains.exposed.v1.jdbc.insertIgnore
+import org.jetbrains.exposed.v1.jdbc.select
+import kotlin.time.Clock
 
 @Suppress("TooManyFunctions")
 class SqliteReservationRepository : ReservationRepository {

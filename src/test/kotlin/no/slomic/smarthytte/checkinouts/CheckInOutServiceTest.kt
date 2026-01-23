@@ -3,8 +3,6 @@ package no.slomic.smarthytte.checkinouts
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
@@ -19,9 +17,11 @@ import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.createTrip
 import java.util.*
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 class CheckInOutServiceTest :
     ShouldSpec({

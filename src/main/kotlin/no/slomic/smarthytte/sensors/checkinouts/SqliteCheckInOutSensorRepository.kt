@@ -2,11 +2,11 @@ package no.slomic.smarthytte.sensors.checkinouts
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
-import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import kotlin.time.Clock
 
 class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteCheckInOutSensorRepository::class.java.name)

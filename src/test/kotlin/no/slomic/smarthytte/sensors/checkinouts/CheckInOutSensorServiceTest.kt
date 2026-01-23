@@ -11,14 +11,14 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import kotlinx.coroutines.channels.Channel
-import kotlinx.datetime.Instant
-import kotlinx.datetime.toJavaInstant
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 import no.slomic.smarthytte.utils.TestDbSetup
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 
 data class MockFluxRecord(val time: Instant, val value: String)
 

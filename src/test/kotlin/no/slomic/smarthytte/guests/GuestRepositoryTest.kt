@@ -12,9 +12,9 @@ import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.reservations.reservation
 import no.slomic.smarthytte.utils.TestDbSetup
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 val guest = Guest(
     id = "john",

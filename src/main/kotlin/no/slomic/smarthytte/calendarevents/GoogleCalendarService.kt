@@ -13,7 +13,6 @@ import com.google.auth.oauth2.GoogleCredentials
 import com.google.auth.oauth2.ServiceAccountCredentials
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.readSummaryToGuestFromJsonFile
@@ -24,6 +23,7 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 import java.io.FileInputStream
+import kotlin.time.Instant
 
 class GoogleCalendarService(
     private val reservationRepository: ReservationRepository,

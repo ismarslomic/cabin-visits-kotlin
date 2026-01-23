@@ -1,6 +1,6 @@
 package no.slomic.smarthytte.checkinouts
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 sealed class CheckInOut {
     abstract val time: Instant

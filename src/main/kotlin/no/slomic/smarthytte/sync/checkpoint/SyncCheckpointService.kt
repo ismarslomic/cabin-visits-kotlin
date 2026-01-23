@@ -1,7 +1,7 @@
 package no.slomic.smarthytte.sync.checkpoint
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
 
 class SyncCheckpointService(val repository: SyncCheckpointRepository) {
     companion object {

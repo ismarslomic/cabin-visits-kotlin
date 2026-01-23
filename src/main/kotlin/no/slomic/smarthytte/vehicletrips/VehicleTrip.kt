@@ -1,7 +1,7 @@
 package no.slomic.smarthytte.vehicletrips
 
-import kotlinx.datetime.Instant
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 data class VehicleTrip(
     val averageEnergyConsumption: Double,

@@ -2,11 +2,11 @@ package no.slomic.smarthytte.vehicletrips
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
-import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import kotlin.time.Clock
 
 class SqliteVehicleTripRepository : VehicleTripRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteVehicleTripRepository::class.java.name)
@@ -26,11 +26,11 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         }
     }
 
-    override suspend fun setNotionId(notionId: String, vehicleTripId: String): PersistenceResult {
+    override suspend fun setNotionId(notionId: String, vehicleTripId: String): PersistenceResult = suspendTransaction {
         logger.trace("Setting notion Id for vehicle trip with id: $vehicleTripId")
 
         val storedVehicleTrip: VehicleTripEntity =
-            VehicleTripEntity.findById(vehicleTripId) ?: return PersistenceResult.NO_ACTION
+            VehicleTripEntity.findById(vehicleTripId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
         with(storedVehicleTrip) {
             this.notionId = notionId
@@ -39,7 +39,7 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         }
 
         logger.trace("Notion id set for vehicle trip with id: $vehicleTripId")
-        return PersistenceResult.UPDATED
+        PersistenceResult.UPDATED
     }
 
     @Suppress("DuplicatedCode")

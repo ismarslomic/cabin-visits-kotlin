@@ -2,11 +2,11 @@ package no.slomic.smarthytte.guests
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.datetime.Clock
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
-import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import kotlin.time.Clock
 
 class SqliteGuestRepository : GuestRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteGuestRepository::class.java.name)
@@ -22,10 +22,11 @@ class SqliteGuestRepository : GuestRepository {
         }
     }
 
-    override suspend fun setNotionId(notionId: String, guestId: String): PersistenceResult {
+    override suspend fun setNotionId(notionId: String, guestId: String): PersistenceResult = suspendTransaction {
         logger.trace("Setting notion Id for guest with id: $guestId")
 
-        val storedGuest: GuestEntity = GuestEntity.findById(guestId) ?: return PersistenceResult.NO_ACTION
+        val storedGuest: GuestEntity =
+            GuestEntity.findById(guestId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
         with(storedGuest) {
             this.notionId = notionId
@@ -34,7 +35,7 @@ class SqliteGuestRepository : GuestRepository {
         }
 
         logger.trace("Notion id set for guest with id: $guestId")
-        return PersistenceResult.UPDATED
+        PersistenceResult.UPDATED
     }
 
     private fun addGuest(guest: Guest): PersistenceResult {

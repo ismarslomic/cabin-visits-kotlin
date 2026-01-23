@@ -8,8 +8,8 @@ import kotlinx.serialization.json.Json
 
 class GetVehicleTripsRequestTest :
     StringSpec({
-        val fromDate = LocalDate(dayOfMonth = 1, monthNumber = 2, year = 2025)
-        val toDate = LocalDate(dayOfMonth = 5, monthNumber = 2, year = 2025)
+        val fromDate = LocalDate(year = 2025, month = 2, day = 1)
+        val toDate = LocalDate(year = 2025, month = 2, day = 5)
 
         "From and to dates should be formatted to norwegian format in the http request" {
             val request: GetVehicleTripsRequest = createRequest(fromDate, toDate)

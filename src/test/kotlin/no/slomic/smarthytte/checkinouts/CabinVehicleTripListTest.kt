@@ -3,9 +3,9 @@ package no.slomic.smarthytte.checkinouts
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.vehicletrips.createTrip
+import kotlin.time.Instant
 
 /**
  * Rules:

@@ -1,12 +1,12 @@
 package no.slomic.smarthytte.reservations
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import kotlin.time.Instant
 
 data class Reservation(
     val id: String,

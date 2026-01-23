@@ -3,8 +3,8 @@ package no.slomic.smarthytte.sync.checkpoint
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.utils.TestDbSetup
+import kotlin.time.Instant
 
 class SyncCheckpointServiceTest :
     StringSpec({

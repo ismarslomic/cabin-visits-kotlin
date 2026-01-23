@@ -1,12 +1,12 @@
 package no.slomic.smarthytte.sensors.checkinouts
 
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
-import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.dao.EntityClass
+import org.jetbrains.exposed.v1.datetime.timestamp
+import kotlin.time.Instant
 
 object CheckInOutSensorTable : BaseIdTable<String>(name = "check_in_out_sensor") {
     override val id: Column<EntityID<String>> = varchar("id", length = 30).entityId()

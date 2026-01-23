@@ -7,7 +7,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.utils.TestDbSetup
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 class SyncCheckpointRepositoryTest :
     StringSpec({

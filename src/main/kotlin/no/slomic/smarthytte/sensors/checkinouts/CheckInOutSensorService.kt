@@ -6,9 +6,6 @@ import com.influxdb.query.FluxRecord
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.coroutines.channels.toList
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.toKotlinInstant
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.nowIsoUtcString
 import no.slomic.smarthytte.common.toIsoUtcString
@@ -17,7 +14,10 @@ import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
+import kotlin.time.toKotlinInstant
 
 class CheckInOutSensorService(
     val checkInOutSensorRepository: CheckInOutSensorRepository,

@@ -2,9 +2,9 @@ package no.slomic.smarthytte.sync.checkpoint
 
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
-import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.dao.EntityClass
 
 object SyncCheckpointTable : BaseIdTable<String>(name = "sync_checkpoint") {
     override val id: Column<EntityID<String>> = varchar(name = "id", length = 50).entityId()

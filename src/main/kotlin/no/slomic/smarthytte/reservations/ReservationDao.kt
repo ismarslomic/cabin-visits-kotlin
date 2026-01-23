@@ -1,6 +1,5 @@
 package no.slomic.smarthytte.reservations
 
-import kotlinx.datetime.Instant
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
@@ -13,11 +12,12 @@ import no.slomic.smarthytte.reservations.ReservationVehicleTripType.TO_CABIN
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripEntity
 import no.slomic.smarthytte.vehicletrips.daoToModel
-import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.SizedIterable
-import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.dao.EntityClass
+import org.jetbrains.exposed.v1.datetime.timestamp
+import org.jetbrains.exposed.v1.jdbc.SizedIterable
+import kotlin.time.Instant
 
 object ReservationTable : BaseIdTable<String>(name = "reservation") {
     override val id: Column<EntityID<String>> = varchar("id", length = 1024).entityId()

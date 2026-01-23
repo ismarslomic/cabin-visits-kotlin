@@ -149,7 +149,7 @@ class VehicleTripServiceIntegrationTest :
             // Assert
             val checkPointAfterFetching: LocalDate? = syncCheckpointService.checkpointForVehicleTrips()
             checkPointBeforeFetching.shouldBeNull()
-            checkPointAfterFetching shouldBe LocalDate(year = 2025, monthNumber = 3, dayOfMonth = 15)
+            checkPointAfterFetching shouldBe LocalDate(year = 2025, month = 3, day = 15)
         }
 
         "should not update the checkpoint for vehicle trips when fetched trip list is empty" {
@@ -220,8 +220,8 @@ class VehicleTripServiceIntegrationTest :
             syncCheckpointService.addOrUpdateCheckpointForVehicleTrips(
                 value = LocalDate(
                     year = 2025,
-                    monthNumber = 3,
-                    dayOfMonth = 2,
+                    month = 3,
+                    day = 2,
                 ),
             )
 

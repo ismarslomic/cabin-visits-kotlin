@@ -7,15 +7,16 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toJavaInstant
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 
 class InstantUtilsTest :
     StringSpec({
@@ -44,7 +45,7 @@ class InstantUtilsTest :
 
         "toInstant(LocalDate, LocalTime, TimeZone) should convert local date and time and zone to correct instant" {
             // Prepare
-            val date = LocalDate(year = 2025, monthNumber = 7, dayOfMonth = 10)
+            val date = LocalDate(year = 2025, month = 7, day = 10)
             val time = LocalTime(hour = 15, minute = 0)
             val timeZone = TimeZone.of("Europe/Oslo")
 
@@ -54,8 +55,8 @@ class InstantUtilsTest :
             // Compute the expected instant using java.time for reference
             val javaInstant = ZonedDateTime.of(
                 date.year,
-                date.monthNumber,
-                date.dayOfMonth,
+                date.month.number,
+                date.day,
                 time.hour,
                 time.minute,
                 time.second,
@@ -92,7 +93,7 @@ class InstantUtilsTest :
             val osloDate: LocalDate = instant.toOsloDate()
 
             // Then
-            osloDate shouldBe LocalDate(year = 2025, monthNumber = 7, dayOfMonth = 11)
+            osloDate shouldBe LocalDate(year = 2025, month = 7, day = 11)
         }
 
         "osloDateNow should return the current Oslo local date" {
