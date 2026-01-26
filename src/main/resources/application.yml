@@ -48,3 +48,19 @@ vehicle-trip:
   referrer: ${VEHICLE_TRIP_REFERRER}
   locale: ${VEHICLE_TRIP_LOCALE}
   page-size: ${VEHICLE_TRIP_PAGE_SIZE:-200}
+
+ski-stats:
+  base-url: ${SKI_STATS_BASE_URL}
+  auth-path: ${SKI_STATS_AUTH_PATH}
+  season-stats-path: ${SKI_STATS_SEASON_STATS_PATH}
+  app-instance-id: ${SKI_STATS_APP_INSTANCE_ID}
+  app-platform: ${SKI_STATS_APP_PLATFORM}
+  api-key: ${SKI_STATS_API_KEY}
+  app-version: ${SKI_STATS_APP_VERSION}
+  cookie: ${SKI_STATS_COOKIE}
+  user-agent: ${SKI_STATS_USER_AGENT}
+  profile-ismar:
+    username: ${SKI_STATS_PROFILE_ISMAR_USERNAME}
+    password: ${SKI_STATS_PROFILE_ISMAR_PASSWORD}
+    agent-id: ${SKI_STATS_PROFILE_ISMAR_AGENT_ID}
+    client-secret: ${SKI_STATS_PROFILE_ISMAR_CLIENT_SECRET}
