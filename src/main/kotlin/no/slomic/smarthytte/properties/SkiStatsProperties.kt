@@ -12,6 +12,7 @@ data class SkiStatsProperties(
     val appVersion: String,
     val cookie: String,
     val userAgent: String,
+    val clientSecret: String,
     val profileIsmar: ProfileSkiStatsProperties,
 )
 
@@ -19,5 +20,4 @@ data class ProfileSkiStatsProperties(
     val username: String,
     val password: String,
     val agentId: String,
-    val clientSecret: String,
 )

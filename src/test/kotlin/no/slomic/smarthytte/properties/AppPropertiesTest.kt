@@ -42,7 +42,7 @@ class AppPropertiesTest :
         val envVarSkiStatsProfileIsmarUsername = "ismar-username"
         val envVarSkiStatsProfileIsmarPassword = "ismar-password"
         val envVarSkiStatsProfileIsmarAgentId = "ismar-agent-id"
-        val envVarSkiStatsProfileIsmarClientSecret = "ismar-client-secret"
+        val envVarSkiStatsClientSecret = "client-secret"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -74,10 +74,10 @@ class AppPropertiesTest :
                 "SKI_STATS_APP_VERSION" to envVarSkiStatsAppVersion,
                 "SKI_STATS_COOKIE" to envVarSkiStatsCookie,
                 "SKI_STATS_USER_AGENT" to envVarSkiStatsUserAgent,
+                "SKI_STATS_CLIENT_SECRET" to envVarSkiStatsClientSecret,
                 "SKI_STATS_PROFILE_ISMAR_USERNAME" to envVarSkiStatsProfileIsmarUsername,
                 "SKI_STATS_PROFILE_ISMAR_PASSWORD" to envVarSkiStatsProfileIsmarPassword,
                 "SKI_STATS_PROFILE_ISMAR_AGENT_ID" to envVarSkiStatsProfileIsmarAgentId,
-                "SKI_STATS_PROFILE_ISMAR_CLIENT_SECRET" to envVarSkiStatsProfileIsmarClientSecret,
             )
             withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -184,10 +184,10 @@ class AppPropertiesTest :
                         skiStatsProperties.appVersion shouldBe envVarSkiStatsAppVersion
                         skiStatsProperties.cookie shouldBe envVarSkiStatsCookie
                         skiStatsProperties.userAgent shouldBe envVarSkiStatsUserAgent
+                        skiStatsProperties.clientSecret shouldBe envVarSkiStatsClientSecret
                         skiStatsProperties.profileIsmar.username shouldBe envVarSkiStatsProfileIsmarUsername
                         skiStatsProperties.profileIsmar.password shouldBe envVarSkiStatsProfileIsmarPassword
                         skiStatsProperties.profileIsmar.agentId shouldBe envVarSkiStatsProfileIsmarAgentId
-                        skiStatsProperties.profileIsmar.clientSecret shouldBe envVarSkiStatsProfileIsmarClientSecret
                     }
                 }
             }
@@ -244,7 +244,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CREDENTIALS_FILE_PATH}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CREDENTIALS_FILE_PATH}"
                     }
                 }
             }
@@ -261,7 +261,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CALENDAR_ID}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CALENDAR_ID}"
                     }
                 }
             }
