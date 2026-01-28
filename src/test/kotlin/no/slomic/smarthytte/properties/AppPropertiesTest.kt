@@ -30,6 +30,19 @@ class AppPropertiesTest :
         val envVarVehicleTripUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
         val envVarVehicleTripReferrer = "https://myapp.com"
         val envVarVehicleTripLocale = "key=nb_NO"
+        val envVarSkiStatsBaseUrl = "https://skistats.com"
+        val envVarSkiStatsAuthPath = "/auth"
+        val envVarSkiStatsSeasonStatsPath = "/season-stats"
+        val envVarSkiStatsAppInstanceId = "app-instance-id"
+        val envVarSkiStatsAppPlatform = "app-platform"
+        val envVarSkiStatsApiKey = "api-key"
+        val envVarSkiStatsAppVersion = "1.0.0"
+        val envVarSkiStatsCookie = "cookie"
+        val envVarSkiStatsUserAgent = "user-agent"
+        val envVarSkiStatsProfileIsmarUsername = "ismar-username"
+        val envVarSkiStatsProfileIsmarPassword = "ismar-password"
+        val envVarSkiStatsProfileIsmarAgentId = "ismar-agent-id"
+        val envVarSkiStatsClientSecret = "client-secret"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -52,6 +65,19 @@ class AppPropertiesTest :
                 "VEHICLE_TRIP_USER_AGENT" to envVarVehicleTripUserAgent,
                 "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
                 "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
+                "SKI_STATS_BASE_URL" to envVarSkiStatsBaseUrl,
+                "SKI_STATS_AUTH_PATH" to envVarSkiStatsAuthPath,
+                "SKI_STATS_SEASON_STATS_PATH" to envVarSkiStatsSeasonStatsPath,
+                "SKI_STATS_APP_INSTANCE_ID" to envVarSkiStatsAppInstanceId,
+                "SKI_STATS_APP_PLATFORM" to envVarSkiStatsAppPlatform,
+                "SKI_STATS_API_KEY" to envVarSkiStatsApiKey,
+                "SKI_STATS_APP_VERSION" to envVarSkiStatsAppVersion,
+                "SKI_STATS_COOKIE" to envVarSkiStatsCookie,
+                "SKI_STATS_USER_AGENT" to envVarSkiStatsUserAgent,
+                "SKI_STATS_CLIENT_SECRET" to envVarSkiStatsClientSecret,
+                "SKI_STATS_PROFILE_ISMAR_USERNAME" to envVarSkiStatsProfileIsmarUsername,
+                "SKI_STATS_PROFILE_ISMAR_PASSWORD" to envVarSkiStatsProfileIsmarPassword,
+                "SKI_STATS_PROFILE_ISMAR_AGENT_ID" to envVarSkiStatsProfileIsmarAgentId,
             )
             withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -144,6 +170,26 @@ class AppPropertiesTest :
                         vehicleTripProperties.locale shouldBe envVarVehicleTripLocale
                     }
                 }
+
+                When("reading ski stats properties") {
+                    val skiStatsProperties = loadProperties<SkiStatsPropertiesHolder>().skiStats
+
+                    Then("properties should be set to the environment variable value") {
+                        skiStatsProperties.baseUrl shouldBe envVarSkiStatsBaseUrl
+                        skiStatsProperties.authPath shouldBe envVarSkiStatsAuthPath
+                        skiStatsProperties.seasonStatsPath shouldBe envVarSkiStatsSeasonStatsPath
+                        skiStatsProperties.appInstanceId shouldBe envVarSkiStatsAppInstanceId
+                        skiStatsProperties.appPlatform shouldBe envVarSkiStatsAppPlatform
+                        skiStatsProperties.apiKey shouldBe envVarSkiStatsApiKey
+                        skiStatsProperties.appVersion shouldBe envVarSkiStatsAppVersion
+                        skiStatsProperties.cookie shouldBe envVarSkiStatsCookie
+                        skiStatsProperties.userAgent shouldBe envVarSkiStatsUserAgent
+                        skiStatsProperties.clientSecret shouldBe envVarSkiStatsClientSecret
+                        skiStatsProperties.profileIsmar.username shouldBe envVarSkiStatsProfileIsmarUsername
+                        skiStatsProperties.profileIsmar.password shouldBe envVarSkiStatsProfileIsmarPassword
+                        skiStatsProperties.profileIsmar.agentId shouldBe envVarSkiStatsProfileIsmarAgentId
+                    }
+                }
             }
             And("optional environment variables are set") {
                 val envVarSyncFromDateTime = "2020-05-07T00:00:00Z"
@@ -198,7 +244,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CREDENTIALS_FILE_PATH}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CREDENTIALS_FILE_PATH}"
                     }
                 }
             }
@@ -215,7 +261,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CALENDAR_ID}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CALENDAR_ID}"
                     }
                 }
             }
