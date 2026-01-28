@@ -16,8 +16,4 @@ data class SkiStatsProperties(
     val profileIsmar: ProfileSkiStatsProperties,
 )
 
-data class ProfileSkiStatsProperties(
-    val username: String,
-    val password: String,
-    val agentId: String,
-)
+data class ProfileSkiStatsProperties(val username: String, val password: String, val agentId: String)

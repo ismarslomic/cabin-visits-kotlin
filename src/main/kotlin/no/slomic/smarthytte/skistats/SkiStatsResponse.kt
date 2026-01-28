@@ -25,3 +25,5 @@ data class OAuthTokenResponse(
     val expiresIn: Long? = null,
     val scope: String? = null,
 )
+
+data class SkiStatsTokens(val accessToken: String, val refreshToken: String, val expiresAtEpochSeconds: Long? = null)

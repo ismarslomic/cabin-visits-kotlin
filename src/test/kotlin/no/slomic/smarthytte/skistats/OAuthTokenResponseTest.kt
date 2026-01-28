@@ -97,7 +97,8 @@ class OAuthTokenResponseTest :
                 Json.decodeFromString<OAuthTokenResponse>(json)
             }
             exception.message shouldContain
-                "Field 'access_token' is required for type with serial name 'no.slomic.smarthytte.skistats.OAuthTokenResponse', but it was missing"
+                "Field 'access_token' is required for type with serial name " +
+                "'no.slomic.smarthytte.skistats.OAuthTokenResponse', but it was missing"
         }
 
         "should fail to deserialize OAuthTokenResponse when refresh_token is missing" {
@@ -111,6 +112,7 @@ class OAuthTokenResponseTest :
                 Json.decodeFromString<OAuthTokenResponse>(json)
             }
             exception.message shouldContain
-                "Field 'refresh_token' is required for type with serial name 'no.slomic.smarthytte.skistats.OAuthTokenResponse', but it was missing"
+                "Field 'refresh_token' is required for type with serial name " +
+                "'no.slomic.smarthytte.skistats.OAuthTokenResponse', but it was missing"
         }
     })
