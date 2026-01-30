@@ -97,6 +97,68 @@
       ]
     },
     {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonError",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setErrors",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setMessage",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonError$ErrorInfo",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDomain",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocation",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocationType",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setMessage",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setReason",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
       "type": "com.google.api.client.googleapis.services.AbstractGoogleClientRequest",
       "allDeclaredFields": true
     },
@@ -317,6 +379,242 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "setCreated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setCreator",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Creator"
+          ]
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEnd",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setEtag",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEventType",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setExtendedProperties",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$ExtendedProperties"
+          ]
+        },
+        {
+          "name": "setGuestsCanInviteOthers",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        },
+        {
+          "name": "setGuestsCanSeeOtherGuests",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        },
+        {
+          "name": "setHtmlLink",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setICalUID",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setId",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setKind",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocation",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setOrganizer",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Organizer"
+          ]
+        },
+        {
+          "name": "setReminders",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Reminders"
+          ]
+        },
+        {
+          "name": "setSequence",
+          "parameterTypes": [
+            "java.lang.Integer"
+          ]
+        },
+        {
+          "name": "setStart",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setStatus",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSummary",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setTransparency",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setUpdated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setVisibility",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Creator",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$ExtendedProperties",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Organizer",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDisplayName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSelf",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Reminders",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setUseDefault",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventDateTime",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDate",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setDateTime",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setTimeZone",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -1066,6 +1364,17 @@
       ]
     },
     {
+      "type": "java.io.FileNotFoundException",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
       "type": "java.io.Serializable"
     },
     {
@@ -1303,6 +1612,10 @@
     },
     {
       "type": "java.util.LinkedHashMap"
+    },
+    {
+      "type": "java.util.Map",
+      "allDeclaredFields": true
     },
     {
       "type": "java.util.SortedSet"
@@ -2107,34 +2420,6 @@
       "type": "org.flywaydb.core.internal.NullFlywayTelemetryManager"
     },
     {
-      "type": "org.flywaydb.core.internal.command.clean.CleanModeConfigurationExtension",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "getClean",
-          "parameterTypes": []
-        },
-        {
-          "name": "setClean",
-          "parameterTypes": [
-            "org.flywaydb.core.internal.command.clean.CleanModel"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.flywaydb.core.internal.command.clean.CleanModel",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "org.flywaydb.core.internal.command.clean.SchemaModel",
-      "allDeclaredFields": true
-    },
-    {
       "type": "org.flywaydb.core.internal.configuration.resolvers.EnvironmentProvisionerNone"
     },
     {
@@ -2804,6 +3089,12 @@
     },
     {
       "glob": "application.yml"
+    },
+    {
+      "glob": "ch/qos/logback/classic/logback-classic-version.properties"
+    },
+    {
+      "glob": "ch/qos/logback/core/logback-core-version.properties"
     },
     {
       "glob": "com/google/api/client/googleapis/google-api-client.properties"
