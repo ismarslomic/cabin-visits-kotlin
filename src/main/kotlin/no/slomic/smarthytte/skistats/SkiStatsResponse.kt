@@ -4,6 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
+// Using non-nullable types on property absolutely required in this app, all other properties are nice to have
 @Serializable
 data class OAuthTokenResponse(
     @SerialName("refresh_token")

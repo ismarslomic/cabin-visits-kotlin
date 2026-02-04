@@ -11,39 +11,40 @@ import kotlin.time.Clock
 class SqliteSkiStatsRepository : SkiStatsRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteSkiStatsRepository::class.java.name)
 
-    override suspend fun tokensByProfile(id: String): SkiStatsTokens? =
-        suspendTransaction { SkiStatsTokenEntity.findById(id)?.let(::daoToModel) }
+    override suspend fun tokensByProfile(userProfileId: String): SkiStatsTokens? =
+        suspendTransaction { SkiStatsTokenEntity.findById(userProfileId)?.let(::daoToModel) }
 
-    override suspend fun addOrUpdateTokens(id: String, tokens: SkiStatsTokens): PersistenceResult = suspendTransaction {
-        val entityId: EntityID<String> = EntityID(id = id, table = SkiStatsTokenTable)
-        val storedProfileTokens: SkiStatsTokenEntity? = SkiStatsTokenEntity.findById(entityId)
+    override suspend fun addOrUpdateTokens(userProfileId: String, tokens: SkiStatsTokens): PersistenceResult =
+        suspendTransaction {
+            val entityId: EntityID<String> = EntityID(id = userProfileId, table = SkiStatsTokenTable)
+            val storedProfileTokens: SkiStatsTokenEntity? = SkiStatsTokenEntity.findById(entityId)
 
-        if (storedProfileTokens == null) {
-            addProfileTokens(id, tokens)
-        } else {
-            updateProfileTokens(id, tokens)
+            if (storedProfileTokens == null) {
+                addProfileTokens(userProfileId, tokens)
+            } else {
+                updateProfileTokens(userProfileId, tokens)
+            }
         }
-    }
 
-    private fun addProfileTokens(id: String, tokens: SkiStatsTokens): PersistenceResult {
-        logger.trace("Adding profile tokens with id: $id")
+    private fun addProfileTokens(userProfileId: String, tokens: SkiStatsTokens): PersistenceResult {
+        logger.trace("Adding profile tokens with id: $userProfileId")
 
-        SkiStatsTokenEntity.new(id) {
+        SkiStatsTokenEntity.new(userProfileId) {
             accessToken = tokens.accessToken
             refreshToken = tokens.refreshToken
             expiresAtEpochSeconds = tokens.expiresAtEpochSeconds
             createdTime = Clock.System.now().truncatedToMillis()
         }
 
-        logger.trace("Added profile tokens with id: $id")
+        logger.trace("Added profile tokens with id: $userProfileId")
         return PersistenceResult.ADDED
     }
 
-    private fun updateProfileTokens(id: String, tokens: SkiStatsTokens): PersistenceResult {
-        logger.trace("Updating profile tokens with id: $id")
+    private fun updateProfileTokens(userProfileId: String, tokens: SkiStatsTokens): PersistenceResult {
+        logger.trace("Updating profile tokens with id: $userProfileId")
 
         val storedProfileTokens: SkiStatsTokenEntity =
-            SkiStatsTokenEntity.findById(id) ?: return PersistenceResult.NO_ACTION
+            SkiStatsTokenEntity.findById(userProfileId) ?: return PersistenceResult.NO_ACTION
 
         with(storedProfileTokens) {
             accessToken = tokens.accessToken
@@ -57,10 +58,10 @@ class SqliteSkiStatsRepository : SkiStatsRepository {
             storedProfileTokens.version = storedProfileTokens.version.inc()
             storedProfileTokens.updatedTime = Clock.System.now().truncatedToMillis()
 
-            logger.trace("Updated profile tokens with id: $id")
+            logger.trace("Updated profile tokens with id: $userProfileId")
             PersistenceResult.UPDATED
         } else {
-            logger.trace("No changes detected for profile tokens with id: $id")
+            logger.trace("No changes detected for profile tokens with id: $userProfileId")
             PersistenceResult.NO_ACTION
         }
     }
