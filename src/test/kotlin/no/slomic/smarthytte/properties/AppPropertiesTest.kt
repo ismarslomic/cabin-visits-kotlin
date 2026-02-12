@@ -3,6 +3,7 @@ package no.slomic.smarthytte.properties
 import com.sksamuel.hoplite.ConfigException
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlinx.datetime.LocalDate
@@ -42,7 +43,8 @@ class AppPropertiesTest :
         val envVarSkiStatsProfileIsmarUsername = "ismar-username"
         val envVarSkiStatsProfileIsmarPassword = "ismar-password"
         val envVarSkiStatsProfileIsmarAgentId = "ismar-agent-id"
-        val envVarSkiStatsClientSecret = "client-secret"
+        val envVarSkiStatsProfileIsmarClientSecret = "client-secret"
+        val envVarSkiStatsProfileIsmarClientId = "client-id"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -74,7 +76,8 @@ class AppPropertiesTest :
                 "SKI_STATS_APP_VERSION" to envVarSkiStatsAppVersion,
                 "SKI_STATS_COOKIE" to envVarSkiStatsCookie,
                 "SKI_STATS_USER_AGENT" to envVarSkiStatsUserAgent,
-                "SKI_STATS_CLIENT_SECRET" to envVarSkiStatsClientSecret,
+                "SKI_STATS_PROFILE_ISMAR_CLIENT_ID" to envVarSkiStatsProfileIsmarClientId,
+                "SKI_STATS_PROFILE_ISMAR_CLIENT_SECRET" to envVarSkiStatsProfileIsmarClientSecret,
                 "SKI_STATS_PROFILE_ISMAR_USERNAME" to envVarSkiStatsProfileIsmarUsername,
                 "SKI_STATS_PROFILE_ISMAR_PASSWORD" to envVarSkiStatsProfileIsmarPassword,
                 "SKI_STATS_PROFILE_ISMAR_AGENT_ID" to envVarSkiStatsProfileIsmarAgentId,
@@ -175,19 +178,22 @@ class AppPropertiesTest :
                     val skiStatsProperties = loadProperties<SkiStatsPropertiesHolder>().skiStats
 
                     Then("properties should be set to the environment variable value") {
-                        skiStatsProperties.baseUrl shouldBe envVarSkiStatsBaseUrl
-                        skiStatsProperties.authPath shouldBe envVarSkiStatsAuthPath
-                        skiStatsProperties.seasonStatsPath shouldBe envVarSkiStatsSeasonStatsPath
-                        skiStatsProperties.appInstanceId shouldBe envVarSkiStatsAppInstanceId
-                        skiStatsProperties.appPlatform shouldBe envVarSkiStatsAppPlatform
-                        skiStatsProperties.apiKey shouldBe envVarSkiStatsApiKey
-                        skiStatsProperties.appVersion shouldBe envVarSkiStatsAppVersion
-                        skiStatsProperties.cookie shouldBe envVarSkiStatsCookie
-                        skiStatsProperties.userAgent shouldBe envVarSkiStatsUserAgent
-                        skiStatsProperties.clientSecret shouldBe envVarSkiStatsClientSecret
-                        skiStatsProperties.profileIsmar.username shouldBe envVarSkiStatsProfileIsmarUsername
-                        skiStatsProperties.profileIsmar.password shouldBe envVarSkiStatsProfileIsmarPassword
-                        skiStatsProperties.profileIsmar.agentId shouldBe envVarSkiStatsProfileIsmarAgentId
+                        skiStatsProperties.core.baseUrl shouldBe envVarSkiStatsBaseUrl
+                        skiStatsProperties.core.authPath shouldBe envVarSkiStatsAuthPath
+                        skiStatsProperties.core.seasonStatsPath shouldBe envVarSkiStatsSeasonStatsPath
+                        skiStatsProperties.core.appInstanceId shouldBe envVarSkiStatsAppInstanceId
+                        skiStatsProperties.core.appPlatform shouldBe envVarSkiStatsAppPlatform
+                        skiStatsProperties.core.apiKey shouldBe envVarSkiStatsApiKey
+                        skiStatsProperties.core.appVersion shouldBe envVarSkiStatsAppVersion
+                        skiStatsProperties.core.cookie shouldBe envVarSkiStatsCookie
+                        skiStatsProperties.core.userAgent shouldBe envVarSkiStatsUserAgent
+                        skiStatsProperties.profiles shouldHaveSize 1
+                        val profileIsmar = skiStatsProperties.profiles.first()
+                        profileIsmar.username shouldBe envVarSkiStatsProfileIsmarUsername
+                        profileIsmar.password shouldBe envVarSkiStatsProfileIsmarPassword
+                        profileIsmar.agentId shouldBe envVarSkiStatsProfileIsmarAgentId
+                        profileIsmar.clientSecret shouldBe envVarSkiStatsProfileIsmarClientSecret
+                        profileIsmar.clientId shouldBe envVarSkiStatsProfileIsmarClientId
                     }
                 }
             }
