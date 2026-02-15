@@ -22,6 +22,19 @@ import java.util.*
 import kotlin.time.Clock
 
 /**
+ * Custom (non-standard) HTTP header names used by SkiStats.
+ *
+ * Kept as constants similar to [HttpHeaders] to avoid typos and duplication.
+ */
+public object SkiStatsHttpHeaders {
+    const val APP_INSTANCE_ID: String = "x-app-instanceid"
+    const val APP_PLATFORM: String = "x-app-platform"
+    const val API_KEY: String = "x-api-key"
+    const val APP_VERSION: String = "x-app-version"
+    const val BUILD_TYPE: String = "x-build-type"
+}
+
+/**
  * Handles OAuth token acquisition and refresh against the SkiStats `/oauth/token` endpoint.
  *
  * Uses [HttpClientProvider.client] (shared baseline) for HTTP calls and sets
@@ -128,9 +141,9 @@ private fun commonHttpHeaders(coreProps: CoreSkiStatsProperties) = mapOf(
     HttpHeaders.Cookie to coreProps.cookie,
     HttpHeaders.Accept to ContentType.Application.Json.toString(),
     HttpHeaders.UserAgent to coreProps.userAgent,
-    "x-app-instanceid" to coreProps.appInstanceId,
-    "x-app-platform" to coreProps.appPlatform,
-    "x-api-key" to coreProps.apiKey,
-    "x-app-version" to coreProps.appVersion,
-    "x-build-type" to "release",
+    SkiStatsHttpHeaders.APP_INSTANCE_ID to coreProps.appInstanceId,
+    SkiStatsHttpHeaders.APP_PLATFORM to coreProps.appPlatform,
+    SkiStatsHttpHeaders.API_KEY to coreProps.apiKey,
+    SkiStatsHttpHeaders.APP_VERSION to coreProps.appVersion,
+    SkiStatsHttpHeaders.BUILD_TYPE to "release",
 )

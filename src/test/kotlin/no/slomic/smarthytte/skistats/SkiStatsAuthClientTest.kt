@@ -198,11 +198,11 @@ private fun assertRequestHasHeader(
         get(HttpHeaders.UserAgent) shouldBe coreProps.userAgent
         get(HttpHeaders.Cookie) shouldBe coreProps.cookie
         get(HttpHeaders.Authorization) shouldBe expectedAuthorization
-        get("x-app-instanceid") shouldBe coreProps.appInstanceId
-        get("x-app-platform") shouldBe coreProps.appPlatform
-        get("x-api-key") shouldBe coreProps.apiKey
-        get("x-app-version") shouldBe coreProps.appVersion
-        get("x-build-type") shouldBe "release"
+        get(SkiStatsHttpHeaders.APP_INSTANCE_ID) shouldBe coreProps.appInstanceId
+        get(SkiStatsHttpHeaders.APP_PLATFORM) shouldBe coreProps.appPlatform
+        get(SkiStatsHttpHeaders.API_KEY) shouldBe coreProps.apiKey
+        get(SkiStatsHttpHeaders.APP_VERSION) shouldBe coreProps.appVersion
+        get(SkiStatsHttpHeaders.BUILD_TYPE) shouldBe "release"
     }
 }
 
