@@ -10,11 +10,13 @@ import no.slomic.smarthytte.properties.SkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import kotlin.time.Clock
+import kotlin.time.Clock.System
 
 class SkiStatsService(
     private val skiStatsRepository: SkiStatsRepository,
     private val httpClient: HttpClient,
     skiStatsPropertiesHolder: SkiStatsPropertiesHolder = loadProperties(),
+    private val clock: Clock = System,
 ) {
     private val logger: Logger = KtorSimpleLogger(SkiStatsService::class.java.name)
     private val properties: SkiStatsProperties = skiStatsPropertiesHolder.skiStats
@@ -23,7 +25,7 @@ class SkiStatsService(
         val profileId = profile.id
         logger.info("SkiStats: polling season stats for profile={}", profileId)
 
-        val authClient = createAuthClient(profile)
+        val authClient = createSkiStatsAuthClient(profile)
         ensureLoggedIn(profile, authClient)
 
         val apiClient = createSkiStatsApiClient(
@@ -33,26 +35,32 @@ class SkiStatsService(
             authClient = authClient,
         )
 
-        try {
+        apiClient.use { apiClient ->
             val seasonJson: String = fetchSeasonJson(apiClient)
             logger.info(seasonJson)
             logger.info("SkiStats: season snapshot persisted for profile={}", profileId)
-        } finally {
-            // API-klienten er en egen instans (med Auth-plugin) og må stenges
-            apiClient.close()
         }
     }
 
     private suspend fun fetchSeasonJson(apiClient: HttpClient): String =
         apiClient.get(properties.core.seasonStatsUrl) {}.body()
 
-    private fun createAuthClient(profile: ProfileSkiStatsProperties): SkiStatsAuthClient = SkiStatsAuthClient(
+    private fun createSkiStatsAuthClient(profile: ProfileSkiStatsProperties): SkiStatsAuthClient = SkiStatsAuthClient(
         httpClient = httpClient,
         coreProps = properties.core,
         profileProps = profile,
     )
 
-    private suspend fun ensureLoggedIn(profile: ProfileSkiStatsProperties, authClient: SkiStatsAuthClient) {
+    /**
+     * Ensures the current user's profile is logged in by checking for existing tokens
+     * and getting new ones if necessary via the password grant flow.
+     *
+     * @param profile Represents the user's profile containing the necessary credentials and identifiers
+     *                required for authentication.
+     * @param authClient An instance of SkiStatsAuthClient responsible for handling the OAuth
+     *                   token acquisition process using the given profile details.
+     */
+    internal suspend fun ensureLoggedIn(profile: ProfileSkiStatsProperties, authClient: SkiStatsAuthClient) {
         val profileId = profile.id
         val existing = skiStatsRepository.tokensByProfile(profileId)
         if (existing != null) return
@@ -63,7 +71,7 @@ class SkiStatsService(
 
         val expiresAtEpochSeconds =
             response.expiresAtUtc?.epochSeconds
-                ?: response.expiresIn?.let { Clock.System.now().epochSeconds + it }
+                ?: response.expiresIn?.let { clock.now().epochSeconds + it }
 
         val stored = SkiStatsTokens(
             accessToken = response.accessToken,
