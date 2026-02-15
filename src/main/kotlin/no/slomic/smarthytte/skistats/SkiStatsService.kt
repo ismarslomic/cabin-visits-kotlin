@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
+import no.slomic.smarthytte.properties.CoreSkiStatsProperties
 import no.slomic.smarthytte.properties.ProfileSkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsPropertiesHolder
@@ -17,6 +18,12 @@ class SkiStatsService(
     private val httpClient: HttpClient,
     skiStatsPropertiesHolder: SkiStatsPropertiesHolder = loadProperties(),
     private val clock: Clock = System,
+    private val apiClientFactory: (
+        CoreSkiStatsProperties,
+        SkiStatsRepository,
+        String,
+        SkiStatsAuthClient,
+    ) -> HttpClient = ::createSkiStatsApiClient,
 ) {
     private val logger: Logger = KtorSimpleLogger(SkiStatsService::class.java.name)
     private val properties: SkiStatsProperties = skiStatsPropertiesHolder.skiStats
@@ -28,11 +35,11 @@ class SkiStatsService(
         val authClient = createSkiStatsAuthClient(profile)
         ensureLoggedIn(profile, authClient)
 
-        val apiClient = createSkiStatsApiClient(
-            coreProps = properties.core,
-            skiStatsRepository = skiStatsRepository,
-            profileId = profileId,
-            authClient = authClient,
+        val apiClient = apiClientFactory(
+            properties.core,
+            skiStatsRepository,
+            profileId,
+            authClient,
         )
 
         apiClient.use { apiClient ->
@@ -45,7 +52,7 @@ class SkiStatsService(
     private suspend fun fetchSeasonJson(apiClient: HttpClient): String =
         apiClient.get(properties.core.seasonStatsUrl) {}.body()
 
-    private fun createSkiStatsAuthClient(profile: ProfileSkiStatsProperties): SkiStatsAuthClient = SkiStatsAuthClient(
+    internal fun createSkiStatsAuthClient(profile: ProfileSkiStatsProperties): SkiStatsAuthClient = SkiStatsAuthClient(
         httpClient = httpClient,
         coreProps = properties.core,
         profileProps = profile,

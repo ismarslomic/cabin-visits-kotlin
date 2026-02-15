@@ -1,6 +1,7 @@
 package no.slomic.smarthytte.skistats
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -310,5 +311,181 @@ class SkiStatsServiceTest :
                     ),
                 )
             }
+        }
+
+        "pollSeasonStats should fetch season data when tokens exist" {
+            // Given
+            val mockRepository = mockk<SkiStatsRepository>()
+            val existingTokens = SkiStatsTokens(
+                accessToken = "existing-access-token",
+                refreshToken = "existing-refresh-token",
+                expiresAtEpochSeconds = 1800000000,
+            )
+
+            coEvery { mockRepository.tokensByProfile(profileProps.id) } returns existingTokens
+
+            val mockEngine = MockEngine { request ->
+                when {
+                    request.url.encodedPath.endsWith("/season") -> {
+                        respond(
+                            content = ByteReadChannel("""{"totalDays": 42, "totalVertical": 123456}"""),
+                            status = HttpStatusCode.OK,
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    }
+
+                    else -> respond(
+                        content = ByteReadChannel("{}"),
+                        status = HttpStatusCode.OK,
+                        headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                    )
+                }
+            }
+
+            val httpClient = HttpClient(mockEngine) {
+                install(HttpCookies) {
+                    storage = AcceptAllCookiesStorage()
+                }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            ignoreUnknownKeys = true
+                            explicitNulls = false
+                        },
+                    )
+                }
+            }
+
+            val mockApiClient = HttpClient(mockEngine) {
+                install(HttpCookies) {
+                    storage = AcceptAllCookiesStorage()
+                }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            ignoreUnknownKeys = true
+                            explicitNulls = false
+                        },
+                    )
+                }
+            }
+
+            val service = SkiStatsService(
+                skiStatsRepository = mockRepository,
+                httpClient = httpClient,
+                skiStatsPropertiesHolder = propertiesHolder,
+                apiClientFactory = { _, _, _, _ -> mockApiClient },
+            )
+
+            // When
+            service.pollSeasonStats(profileProps)
+
+            // Then
+            coVerify(exactly = 1) { mockRepository.tokensByProfile(profileProps.id) }
+            coVerify(exactly = 0) { mockRepository.addOrUpdateTokens(any(), any()) }
+        }
+
+        "pollSeasonStats should perform login and fetch season data when no tokens exist" {
+            // Given
+            val mockRepository = mockk<SkiStatsRepository>()
+            val fixedInstant = Instant.fromEpochSeconds(1000000000)
+            val mockClock = object : Clock {
+                override fun now() = fixedInstant
+            }
+
+            coEvery { mockRepository.tokensByProfile(profileProps.id) } returns null
+            coEvery { mockRepository.addOrUpdateTokens(any(), any()) } returns PersistenceResult.ADDED
+
+            var requestCount = 0
+            val mockEngine = MockEngine { request ->
+                requestCount++
+                when {
+                    request.url.encodedPath.endsWith("/oauth/token") -> {
+                        respond(
+                            content = ByteReadChannel(
+                                """
+                                {
+                                  "user_id": "user-123",
+                                  "client_id": "my-client-123",
+                                  "access_token": "new-access-token",
+                                  "token_type": "bearer",
+                                  "expires_in": 1799,
+                                  "refresh_token": "new-refresh-token"
+                                }
+                                """.trimIndent(),
+                            ),
+                            status = HttpStatusCode.OK,
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    }
+
+                    request.url.encodedPath.endsWith("/season") -> {
+                        respond(
+                            content = ByteReadChannel("""{"totalDays": 42, "totalVertical": 123456}"""),
+                            status = HttpStatusCode.OK,
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    }
+
+                    else -> respond(
+                        content = ByteReadChannel("{}"),
+                        status = HttpStatusCode.OK,
+                        headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                    )
+                }
+            }
+
+            val httpClient = HttpClient(mockEngine) {
+                install(HttpCookies) {
+                    storage = AcceptAllCookiesStorage()
+                }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            ignoreUnknownKeys = true
+                            explicitNulls = false
+                        },
+                    )
+                }
+            }
+
+            val mockApiClient = HttpClient(mockEngine) {
+                install(HttpCookies) {
+                    storage = AcceptAllCookiesStorage()
+                }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            ignoreUnknownKeys = true
+                            explicitNulls = false
+                        },
+                    )
+                }
+            }
+
+            val service = SkiStatsService(
+                skiStatsRepository = mockRepository,
+                httpClient = httpClient,
+                skiStatsPropertiesHolder = propertiesHolder,
+                clock = mockClock,
+                apiClientFactory = { _, _, _, _ -> mockApiClient },
+            )
+
+            // When
+            service.pollSeasonStats(profileProps)
+
+            // Then
+            coVerify(exactly = 1) { mockRepository.tokensByProfile(profileProps.id) }
+            coVerify(exactly = 1) {
+                mockRepository.addOrUpdateTokens(
+                    profileProps.id,
+                    SkiStatsTokens(
+                        accessToken = "new-access-token",
+                        refreshToken = "new-refresh-token",
+                        expiresAtEpochSeconds = 1000001799,
+                    ),
+                )
+            }
+            requestCount shouldBe 2 // One for auth, one for season stats
         }
     })
