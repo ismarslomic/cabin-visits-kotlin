@@ -28,9 +28,9 @@ class SkiStatsService(
     private val logger: Logger = KtorSimpleLogger(SkiStatsService::class.java.name)
     private val properties: SkiStatsProperties = skiStatsPropertiesHolder.skiStats
 
-    suspend fun pollSeasonStats(profile: ProfileSkiStatsProperties) {
+    suspend fun pollFriendsLeaderboard(periodType: PeriodType, value: String, profile: ProfileSkiStatsProperties) {
         val profileId = profile.id
-        logger.info("SkiStats: polling season stats for profile={}", profileId)
+        logger.info("Polling friends leaderboard for period={} and profile={}", periodType, profileId)
 
         val authClient = createSkiStatsAuthClient(profile)
         ensureLoggedIn(profile, authClient)
@@ -43,14 +43,17 @@ class SkiStatsService(
         )
 
         apiClient.use { apiClient ->
-            val seasonJson: String = fetchSeasonJson(apiClient)
+            val seasonJson: String = fetchFriendsLeaderboardJson(periodType, value, apiClient)
             logger.info(seasonJson)
-            logger.info("SkiStats: season snapshot persisted for profile={}", profileId)
+            logger.info("Friends leaderboard persisted period={} and profile={}", periodType, profileId)
         }
     }
 
-    private suspend fun fetchSeasonJson(apiClient: HttpClient): String =
-        apiClient.get(properties.core.seasonStatsUrl) {}.body()
+    private suspend fun fetchFriendsLeaderboardJson(
+        periodType: PeriodType,
+        value: String,
+        apiClient: HttpClient,
+    ): String = apiClient.get(properties.core.friendsLeaderboardsUrl(periodType.name, value)) {}.body()
 
     internal fun createSkiStatsAuthClient(profile: ProfileSkiStatsProperties): SkiStatsAuthClient = SkiStatsAuthClient(
         httpClient = httpClient,
@@ -72,7 +75,7 @@ class SkiStatsService(
         val existing = skiStatsRepository.tokensByProfile(profileId)
         if (existing != null) return
 
-        logger.info("SkiStats: no tokens found for profile={}, performing password grant", profileId)
+        logger.info("No tokens found for profile={}, performing password grant", profileId)
 
         val response = authClient.passwordGrant()
 
@@ -88,6 +91,12 @@ class SkiStatsService(
 
         skiStatsRepository.addOrUpdateTokens(profileId, stored)
 
-        logger.info("SkiStats: initial tokens persisted for profile={}", profileId)
+        logger.info("Initial tokens persisted for profile={}", profileId)
     }
+}
+
+enum class PeriodType {
+    DAY,
+    WEEK,
+    SEASON,
 }

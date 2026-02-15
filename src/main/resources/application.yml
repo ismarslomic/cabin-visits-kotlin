@@ -53,7 +53,7 @@ ski-stats:
   core:
     base-url: ${SKI_STATS_BASE_URL}
     auth-path: ${SKI_STATS_AUTH_PATH}
-    season-stats-path: ${SKI_STATS_SEASON_STATS_PATH}
+    friends-leaderboards-path: ${SKI_STATS_FRIENDS_LEADERBOARDS_PATH}
     app-instance-id: ${SKI_STATS_APP_INSTANCE_ID}
     app-platform: ${SKI_STATS_APP_PLATFORM}
     api-key: ${SKI_STATS_API_KEY}

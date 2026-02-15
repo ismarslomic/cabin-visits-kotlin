@@ -32,7 +32,7 @@ class SkiStatsAuthClientTest :
         val coreProps = CoreSkiStatsProperties(
             baseUrl = "https://api.example.com",
             authPath = "/oauth/token",
-            seasonStatsPath = "/season",
+            friendsLeaderboardsPath = "/friends/leaderboards",
             appInstanceId = "ABC-DEF-GHIJKLMN",
             appPlatform = "osx",
             apiKey = "key-foo-bar",

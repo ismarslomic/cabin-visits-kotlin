@@ -69,7 +69,7 @@ class AppPropertiesTest :
                 "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
                 "SKI_STATS_BASE_URL" to envVarSkiStatsBaseUrl,
                 "SKI_STATS_AUTH_PATH" to envVarSkiStatsAuthPath,
-                "SKI_STATS_SEASON_STATS_PATH" to envVarSkiStatsSeasonStatsPath,
+                "SKI_STATS_FRIENDS_LEADERBOARDS_PATH" to envVarSkiStatsSeasonStatsPath,
                 "SKI_STATS_APP_INSTANCE_ID" to envVarSkiStatsAppInstanceId,
                 "SKI_STATS_APP_PLATFORM" to envVarSkiStatsAppPlatform,
                 "SKI_STATS_API_KEY" to envVarSkiStatsApiKey,
@@ -180,7 +180,7 @@ class AppPropertiesTest :
                     Then("properties should be set to the environment variable value") {
                         skiStatsProperties.core.baseUrl shouldBe envVarSkiStatsBaseUrl
                         skiStatsProperties.core.authPath shouldBe envVarSkiStatsAuthPath
-                        skiStatsProperties.core.seasonStatsPath shouldBe envVarSkiStatsSeasonStatsPath
+                        skiStatsProperties.core.friendsLeaderboardsPath shouldBe envVarSkiStatsSeasonStatsPath
                         skiStatsProperties.core.appInstanceId shouldBe envVarSkiStatsAppInstanceId
                         skiStatsProperties.core.appPlatform shouldBe envVarSkiStatsAppPlatform
                         skiStatsProperties.core.apiKey shouldBe envVarSkiStatsApiKey

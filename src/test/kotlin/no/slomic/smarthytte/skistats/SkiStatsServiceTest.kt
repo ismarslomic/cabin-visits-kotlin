@@ -31,7 +31,7 @@ class SkiStatsServiceTest :
         val coreProps = CoreSkiStatsProperties(
             baseUrl = "https://api.example.com",
             authPath = "/oauth/token",
-            seasonStatsPath = "/season",
+            friendsLeaderboardsPath = "/friends/leaderboards",
             appInstanceId = "ABC-DEF-GHIJKLMN",
             appPlatform = "osx",
             apiKey = "key-foo-bar",
@@ -313,7 +313,7 @@ class SkiStatsServiceTest :
             }
         }
 
-        "pollSeasonStats should fetch season data when tokens exist" {
+        "pollFriendsLeaderboard should fetch DAY leaderboard when tokens exist" {
             // Given
             val mockRepository = mockk<SkiStatsRepository>()
             val existingTokens = SkiStatsTokens(
@@ -326,9 +326,9 @@ class SkiStatsServiceTest :
 
             val mockEngine = MockEngine { request ->
                 when {
-                    request.url.encodedPath.endsWith("/season") -> {
+                    request.url.encodedPath.contains("/day/2026-02-15") -> {
                         respond(
-                            content = ByteReadChannel("""{"totalDays": 42, "totalVertical": 123456}"""),
+                            content = ByteReadChannel("""{"date": "2026-02-15", "leaderboard": []}"""),
                             status = HttpStatusCode.OK,
                             headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                         )
@@ -338,20 +338,6 @@ class SkiStatsServiceTest :
                         content = ByteReadChannel("{}"),
                         status = HttpStatusCode.OK,
                         headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
-                    )
-                }
-            }
-
-            val httpClient = HttpClient(mockEngine) {
-                install(HttpCookies) {
-                    storage = AcceptAllCookiesStorage()
-                }
-                install(ContentNegotiation) {
-                    json(
-                        Json {
-                            ignoreUnknownKeys = true
-                            explicitNulls = false
-                        },
                     )
                 }
             }
@@ -370,6 +356,7 @@ class SkiStatsServiceTest :
                 }
             }
 
+            val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
                 httpClient = httpClient,
@@ -378,14 +365,132 @@ class SkiStatsServiceTest :
             )
 
             // When
-            service.pollSeasonStats(profileProps)
+            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
 
             // Then
             coVerify(exactly = 1) { mockRepository.tokensByProfile(profileProps.id) }
             coVerify(exactly = 0) { mockRepository.addOrUpdateTokens(any(), any()) }
         }
 
-        "pollSeasonStats should perform login and fetch season data when no tokens exist" {
+        "pollFriendsLeaderboard should fetch WEEK leaderboard when tokens exist" {
+            // Given
+            val mockRepository = mockk<SkiStatsRepository>()
+            val existingTokens = SkiStatsTokens(
+                accessToken = "existing-access-token",
+                refreshToken = "existing-refresh-token",
+                expiresAtEpochSeconds = 1800000000,
+            )
+
+            coEvery { mockRepository.tokensByProfile(profileProps.id) } returns existingTokens
+
+            val mockEngine = MockEngine { request ->
+                when {
+                    request.url.encodedPath.contains("/week/2907") -> {
+                        respond(
+                            content = ByteReadChannel("""{"week": "2024-W03", "leaderboard": []}"""),
+                            status = HttpStatusCode.OK,
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    }
+
+                    else -> respond(
+                        content = ByteReadChannel("{}"),
+                        status = HttpStatusCode.OK,
+                        headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                    )
+                }
+            }
+
+            val mockApiClient = HttpClient(mockEngine) {
+                install(HttpCookies) {
+                    storage = AcceptAllCookiesStorage()
+                }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            ignoreUnknownKeys = true
+                            explicitNulls = false
+                        },
+                    )
+                }
+            }
+
+            val httpClient = createMockHttpClient()
+            val service = SkiStatsService(
+                skiStatsRepository = mockRepository,
+                httpClient = httpClient,
+                skiStatsPropertiesHolder = propertiesHolder,
+                apiClientFactory = { _, _, _, _ -> mockApiClient },
+            )
+
+            // When
+            service.pollFriendsLeaderboard(PeriodType.WEEK, "2907", profileProps)
+
+            // Then
+            coVerify(exactly = 1) { mockRepository.tokensByProfile(profileProps.id) }
+            coVerify(exactly = 0) { mockRepository.addOrUpdateTokens(any(), any()) }
+        }
+
+        "pollFriendsLeaderboard should fetch SEASON leaderboard when tokens exist" {
+            // Given
+            val mockRepository = mockk<SkiStatsRepository>()
+            val existingTokens = SkiStatsTokens(
+                accessToken = "existing-access-token",
+                refreshToken = "existing-refresh-token",
+                expiresAtEpochSeconds = 1800000000,
+            )
+
+            coEvery { mockRepository.tokensByProfile(profileProps.id) } returns existingTokens
+
+            val mockEngine = MockEngine { request ->
+                when {
+                    request.url.encodedPath.contains("/season/29") -> {
+                        respond(
+                            content = ByteReadChannel("""{"season": "2024", "leaderboard": []}"""),
+                            status = HttpStatusCode.OK,
+                            headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                        )
+                    }
+
+                    else -> respond(
+                        content = ByteReadChannel("{}"),
+                        status = HttpStatusCode.OK,
+                        headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
+                    )
+                }
+            }
+
+            val mockApiClient = HttpClient(mockEngine) {
+                install(HttpCookies) {
+                    storage = AcceptAllCookiesStorage()
+                }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            ignoreUnknownKeys = true
+                            explicitNulls = false
+                        },
+                    )
+                }
+            }
+
+            val httpClient = createMockHttpClient()
+            val service = SkiStatsService(
+                skiStatsRepository = mockRepository,
+                httpClient = httpClient,
+                skiStatsPropertiesHolder = propertiesHolder,
+                apiClientFactory = { _, _, _, _ -> mockApiClient },
+            )
+
+            // When
+            service.pollFriendsLeaderboard(PeriodType.SEASON, "29", profileProps)
+
+            // Then
+            coVerify(exactly = 1) { mockRepository.tokensByProfile(profileProps.id) }
+            coVerify(exactly = 0) { mockRepository.addOrUpdateTokens(any(), any()) }
+        }
+
+        "pollFriendsLeaderboard should perform login and fetch leaderboard when no tokens exist" {
             // Given
             val mockRepository = mockk<SkiStatsRepository>()
             val fixedInstant = Instant.fromEpochSeconds(1000000000)
@@ -472,7 +577,7 @@ class SkiStatsServiceTest :
             )
 
             // When
-            service.pollSeasonStats(profileProps)
+            service.pollFriendsLeaderboard(PeriodType.WEEK, "2907", profileProps)
 
             // Then
             coVerify(exactly = 1) { mockRepository.tokensByProfile(profileProps.id) }
