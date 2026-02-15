@@ -26,7 +26,7 @@ import kotlin.time.Clock
  *
  * Kept as constants similar to [HttpHeaders] to avoid typos and duplication.
  */
-public object SkiStatsHttpHeaders {
+object SkiStatsHttpHeaders {
     const val APP_INSTANCE_ID: String = "x-app-instanceid"
     const val APP_PLATFORM: String = "x-app-platform"
     const val API_KEY: String = "x-api-key"
