@@ -3,7 +3,7 @@ detekt = "1.23.8"
 exposed = "1.0.0"
 flyway = "12.0.1"
 googleCalendarService = "v3-rev20251207-2.0.0"
-googleOauthClient ="1.42.1"
+googleOauthClient = "1.42.1"
 graalvm = "0.11.4"
 hoplite = "2.9.0"
 influxdb = "7.5.0"
@@ -32,6 +32,7 @@ kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core", vers
 kotest-assertions-json = { group = "io.kotest", name = "kotest-assertions-json", version.ref = "kotest" }
 kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
 ktor-client = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
@@ -49,7 +50,7 @@ sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlit
 database = ["ktor-serialization-kotlinx-json", "exposed-core", "exposed-jdbc", "exposed-dao", "exposed-kotlin-datetime", "sqlite-jdbc", "flyway"]
 google-calendar = ["google-oauth", "google-calendar-api"]
 kotest = ["kotest-runner-junit5", "kotest-assertions", "kotest-assertions-json"]
-ktor = ["ktor-server-core-jvm", "ktor-server-cio-jvm", "ktor-client", "ktor-client-content-negotiation", "ktor-client-cio"]
+ktor = ["ktor-server-core-jvm", "ktor-server-cio-jvm", "ktor-client", "ktor-client-auth", "ktor-client-content-negotiation", "ktor-client-cio"]
 metrics = ["ktor-micrometer-metrics", "micrometer-registry-prometheus"]
 
 [plugins]
