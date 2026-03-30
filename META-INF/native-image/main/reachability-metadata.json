@@ -1,12 +1,6 @@
 {
   "reflection": [
     {
-      "type": "[Lio.ktor.network.selector.SelectInterest;"
-    },
-    {
-      "type": "[Ljava.lang.String;"
-    },
-    {
       "type": "android.os.Build$VERSION"
     },
     {
@@ -17,6 +11,10 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "boolean[]",
+      "jniAccessible": true
     },
     {
       "type": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
@@ -88,91 +86,99 @@
       "type": "ch.qos.logback.core.spi.ContextAware"
     },
     {
-      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
+      "type": "com.google.api.client.googleapis.services.AbstractGoogleClientRequest"
     },
     {
-      "type": "com.google.api.client.googleapis.json.GoogleJsonError",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setErrors",
-          "parameterTypes": [
-            "java.util.List"
-          ]
-        },
-        {
-          "name": "setMessage",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
+      "type": "com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest"
     },
     {
-      "type": "com.google.api.client.googleapis.json.GoogleJsonError$ErrorInfo",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setDomain",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLocation",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLocationType",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setMessage",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setReason",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.client.googleapis.services.AbstractGoogleClientRequest",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest",
-      "allDeclaredFields": true
-    },
-    {
-      "type": "com.google.api.client.http.GenericUrl",
-      "allDeclaredFields": true
+      "type": "com.google.api.client.http.GenericUrl"
     },
     {
       "type": "com.google.api.client.http.HttpHeaders",
-      "allDeclaredFields": true,
+      "fields": [
+        {
+          "name": "accept"
+        },
+        {
+          "name": "acceptEncoding"
+        },
+        {
+          "name": "age"
+        },
+        {
+          "name": "authenticate"
+        },
+        {
+          "name": "authorization"
+        },
+        {
+          "name": "cacheControl"
+        },
+        {
+          "name": "contentEncoding"
+        },
+        {
+          "name": "contentLength"
+        },
+        {
+          "name": "contentMD5"
+        },
+        {
+          "name": "contentRange"
+        },
+        {
+          "name": "contentType"
+        },
+        {
+          "name": "cookie"
+        },
+        {
+          "name": "date"
+        },
+        {
+          "name": "etag"
+        },
+        {
+          "name": "expires"
+        },
+        {
+          "name": "ifMatch"
+        },
+        {
+          "name": "ifModifiedSince"
+        },
+        {
+          "name": "ifNoneMatch"
+        },
+        {
+          "name": "ifRange"
+        },
+        {
+          "name": "ifUnmodifiedSince"
+        },
+        {
+          "name": "lastModified"
+        },
+        {
+          "name": "location"
+        },
+        {
+          "name": "mimeVersion"
+        },
+        {
+          "name": "range"
+        },
+        {
+          "name": "retryAfter"
+        },
+        {
+          "name": "userAgent"
+        },
+        {
+          "name": "warning"
+        }
+      ],
       "methods": [
         {
           "name": "setAccept",
@@ -194,6 +200,12 @@
         },
         {
           "name": "setAuthenticate",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setAuthorization",
           "parameterTypes": [
             "java.lang.String"
           ]
@@ -334,7 +346,6 @@
     },
     {
       "type": "com.google.api.client.json.GenericJson",
-      "allDeclaredFields": true,
       "methods": [
         {
           "name": "<init>",
@@ -344,19 +355,75 @@
     },
     {
       "type": "com.google.api.client.json.webtoken.JsonWebSignature$Header",
-      "allDeclaredFields": true
+      "fields": [
+        {
+          "name": "algorithm"
+        },
+        {
+          "name": "critical"
+        },
+        {
+          "name": "jwk"
+        },
+        {
+          "name": "jwkUrl"
+        },
+        {
+          "name": "keyId"
+        },
+        {
+          "name": "x509Certificates"
+        },
+        {
+          "name": "x509Thumbprint"
+        },
+        {
+          "name": "x509Url"
+        }
+      ]
     },
     {
       "type": "com.google.api.client.json.webtoken.JsonWebToken$Header",
-      "allDeclaredFields": true
+      "fields": [
+        {
+          "name": "contentType"
+        },
+        {
+          "name": "type"
+        }
+      ]
     },
     {
       "type": "com.google.api.client.json.webtoken.JsonWebToken$Payload",
-      "allDeclaredFields": true
+      "fields": [
+        {
+          "name": "audience"
+        },
+        {
+          "name": "expirationTimeSeconds"
+        },
+        {
+          "name": "issuedAtTimeSeconds"
+        },
+        {
+          "name": "issuer"
+        },
+        {
+          "name": "jwtId"
+        },
+        {
+          "name": "notBeforeTimeSeconds"
+        },
+        {
+          "name": "subject"
+        },
+        {
+          "name": "type"
+        }
+      ]
     },
     {
       "type": "com.google.api.client.util.GenericData",
-      "allDeclaredFields": true,
       "methods": [
         {
           "name": "<init>",
@@ -366,261 +433,103 @@
     },
     {
       "type": "com.google.api.services.calendar.Calendar$Events$List",
-      "allDeclaredFields": true
+      "fields": [
+        {
+          "name": "alwaysIncludeEmail"
+        },
+        {
+          "name": "calendarId"
+        },
+        {
+          "name": "eventTypes"
+        },
+        {
+          "name": "iCalUID"
+        },
+        {
+          "name": "maxAttendees"
+        },
+        {
+          "name": "maxResults"
+        },
+        {
+          "name": "orderBy"
+        },
+        {
+          "name": "pageToken"
+        },
+        {
+          "name": "privateExtendedProperty"
+        },
+        {
+          "name": "q"
+        },
+        {
+          "name": "sharedExtendedProperty"
+        },
+        {
+          "name": "showDeleted"
+        },
+        {
+          "name": "showHiddenInvitations"
+        },
+        {
+          "name": "singleEvents"
+        },
+        {
+          "name": "syncToken"
+        },
+        {
+          "name": "timeMax"
+        },
+        {
+          "name": "timeMin"
+        },
+        {
+          "name": "timeZone"
+        },
+        {
+          "name": "updatedMin"
+        }
+      ]
     },
     {
       "type": "com.google.api.services.calendar.CalendarRequest",
-      "allDeclaredFields": true
+      "fields": [
+        {
+          "name": "alt"
+        },
+        {
+          "name": "fields"
+        },
+        {
+          "name": "key"
+        },
+        {
+          "name": "oauthToken"
+        },
+        {
+          "name": "prettyPrint"
+        },
+        {
+          "name": "quotaUser"
+        },
+        {
+          "name": "userIp"
+        }
+      ]
     },
     {
       "type": "com.google.api.services.calendar.model.Event",
-      "allDeclaredFields": true,
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": []
-        },
-        {
-          "name": "setCreated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setCreator",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Creator"
-          ]
-        },
-        {
-          "name": "setDescription",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEnd",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setEtag",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEventType",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setExtendedProperties",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$ExtendedProperties"
-          ]
-        },
-        {
-          "name": "setGuestsCanInviteOthers",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        },
-        {
-          "name": "setGuestsCanSeeOtherGuests",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        },
-        {
-          "name": "setHtmlLink",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setICalUID",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setId",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setKind",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLocation",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setOrganizer",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Organizer"
-          ]
-        },
-        {
-          "name": "setReminders",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Reminders"
-          ]
-        },
-        {
-          "name": "setSequence",
-          "parameterTypes": [
-            "java.lang.Integer"
-          ]
-        },
-        {
-          "name": "setStart",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setStatus",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSummary",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setTransparency",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setUpdated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setVisibility",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Creator",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setEmail",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$ExtendedProperties",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Organizer",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setDisplayName",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEmail",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSelf",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Reminders",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setUseDefault",
-          "parameterTypes": [
-            "java.lang.Boolean"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.EventDateTime",
-      "allDeclaredFields": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setDate",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setDateTime",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setTimeZone",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
         }
       ]
     },
     {
       "type": "com.google.api.services.calendar.model.EventReminder",
-      "allDeclaredFields": true,
       "methods": [
         {
           "name": "<init>",
@@ -630,7 +539,6 @@
     },
     {
       "type": "com.google.api.services.calendar.model.Events",
-      "allDeclaredFields": true,
       "methods": [
         {
           "name": "<init>",
@@ -728,7 +636,23 @@
     },
     {
       "type": "com.influxdb.client.domain.Dialect",
-      "allDeclaredFields": true
+      "fields": [
+        {
+          "name": "annotations"
+        },
+        {
+          "name": "commentPrefix"
+        },
+        {
+          "name": "dateTimeFormat"
+        },
+        {
+          "name": "delimiter"
+        },
+        {
+          "name": "header"
+        }
+      ]
     },
     {
       "type": "com.influxdb.client.domain.Dialect$AnnotationsEnum$Adapter",
@@ -749,12 +673,10 @@
       ]
     },
     {
-      "type": "com.influxdb.client.domain.Expression",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.Expression"
     },
     {
-      "type": "com.influxdb.client.domain.File",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.File"
     },
     {
       "type": "com.influxdb.client.domain.File$FileBodyAdapter",
@@ -766,28 +688,42 @@
       ]
     },
     {
-      "type": "com.influxdb.client.domain.Identifier",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.Identifier"
     },
     {
-      "type": "com.influxdb.client.domain.ImportDeclaration",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.ImportDeclaration"
     },
     {
-      "type": "com.influxdb.client.domain.Node",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.Node"
     },
     {
-      "type": "com.influxdb.client.domain.PackageClause",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.PackageClause"
     },
     {
-      "type": "com.influxdb.client.domain.PropertyKey",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.PropertyKey"
     },
     {
       "type": "com.influxdb.client.domain.Query",
-      "allDeclaredFields": true
+      "fields": [
+        {
+          "name": "dialect"
+        },
+        {
+          "name": "extern"
+        },
+        {
+          "name": "now"
+        },
+        {
+          "name": "params"
+        },
+        {
+          "name": "query"
+        },
+        {
+          "name": "type"
+        }
+      ]
     },
     {
       "type": "com.influxdb.client.domain.Query$TypeEnum$Adapter",
@@ -799,8 +735,7 @@
       ]
     },
     {
-      "type": "com.influxdb.client.domain.StringLiteral",
-      "allDeclaredFields": true
+      "type": "com.influxdb.client.domain.StringLiteral"
     },
     {
       "type": "com.sksamuel.hoplite.decoder.Base64Decoder"
@@ -1031,6 +966,17 @@
       ]
     },
     {
+      "type": "com.sun.crypto.provider.HKDFKeyDerivation$HKDFSHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "javax.crypto.KDFParameters"
+          ]
+        }
+      ]
+    },
+    {
       "type": "com.sun.crypto.provider.HmacCore$HmacSHA256",
       "methods": [
         {
@@ -1126,34 +1072,19 @@
       "type": "io.grpc.override.ContextStorageOverride"
     },
     {
-      "type": "io.ktor.client.HttpClient",
-      "fields": [
-        {
-          "name": "closed"
-        }
-      ]
+      "type": "io.ktor.client.HttpClient"
     },
     {
       "type": "io.ktor.client.HttpClientConfig"
     },
     {
-      "type": "io.ktor.client.call.HttpClientCall",
-      "fields": [
-        {
-          "name": "received"
-        }
-      ]
+      "type": "io.ktor.client.call.HttpClientCall"
     },
     {
       "type": "io.ktor.client.content.ProgressListener"
     },
     {
-      "type": "io.ktor.client.engine.HttpClientEngineBase",
-      "fields": [
-        {
-          "name": "closed"
-        }
-      ]
+      "type": "io.ktor.client.engine.HttpClientEngineBase"
     },
     {
       "type": "io.ktor.client.engine.HttpClientEngineCapability"
@@ -1162,12 +1093,7 @@
       "type": "io.ktor.client.engine.HttpClientEngineConfig"
     },
     {
-      "type": "io.ktor.client.engine.cio.Endpoint",
-      "fields": [
-        {
-          "name": "connections"
-        }
-      ]
+      "type": "io.ktor.client.engine.cio.Endpoint"
     },
     {
       "type": "io.ktor.client.plugins.HttpRetryDelayContext"
@@ -1209,65 +1135,22 @@
       "type": "io.ktor.http.HttpStatusCode"
     },
     {
-      "type": "io.ktor.network.selector.InterestSuspensionsMap",
-      "fields": [
-        {
-          "name": "acceptHandlerReference"
-        },
-        {
-          "name": "connectHandlerReference"
-        },
-        {
-          "name": "readHandlerReference"
-        },
-        {
-          "name": "writeHandlerReference"
-        }
-      ]
+      "type": "io.ktor.network.selector.InterestSuspensionsMap"
     },
     {
-      "type": "io.ktor.network.selector.LockFreeMPSCQueue",
-      "fields": [
-        {
-          "name": "curRef"
-        }
-      ]
+      "type": "io.ktor.network.selector.LockFreeMPSCQueue"
     },
     {
-      "type": "io.ktor.network.selector.LockFreeMPSCQueueCore",
-      "fields": [
-        {
-          "name": "nextRef"
-        },
-        {
-          "name": "stateRef"
-        }
-      ]
+      "type": "io.ktor.network.selector.LockFreeMPSCQueueCore"
     },
     {
-      "type": "io.ktor.network.selector.SelectableBase",
-      "fields": [
-        {
-          "name": "_interestedOps"
-        }
-      ]
+      "type": "io.ktor.network.selector.SelectInterest[]"
     },
     {
-      "type": "io.ktor.network.sockets.SocketBase",
-      "fields": [
-        {
-          "name": "actualCloseFlag"
-        },
-        {
-          "name": "closeFlag"
-        },
-        {
-          "name": "readerJob"
-        },
-        {
-          "name": "writerJob"
-        }
-      ]
+      "type": "io.ktor.network.selector.SelectableBase"
+    },
+    {
+      "type": "io.ktor.network.sockets.SocketBase"
     },
     {
       "type": "io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider"
@@ -1291,56 +1174,22 @@
       "type": "io.ktor.util.Attributes"
     },
     {
-      "type": "io.ktor.util.collections.CopyOnWriteHashMap",
-      "fields": [
-        {
-          "name": "current"
-        }
-      ]
+      "type": "io.ktor.util.collections.CopyOnWriteHashMap"
     },
     {
-      "type": "io.ktor.util.internal.LockFreeLinkedListNode",
-      "fields": [
-        {
-          "name": "_next"
-        },
-        {
-          "name": "_prev"
-        },
-        {
-          "name": "removedRef"
-        }
-      ]
+      "type": "io.ktor.util.internal.LockFreeLinkedListNode"
     },
     {
       "type": "io.ktor.util.reflect.TypeInfo"
     },
     {
-      "type": "io.ktor.utils.io.ByteChannel",
-      "fields": [
-        {
-          "name": "_closedCause"
-        },
-        {
-          "name": "suspensionSlot"
-        }
-      ]
+      "type": "io.ktor.utils.io.ByteChannel"
     },
     {
-      "type": "io.ktor.utils.io.pool.DefaultPool",
-      "fields": [
-        {
-          "name": "top"
-        }
-      ]
+      "type": "io.ktor.utils.io.pool.DefaultPool"
     },
     {
-      "type": "io.micrometer.core.instrument.distribution.TimeWindowMax",
-      "fields": [
-        {
-          "name": "rotating"
-        }
-      ]
+      "type": "io.micrometer.core.instrument.distribution.TimeWindowMax"
     },
     {
       "type": "io.opencensus.impl.trace.TraceComponentImpl"
@@ -1364,17 +1213,6 @@
       ]
     },
     {
-      "type": "java.io.FileNotFoundException",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
       "type": "java.io.Serializable"
     },
     {
@@ -1382,9 +1220,18 @@
     },
     {
       "type": "java.lang.Boolean",
+      "jniAccessible": true,
       "fields": [
         {
           "name": "TYPE"
+        }
+      ],
+      "methods": [
+        {
+          "name": "getBoolean",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -1475,8 +1322,7 @@
       "type": "java.lang.Number"
     },
     {
-      "type": "java.lang.Object",
-      "allDeclaredFields": true
+      "type": "java.lang.Object"
     },
     {
       "type": "java.lang.Short",
@@ -1487,18 +1333,26 @@
       ]
     },
     {
-      "type": "java.lang.String",
-      "fields": [
-        {
-          "name": "TYPE"
-        }
-      ]
+      "type": "java.lang.String"
     },
     {
       "type": "java.lang.StringBuffer"
     },
     {
       "type": "java.lang.StringBuilder"
+    },
+    {
+      "type": "java.lang.String[]"
+    },
+    {
+      "type": "java.lang.Throwable",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "toString",
+          "parameterTypes": []
+        }
+      ]
     },
     {
       "type": "java.lang.Void",
@@ -1601,8 +1455,7 @@
       "type": "java.sql.Timestamp"
     },
     {
-      "type": "java.util.AbstractMap",
-      "allDeclaredFields": true
+      "type": "java.util.AbstractMap"
     },
     {
       "type": "java.util.Date"
@@ -1612,10 +1465,6 @@
     },
     {
       "type": "java.util.LinkedHashMap"
-    },
-    {
-      "type": "java.util.Map",
-      "allDeclaredFields": true
     },
     {
       "type": "java.util.SortedSet"
@@ -1742,12 +1591,7 @@
       "type": "kotlin.Number"
     },
     {
-      "type": "kotlin.SafePublicationLazyImpl",
-      "fields": [
-        {
-          "name": "_value"
-        }
-      ]
+      "type": "kotlin.SafePublicationLazyImpl"
     },
     {
       "type": "kotlin.Short"
@@ -1823,7 +1667,41 @@
     },
     {
       "type": "kotlin.reflect.jvm.internal.impl.resolve.scopes.DescriptorKindFilter",
-      "allPublicFields": true
+      "fields": [
+        {
+          "name": "ALL"
+        },
+        {
+          "name": "CALLABLES"
+        },
+        {
+          "name": "CLASSIFIERS"
+        },
+        {
+          "name": "Companion"
+        },
+        {
+          "name": "FUNCTIONS"
+        },
+        {
+          "name": "NON_SINGLETON_CLASSIFIERS"
+        },
+        {
+          "name": "PACKAGES"
+        },
+        {
+          "name": "SINGLETON_CLASSIFIERS"
+        },
+        {
+          "name": "TYPE_ALIASES"
+        },
+        {
+          "name": "VALUES"
+        },
+        {
+          "name": "VARIABLES"
+        }
+      ]
     },
     {
       "type": "kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsLoaderImpl"
@@ -1832,272 +1710,73 @@
       "type": "kotlin.time.Instant"
     },
     {
-      "type": "kotlinx.coroutines.CancellableContinuationImpl",
-      "fields": [
-        {
-          "name": "_decisionAndIndex$volatile"
-        },
-        {
-          "name": "_parentHandle$volatile"
-        },
-        {
-          "name": "_state$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.CancellableContinuationImpl"
     },
     {
-      "type": "kotlinx.coroutines.CancelledContinuation",
-      "fields": [
-        {
-          "name": "_resumed$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.CancelledContinuation"
     },
     {
-      "type": "kotlinx.coroutines.CompletedExceptionally",
-      "fields": [
-        {
-          "name": "_handled$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.CompletedExceptionally"
     },
     {
-      "type": "kotlinx.coroutines.DispatchedCoroutine",
-      "fields": [
-        {
-          "name": "_decision$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.DispatchedCoroutine"
     },
     {
-      "type": "kotlinx.coroutines.EventLoopImplBase",
-      "fields": [
-        {
-          "name": "_delayed$volatile"
-        },
-        {
-          "name": "_isCompleted$volatile"
-        },
-        {
-          "name": "_queue$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.EventLoopImplBase"
     },
     {
-      "type": "kotlinx.coroutines.InvokeOnCancelling",
-      "fields": [
-        {
-          "name": "_invoked$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.InvokeOnCancelling"
     },
     {
-      "type": "kotlinx.coroutines.JobSupport",
-      "fields": [
-        {
-          "name": "_parentHandle$volatile"
-        },
-        {
-          "name": "_state$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.JobSupport"
     },
     {
-      "type": "kotlinx.coroutines.JobSupport$Finishing",
-      "fields": [
-        {
-          "name": "_exceptionsHolder$volatile"
-        },
-        {
-          "name": "_isCompleting$volatile"
-        },
-        {
-          "name": "_rootCause$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.JobSupport$Finishing"
     },
     {
-      "type": "kotlinx.coroutines.channels.BufferedChannel",
-      "fields": [
-        {
-          "name": "_closeCause$volatile"
-        },
-        {
-          "name": "bufferEnd$volatile"
-        },
-        {
-          "name": "bufferEndSegment$volatile"
-        },
-        {
-          "name": "closeHandler$volatile"
-        },
-        {
-          "name": "completedExpandBuffersAndPauseFlag$volatile"
-        },
-        {
-          "name": "receiveSegment$volatile"
-        },
-        {
-          "name": "receivers$volatile"
-        },
-        {
-          "name": "sendSegment$volatile"
-        },
-        {
-          "name": "sendersAndCloseStatus$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.channels.BufferedChannel"
     },
     {
-      "type": "kotlinx.coroutines.internal.ConcurrentLinkedListNode",
-      "fields": [
-        {
-          "name": "_next$volatile"
-        },
-        {
-          "name": "_prev$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.ConcurrentLinkedListNode"
     },
     {
-      "type": "kotlinx.coroutines.internal.DispatchedContinuation",
-      "fields": [
-        {
-          "name": "_reusableCancellableContinuation$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.DispatchedContinuation"
     },
     {
-      "type": "kotlinx.coroutines.internal.LimitedDispatcher",
-      "fields": [
-        {
-          "name": "runningWorkers$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.LimitedDispatcher"
     },
     {
-      "type": "kotlinx.coroutines.internal.LockFreeLinkedListNode",
-      "fields": [
-        {
-          "name": "_next$volatile"
-        },
-        {
-          "name": "_prev$volatile"
-        },
-        {
-          "name": "_removedRef$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.LockFreeLinkedListNode"
     },
     {
-      "type": "kotlinx.coroutines.internal.LockFreeTaskQueue",
-      "fields": [
-        {
-          "name": "_cur$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.LockFreeTaskQueue"
     },
     {
-      "type": "kotlinx.coroutines.internal.LockFreeTaskQueueCore",
-      "fields": [
-        {
-          "name": "_next$volatile"
-        },
-        {
-          "name": "_state$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.LockFreeTaskQueueCore"
     },
     {
-      "type": "kotlinx.coroutines.internal.Segment",
-      "fields": [
-        {
-          "name": "cleanedAndPointers$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.Segment"
     },
     {
-      "type": "kotlinx.coroutines.internal.ThreadSafeHeap",
-      "fields": [
-        {
-          "name": "_size$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.internal.ThreadSafeHeap"
     },
     {
-      "type": "kotlinx.coroutines.scheduling.CoroutineScheduler",
-      "fields": [
-        {
-          "name": "_isTerminated$volatile"
-        },
-        {
-          "name": "controlState$volatile"
-        },
-        {
-          "name": "parkedWorkersStack$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.scheduling.CoroutineScheduler"
     },
     {
-      "type": "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker",
-      "fields": [
-        {
-          "name": "workerCtl$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
     },
     {
-      "type": "kotlinx.coroutines.scheduling.WorkQueue",
-      "fields": [
-        {
-          "name": "blockingTasksInBuffer$volatile"
-        },
-        {
-          "name": "consumerIndex$volatile"
-        },
-        {
-          "name": "lastScheduledTask$volatile"
-        },
-        {
-          "name": "producerIndex$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.scheduling.WorkQueue"
     },
     {
-      "type": "kotlinx.coroutines.sync.MutexImpl",
-      "fields": [
-        {
-          "name": "owner$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.sync.MutexImpl"
     },
     {
-      "type": "kotlinx.coroutines.sync.SemaphoreAndMutexImpl",
-      "fields": [
-        {
-          "name": "_availablePermits$volatile"
-        },
-        {
-          "name": "deqIdx$volatile"
-        },
-        {
-          "name": "enqIdx$volatile"
-        },
-        {
-          "name": "head$volatile"
-        },
-        {
-          "name": "tail$volatile"
-        }
-      ]
+      "type": "kotlinx.coroutines.sync.SemaphoreAndMutexImpl"
     },
     {
-      "type": "kotlinx.io.RefCountingCopyTracker",
-      "fields": [
-        {
-          "name": "copyCount"
-        }
-      ]
+      "type": "kotlinx.io.RefCountingCopyTracker"
     },
     {
       "type": "no.slomic.smarthytte.checkinouts.CheckInOutSource"
@@ -2354,21 +2033,7 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsResponse",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsResponse$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
-        }
-      ]
+      "type": "no.slomic.smarthytte.vehicletrips.GetVehicleTripsResponse"
     },
     {
       "type": "no.slomic.smarthytte.vehicletrips.VehicleTripEntity",
@@ -2386,7 +2051,6 @@
     },
     {
       "type": "org.flywaydb.core.api.migration.baseline.BaselineMigrationConfigurationExtension",
-      "allDeclaredFields": true,
       "methods": [
         {
           "name": "<init>",
@@ -2468,19 +2132,16 @@
       "type": "org.flywaydb.core.internal.proprietaryStubs.GenerateCommandExtensionStub"
     },
     {
-      "type": "org.flywaydb.core.internal.proprietaryStubs.LicensingConfigurationExtensionStub",
-      "allDeclaredFields": true
+      "type": "org.flywaydb.core.internal.proprietaryStubs.LicensingConfigurationExtensionStub"
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.ModelCommandExtensionStub"
     },
     {
-      "type": "org.flywaydb.core.internal.proprietaryStubs.OfflinePermitConfigurationExtensionStub",
-      "allDeclaredFields": true
+      "type": "org.flywaydb.core.internal.proprietaryStubs.OfflinePermitConfigurationExtensionStub"
     },
     {
-      "type": "org.flywaydb.core.internal.proprietaryStubs.PATTokenConfigurationExtensionStub",
-      "allDeclaredFields": true
+      "type": "org.flywaydb.core.internal.proprietaryStubs.PATTokenConfigurationExtensionStub"
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.PrepareCommandExtensionStub"
@@ -2490,7 +2151,6 @@
     },
     {
       "type": "org.flywaydb.core.internal.publishing.PublishingConfigurationExtension",
-      "allDeclaredFields": true,
       "methods": [
         {
           "name": "<init>",
@@ -2644,6 +2304,203 @@
     },
     {
       "type": "org.slf4j.spi.SLF4JServiceProvider"
+    },
+    {
+      "type": "org.sqlite.BusyHandler",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "callback",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Collation",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "xCompare",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Function",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "args"
+        },
+        {
+          "name": "context"
+        },
+        {
+          "name": "value"
+        }
+      ],
+      "methods": [
+        {
+          "name": "xFunc",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Function$Aggregate",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "clone",
+          "parameterTypes": []
+        },
+        {
+          "name": "xFinal",
+          "parameterTypes": []
+        },
+        {
+          "name": "xStep",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.Function$Window",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "xInverse",
+          "parameterTypes": []
+        },
+        {
+          "name": "xValue",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.ProgressHandler",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "progress",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.core.DB",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "onCommit",
+          "parameterTypes": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "onUpdate",
+          "parameterTypes": [
+            "int",
+            "java.lang.String",
+            "java.lang.String",
+            "long"
+          ]
+        },
+        {
+          "name": "throwex",
+          "parameterTypes": []
+        },
+        {
+          "name": "throwex",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.core.DB$ProgressObserver",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "progress",
+          "parameterTypes": [
+            "int",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.sqlite.core.NativeDB",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "busyHandler"
+        },
+        {
+          "name": "commitListener"
+        },
+        {
+          "name": "pointer"
+        },
+        {
+          "name": "progressHandler"
+        },
+        {
+          "name": "updateListener"
+        }
+      ],
+      "methods": [
+        {
+          "name": "stringToUtf8ByteArray",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "throwex",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.management.VMManagementImpl",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "compTimeMonitoringSupport"
+        },
+        {
+          "name": "currentThreadCpuTimeSupport"
+        },
+        {
+          "name": "objectMonitorUsageSupport"
+        },
+        {
+          "name": "otherThreadCpuTimeSupport"
+        },
+        {
+          "name": "remoteDiagnosticCommandsSupport"
+        },
+        {
+          "name": "synchronizerUsageSupport"
+        },
+        {
+          "name": "threadAllocatedMemorySupport"
+        },
+        {
+          "name": "threadContentionMonitoringSupport"
+        }
+      ]
     },
     {
       "type": "sun.security.pkcs12.PKCS12KeyStore",
@@ -2927,18 +2784,6 @@
       ]
     },
     {
-      "type": "sun.security.x509.IssuerAlternativeNameExtension",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "java.lang.Boolean",
-            "java.lang.Object"
-          ]
-        }
-      ]
-    },
-    {
       "type": "sun.security.x509.KeyUsageExtension",
       "methods": [
         {
@@ -2999,6 +2844,30 @@
       ]
     },
     {
+      "type": "sun.text.resources.cldr.FormatData"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en_US"
+    },
+    {
+      "type": "sun.util.resources.cldr.CalendarData"
+    },
+    {
+      "type": "tools.jackson.databind.deser.Deserializers[]"
+    },
+    {
+      "type": "tools.jackson.databind.deser.KeyDeserializers[]"
+    },
+    {
+      "type": "tools.jackson.databind.deser.ValueInstantiators[]"
+    },
+    {
+      "type": "tools.jackson.databind.ser.Serializers[]"
+    },
+    {
       "type": {
         "proxy": [
           "com.influxdb.client.service.HealthService"
@@ -3038,9 +2907,6 @@
     },
     {
       "glob": "META-INF/services/io.ktor.serialization.kotlinx.KotlinxSerializationExtensionProvider"
-    },
-    {
-      "glob": "META-INF/services/java.lang.System$LoggerFinder"
     },
     {
       "glob": "META-INF/services/java.net.spi.InetAddressResolverProvider"
@@ -3121,6 +2987,33 @@
       "glob": "db/migration/V1.1__new_table_reservation_vehicle_trip.sql"
     },
     {
+      "glob": "kotlin/annotation/annotation.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/collections/collections.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/concurrent/atomics/atomics.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/coroutines/coroutines.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/internal/internal.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/kotlin.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/ranges/ranges.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/reflect/reflect.kotlin_builtins"
+    },
+    {
+      "glob": "kotlin/time/time.kotlin_builtins"
+    },
+    {
       "glob": "logback-test.xml"
     },
     {
@@ -3153,223 +3046,6 @@
     {
       "module": "java.base",
       "glob": "sun/net/idn/uidna.spp"
-    },
-    {
-      "module": "java.xml",
-      "glob": "jdk/xml/internal/jdkcatalog/JDKCatalog.xml"
-    }
-  ],
-  "bundles": [],
-  "jni": [
-    {
-      "type": "[Z"
-    },
-    {
-      "type": "java.lang.Boolean",
-      "methods": [
-        {
-          "name": "getBoolean",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "java.lang.Throwable",
-      "methods": [
-        {
-          "name": "toString",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.BusyHandler",
-      "methods": [
-        {
-          "name": "callback",
-          "parameterTypes": [
-            "int"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.Collation",
-      "methods": [
-        {
-          "name": "xCompare",
-          "parameterTypes": [
-            "java.lang.String",
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.Function",
-      "fields": [
-        {
-          "name": "args"
-        },
-        {
-          "name": "context"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "xFunc",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.Function$Aggregate",
-      "methods": [
-        {
-          "name": "clone",
-          "parameterTypes": []
-        },
-        {
-          "name": "xFinal",
-          "parameterTypes": []
-        },
-        {
-          "name": "xStep",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.Function$Window",
-      "methods": [
-        {
-          "name": "xInverse",
-          "parameterTypes": []
-        },
-        {
-          "name": "xValue",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.ProgressHandler",
-      "methods": [
-        {
-          "name": "progress",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.core.DB",
-      "methods": [
-        {
-          "name": "onCommit",
-          "parameterTypes": [
-            "boolean"
-          ]
-        },
-        {
-          "name": "onUpdate",
-          "parameterTypes": [
-            "int",
-            "java.lang.String",
-            "java.lang.String",
-            "long"
-          ]
-        },
-        {
-          "name": "throwex",
-          "parameterTypes": []
-        },
-        {
-          "name": "throwex",
-          "parameterTypes": [
-            "int"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.core.DB$ProgressObserver",
-      "methods": [
-        {
-          "name": "progress",
-          "parameterTypes": [
-            "int",
-            "int"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.sqlite.core.NativeDB",
-      "fields": [
-        {
-          "name": "busyHandler"
-        },
-        {
-          "name": "commitListener"
-        },
-        {
-          "name": "pointer"
-        },
-        {
-          "name": "progressHandler"
-        },
-        {
-          "name": "updateListener"
-        }
-      ],
-      "methods": [
-        {
-          "name": "stringToUtf8ByteArray",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "throwex",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "sun.management.VMManagementImpl",
-      "fields": [
-        {
-          "name": "compTimeMonitoringSupport"
-        },
-        {
-          "name": "currentThreadCpuTimeSupport"
-        },
-        {
-          "name": "objectMonitorUsageSupport"
-        },
-        {
-          "name": "otherThreadCpuTimeSupport"
-        },
-        {
-          "name": "remoteDiagnosticCommandsSupport"
-        },
-        {
-          "name": "synchronizerUsageSupport"
-        },
-        {
-          "name": "threadAllocatedMemorySupport"
-        },
-        {
-          "name": "threadContentionMonitoringSupport"
-        }
-      ]
     }
   ]
 }
