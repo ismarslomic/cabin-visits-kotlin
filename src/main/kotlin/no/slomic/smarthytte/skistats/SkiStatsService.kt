@@ -53,7 +53,10 @@ class SkiStatsService(
         periodType: PeriodType,
         value: String,
         apiClient: HttpClient,
-    ): String = apiClient.get(properties.core.friendsLeaderboardsUrl(periodType.name, value)) {}.body()
+    ): String {
+        val url = properties.core.friendsLeaderboardsUrl(periodType.name, value)
+        return apiClient.get(url) {}.body()
+    }
 
     internal fun createSkiStatsAuthClient(profile: ProfileSkiStatsProperties): SkiStatsAuthClient = SkiStatsAuthClient(
         httpClient = httpClient,
@@ -75,7 +78,7 @@ class SkiStatsService(
         val existing = skiStatsRepository.tokensByProfile(profileId)
         if (existing != null) return
 
-        logger.info("No tokens found for profile={}, performing password grant", profileId)
+        logger.info("No auth tokens found in database for profile={}, performing password grant", profileId)
 
         val response = authClient.passwordGrant()
 
@@ -91,7 +94,7 @@ class SkiStatsService(
 
         skiStatsRepository.addOrUpdateTokens(profileId, stored)
 
-        logger.info("Initial tokens persisted for profile={}", profileId)
+        logger.info("Initial auth tokens persisted in database for profile={}", profileId)
     }
 }
 

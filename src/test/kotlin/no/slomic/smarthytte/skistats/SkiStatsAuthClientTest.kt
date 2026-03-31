@@ -25,7 +25,6 @@ import kotlinx.serialization.json.Json
 import no.slomic.smarthytte.properties.CoreSkiStatsProperties
 import no.slomic.smarthytte.properties.ProfileSkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsProperties
-import java.util.*
 
 class SkiStatsAuthClientTest :
     StringSpec({
@@ -53,11 +52,6 @@ class SkiStatsAuthClientTest :
             core = coreProps,
             profiles = listOf(profileProp),
         )
-        val basicAuthHeaderValue =
-            "Basic ${
-                Base64.getEncoder()
-                    .encodeToString("${profileProp.clientId}:${profileProp.clientSecret}".toByteArray())
-            }"
 
         "passwordGrant should make POST request with correct headers and body parameters" {
             var capturedRequest: HttpRequestData? = null
@@ -98,8 +92,8 @@ class SkiStatsAuthClientTest :
                 method shouldBe HttpMethod.Post
 
                 // Verify Authorization header
-                assertRequestHasHeader(headers, coreProps, basicAuthHeaderValue)
-                headers[HttpHeaders.Authorization] shouldBe basicAuthHeaderValue
+                assertRequestHasHeader(headers, coreProps, props.profiles[0].clientSecret)
+                headers[HttpHeaders.Authorization] shouldBe props.profiles[0].clientSecret
 
                 // Verify Content-Type header (check the body's content type instead)
                 body.contentType shouldBe ContentType.Application.FormUrlEncoded
@@ -162,7 +156,7 @@ class SkiStatsAuthClientTest :
                 method shouldBe HttpMethod.Post
 
                 // Verify Authorization header
-                headers[HttpHeaders.Authorization] shouldBe basicAuthHeaderValue
+                headers[HttpHeaders.Authorization] shouldBe props.profiles[0].clientSecret
 
                 // Verify Content-Type header (check the body's content type instead)
                 body.contentType shouldBe ContentType.Application.FormUrlEncoded

@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -13,12 +14,10 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import io.ktor.http.formUrlEncode
-import io.ktor.http.headers
 import io.ktor.util.appendAll
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.properties.CoreSkiStatsProperties
 import no.slomic.smarthytte.properties.ProfileSkiStatsProperties
-import java.util.*
 import kotlin.time.Clock
 
 /**
@@ -45,17 +44,8 @@ class SkiStatsAuthClient(
     private val coreProps: CoreSkiStatsProperties,
     private val profileProps: ProfileSkiStatsProperties,
 ) {
-    val basicAuth: String
-        get() {
-            val token =
-                Base64.getEncoder()
-                    .encodeToString("${profileProps.clientId}:${profileProps.clientSecret}".toByteArray())
-            return "Basic $token"
-        }
-
     val httpHeaders = commonHttpHeaders(coreProps) + mapOf(
-        // HttpHeaders.ContentType to ContentType.Application.FormUrlEncoded.toString(),
-        HttpHeaders.Authorization to basicAuth,
+        HttpHeaders.Authorization to profileProps.clientSecret,
     )
 
     suspend fun passwordGrant(): OAuthTokenResponse = httpClient.post(coreProps.authUrl) {
@@ -96,7 +86,9 @@ fun createSkiStatsApiClient(
     profileId: String,
     authClient: SkiStatsAuthClient,
 ): HttpClient = HttpClientProvider.createClient {
-    headers { commonHttpHeaders(coreProps) }
+    defaultRequest {
+        headers { appendAll(commonHttpHeaders(coreProps)) }
+    }
 
     install(Auth) {
         bearer {
