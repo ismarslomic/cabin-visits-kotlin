@@ -2,7 +2,7 @@
 # Multi-arch Dockerfile that builds the GraalVM native image per-target platform
 
 # --- Builder stage: build native image with GraalVM ---
-FROM ghcr.io/graalvm/native-image-community:24-ol9 AS builder
+FROM ghcr.io/graalvm/native-image-community:25-ol9 AS builder
 
 WORKDIR /workspace
 
