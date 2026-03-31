@@ -172,7 +172,7 @@ private fun startServerWithRefresh(): Triple<EmbeddedServer<*, *>, Int, MutableL
 private fun coreProps(baseUrl: String) = CoreSkiStatsProperties(
     baseUrl = baseUrl,
     authPath = "/oauth/token",
-    seasonStatsPath = "/season",
+    friendsLeaderboardsPath = "/season",
     appInstanceId = "app-instance",
     appPlatform = "ios",
     apiKey = "api-key",
