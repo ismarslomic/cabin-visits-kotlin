@@ -82,7 +82,7 @@ class SkiStatsAuthClient(
  */
 fun createSkiStatsApiClient(
     coreProps: CoreSkiStatsProperties,
-    skiStatsRepository: SkiStatsRepository,
+    skiStatsRepository: SkiTokenRepository,
     profileId: String,
     authClient: SkiStatsAuthClient,
 ): HttpClient = HttpClientProvider.createClient {

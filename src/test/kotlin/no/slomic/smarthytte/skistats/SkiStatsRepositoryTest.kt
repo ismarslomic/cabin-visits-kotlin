@@ -21,7 +21,7 @@ class SkiStatsRepositoryTest :
             testDbSetup.teardownDb()
         }
 
-        val repository: SkiStatsRepository = SqliteSkiStatsRepository()
+        val repository: SkiTokenRepository = SqliteSkiTokenRepository()
         val profileId = "user-123"
         val tokens = SkiStatsTokens(
             accessToken = "access-token-123",

@@ -23,6 +23,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.serialization.json.Json
 import no.slomic.smarthytte.properties.CoreSkiStatsProperties
+import no.slomic.smarthytte.properties.FriendsLeaderboardSkiStatsProperties
 import no.slomic.smarthytte.properties.ProfileSkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsProperties
 
@@ -51,6 +52,12 @@ class SkiStatsAuthClientTest :
         val props = SkiStatsProperties(
             core = coreProps,
             profiles = listOf(profileProp),
+            friendsLeaderboard = FriendsLeaderboardSkiStatsProperties(
+                syncFrequencyMinutes = 30,
+                syncFromDate = "2026-02-15",
+                syncFromWeekId = "2907",
+                syncFromSeasonId = "29",
+            ),
         )
 
         "passwordGrant should make POST request with correct headers and body parameters" {

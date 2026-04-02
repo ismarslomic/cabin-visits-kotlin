@@ -5,7 +5,18 @@ import io.ktor.http.appendPathSegments
 
 data class SkiStatsPropertiesHolder(val skiStats: SkiStatsProperties)
 
-data class SkiStatsProperties(val core: CoreSkiStatsProperties, val profiles: List<ProfileSkiStatsProperties>)
+data class SkiStatsProperties(
+    val core: CoreSkiStatsProperties,
+    val profiles: List<ProfileSkiStatsProperties>,
+    val friendsLeaderboard: FriendsLeaderboardSkiStatsProperties,
+)
+
+data class FriendsLeaderboardSkiStatsProperties(
+    val syncFrequencyMinutes: Int,
+    val syncFromDate: String,
+    val syncFromWeekId: String,
+    val syncFromSeasonId: String,
+)
 
 data class CoreSkiStatsProperties(
     val baseUrl: String,

@@ -1,0 +1,44 @@
+{
+  "userId": "ABCD12345",
+  "periodData": {
+    "periodType": "Day",
+    "startDate": "2026-02-15",
+    "weekId": "2907",
+    "seasonId": "29"
+  },
+  "entries": [
+    {
+      "position": 1,
+      "userId": "ABCD12345",
+      "isPrivate": false,
+      "name": "Peter Doe",
+      "value": 4811,
+      "profileImageUrl": "https://localhost/profile-images/peter.jpg?width=200"
+    },
+    {
+      "position": 1,
+      "userId": "EFGH12345",
+      "isPrivate": false,
+      "name": "Mary Doe",
+      "value": 4811,
+      "profileImageUrl": "https://localhost/profile-images/mary.jpg?width=200"
+    },
+    {
+      "position": 3,
+      "userId": "IJKL1234",
+      "isPrivate": false,
+      "name": "Ellen Doe",
+      "value": 3911,
+      "profileImageUrl": "https://localhost/profile-images/ellen.jpg?width=200"
+    }
+  ],
+  "user": {
+    "position": 1,
+    "userId": "ABCD12345",
+    "isPrivate": false,
+    "name": "Peter Doe",
+    "value": 4811,
+    "profileImageUrl": "https://localhost/profile-images/peter.jpg?width=200"
+  },
+  "updatedAtUtc": "2026-02-15T18:15:07Z"
+}

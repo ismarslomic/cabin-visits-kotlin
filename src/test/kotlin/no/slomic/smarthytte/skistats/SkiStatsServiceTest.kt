@@ -19,9 +19,11 @@ import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.properties.CoreSkiStatsProperties
+import no.slomic.smarthytte.properties.FriendsLeaderboardSkiStatsProperties
 import no.slomic.smarthytte.properties.ProfileSkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsPropertiesHolder
+import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -52,9 +54,16 @@ class SkiStatsServiceTest :
         val properties = SkiStatsProperties(
             core = coreProps,
             profiles = listOf(profileProps),
+            friendsLeaderboard = FriendsLeaderboardSkiStatsProperties(
+                syncFrequencyMinutes = 30,
+                syncFromDate = "2026-02-15",
+                syncFromWeekId = "2907",
+                syncFromSeasonId = "29",
+            ),
         )
 
         val propertiesHolder = SkiStatsPropertiesHolder(skiStats = properties)
+        val mockSyncCheckpointService = mockk<SyncCheckpointService>(relaxed = true)
 
         fun createMockHttpClient(): HttpClient {
             val mockEngine = MockEngine { request ->
@@ -120,6 +129,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
             )
@@ -159,6 +169,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 clock = mockClock,
@@ -205,6 +216,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 clock = mockClock,
@@ -249,6 +261,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 clock = mockClock,
@@ -292,6 +305,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 clock = mockClock,
@@ -328,7 +342,27 @@ class SkiStatsServiceTest :
                 when {
                     request.url.encodedPath.contains("/day/2026-02-15") -> {
                         respond(
-                            content = ByteReadChannel("""{"date": "2026-02-15", "leaderboard": []}"""),
+                            content = ByteReadChannel(
+                                """
+                                {
+                                  "userId": "john",
+                                  "periodData": {
+                                    "periodType": "Day",
+                                    "startDate": "2026-02-15",
+                                    "seasonId": "29"
+                                  },
+                                  "entries": [],
+                                  "user": {
+                                    "position": 0,
+                                    "userId": "john",
+                                    "isPrivate": false,
+                                    "name": "John",
+                                    "value": 0
+                                  },
+                                  "updatedAtUtc": "2026-02-15T18:15:07Z"
+                                }
+                                """.trimIndent(),
+                            ),
                             status = HttpStatusCode.OK,
                             headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                         )
@@ -359,6 +393,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 apiClientFactory = { _, _, _, _ -> mockApiClient },
@@ -387,7 +422,28 @@ class SkiStatsServiceTest :
                 when {
                     request.url.encodedPath.contains("/week/2907") -> {
                         respond(
-                            content = ByteReadChannel("""{"week": "2024-W03", "leaderboard": []}"""),
+                            content = ByteReadChannel(
+                                """
+                                {
+                                  "userId": "john",
+                                  "periodData": {
+                                    "periodType": "Week",
+                                    "startDate": "2026-02-09",
+                                    "weekId": "2907",
+                                    "seasonId": "29"
+                                  },
+                                  "entries": [],
+                                  "user": {
+                                    "position": 0,
+                                    "userId": "john",
+                                    "isPrivate": false,
+                                    "name": "John",
+                                    "value": 0
+                                  },
+                                  "updatedAtUtc": "2026-02-15T18:15:07Z"
+                                }
+                                """.trimIndent(),
+                            ),
                             status = HttpStatusCode.OK,
                             headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                         )
@@ -418,6 +474,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 apiClientFactory = { _, _, _, _ -> mockApiClient },
@@ -446,7 +503,27 @@ class SkiStatsServiceTest :
                 when {
                     request.url.encodedPath.contains("/season/29") -> {
                         respond(
-                            content = ByteReadChannel("""{"season": "2024", "leaderboard": []}"""),
+                            content = ByteReadChannel(
+                                """
+                                {
+                                  "userId": "john",
+                                  "periodData": {
+                                    "periodType": "Season",
+                                    "startDate": "2025-11-03",
+                                    "seasonId": "29"
+                                  },
+                                  "entries": [],
+                                  "user": {
+                                    "position": 0,
+                                    "userId": "john",
+                                    "isPrivate": false,
+                                    "name": "John",
+                                    "value": 0
+                                  },
+                                  "updatedAtUtc": "2026-02-15T18:15:07Z"
+                                }
+                                """.trimIndent(),
+                            ),
                             status = HttpStatusCode.OK,
                             headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                         )
@@ -477,6 +554,7 @@ class SkiStatsServiceTest :
             val httpClient = createMockHttpClient()
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 apiClientFactory = { _, _, _, _ -> mockApiClient },
@@ -524,9 +602,30 @@ class SkiStatsServiceTest :
                         )
                     }
 
-                    request.url.encodedPath.endsWith("/season") -> {
+                    request.url.encodedPath.contains("/week/2907") -> {
                         respond(
-                            content = ByteReadChannel("""{"totalDays": 42, "totalVertical": 123456}"""),
+                            content = ByteReadChannel(
+                                """
+                                {
+                                  "userId": "john",
+                                  "periodData": {
+                                    "periodType": "Week",
+                                    "startDate": "2026-02-09",
+                                    "weekId": "2907",
+                                    "seasonId": "29"
+                                  },
+                                  "entries": [],
+                                  "user": {
+                                    "position": 0,
+                                    "userId": "john",
+                                    "isPrivate": false,
+                                    "name": "John",
+                                    "value": 0
+                                  },
+                                  "updatedAtUtc": "2026-02-15T18:15:07Z"
+                                }
+                                """.trimIndent(),
+                            ),
                             status = HttpStatusCode.OK,
                             headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                         )
@@ -570,6 +669,7 @@ class SkiStatsServiceTest :
 
             val service = SkiStatsService(
                 skiStatsRepository = mockRepository,
+                syncCheckpointService = mockSyncCheckpointService,
                 httpClient = httpClient,
                 skiStatsPropertiesHolder = propertiesHolder,
                 clock = mockClock,

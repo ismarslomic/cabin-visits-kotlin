@@ -45,6 +45,9 @@ class AppPropertiesTest :
         val envVarSkiStatsProfileIsmarAgentId = "ismar-agent-id"
         val envVarSkiStatsProfileIsmarClientSecret = "client-secret"
         val envVarSkiStatsProfileIsmarClientId = "client-id"
+        val envVarSkiStatsFriendsLeaderboardSyncFromDate = "2025-11-03"
+        val envVarSkiStatsFriendsLeaderboardSyncFromWeekId = "2901"
+        val envVarSkiStatsFriendsLeaderboardSyncFromSeasonId = "29"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -81,6 +84,9 @@ class AppPropertiesTest :
                 "SKI_STATS_PROFILE_ISMAR_USERNAME" to envVarSkiStatsProfileIsmarUsername,
                 "SKI_STATS_PROFILE_ISMAR_PASSWORD" to envVarSkiStatsProfileIsmarPassword,
                 "SKI_STATS_PROFILE_ISMAR_AGENT_ID" to envVarSkiStatsProfileIsmarAgentId,
+                "SKI_STATS_FRIENDS_LEADERBOARD_SYNC_FROM_DATE" to envVarSkiStatsFriendsLeaderboardSyncFromDate,
+                "SKI_STATS_FRIENDS_LEADERBOARD_SYNC_FROM_WEEK_ID" to envVarSkiStatsFriendsLeaderboardSyncFromWeekId,
+                "SKI_STATS_FRIENDS_LEADERBOARD_SYNC_FROM_SEASON_ID" to envVarSkiStatsFriendsLeaderboardSyncFromSeasonId,
             )
             withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {

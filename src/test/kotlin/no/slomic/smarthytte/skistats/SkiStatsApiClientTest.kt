@@ -33,7 +33,7 @@ class SkiStatsApiClientTest :
             }
 
             val coreProps = coreProps("http://localhost:$port")
-            val repo = mockk<SkiStatsRepository>()
+            val repo = mockk<SkiTokenRepository>()
             val authClient = mockk<SkiStatsAuthClient>(relaxed = true)
 
             coEvery { repo.tokensByProfile("p1") } returns SkiStatsTokens("access-1", "refresh-1")
@@ -53,7 +53,7 @@ class SkiStatsApiClientTest :
             val (server, port, authHeaderStore) = startServerWithRefresh()
             val coreProps = coreProps("http://localhost:$port")
 
-            val repo = mockk<SkiStatsRepository>()
+            val repo = mockk<SkiTokenRepository>()
             val authClient = mockk<SkiStatsAuthClient>()
 
             coEvery { repo.tokensByProfile("p1") } returns SkiStatsTokens("access-old", "refresh-old")
@@ -101,7 +101,7 @@ class SkiStatsApiClientTest :
             }
 
             val coreProps = coreProps("http://localhost:$port1")
-            val repo = mockk<SkiStatsRepository>()
+            val repo = mockk<SkiTokenRepository>()
             val authClient = mockk<SkiStatsAuthClient>(relaxed = true)
 
             coEvery { repo.tokensByProfile("p1") } returns SkiStatsTokens("access-1", "refresh-1")
