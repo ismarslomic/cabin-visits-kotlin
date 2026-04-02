@@ -26,6 +26,7 @@ import no.slomic.smarthytte.plugins.configureRouting
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
+import no.slomic.smarthytte.properties.SkiStatsPropertiesHolder
 import no.slomic.smarthytte.properties.VehicleTripProperties
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
@@ -34,6 +35,8 @@ import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
+import no.slomic.smarthytte.skistats.SkiStatsService
+import no.slomic.smarthytte.skistats.SqliteSkiStatsRepository
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
@@ -85,12 +88,18 @@ fun Application.module() {
     val reservationRepository: ReservationRepository = SqliteReservationRepository()
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
     val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
+    val skiStatsRepository = SqliteSkiStatsRepository()
 
     // Initialize services
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
     val vehicleTripService = VehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
     val googleCalendarService = GoogleCalendarService(reservationRepository, syncCheckpointService)
     val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
+    val skiStatsService = SkiStatsService(
+        skiStatsRepository = skiStatsRepository,
+        syncCheckpointService = syncCheckpointService,
+        httpClient = httpClient,
+    )
     val checkInOutService = CheckInOutService(
         reservationRepository = reservationRepository,
         checkInOutSensorRepository = checkInOutSensorRepository,
@@ -114,6 +123,7 @@ fun Application.module() {
         vehicleTripService,
         checkInOutSensorService,
         checkInOutService,
+        skiStatsService,
     )
 
     // Fetch reservations, check in/out sensor data and update check in/out status continuously in the background
@@ -159,18 +169,23 @@ suspend fun Application.initialLoad(
     log.info("Initial load complete!")
 }
 
+@Suppress("LongParameterList") // Orchestration entry point — each parameter is an independent service scheduler
 fun Application.startBackgroundSync(
     googleCalendarService: GoogleCalendarService,
     reservationRepository: ReservationRepository,
     vehicleTripService: VehicleTripService,
     checkInOutSensorService: CheckInOutSensorService,
     checkInOutService: CheckInOutService,
+    skiStatsService: SkiStatsService,
 ) {
     val googleProperties: GoogleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
     val reservationSyncFrequency: Duration = googleProperties.syncFrequencyMinutes.minutes
 
     val vehicleTripProperties: VehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
     val vehicleTripSyncFrequency: Duration = vehicleTripProperties.syncFrequencyMinutes.minutes
+
+    val skiStatsProperties = loadProperties<SkiStatsPropertiesHolder>().skiStats
+    val skiStatsSyncFrequency: Duration = skiStatsProperties.friendsLeaderboard.syncFrequencyMinutes.minutes
 
     val schedulerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -203,6 +218,16 @@ fun Application.startBackgroundSync(
                 checkInOutService.updateCheckInOutStatusForAllReservations()
             }
             delay(duration = vehicleTripSyncFrequency)
+        }
+    }
+
+    // Fetch friends leaderboard ski stats (day/week/season) during daytime and within reservation window.
+    schedulerScope.launch {
+        while (isActive) {
+            if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
+                skiStatsService.pollAllLeaderboards()
+            }
+            delay(duration = skiStatsSyncFrequency)
         }
     }
 }
