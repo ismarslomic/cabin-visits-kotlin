@@ -33,19 +33,3 @@ data class LeaderboardEntry(
     val dropHeightInMeter: Int,
     val profileImageUrl: String? = null,
 )
-
-data class SkiProfile(val id: String, val name: String, val profileImageUrl: String?, val isPrivate: Boolean)
-
-data class SkiLeaderboardEntry(
-    val id: String,
-    val profileId: String,
-    val periodType: PeriodType,
-    val periodValue: String,
-    val startDate: LocalDate,
-    val weekId: String?,
-    val seasonId: String,
-    val leaderboardUpdatedAtUtc: Instant,
-    val entryUserId: String,
-    val position: Int,
-    val dropHeightInMeter: Int,
-)
