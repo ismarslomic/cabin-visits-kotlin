@@ -5,10 +5,8 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.plus
-import no.slomic.smarthytte.common.osloDateNow
+import no.slomic.smarthytte.common.PersistenceResults
 import no.slomic.smarthytte.properties.CoreSkiStatsProperties
 import no.slomic.smarthytte.properties.ProfileSkiStatsProperties
 import no.slomic.smarthytte.properties.SkiStatsProperties
@@ -51,77 +49,170 @@ class SkiStatsService(
         val apiClient = apiClientFactory(properties.core, skiStatsRepository, profileId, authClient)
 
         apiClient.use {
-            pollDayLeaderboards(profileId, it)
-            pollWeekLeaderboards(profileId, it)
-            pollSeasonLeaderboards(profileId, it)
+            val periods = fetchStatisticsPeriods(profile.externalProfileId, it)
+            pollDayLeaderboards(profileId, periods, it)
+            pollWeekLeaderboards(profileId, periods, it)
+            pollSeasonLeaderboards(profileId, periods, it)
         }
     }
 
-    private suspend fun pollDayLeaderboards(profileId: String, apiClient: HttpClient) {
-        val fromDate: LocalDate = syncCheckpointService.checkpointForSkiStatsDay(profileId)
-            ?: LocalDate.parse(properties.friendsLeaderboard.syncFromDate)
-        val today: LocalDate = osloDateNow()
-
-        var date = fromDate
-        while (date <= today) {
-            pollFriendsLeaderboard(PeriodType.DAY, date.toString(), profileId, apiClient)
-            date = date.plus(1, DateTimeUnit.DAY)
-        }
-    }
-
-    private suspend fun pollWeekLeaderboards(profileId: String, apiClient: HttpClient) {
-        val fromWeekId: Int = (
-            syncCheckpointService.checkpointForSkiStatsWeek(profileId)
-                ?: properties.friendsLeaderboard.syncFromWeekId
-            ).toInt()
-        val currentWeekId: Int = isoWeekId(properties.friendsLeaderboard.syncFromSeasonId)
-
-        var weekId = fromWeekId
-        while (weekId <= currentWeekId) {
-            pollFriendsLeaderboard(PeriodType.WEEK, weekId.toString(), profileId, apiClient)
-            weekId++
-        }
-    }
-
-    private suspend fun pollSeasonLeaderboards(profileId: String, apiClient: HttpClient) {
-        val fromSeasonId: Int = (
-            syncCheckpointService.checkpointForSkiStatsSeason(profileId)
-                ?: properties.friendsLeaderboard.syncFromSeasonId
-            ).toInt()
-        val currentSeasonId: Int = properties.friendsLeaderboard.syncFromSeasonId.toInt()
-
-        var seasonId = fromSeasonId
-        while (seasonId <= currentSeasonId) {
-            pollFriendsLeaderboard(PeriodType.SEASON, seasonId.toString(), profileId, apiClient)
-            seasonId++
-        }
-    }
-
-    internal suspend fun pollFriendsLeaderboard(
-        periodType: PeriodType,
-        value: String,
-        profile: ProfileSkiStatsProperties,
+    /**
+     * Polls the friends leaderboard for every day in [periods] on or after the floor date.
+     *
+     * **Initial poll** (no checkpoint exists): uses `syncFromDate` from properties as the floor date,
+     * so all days in [periods] from that date onwards are fetched.
+     *
+     * **Incremental poll** (checkpoint exists): uses the last successfully persisted day from
+     * [SyncCheckpointService.checkpointForSkiStatsDay] as the floor, so only days that have not yet
+     * been synced are fetched. This also re-fetches the checkpoint day itself, which handles late-arriving
+     * leaderboard updates for the most recently polled day.
+     *
+     * @param profileId The internal profile identifier used to look up the checkpoint.
+     * @param periods All seasons/weeks/days where the user has ski statistics, as returned by the
+     *                statistics periods API. Only days at or after the floor date are polled.
+     * @param apiClient The authenticated HTTP client used to fetch leaderboard data.
+     */
+    private suspend fun pollDayLeaderboards(
+        profileId: String,
+        periods: StatisticsPeriodResponse,
+        apiClient: HttpClient,
     ) {
-        val profileId = profile.id
-        logger.info("Polling friends leaderboard for period={} and profile={}", periodType, profileId)
+        val checkpoint: LocalDate? = syncCheckpointService.checkpointForSkiStatsDay(profileId)
+        val fromDate: LocalDate = checkpoint ?: LocalDate.parse(properties.friendsLeaderboard.syncFromDate)
 
-        val authClient = createSkiStatsAuthClient(profile)
-        ensureLoggedIn(profile, authClient)
+        if (checkpoint == null) {
+            logger.info("Performing full fetch of day leaderboards for profile={} from {}", profileId, fromDate)
+        } else {
+            logger.info("Performing incremental fetch of day leaderboards for profile={} from {}", profileId, fromDate)
+        }
 
-        val apiClient = apiClientFactory(properties.core, skiStatsRepository, profileId, authClient)
+        val dates = periods.seasons
+            .flatMap { season -> season.weeks.flatMap { week -> week.days.map { LocalDate.parse(it.date) } } }
+            .filter { it >= fromDate }
+            .sorted()
 
-        apiClient.use {
-            pollFriendsLeaderboard(periodType, value, profileId, it)
+        for (date in dates) {
+            fetchFriendsLeaderboard(PeriodType.DAY, date.toString(), profileId, apiClient)
         }
     }
 
-    private suspend fun pollFriendsLeaderboard(
+    /**
+     * Polls the friends leaderboard for every week in [periods] on or after the floor week.
+     *
+     * **Initial poll** (no checkpoint exists): uses `syncFromWeekId` from properties as the floor,
+     * so all weeks in [periods] from that week onwards are fetched.
+     *
+     * **Incremental poll** (checkpoint exists): uses the last successfully persisted week ID from
+     * [SyncCheckpointService.checkpointForSkiStatsWeek] as the floor. The checkpoint week itself is
+     * also re-fetched, which handles late-arriving leaderboard updates for the most recently polled week.
+     *
+     * Weeks are sorted and compared by `(year, weekNumber)` rather than by their numeric ID, because
+     * week IDs are not globally monotonic: a high-numbered week in year N (e.g. id `2952` = week 52 of
+     * 2025) has a larger numeric ID than an early week in year N+1 (e.g. id `2903` = week 3 of 2026),
+     * even though it is chronologically earlier.
+     *
+     * If the floor week ID is not found in [periods] (e.g. the API no longer returns that week), all
+     * weeks in [periods] are included as a safe fallback.
+     *
+     * @param profileId The internal profile identifier used to look up the checkpoint.
+     * @param periods All seasons/weeks where the user has ski statistics, as returned by the
+     *                statistics periods API. Only weeks at or after the floor week are polled.
+     * @param apiClient The authenticated HTTP client used to fetch leaderboard data.
+     */
+    private suspend fun pollWeekLeaderboards(
+        profileId: String,
+        periods: StatisticsPeriodResponse,
+        apiClient: HttpClient,
+    ) {
+        val checkpoint: String? = syncCheckpointService.checkpointForSkiStatsWeek(profileId)
+        val fromWeekId: String = checkpoint ?: properties.friendsLeaderboard.syncFromWeekId
+
+        if (checkpoint == null) {
+            logger.info(
+                "Performing full fetch of week leaderboards for profile={} from weekId={}",
+                profileId,
+                fromWeekId,
+            )
+        } else {
+            logger.info(
+                "Performing incremental fetch of week leaderboards for profile={} from weekId={}",
+                profileId,
+                fromWeekId,
+            )
+        }
+
+        val allWeeks = periods.seasons.flatMap { season -> season.weeks }
+        val fromWeek = allWeeks.find { it.id == fromWeekId }
+
+        val weeks = allWeeks
+            .filter { week ->
+                fromWeek == null ||
+                    week.year > fromWeek.year ||
+                    (week.year == fromWeek.year && week.weekNumber >= fromWeek.weekNumber)
+            }
+            .sortedWith(compareBy({ it.year }, { it.weekNumber }))
+
+        for (week in weeks) {
+            fetchFriendsLeaderboard(PeriodType.WEEK, week.id, profileId, apiClient)
+        }
+    }
+
+    /**
+     * Polls the friends leaderboard for every season in [periods] on or after the floor season ID.
+     *
+     * **Initial poll** (no checkpoint exists): uses `syncFromSeasonId` from properties as the floor,
+     * so all seasons in [periods] from that season ID onwards are fetched.
+     *
+     * **Incremental poll** (checkpoint exists): uses the last successfully persisted season ID from
+     * [SyncCheckpointService.checkpointForSkiStatsSeason] as the floor. The checkpoint season itself is
+     * also re-fetched, which handles late-arriving leaderboard updates for the most recently polled season.
+     * Season IDs are compared as integers (e.g. `29`).
+     *
+     * @param profileId The internal profile identifier used to look up the checkpoint.
+     * @param periods All seasons where the user has ski statistics, as returned by the statistics
+     *                periods API. Only seasons at or after the floor season ID are polled.
+     * @param apiClient The authenticated HTTP client used to fetch leaderboard data.
+     */
+    private suspend fun pollSeasonLeaderboards(
+        profileId: String,
+        periods: StatisticsPeriodResponse,
+        apiClient: HttpClient,
+    ) {
+        val checkpoint: String? = syncCheckpointService.checkpointForSkiStatsSeason(profileId)
+        val fromSeasonId: Int = (checkpoint ?: properties.friendsLeaderboard.syncFromSeasonId).toInt()
+
+        if (checkpoint == null) {
+            logger.info(
+                "Performing full fetch of season leaderboards for profile={} from seasonId={}",
+                profileId,
+                fromSeasonId,
+            )
+        } else {
+            logger.info(
+                "Performing incremental fetch of season leaderboards for profile={} from seasonId={}",
+                profileId,
+                fromSeasonId,
+            )
+        }
+
+        val seasonIds = periods.seasons
+            .map { it.id.toInt() }
+            .filter { it >= fromSeasonId }
+            .sorted()
+
+        for (seasonId in seasonIds) {
+            fetchFriendsLeaderboard(PeriodType.SEASON, seasonId.toString(), profileId, apiClient)
+        }
+    }
+
+    private suspend fun fetchFriendsLeaderboard(
         periodType: PeriodType,
         value: String,
         profileId: String,
         apiClient: HttpClient,
     ) {
         val response: FriendsLeaderboardResponse = fetchLeaderboard(periodType, value, apiClient)
+        val persistenceResults = PersistenceResults()
 
         for (entry in response.entries) {
             val skiProfile = SkiProfile(
@@ -145,11 +236,15 @@ class SkiStatsService(
                 position = entry.position,
                 dropHeightInMeter = entry.dropHeightInMeter,
             )
-            skiStatsRepository.addOrUpdateLeaderboardEntry(leaderboardEntry)
+            persistenceResults.add(skiStatsRepository.addOrUpdateLeaderboardEntry(leaderboardEntry))
         }
 
         updateCheckpoint(periodType, value, profileId)
-        logger.info("Friends leaderboard persisted period={} value={} profile={}", periodType, value, profileId)
+        logger.info(
+            "Fetching leaderboard for period=$periodType value=$value profile=$profileId complete. " +
+                "Total entries in response: ${response.entries.size}, added: ${persistenceResults.addedCount}, " +
+                "updated: ${persistenceResults.updatedCount}, no actions: ${persistenceResults.noActionCount}",
+        )
     }
 
     private suspend fun updateCheckpoint(periodType: PeriodType, value: String, profileId: String) {
@@ -172,6 +267,20 @@ class SkiStatsService(
     ): FriendsLeaderboardResponse {
         val url = properties.core.friendsLeaderboardsUrl(periodType.name, value)
         return apiClient.get(url) {}.body()
+    }
+
+    private suspend fun fetchStatisticsPeriods(skiProfileId: String, apiClient: HttpClient): StatisticsPeriodResponse {
+        logger.info("Started fetching statistics periods for profile=$skiProfileId from external source.")
+
+        val url = properties.core.statisticsPeriodsUrl(skiProfileId)
+        val statisticsPeriods: StatisticsPeriodResponse = apiClient.get(url) {}.body()
+
+        logger.info(
+            "Fetching statistics periods from external source complete. " +
+                "Total seasons in response: ${statisticsPeriods.seasons.size}",
+        )
+
+        return statisticsPeriods
     }
 
     internal fun createSkiStatsAuthClient(profile: ProfileSkiStatsProperties): SkiStatsAuthClient = SkiStatsAuthClient(
@@ -222,15 +331,3 @@ enum class PeriodType {
 
 fun leaderboardEntryId(profileId: String, periodType: PeriodType, periodValue: String, entryUserId: String) =
     "${profileId}_${periodType.name}_${periodValue}_$entryUserId"
-
-/**
- * Computes the weekId for the current date using ISO week number and the given seasonId.
- *
- * WeekId format: {seasonId}{isoWeekNumber:02d}
- * Example: season "29", ISO week 7 → "2907"
- */
-private fun isoWeekId(seasonId: String): Int {
-    val now = java.time.LocalDate.now(java.time.ZoneId.of("Europe/Oslo"))
-    val isoWeek = now.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
-    return "${seasonId}${isoWeek.toString().padStart(2, '0')}".toInt()
-}

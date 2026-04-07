@@ -9,12 +9,16 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import io.ktor.http.formUrlEncode
+import io.ktor.http.isSuccess
 import io.ktor.util.appendAll
+import io.ktor.util.logging.KtorSimpleLogger
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.properties.CoreSkiStatsProperties
 import no.slomic.smarthytte.properties.ProfileSkiStatsProperties
@@ -44,6 +48,7 @@ class SkiStatsAuthClient(
     private val coreProps: CoreSkiStatsProperties,
     private val profileProps: ProfileSkiStatsProperties,
 ) {
+    private val logger = KtorSimpleLogger(SkiStatsAuthClient::class.java.name)
     val httpHeaders = commonHttpHeaders(coreProps) + mapOf(
         HttpHeaders.Authorization to profileProps.clientSecret,
     )
@@ -61,17 +66,28 @@ class SkiStatsAuthClient(
         )
     }.body()
 
-    suspend fun refreshGrant(refreshToken: String): OAuthTokenResponse = httpClient.post(coreProps.authUrl) {
-        headers { appendAll(this@SkiStatsAuthClient.httpHeaders) }
-        contentType(ContentType.Application.FormUrlEncoded)
-        setBody(
-            Parameters.build {
-                append("refresh_token", refreshToken)
-                append("grant_type", "refresh_token")
-                append("agent_id", profileProps.agentId)
-            }.formUrlEncode(),
-        )
-    }.body()
+    suspend fun refreshGrant(refreshToken: String): OAuthTokenResponse? {
+        val response: HttpResponse = httpClient.post(coreProps.authUrl) {
+            headers { appendAll(this@SkiStatsAuthClient.httpHeaders) }
+            contentType(ContentType.Application.FormUrlEncoded)
+            setBody(
+                Parameters.build {
+                    append("refresh_token", refreshToken)
+                    append("grant_type", "refresh_token")
+                    append("agent_id", profileProps.agentId)
+                }.formUrlEncode(),
+            )
+        }
+        if (!response.status.isSuccess()) {
+            logger.warn(
+                "Refresh token grant failed with status={}, body={}",
+                response.status,
+                response.bodyAsText(),
+            )
+            return null
+        }
+        return response.body()
+    }
 }
 
 /**
@@ -102,6 +118,7 @@ fun createSkiStatsApiClient(
                 val oldRefresh: String = old.refreshToken ?: return@refreshTokens null
 
                 val refreshed: OAuthTokenResponse = authClient.refreshGrant(oldRefresh)
+                    ?: authClient.passwordGrant()
 
                 // Handle refresh token rotation: keep old if the server doesn't return a new one
                 val newRefresh = refreshed.refreshToken

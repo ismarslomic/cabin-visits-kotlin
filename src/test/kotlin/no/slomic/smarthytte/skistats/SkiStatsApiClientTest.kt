@@ -173,6 +173,7 @@ private fun coreProps(baseUrl: String) = CoreSkiStatsProperties(
     baseUrl = baseUrl,
     authPath = "/oauth/token",
     friendsLeaderboardsPath = "/season",
+    statisticsPeriodsPath = "/users/{skiProfileId}/statistics/periods",
     appInstanceId = "app-instance",
     appPlatform = "ios",
     apiKey = "api-key",

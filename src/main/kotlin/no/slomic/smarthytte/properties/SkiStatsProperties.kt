@@ -12,6 +12,7 @@ data class SkiStatsProperties(
 )
 
 data class FriendsLeaderboardSkiStatsProperties(
+    val enabled: Boolean,
     val syncFrequencyMinutes: Int,
     val syncFromDate: String,
     val syncFromWeekId: String,
@@ -22,6 +23,7 @@ data class CoreSkiStatsProperties(
     val baseUrl: String,
     val authPath: String,
     val friendsLeaderboardsPath: String,
+    val statisticsPeriodsPath: String,
     val appInstanceId: String,
     val appPlatform: String,
     val apiKey: String,
@@ -30,6 +32,21 @@ data class CoreSkiStatsProperties(
     val userAgent: String,
 ) {
     val authUrl: String get() = "${baseUrl}$authPath"
+
+    /**
+     * Builds the URL for fetching statistics periods for a specific user.
+     *
+     * The [statisticsPeriodsPath] must contain the placeholder `{skiProfileId}`, which will be replaced
+     * at runtime with the actual SkiStats user ID (UUID) received from the auth or leaderboard API responses.
+     *
+     * Example value for `statisticsPeriodsPath`: `/users/{skiProfileId}/statistics/periods`
+     * Example result: `https://api.example.com/users/ABCD1234/statistics/periods`
+     *
+     * @param skiProfileId The SkiStats user ID (UUID) to substitute for `{skiProfileId}` in the path.
+     * @return The complete URL as a string for fetching the user's statistics periods.
+     */
+    fun statisticsPeriodsUrl(skiProfileId: String): String =
+        "$baseUrl${statisticsPeriodsPath.replace("{skiProfileId}", skiProfileId)}"
 
     /**
      * Builds and returns the URL for accessing friends' leaderboards based on the specified period type and value.
@@ -47,6 +64,7 @@ data class CoreSkiStatsProperties(
 
 data class ProfileSkiStatsProperties(
     val id: String,
+    val externalProfileId: String,
     val username: String,
     val password: String,
     val agentId: String,

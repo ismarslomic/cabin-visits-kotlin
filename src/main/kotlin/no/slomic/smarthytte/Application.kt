@@ -210,24 +210,38 @@ fun Application.startBackgroundSync(
     // check-in / out status for all reservations (sync task).
     // This task is scheduled only within the daytime and during the reservation window (between from and end time),
     // to reduce unnecessary data fetching from the external sources outside the reservation window.
-    schedulerScope.launch {
-        while (isActive) {
-            if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
-                vehicleTripService.fetchVehicleTrips()
-                checkInOutSensorService.fetchCheckInOut()
-                checkInOutService.updateCheckInOutStatusForAllReservations()
+    if (vehicleTripProperties.enabled) {
+        schedulerScope.launch {
+            while (isActive) {
+                if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
+                    vehicleTripService.fetchVehicleTrips()
+                    checkInOutSensorService.fetchCheckInOut()
+                    checkInOutService.updateCheckInOutStatusForAllReservations()
+                }
+                delay(duration = vehicleTripSyncFrequency)
             }
-            delay(duration = vehicleTripSyncFrequency)
+        }
+    } else {
+        schedulerScope.launch {
+            while (isActive) {
+                if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
+                    checkInOutSensorService.fetchCheckInOut()
+                    checkInOutService.updateCheckInOutStatusForAllReservations()
+                }
+                delay(duration = 60.minutes)
+            }
         }
     }
 
     // Fetch friends leaderboard ski stats (day/week/season) during daytime and within reservation window.
-    schedulerScope.launch {
-        while (isActive) {
-            if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
+    if (skiStatsProperties.friendsLeaderboard.enabled) {
+        schedulerScope.launch {
+            while (isActive) {
+                // if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
                 skiStatsService.pollAllLeaderboards()
+                // }
+                delay(duration = skiStatsSyncFrequency)
             }
-            delay(duration = skiStatsSyncFrequency)
         }
     }
 }

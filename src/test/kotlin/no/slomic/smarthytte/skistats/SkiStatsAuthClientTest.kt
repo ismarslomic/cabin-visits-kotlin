@@ -33,6 +33,7 @@ class SkiStatsAuthClientTest :
             baseUrl = "https://api.example.com",
             authPath = "/oauth/token",
             friendsLeaderboardsPath = "/friends/leaderboards",
+            statisticsPeriodsPath = "/users/{skiProfileId}/statistics/periods",
             appInstanceId = "ABC-DEF-GHIJKLMN",
             appPlatform = "osx",
             apiKey = "key-foo-bar",
@@ -42,6 +43,7 @@ class SkiStatsAuthClientTest :
         )
         val profileProp = ProfileSkiStatsProperties(
             id = "john",
+            externalProfileId = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
             username = "johndoe",
             password = "supersecretpassword",
             agentId = "agent-123",
@@ -53,6 +55,7 @@ class SkiStatsAuthClientTest :
             core = coreProps,
             profiles = listOf(profileProp),
             friendsLeaderboard = FriendsLeaderboardSkiStatsProperties(
+                enabled = true,
                 syncFrequencyMinutes = 30,
                 syncFromDate = "2026-02-15",
                 syncFromWeekId = "2907",
@@ -182,6 +185,7 @@ class SkiStatsAuthClientTest :
             }
 
             // Verify response
+            response.shouldNotBeNull()
             response.accessToken shouldBe "mock-access-token"
             response.refreshToken shouldBe "mock-refresh-token"
         }

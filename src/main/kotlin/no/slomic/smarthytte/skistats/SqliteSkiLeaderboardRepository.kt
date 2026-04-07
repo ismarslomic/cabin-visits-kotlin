@@ -53,7 +53,6 @@ class SqliteSkiLeaderboardRepository : SkiLeaderboardRepository {
             SkiLeaderboardEntryEntity.findById(entry.id) ?: return PersistenceResult.NO_ACTION
 
         with(stored) {
-            leaderboardUpdatedAtUtc = entry.leaderboardUpdatedAtUtc
             position = entry.position
             dropHeightInMeter = entry.dropHeightInMeter
         }
@@ -61,6 +60,8 @@ class SqliteSkiLeaderboardRepository : SkiLeaderboardRepository {
         val isDirty: Boolean = stored.writeValues.isNotEmpty()
 
         return if (isDirty) {
+            // leaderboardUpdatedAtUtc updates for every poll we do, even when there are none changes
+            stored.leaderboardUpdatedAtUtc = entry.leaderboardUpdatedAtUtc
             stored.version = stored.version.inc()
             stored.updatedTime = Clock.System.now().truncatedToMillis()
 

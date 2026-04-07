@@ -45,6 +45,7 @@ class SkiStatsServiceIntegrationTest :
             baseUrl = "https://api.example.com",
             authPath = "/oauth/token",
             friendsLeaderboardsPath = "/leaderboards/friends",
+            statisticsPeriodsPath = "/users/{skiProfileId}/statistics/periods",
             appInstanceId = "ABC-DEF-GHIJKLMN",
             appPlatform = "osx",
             apiKey = "key-foo-bar",
@@ -55,6 +56,7 @@ class SkiStatsServiceIntegrationTest :
 
         val profileProps = ProfileSkiStatsProperties(
             id = "ismar",
+            externalProfileId = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
             username = "ismar@example.com",
             password = "supersecretpassword",
             agentId = "agent-123",
@@ -67,6 +69,7 @@ class SkiStatsServiceIntegrationTest :
                 core = coreProps,
                 profiles = listOf(profileProps),
                 friendsLeaderboard = FriendsLeaderboardSkiStatsProperties(
+                    enabled = true,
                     syncFrequencyMinutes = 30,
                     syncFromDate = "2026-02-15",
                     syncFromWeekId = "2907",
@@ -83,17 +86,21 @@ class SkiStatsServiceIntegrationTest :
 
         fun readJsonResource(fileName: String): String = readContentFromFile(getResourceFilePath(fileName))
 
-        // Creates a factory that returns a fresh MockEngine client per call (needed because apiClient.use{} closes it)
+        // Creates a factory that returns a fresh MockEngine client per call (needed because apiClient.use{} closes it).
+        // periodsJson drives which periods are polled; dayJson/weekJson/seasonJson supply the leaderboard responses.
+        // When a leaderboard json is empty, a valid but empty leaderboard response is returned so parsing succeeds.
         fun leaderboardApiClientFactory(
-            dayJson: String,
-            weekJson: String,
-            seasonJson: String,
+            periodsJson: String,
+            dayJson: String = "",
+            weekJson: String = "",
+            seasonJson: String = "",
         ): (CoreSkiStatsProperties, SkiTokenRepository, String, SkiStatsAuthClient) -> HttpClient = { _, _, _, _ ->
             val engine = MockEngine { request ->
                 val content = when {
-                    request.url.encodedPath.contains("/day/") -> dayJson
-                    request.url.encodedPath.contains("/week/") -> weekJson
-                    request.url.encodedPath.contains("/season/") -> seasonJson
+                    request.url.encodedPath.contains("/statistics/periods") -> periodsJson
+                    request.url.encodedPath.contains("/day/") -> dayJson.ifEmpty { EMPTY_LEADERBOARD_JSON }
+                    request.url.encodedPath.contains("/week/") -> weekJson.ifEmpty { EMPTY_LEADERBOARD_JSON }
+                    request.url.encodedPath.contains("/season/") -> seasonJson.ifEmpty { EMPTY_LEADERBOARD_JSON }
                     else -> "{}"
                 }
                 respond(
@@ -129,16 +136,17 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val dayJson = readJsonResource("friendsLeaderboardDayResponse.json")
             val service = SkiStatsService(
                 skiStatsRepository = repository,
                 syncCheckpointService = syncCheckpointService,
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
-                apiClientFactory = leaderboardApiClientFactory(dayJson = dayJson, weekJson = "", seasonJson = ""),
+                apiClientFactory = leaderboardApiClientFactory(periodsJson = periodsJson, dayJson = dayJson),
             )
 
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
+            service.pollAllLeaderboards()
 
             val entries = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.DAY)
             entries shouldHaveSize 3
@@ -162,16 +170,17 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val weekJson = readJsonResource("friendsLeaderboardWeekResponse.json")
             val service = SkiStatsService(
                 skiStatsRepository = repository,
                 syncCheckpointService = syncCheckpointService,
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
-                apiClientFactory = leaderboardApiClientFactory(dayJson = "", weekJson = weekJson, seasonJson = ""),
+                apiClientFactory = leaderboardApiClientFactory(periodsJson = periodsJson, weekJson = weekJson),
             )
 
-            service.pollFriendsLeaderboard(PeriodType.WEEK, "2907", profileProps)
+            service.pollAllLeaderboards()
 
             val entries = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.WEEK)
             entries shouldHaveSize 4
@@ -189,16 +198,17 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val seasonJson = readJsonResource("friendsLeaderboardSeasonResponse.json")
             val service = SkiStatsService(
                 skiStatsRepository = repository,
                 syncCheckpointService = syncCheckpointService,
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
-                apiClientFactory = leaderboardApiClientFactory(dayJson = "", weekJson = "", seasonJson = seasonJson),
+                apiClientFactory = leaderboardApiClientFactory(periodsJson = periodsJson, seasonJson = seasonJson),
             )
 
-            service.pollFriendsLeaderboard(PeriodType.SEASON, "29", profileProps)
+            service.pollAllLeaderboards()
 
             val entries = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.SEASON)
             entries shouldHaveSize 4
@@ -216,17 +226,18 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val dayJson = readJsonResource("friendsLeaderboardDayResponse.json")
             val service = SkiStatsService(
                 skiStatsRepository = repository,
                 syncCheckpointService = syncCheckpointService,
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
-                apiClientFactory = leaderboardApiClientFactory(dayJson = dayJson, weekJson = "", seasonJson = ""),
+                apiClientFactory = leaderboardApiClientFactory(periodsJson = periodsJson, dayJson = dayJson),
             )
 
             val checkpointBefore = syncCheckpointService.checkpointForSkiStatsDay("ismar")
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
+            service.pollAllLeaderboards()
             val checkpointAfter = syncCheckpointService.checkpointForSkiStatsDay("ismar")
 
             checkpointBefore.shouldBeNull()
@@ -238,6 +249,7 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val weekJson = readJsonResource("friendsLeaderboardWeekResponse.json")
             val seasonJson = readJsonResource("friendsLeaderboardSeasonResponse.json")
             val service = SkiStatsService(
@@ -246,14 +258,13 @@ class SkiStatsServiceIntegrationTest :
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
                 apiClientFactory = leaderboardApiClientFactory(
-                    dayJson = "",
+                    periodsJson = periodsJson,
                     weekJson = weekJson,
                     seasonJson = seasonJson,
                 ),
             )
 
-            service.pollFriendsLeaderboard(PeriodType.WEEK, "2907", profileProps)
-            service.pollFriendsLeaderboard(PeriodType.SEASON, "29", profileProps)
+            service.pollAllLeaderboards()
 
             syncCheckpointService.checkpointForSkiStatsWeek("ismar") shouldBe "2907"
             syncCheckpointService.checkpointForSkiStatsSeason("ismar") shouldBe "29"
@@ -264,17 +275,18 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val dayJson = readJsonResource("friendsLeaderboardDayResponse.json")
             val service = SkiStatsService(
                 skiStatsRepository = repository,
                 syncCheckpointService = syncCheckpointService,
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
-                apiClientFactory = leaderboardApiClientFactory(dayJson = dayJson, weekJson = "", seasonJson = ""),
+                apiClientFactory = leaderboardApiClientFactory(periodsJson = periodsJson, dayJson = dayJson),
             )
 
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
+            service.pollAllLeaderboards()
+            service.pollAllLeaderboards()
 
             val entries = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.DAY)
             entries shouldHaveSize 3
@@ -285,8 +297,9 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val dayJson = readJsonResource("friendsLeaderboardDayResponse.json")
-            // Second response has Ismar with updated position and dropHeightInMeter
+            // Second response has ABCD12345 with updated position
             val updatedDayJson = dayJson.replace(
                 "\"position\": 1,\n      \"userId\": \"ABCD12345\"",
                 "\"position\": 2,\n      \"userId\": \"ABCD12345\"",
@@ -296,10 +309,14 @@ class SkiStatsServiceIntegrationTest :
             val factory: (CoreSkiStatsProperties, SkiTokenRepository, String, SkiStatsAuthClient) -> HttpClient =
                 { _, _, _, _ ->
                     callCount++
-                    val json = if (callCount == 1) dayJson else updatedDayJson
-                    val engine = MockEngine {
+                    val leaderboardJson = if (callCount == 1) dayJson else updatedDayJson
+                    val engine = MockEngine { request ->
+                        val content = when {
+                            request.url.encodedPath.contains("/statistics/periods") -> periodsJson
+                            else -> leaderboardJson
+                        }
                         respond(
-                            ByteReadChannel(json),
+                            ByteReadChannel(content),
                             HttpStatusCode.OK,
                             headersOf("Content-Type", ContentType.Application.Json.toString()),
                         )
@@ -325,12 +342,12 @@ class SkiStatsServiceIntegrationTest :
                 apiClientFactory = factory,
             )
 
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
+            service.pollAllLeaderboards()
             val ismarAfterFirst = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.DAY)
                 .first { it.entryUserId == "ABCD12345" }
             ismarAfterFirst.position shouldBe 1
 
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
+            service.pollAllLeaderboards()
             val ismarAfterSecond = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.DAY)
                 .first { it.entryUserId == "ABCD12345" }
             ismarAfterSecond.position shouldBe 2
@@ -343,6 +360,7 @@ class SkiStatsServiceIntegrationTest :
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val dayJson = readJsonResource("friendsLeaderboardDayResponse.json")
             val weekJson = readJsonResource("friendsLeaderboardWeekResponse.json")
             val service = SkiStatsService(
@@ -350,12 +368,15 @@ class SkiStatsServiceIntegrationTest :
                 syncCheckpointService = syncCheckpointService,
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
-                apiClientFactory = leaderboardApiClientFactory(dayJson = dayJson, weekJson = weekJson, seasonJson = ""),
+                apiClientFactory = leaderboardApiClientFactory(
+                    periodsJson = periodsJson,
+                    dayJson = dayJson,
+                    weekJson = weekJson,
+                ),
             )
 
-            // Ismar appears in both day and week responses
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
-            service.pollFriendsLeaderboard(PeriodType.WEEK, "2907", profileProps)
+            // Ismar appears in both day and week responses — single pollAllLeaderboards covers both
+            service.pollAllLeaderboards()
 
             val dayEntries = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.DAY)
             val weekEntries = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.WEEK)
@@ -368,26 +389,30 @@ class SkiStatsServiceIntegrationTest :
             weekEntries.any { it.entryUserId == "ABCD12345" } shouldBe true
         }
 
-        "should use syncFromDate as start date when no checkpoint exists" {
+        "should use syncFromDate as floor when no checkpoint exists" {
             val repository = SqliteSkiStatsRepository()
             val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             repository.addOrUpdateTokens(profileProps.id, existingTokens)
 
-            // syncFromDate is 2026-02-15 — osloDateNow() is 2026-03-31, so many dates would be polled.
-            // We test indirectly: after pollFriendsLeaderboard for specific date, checkpoint is set.
+            // The statistics periods fixture contains 2026-02-15 as the only day, which equals
+            // syncFromDate. It will be the only date polled and the checkpoint will be set to it.
+            val periodsJson = readJsonResource("statisticsPeriodsResponse.json")
             val dayJson = readJsonResource("friendsLeaderboardDayResponse.json")
             val service = SkiStatsService(
                 skiStatsRepository = repository,
                 syncCheckpointService = syncCheckpointService,
                 httpClient = createNoOpHttpClient(),
                 skiStatsPropertiesHolder = propertiesHolder,
-                apiClientFactory = leaderboardApiClientFactory(dayJson = dayJson, weekJson = "", seasonJson = ""),
+                apiClientFactory = leaderboardApiClientFactory(periodsJson = periodsJson, dayJson = dayJson),
             )
 
             syncCheckpointService.checkpointForSkiStatsDay("ismar").shouldBeNull()
 
-            // After poll, checkpoint is updated to the polled date
-            service.pollFriendsLeaderboard(PeriodType.DAY, "2026-02-15", profileProps)
+            service.pollAllLeaderboards()
             syncCheckpointService.checkpointForSkiStatsDay("ismar").shouldNotBeNull()
         }
     })
+
+@Suppress("MaxLineLength")
+private const val EMPTY_LEADERBOARD_JSON =
+    """{"userId":"ismar","periodData":{"periodType":"Day","startDate":"2026-02-15","seasonId":"29"},"entries":[],"user":{"position":0,"userId":"ismar","isPrivate":false,"name":"Ismar","value":0},"updatedAtUtc":"2026-02-15T18:15:07Z"}"""
