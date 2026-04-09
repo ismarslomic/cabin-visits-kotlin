@@ -3,6 +3,7 @@ package no.slomic.smarthytte.properties
 import com.sksamuel.hoplite.ConfigException
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlinx.datetime.LocalDate
@@ -30,6 +31,25 @@ class AppPropertiesTest :
         val envVarVehicleTripUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
         val envVarVehicleTripReferrer = "https://myapp.com"
         val envVarVehicleTripLocale = "key=nb_NO"
+        val envVarSkiStatsBaseUrl = "https://skistats.com"
+        val envVarSkiStatsAuthPath = "/auth"
+        val envVarSkiStatsSeasonStatsPath = "/season-stats"
+        val envVarSkiStatsStatisticsPeriodsPath = "/users/{skiProfileId}/statistics/periods"
+        val envVarSkiStatsAppInstanceId = "app-instance-id"
+        val envVarSkiStatsAppPlatform = "app-platform"
+        val envVarSkiStatsApiKey = "api-key"
+        val envVarSkiStatsAppVersion = "1.0.0"
+        val envVarSkiStatsCookie = "cookie"
+        val envVarSkiStatsUserAgent = "user-agent"
+        val envVarSkiStatsProfileIsmarExternalProfileId = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+        val envVarSkiStatsProfileIsmarUsername = "ismar-username"
+        val envVarSkiStatsProfileIsmarPassword = "ismar-password"
+        val envVarSkiStatsProfileIsmarAgentId = "ismar-agent-id"
+        val envVarSkiStatsProfileIsmarClientSecret = "client-secret"
+        val envVarSkiStatsProfileIsmarClientId = "client-id"
+        val envVarSkiStatsFriendsLeaderboardSyncFromDate = "2025-11-03"
+        val envVarSkiStatsFriendsLeaderboardSyncFromWeekId = "2901"
+        val envVarSkiStatsFriendsLeaderboardSyncFromSeasonId = "29"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -52,6 +72,25 @@ class AppPropertiesTest :
                 "VEHICLE_TRIP_USER_AGENT" to envVarVehicleTripUserAgent,
                 "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
                 "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
+                "SKI_STATS_BASE_URL" to envVarSkiStatsBaseUrl,
+                "SKI_STATS_AUTH_PATH" to envVarSkiStatsAuthPath,
+                "SKI_STATS_FRIENDS_LEADERBOARDS_PATH" to envVarSkiStatsSeasonStatsPath,
+                "SKI_STATS_STATISTICS_PERIODS_PATH" to envVarSkiStatsStatisticsPeriodsPath,
+                "SKI_STATS_APP_INSTANCE_ID" to envVarSkiStatsAppInstanceId,
+                "SKI_STATS_APP_PLATFORM" to envVarSkiStatsAppPlatform,
+                "SKI_STATS_API_KEY" to envVarSkiStatsApiKey,
+                "SKI_STATS_APP_VERSION" to envVarSkiStatsAppVersion,
+                "SKI_STATS_COOKIE" to envVarSkiStatsCookie,
+                "SKI_STATS_USER_AGENT" to envVarSkiStatsUserAgent,
+                "SKI_STATS_PROFILE_ISMAR_EXTERNAL_PROFILE_ID" to envVarSkiStatsProfileIsmarExternalProfileId,
+                "SKI_STATS_PROFILE_ISMAR_CLIENT_ID" to envVarSkiStatsProfileIsmarClientId,
+                "SKI_STATS_PROFILE_ISMAR_CLIENT_SECRET" to envVarSkiStatsProfileIsmarClientSecret,
+                "SKI_STATS_PROFILE_ISMAR_USERNAME" to envVarSkiStatsProfileIsmarUsername,
+                "SKI_STATS_PROFILE_ISMAR_PASSWORD" to envVarSkiStatsProfileIsmarPassword,
+                "SKI_STATS_PROFILE_ISMAR_AGENT_ID" to envVarSkiStatsProfileIsmarAgentId,
+                "SKI_STATS_FRIENDS_LEADERBOARD_SYNC_FROM_DATE" to envVarSkiStatsFriendsLeaderboardSyncFromDate,
+                "SKI_STATS_FRIENDS_LEADERBOARD_SYNC_FROM_WEEK_ID" to envVarSkiStatsFriendsLeaderboardSyncFromWeekId,
+                "SKI_STATS_FRIENDS_LEADERBOARD_SYNC_FROM_SEASON_ID" to envVarSkiStatsFriendsLeaderboardSyncFromSeasonId,
             )
             withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -133,6 +172,7 @@ class AppPropertiesTest :
                     }
 
                     Then("properties for external service should be set to the environment variable value") {
+                        vehicleTripProperties.enabled shouldBe true
                         vehicleTripProperties.loginUrl shouldBe envVarVehicleTripLoginUrl
                         vehicleTripProperties.tripsUrl shouldBe envVarVehicleTripTripsUrl
                         vehicleTripProperties.username shouldBe envVarVehicleTripUsername
@@ -142,6 +182,32 @@ class AppPropertiesTest :
                         vehicleTripProperties.userAgent shouldBe envVarVehicleTripUserAgent
                         vehicleTripProperties.referrer shouldBe envVarVehicleTripReferrer
                         vehicleTripProperties.locale shouldBe envVarVehicleTripLocale
+                    }
+                }
+
+                When("reading ski stats properties") {
+                    val skiStatsProperties = loadProperties<SkiStatsPropertiesHolder>().skiStats
+
+                    Then("properties should be set to the environment variable value") {
+                        skiStatsProperties.friendsLeaderboard.enabled shouldBe true
+                        skiStatsProperties.core.baseUrl shouldBe envVarSkiStatsBaseUrl
+                        skiStatsProperties.core.authPath shouldBe envVarSkiStatsAuthPath
+                        skiStatsProperties.core.friendsLeaderboardsPath shouldBe envVarSkiStatsSeasonStatsPath
+                        skiStatsProperties.core.statisticsPeriodsPath shouldBe envVarSkiStatsStatisticsPeriodsPath
+                        skiStatsProperties.core.appInstanceId shouldBe envVarSkiStatsAppInstanceId
+                        skiStatsProperties.core.appPlatform shouldBe envVarSkiStatsAppPlatform
+                        skiStatsProperties.core.apiKey shouldBe envVarSkiStatsApiKey
+                        skiStatsProperties.core.appVersion shouldBe envVarSkiStatsAppVersion
+                        skiStatsProperties.core.cookie shouldBe envVarSkiStatsCookie
+                        skiStatsProperties.core.userAgent shouldBe envVarSkiStatsUserAgent
+                        skiStatsProperties.profiles shouldHaveSize 1
+                        val profileIsmar = skiStatsProperties.profiles.first()
+                        profileIsmar.externalProfileId shouldBe envVarSkiStatsProfileIsmarExternalProfileId
+                        profileIsmar.username shouldBe envVarSkiStatsProfileIsmarUsername
+                        profileIsmar.password shouldBe envVarSkiStatsProfileIsmarPassword
+                        profileIsmar.agentId shouldBe envVarSkiStatsProfileIsmarAgentId
+                        profileIsmar.clientSecret shouldBe envVarSkiStatsProfileIsmarClientSecret
+                        profileIsmar.clientId shouldBe envVarSkiStatsProfileIsmarClientId
                     }
                 }
             }
@@ -198,7 +264,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CREDENTIALS_FILE_PATH}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CREDENTIALS_FILE_PATH}"
                     }
                 }
             }
@@ -215,7 +281,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CALENDAR_ID}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CALENDAR_ID}"
                     }
                 }
             }
