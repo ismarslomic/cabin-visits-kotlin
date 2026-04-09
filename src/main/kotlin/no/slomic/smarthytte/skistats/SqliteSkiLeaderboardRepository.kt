@@ -30,11 +30,14 @@ class SqliteSkiLeaderboardRepository : SkiLeaderboardRepository {
 
         SkiLeaderboardEntryEntity.new(entry.id) {
             profileId = entry.profileId
-            periodType = entry.periodType.name
-            periodValue = entry.periodValue
-            startDate = entry.startDate.toString()
-            weekId = entry.weekId
-            seasonId = entry.seasonId
+            periodType = entry.period.type.name
+            periodValue = entry.period.value
+            startDate = entry.period.startDate.toString()
+            weekId = entry.period.weekId
+            seasonId = entry.period.seasonId
+            seasonName = entry.period.seasonName
+            year = entry.period.year
+            weekNumber = entry.period.weekNumber
             leaderboardUpdatedAtUtc = entry.leaderboardUpdatedAtUtc
             entryUserId = entry.entryUserId
             position = entry.position

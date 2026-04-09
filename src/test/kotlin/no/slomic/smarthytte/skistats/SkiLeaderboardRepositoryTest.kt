@@ -145,17 +145,15 @@ class SkiLeaderboardRepositoryTest :
             repository.addOrUpdateProfile(profile2)
 
             val dayEntry1 =
-                createSkiLeaderboardEntry(profileId = "ismar", periodType = PeriodType.DAY, entryUserId = profile1.id)
+                createSkiLeaderboardEntry(profileId = "ismar", entryUserId = profile1.id)
             val dayEntry2 = createSkiLeaderboardEntry(
                 profileId = "ismar",
-                periodType = PeriodType.DAY,
                 entryUserId = profile2.id,
                 position = 2,
             )
             val weekEntry = createSkiLeaderboardEntry(
                 profileId = "ismar",
-                periodType = PeriodType.WEEK,
-                periodValue = "2907",
+                period = createSkiLeaderboardPeriod(type = PeriodType.WEEK, value = "2907"),
                 entryUserId = profile1.id,
             )
             repository.addOrUpdateLeaderboardEntry(dayEntry1)
@@ -168,7 +166,7 @@ class SkiLeaderboardRepositoryTest :
 
             val weekEntries = repository.leaderboardEntriesByProfileAndPeriodType("ismar", PeriodType.WEEK)
             weekEntries shouldHaveSize 1
-            weekEntries.first().periodValue shouldBe "2907"
+            weekEntries.first().period.value shouldBe "2907"
         }
 
         "entries for different polling profiles are stored and read independently" {
@@ -215,11 +213,14 @@ private fun SkiLeaderboardEntryEntity.shouldBeEqualToEntry(
 ) {
     id.value shouldBe entry.id
     profileId shouldBe entry.profileId
-    periodType shouldBe entry.periodType.name
-    periodValue shouldBe entry.periodValue
-    startDate shouldBe entry.startDate.toString()
-    weekId shouldBe entry.weekId
-    seasonId shouldBe entry.seasonId
+    periodType shouldBe entry.period.type.name
+    periodValue shouldBe entry.period.value
+    startDate shouldBe entry.period.startDate.toString()
+    weekId shouldBe entry.period.weekId
+    seasonId shouldBe entry.period.seasonId
+    seasonName shouldBe entry.period.seasonName
+    year shouldBe entry.period.year
+    weekNumber shouldBe entry.period.weekNumber
     entryUserId shouldBe entry.entryUserId
     position shouldBe entry.position
     dropHeightInMeter shouldBe entry.dropHeightInMeter

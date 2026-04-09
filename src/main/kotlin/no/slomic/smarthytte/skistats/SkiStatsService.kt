@@ -86,13 +86,25 @@ class SkiStatsService(
             logger.info("Performing incremental fetch of day leaderboards for profile={} from {}", profileId, fromDate)
         }
 
-        val dates = periods.seasons
-            .flatMap { season -> season.weeks.flatMap { week -> week.days.map { LocalDate.parse(it.date) } } }
-            .filter { it >= fromDate }
-            .sorted()
+        val seasonWeekDays = periods.seasons
+            .flatMap { season ->
+                season.weeks.flatMap { week ->
+                    week.days.map { Triple(season, week, LocalDate.parse(it.date)) }
+                }
+            }
+            .filter { (_, _, date) -> date >= fromDate }
+            .sortedBy { (_, _, date) -> date }
 
-        for (date in dates) {
-            fetchFriendsLeaderboard(PeriodType.DAY, date.toString(), profileId, apiClient)
+        for ((season, week, date) in seasonWeekDays) {
+            fetchFriendsLeaderboard(
+                periodType = PeriodType.DAY,
+                value = date.toString(),
+                profileId = profileId,
+                apiClient = apiClient,
+                seasonName = season.name,
+                year = week.year,
+                weekNumber = week.weekNumber,
+            )
         }
     }
 
@@ -141,19 +153,27 @@ class SkiStatsService(
             )
         }
 
-        val allWeeks = periods.seasons.flatMap { season -> season.weeks }
-        val fromWeek = allWeeks.find { it.id == fromWeekId }
+        val allSeasonWeeks = periods.seasons.flatMap { season -> season.weeks.map { Pair(season, it) } }
+        val fromWeek = allSeasonWeeks.map { it.second }.find { it.id == fromWeekId }
 
-        val weeks = allWeeks
-            .filter { week ->
+        val seasonWeeks = allSeasonWeeks
+            .filter { (_, week) ->
                 fromWeek == null ||
                     week.year > fromWeek.year ||
                     (week.year == fromWeek.year && week.weekNumber >= fromWeek.weekNumber)
             }
-            .sortedWith(compareBy({ it.year }, { it.weekNumber }))
+            .sortedWith(compareBy({ it.second.year }, { it.second.weekNumber }))
 
-        for (week in weeks) {
-            fetchFriendsLeaderboard(PeriodType.WEEK, week.id, profileId, apiClient)
+        for ((season, week) in seasonWeeks) {
+            fetchFriendsLeaderboard(
+                periodType = PeriodType.WEEK,
+                value = week.id,
+                profileId = profileId,
+                apiClient = apiClient,
+                seasonName = season.name,
+                year = week.year,
+                weekNumber = week.weekNumber,
+            )
         }
     }
 
@@ -195,24 +215,38 @@ class SkiStatsService(
             )
         }
 
-        val seasonIds = periods.seasons
-            .map { it.id.toInt() }
-            .filter { it >= fromSeasonId }
-            .sorted()
+        val seasons = periods.seasons
+            .filter { it.id.toInt() >= fromSeasonId }
+            .sortedBy { it.id.toInt() }
 
-        for (seasonId in seasonIds) {
-            fetchFriendsLeaderboard(PeriodType.SEASON, seasonId.toString(), profileId, apiClient)
+        for (season in seasons) {
+            fetchFriendsLeaderboard(PeriodType.SEASON, season.id, profileId, apiClient, season.name, null, null)
         }
     }
 
+    @Suppress("LongParameterList")
     private suspend fun fetchFriendsLeaderboard(
         periodType: PeriodType,
         value: String,
         profileId: String,
         apiClient: HttpClient,
+        seasonName: String,
+        year: Int?,
+        weekNumber: Int?,
     ) {
         val response: FriendsLeaderboardResponse = fetchLeaderboard(periodType, value, apiClient)
         val persistenceResults = PersistenceResults()
+
+        val period = SkiLeaderboardPeriod(
+            type = periodType,
+            value = value,
+            startDate = response.periodData.startDate,
+            weekId = response.periodData.weekId,
+            seasonId = response.periodData.seasonId,
+            seasonName = seasonName,
+            year = year,
+            weekNumber = weekNumber,
+        )
 
         for (entry in response.entries) {
             val skiProfile = SkiProfile(
@@ -224,13 +258,9 @@ class SkiStatsService(
             skiStatsRepository.addOrUpdateProfile(skiProfile)
 
             val leaderboardEntry = SkiLeaderboardEntry(
-                id = leaderboardEntryId(profileId, periodType, value, entry.userId),
+                id = leaderboardEntryId(profileId, period, entry.userId),
                 profileId = profileId,
-                periodType = periodType,
-                periodValue = value,
-                startDate = response.periodData.startDate,
-                weekId = response.periodData.weekId,
-                seasonId = response.periodData.seasonId,
+                period = period,
                 leaderboardUpdatedAtUtc = response.updatedAtUtc,
                 entryUserId = entry.userId,
                 position = entry.position,
@@ -239,7 +269,7 @@ class SkiStatsService(
             persistenceResults.add(skiStatsRepository.addOrUpdateLeaderboardEntry(leaderboardEntry))
         }
 
-        updateCheckpoint(periodType, value, profileId)
+        updateCheckpoint(period, profileId)
         logger.info(
             "Fetching leaderboard for period=$periodType value=$value profile=$profileId complete. " +
                 "Total entries in response: ${response.entries.size}, added: ${persistenceResults.addedCount}, " +
@@ -247,16 +277,16 @@ class SkiStatsService(
         )
     }
 
-    private suspend fun updateCheckpoint(periodType: PeriodType, value: String, profileId: String) {
-        when (periodType) {
+    private suspend fun updateCheckpoint(period: SkiLeaderboardPeriod, profileId: String) {
+        when (period.type) {
             PeriodType.DAY -> syncCheckpointService.addOrUpdateCheckpointForSkiStatsDay(
                 profileId,
-                LocalDate.parse(value),
+                LocalDate.parse(period.value),
             )
 
-            PeriodType.WEEK -> syncCheckpointService.addOrUpdateCheckpointForSkiStatsWeek(profileId, value)
+            PeriodType.WEEK -> syncCheckpointService.addOrUpdateCheckpointForSkiStatsWeek(profileId, period.value)
 
-            PeriodType.SEASON -> syncCheckpointService.addOrUpdateCheckpointForSkiStatsSeason(profileId, value)
+            PeriodType.SEASON -> syncCheckpointService.addOrUpdateCheckpointForSkiStatsSeason(profileId, period.value)
         }
     }
 
@@ -323,11 +353,5 @@ class SkiStatsService(
     }
 }
 
-enum class PeriodType {
-    DAY,
-    WEEK,
-    SEASON,
-}
-
-fun leaderboardEntryId(profileId: String, periodType: PeriodType, periodValue: String, entryUserId: String) =
-    "${profileId}_${periodType.name}_${periodValue}_$entryUserId"
+fun leaderboardEntryId(profileId: String, period: SkiLeaderboardPeriod, entryUserId: String) =
+    "${profileId}_${period.type.name}_${period.value}_$entryUserId"

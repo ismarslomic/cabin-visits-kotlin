@@ -23,7 +23,10 @@ create table ski_stats_leaderboard_entry
     period_value               VARCHAR(20)        not null,
     start_date                 TEXT               not null,
     week_id                    VARCHAR(10),
+    week_number                INT,
     season_id                  VARCHAR(10)        not null,
+    season_name                VARCHAR(20)        not null default '',
+    year                       INT,
     leaderboard_updated_at_utc TEXT               not null,
     entry_user_id              VARCHAR(50)        not null
         references ski_stats_profile (id) on delete cascade,

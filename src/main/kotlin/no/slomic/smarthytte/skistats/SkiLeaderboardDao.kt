@@ -41,6 +41,9 @@ object SkiLeaderboardEntryTable : BaseIdTable<String>(name = "ski_stats_leaderbo
     val startDate: Column<String> = varchar("start_date", length = 10)
     val weekId: Column<String?> = varchar("week_id", length = 10).nullable()
     val seasonId: Column<String> = varchar("season_id", length = 10)
+    val seasonName: Column<String> = varchar("season_name", length = 20)
+    val year: Column<Int?> = integer("year").nullable()
+    val weekNumber: Column<Int?> = integer("week_number").nullable()
     val leaderboardUpdatedAtUtc = timestamp("leaderboard_updated_at_utc")
     val entryUserId: Column<String> = varchar("entry_user_id", length = 50)
         .references(SkiProfileTable.id, onDelete = ReferenceOption.CASCADE)
@@ -59,6 +62,9 @@ class SkiLeaderboardEntryEntity(id: EntityID<String>) : BaseEntity<String>(id, S
     var startDate: String by SkiLeaderboardEntryTable.startDate
     var weekId: String? by SkiLeaderboardEntryTable.weekId
     var seasonId: String by SkiLeaderboardEntryTable.seasonId
+    var seasonName: String by SkiLeaderboardEntryTable.seasonName
+    var year: Int? by SkiLeaderboardEntryTable.year
+    var weekNumber: Int? by SkiLeaderboardEntryTable.weekNumber
     var leaderboardUpdatedAtUtc by SkiLeaderboardEntryTable.leaderboardUpdatedAtUtc
     var entryUserId: String by SkiLeaderboardEntryTable.entryUserId
     var position: Int by SkiLeaderboardEntryTable.position
@@ -68,11 +74,16 @@ class SkiLeaderboardEntryEntity(id: EntityID<String>) : BaseEntity<String>(id, S
 fun daoToModel(dao: SkiLeaderboardEntryEntity) = SkiLeaderboardEntry(
     id = dao.id.value,
     profileId = dao.profileId,
-    periodType = PeriodType.valueOf(dao.periodType),
-    periodValue = dao.periodValue,
-    startDate = LocalDate.parse(dao.startDate),
-    weekId = dao.weekId,
-    seasonId = dao.seasonId,
+    period = SkiLeaderboardPeriod(
+        type = PeriodType.valueOf(dao.periodType),
+        value = dao.periodValue,
+        startDate = LocalDate.parse(dao.startDate),
+        weekId = dao.weekId,
+        seasonId = dao.seasonId,
+        seasonName = dao.seasonName,
+        year = dao.year,
+        weekNumber = dao.weekNumber,
+    ),
     leaderboardUpdatedAtUtc = dao.leaderboardUpdatedAtUtc,
     entryUserId = dao.entryUserId,
     position = dao.position,

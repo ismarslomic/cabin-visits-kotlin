@@ -158,10 +158,10 @@ class SkiStatsServiceIntegrationTest :
             entries.first { it.entryUserId == "ABCD12345" }.also {
                 it.position shouldBe 1
                 it.dropHeightInMeter shouldBe 4811
-                it.periodValue shouldBe "2026-02-15"
-                it.startDate shouldBe LocalDate(2026, 2, 15)
-                it.weekId shouldBe "2907"
-                it.seasonId shouldBe "29"
+                it.period.value shouldBe "2026-02-15"
+                it.period.startDate shouldBe LocalDate(2026, 2, 15)
+                it.period.weekId shouldBe "2907"
+                it.period.seasonId shouldBe "29"
             }
         }
 
@@ -187,9 +187,9 @@ class SkiStatsServiceIntegrationTest :
             entries.first { it.entryUserId == "EFGH12345" }.also {
                 it.position shouldBe 1
                 it.dropHeightInMeter shouldBe 10808
-                it.periodValue shouldBe "2907"
-                it.weekId shouldBe "2907"
-                it.seasonId shouldBe "29"
+                it.period.value shouldBe "2907"
+                it.period.weekId shouldBe "2907"
+                it.period.seasonId shouldBe "29"
             }
         }
 
@@ -215,9 +215,9 @@ class SkiStatsServiceIntegrationTest :
             entries.first { it.entryUserId == "ABCD12345" }.also {
                 it.position shouldBe 1
                 it.dropHeightInMeter shouldBe 55384
-                it.periodValue shouldBe "29"
-                it.weekId.shouldBeNull()
-                it.seasonId shouldBe "29"
+                it.period.value shouldBe "29"
+                it.period.weekId.shouldBeNull()
+                it.period.seasonId shouldBe "29"
             }
         }
 
