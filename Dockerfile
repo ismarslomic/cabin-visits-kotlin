@@ -2,7 +2,7 @@
 # Multi-arch Dockerfile that builds the GraalVM native image per-target platform
 
 # --- Builder stage: build native image with GraalVM ---
-FROM ghcr.io/graalvm/native-image-community:25-ol9 AS builder
+FROM ghcr.io/graalvm/native-image-community:25.0.2-ol10 AS builder
 
 WORKDIR /workspace
 
@@ -20,7 +20,9 @@ COPY README.md README.md
 
 # Build the native image (glibc-based to avoid musl toolchain issues)
 # You can tweak nativeBuildArgs via the Gradle property if needed
-RUN ./gradlew nativeCompile --no-daemon
+# Remove gradle-daemon-jvm.properties before building — it requires Amazon Corretto 21 which is
+# unavailable here, and detekt does not run in this stage so the workaround is not needed.
+RUN rm gradle/gradle-daemon-jvm.properties && ./gradlew nativeCompile --no-daemon
 
 # --- Runtime stage: minimal distroless with glibc ---
 FROM gcr.io/distroless/cc-debian12:nonroot
