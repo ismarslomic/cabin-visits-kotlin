@@ -37,9 +37,16 @@ jobs:
         uses: graalvm/setup-graalvm@v1
         with:
           native-image-musl: true # sets up musl to build static binaries with GraalVM Native Image
-          version: "24" # Adjusted to GraalVM v24
+          version: "25" # Adjusted to GraalVM v24
           distribution: "graalvm" # GraalVM distribution
-          java-version: "24" # Use Java 24 to match GraalVM v24
+          java-version: "25" # Use Java 24 to match GraalVM v24
+
+      # Set up Java 21 for the Gradle daemon (detekt does not support Java 25+)
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: "21"
 
       # Set up Gradle
       - name: Set up Gradle
