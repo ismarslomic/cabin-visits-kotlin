@@ -1,0 +1,24 @@
+{
+  "userId": "ismar",
+  "seasons": [
+    {
+      "id": "29",
+      "name": "Season 29",
+      "type": "alpine",
+      "weeks": [
+        {
+          "id": "2907",
+          "year": 2026,
+          "weekNumber": 7,
+          "days": [
+            {
+              "date": "2026-02-15",
+              "destinationIds": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "updatedAtUtc": "2026-02-15T18:15:07Z"
+}

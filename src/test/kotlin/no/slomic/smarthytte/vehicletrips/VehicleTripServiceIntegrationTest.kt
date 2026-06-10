@@ -42,6 +42,7 @@ class VehicleTripServiceIntegrationTest :
 
         val propertiesHolder = VehicleTripPropertiesHolder(
             vehicleTrip = VehicleTripProperties(
+                enabled = true,
                 filePath = getResourceFilePath("vehicleTrips.json"),
                 loginUrl = "http://my-vehicle-api.com/login",
                 tripsUrl = "http://my-vehicle-api.com/trips",
