@@ -3,6 +3,7 @@ package no.slomic.smarthytte.properties
 data class VehicleTripPropertiesHolder(val vehicleTrip: VehicleTripProperties)
 
 data class VehicleTripProperties(
+    val enabled: Boolean,
     val filePath: String,
     val loginUrl: String,
     val tripsUrl: String,
