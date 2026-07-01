@@ -207,12 +207,6 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setAuthorization",
-          "parameterTypes": [
             "java.util.List"
           ]
         },
@@ -525,6 +519,192 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "setCreated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setCreator",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Creator"
+          ]
+        },
+        {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEnd",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setEtag",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEventType",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setHtmlLink",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setICalUID",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setId",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setKind",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocation",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setOrganizer",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Organizer"
+          ]
+        },
+        {
+          "name": "setReminders",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Reminders"
+          ]
+        },
+        {
+          "name": "setSequence",
+          "parameterTypes": [
+            "java.lang.Integer"
+          ]
+        },
+        {
+          "name": "setStart",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setStatus",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSummary",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setUpdated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Creator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Organizer",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDisplayName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSelf",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Reminders",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setUseDefault",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventDateTime",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDateTime",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setTimeZone",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -1213,10 +1393,19 @@
       ]
     },
     {
+      "type": "java.io.Closeable"
+    },
+    {
+      "type": "java.io.Flushable"
+    },
+    {
+      "type": "java.io.OutputStream"
+    },
+    {
       "type": "java.io.Serializable"
     },
     {
-      "type": "java.lang.AbstractStringBuilder"
+      "type": "java.lang.AutoCloseable"
     },
     {
       "type": "java.lang.Boolean",
@@ -1274,19 +1463,6 @@
       "type": "java.lang.Comparable"
     },
     {
-      "type": "java.lang.Deprecated",
-      "methods": [
-        {
-          "name": "forRemoval",
-          "parameterTypes": []
-        },
-        {
-          "name": "since",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "java.lang.Double",
       "fields": [
         {
@@ -1336,12 +1512,6 @@
       "type": "java.lang.String"
     },
     {
-      "type": "java.lang.StringBuffer"
-    },
-    {
-      "type": "java.lang.StringBuilder"
-    },
-    {
       "type": "java.lang.String[]"
     },
     {
@@ -1363,25 +1533,10 @@
       ]
     },
     {
-      "type": "java.lang.annotation.Retention",
-      "methods": [
-        {
-          "name": "value",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "java.lang.annotation.Target",
-      "methods": [
-        {
-          "name": "value",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "java.lang.invoke.VarHandle"
+    },
+    {
+      "type": "java.lang.management.MemoryMXBean"
     },
     {
       "type": "java.lang.management.MemoryUsage",
@@ -1391,27 +1546,6 @@
           "parameterTypes": [
             "javax.management.openmbean.CompositeData"
           ]
-        }
-      ]
-    },
-    {
-      "type": "java.lang.reflect.Constructor"
-    },
-    {
-      "type": "java.lang.reflect.Executable",
-      "methods": [
-        {
-          "name": "getParameters",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "java.lang.reflect.Parameter",
-      "methods": [
-        {
-          "name": "getName",
-          "parameterTypes": []
         }
       ]
     },
@@ -1426,9 +1560,6 @@
     },
     {
       "type": "java.net.StandardSocketOptions"
-    },
-    {
-      "type": "java.nio.charset.Charset"
     },
     {
       "type": "java.security.AlgorithmParametersSpi"
@@ -1473,34 +1604,10 @@
       "type": "javax.management.ObjectName"
     },
     {
-      "type": "jdk.internal.ValueBased"
-    },
-    {
-      "type": "jdk.internal.vm.annotation.IntrinsicCandidate"
-    },
-    {
       "type": "kotlin.Any"
     },
     {
-      "type": "kotlin.Array"
-    },
-    {
       "type": "kotlin.Boolean"
-    },
-    {
-      "type": "kotlin.BooleanArray"
-    },
-    {
-      "type": "kotlin.Byte"
-    },
-    {
-      "type": "kotlin.ByteArray"
-    },
-    {
-      "type": "kotlin.Char"
-    },
-    {
-      "type": "kotlin.CharArray"
     },
     {
       "type": "kotlin.CharSequence"
@@ -1510,21 +1617,6 @@
     },
     {
       "type": "kotlin.Comparable"
-    },
-    {
-      "type": "kotlin.Deprecated"
-    },
-    {
-      "type": "kotlin.Double"
-    },
-    {
-      "type": "kotlin.DoubleArray"
-    },
-    {
-      "type": "kotlin.Float"
-    },
-    {
-      "type": "kotlin.FloatArray"
     },
     {
       "type": "kotlin.Function0"
@@ -1542,13 +1634,7 @@
       "type": "kotlin.Int"
     },
     {
-      "type": "kotlin.IntArray"
-    },
-    {
       "type": "kotlin.Long"
-    },
-    {
-      "type": "kotlin.LongArray"
     },
     {
       "type": "kotlin.Metadata",
@@ -1597,9 +1683,6 @@
       "type": "kotlin.Short"
     },
     {
-      "type": "kotlin.ShortArray"
-    },
-    {
       "type": "kotlin.String"
     },
     {
@@ -1607,21 +1690,6 @@
     },
     {
       "type": "kotlin.Unit"
-    },
-    {
-      "type": "kotlin.annotation.AnnotationTarget"
-    },
-    {
-      "type": "kotlin.annotation.MustBeDocumented"
-    },
-    {
-      "type": "kotlin.annotation.Target",
-      "methods": [
-        {
-          "name": "allowedTargets",
-          "parameterTypes": []
-        }
-      ]
     },
     {
       "type": "kotlin.collections.HashMap"
@@ -1702,9 +1770,6 @@
           "name": "VARIABLES"
         }
       ]
-    },
-    {
-      "type": "kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsLoaderImpl"
     },
     {
       "type": "kotlin.time.Instant"
@@ -2102,9 +2167,6 @@
       "type": "org.flywaydb.core.internal.database.sqlite.SQLiteDatabaseType"
     },
     {
-      "type": "org.flywaydb.core.internal.jdbc.ErrorOverrideInitializerStub"
-    },
-    {
       "type": "org.flywaydb.core.internal.logging.slf4j.Slf4jLogCreator",
       "methods": [
         {
@@ -2117,7 +2179,22 @@
       "type": "org.flywaydb.core.internal.proprietaryStubs.AuthCommandExtensionStub"
     },
     {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.AwsSecretsManagerSupportStub"
+    },
+    {
       "type": "org.flywaydb.core.internal.proprietaryStubs.CheckCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CherryPickConfigurationExtensionStub",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CherryPickSupportStub"
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.DeployCommandExtensionStub"
@@ -2129,7 +2206,28 @@
       "type": "org.flywaydb.core.internal.proprietaryStubs.DiffTextCommandExtensionStub"
     },
     {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DryRunConfigurationExtensionStub",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DryRunSupportStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ErrorOverrideInitializerStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ErrorOverridesSupportStub"
+    },
+    {
       "type": "org.flywaydb.core.internal.proprietaryStubs.GenerateCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.LicenseSupportStub"
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.LicensingConfigurationExtensionStub"
@@ -2145,6 +2243,9 @@
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.PrepareCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ShouldExecuteEvaluatorStub"
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.UndoCommandExtensionStub"
@@ -2924,9 +3025,6 @@
       "glob": "META-INF/services/javax.xml.parsers.SAXParserFactory"
     },
     {
-      "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.builtins.BuiltInsLoader"
-    },
-    {
       "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.km.internal.extensions.MetadataExtensions"
     },
     {
@@ -2987,25 +3085,10 @@
       "glob": "db/migration/V1.1__new_table_reservation_vehicle_trip.sql"
     },
     {
-      "glob": "kotlin/annotation/annotation.kotlin_builtins"
-    },
-    {
       "glob": "kotlin/collections/collections.kotlin_builtins"
     },
     {
-      "glob": "kotlin/concurrent/atomics/atomics.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/coroutines/coroutines.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/internal/internal.kotlin_builtins"
-    },
-    {
       "glob": "kotlin/kotlin.kotlin_builtins"
-    },
-    {
-      "glob": "kotlin/ranges/ranges.kotlin_builtins"
     },
     {
       "glob": "kotlin/reflect/reflect.kotlin_builtins"
