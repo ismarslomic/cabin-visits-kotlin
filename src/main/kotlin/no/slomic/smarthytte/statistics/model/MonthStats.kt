@@ -9,17 +9,21 @@ data class MonthStats(
     val year: Int,
     val monthNumber: Int,
     val monthName: String,
-    val totalVisits: Int,
-    val visitsComparedToPreviousMonth: Int,
-    val visitsComparedToSameMonthLastYear: Int,
-    val visitsComparedToYearToDateAverage: Double,
+    val visits: VisitsStats,
     val days: DaysStats,
     val nights: NightsStats,
-    val percentDaysOccupied: Double,
-    val percentWeeksOccupied: Double,
+    val occupancy: OccupancyStats,
     val guests: List<GuestVisitStats>,
     val drivingTime: DrivingTimeStatsMonth?,
     val drivingMoments: DrivingMomentStatsMonth?,
+)
+
+@Serializable
+data class VisitsStats(
+    val totalVisits: Int,
+    val comparedToPreviousMonth: Int,
+    val comparedToSameMonthLastYear: Int,
+    val comparedToYearToDateAverage: Double,
 )
 
 @Serializable

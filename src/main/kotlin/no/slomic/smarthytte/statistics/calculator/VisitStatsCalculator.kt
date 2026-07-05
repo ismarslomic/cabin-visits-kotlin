@@ -4,6 +4,7 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import no.slomic.smarthytte.common.MONTHS_IN_YEAR
 import no.slomic.smarthytte.common.datesUntil
 import no.slomic.smarthytte.common.daysUntilSafe
@@ -32,43 +33,37 @@ data class MonthDates(
     val lastOfPreviousMonth: LocalDate = firstOfMonth.minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
 }
 
-data class YearOccupancy(
-    val totalNights: Int,
-    val percentDaysOccupied: Double,
-    val percentWeeksOccupied: Double,
-    val percentMonthsOccupied: Double,
-)
+data class YearOccupancy(val dayOccupancy: Double, val weekOccupancy: Double, val monthOccupancy: Double)
 
-fun computeYearOccupancy(year: Int, yearReservations: List<Reservation>): YearOccupancy {
+fun computeYearOccupancy(year: Int, allReservations: List<Reservation>): YearOccupancy {
     val jan1 = firstDayOfYear(year)
     val jan1Next = firstDayOfYearAfter(year)
     val daysInYear = jan1.daysUntilSafe(jan1Next)
     val allWeeksInYear = jan1.datesUntil(jan1Next).map { it.isoWeekId() }.toSet().size
 
-    val occupiedDays: Set<LocalDate> = yearReservations
+    val occupiedDays: Set<LocalDate> = allReservations
         .asSequence().flatMap { r ->
             val start = maxOf(r.startDate, jan1)
-            val endEx = minOf(r.endDate, jan1Next)
+            val endEx = minOf(r.endDate.plus(DatePeriod(days = 1)), jan1Next)
             if (start < endEx) start.datesUntil(endEx).toList() else emptyList()
         }
         .toSet()
 
-    val totalNights = occupiedDays.size
-    val percentDaysOccupied = if (daysInYear > 0) {
-        (totalNights.toDouble() / daysInYear.toDouble() * PERCENT_FACTOR).round1()
+    val dayOccupancy = if (daysInYear > 0) {
+        (occupiedDays.size.toDouble() / daysInYear.toDouble() * PERCENT_FACTOR).round1()
     } else {
         0.0
     }
     val occupiedWeeksInYear = occupiedDays.map { it.isoWeekId() }.toSet().size
-    val percentWeeksOccupied = if (allWeeksInYear > 0) {
+    val weekOccupancy = if (allWeeksInYear > 0) {
         (occupiedWeeksInYear.toDouble() / allWeeksInYear.toDouble() * PERCENT_FACTOR).round1()
     } else {
         0.0
     }
     val occupiedMonths = occupiedDays.map { it.month.ordinal + 1 }.toSet().size
-    val percentMonthsOccupied = (occupiedMonths.toDouble() / MONTHS_IN_YEAR.toDouble() * PERCENT_FACTOR).round1()
+    val monthOccupancy = (occupiedMonths.toDouble() / MONTHS_IN_YEAR.toDouble() * PERCENT_FACTOR).round1()
 
-    return YearOccupancy(totalNights, percentDaysOccupied, percentWeeksOccupied, percentMonthsOccupied)
+    return YearOccupancy(dayOccupancy, weekOccupancy, monthOccupancy)
 }
 
 data class MonthOccupancy(val percentDaysOccupied: Double, val percentWeeksOccupied: Double)
@@ -81,7 +76,7 @@ fun computeMonthOccupancy(allReservations: List<Reservation>, dates: MonthDates)
     val occupiedDaysInMonth: Set<LocalDate> = allReservations
         .asSequence().flatMap { r ->
             val start = maxOf(r.startDate, dates.firstOfMonth)
-            val endExclusive = minOf(r.endDate, dates.firstOfNextMonth)
+            val endExclusive = minOf(r.endDate.plus(DatePeriod(days = 1)), dates.firstOfNextMonth)
             if (start < endExclusive) start.datesUntil(endExclusive).toList() else emptyList()
         }
         .toSet()
@@ -101,9 +96,9 @@ fun computeMonthOccupancy(allReservations: List<Reservation>, dates: MonthDates)
 }
 
 data class MonthlyVisitDeltas(
-    val visitsComparedToPreviousMonth: Int,
-    val visitsComparedToSameMonthLastYear: Int,
-    val visitsComparedToYearToDateAverage: Double,
+    val comparedToPreviousMonth: Int,
+    val comparedToSameMonthLastYear: Int,
+    val comparedToYearToDateAverage: Double,
 )
 
 fun calculateMonthlyVisitDeltas(
@@ -125,9 +120,9 @@ fun calculateMonthlyVisitDeltas(
     val yearToDateAverage = yearToDateTotal.toDouble() / (dates.month.ordinal + 1)
 
     return MonthlyVisitDeltas(
-        visitsComparedToPreviousMonth = totalVisits - prevMonthCount,
-        visitsComparedToSameMonthLastYear = totalVisits - sameMonthLastYearCount,
-        visitsComparedToYearToDateAverage = (totalVisits.toDouble() - yearToDateAverage).round1(),
+        comparedToPreviousMonth = totalVisits - prevMonthCount,
+        comparedToSameMonthLastYear = totalVisits - sameMonthLastYearCount,
+        comparedToYearToDateAverage = (totalVisits.toDouble() - yearToDateAverage).round1(),
     )
 }
 

@@ -211,9 +211,9 @@ class VisitStatsCalculatorTest :
                     totalVisits = totalVisits,
                 )
 
-                result.visitsComparedToPreviousMonth shouldBe 1
-                result.visitsComparedToSameMonthLastYear shouldBe -1
-                result.visitsComparedToYearToDateAverage shouldBe 0.0
+                result.comparedToPreviousMonth shouldBe 1
+                result.comparedToSameMonthLastYear shouldBe -1
+                result.comparedToYearToDateAverage shouldBe 0.0
             }
 
             should("count only previous month visits, not earlier months") {
@@ -236,7 +236,7 @@ class VisitStatsCalculatorTest :
                     totalVisits = 0,
                 )
                 // Previous month = February: feb1 and feb29 = 2 visits
-                result.visitsComparedToPreviousMonth shouldBe -2
+                result.comparedToPreviousMonth shouldBe -2
             }
         }
     })
