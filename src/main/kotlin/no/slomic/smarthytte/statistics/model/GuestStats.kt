@@ -3,7 +3,7 @@ package no.slomic.smarthytte.statistics.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GuestStatsResponse(
+data class GuestStats(
     val topGuestsByVisits: List<GuestRanking>,
     val topGuestsByStayDays: List<GuestRanking>,
     val genderDistribution: GenderDistribution,

@@ -5,7 +5,7 @@ import no.slomic.smarthytte.statistics.calculator.DrivingMomentStatsYear
 import no.slomic.smarthytte.statistics.calculator.DrivingTimeStatsYear
 
 @Serializable
-data class YearStatsResponse(
+data class YearStats(
     val year: Int,
     val totalVisits: Int,
     val visitsComparedToLast12Months: Int,

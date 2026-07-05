@@ -4,7 +4,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class LiveStatsResponse(
+data class LiveStats(
     val isOccupied: Boolean,
     val currentReservation: CurrentReservationInfo?,
     val nextReservation: NextReservationInfo?,

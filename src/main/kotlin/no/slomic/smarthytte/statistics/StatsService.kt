@@ -34,13 +34,13 @@ import no.slomic.smarthytte.statistics.model.CurrentReservationInfo
 import no.slomic.smarthytte.statistics.model.CurrentYearStats
 import no.slomic.smarthytte.statistics.model.GenderDistribution
 import no.slomic.smarthytte.statistics.model.GuestRanking
-import no.slomic.smarthytte.statistics.model.GuestStatsResponse
-import no.slomic.smarthytte.statistics.model.LiveStatsResponse
+import no.slomic.smarthytte.statistics.model.GuestStats
+import no.slomic.smarthytte.statistics.model.LiveStats
 import no.slomic.smarthytte.statistics.model.MonthCount
 import no.slomic.smarthytte.statistics.model.MonthStats
 import no.slomic.smarthytte.statistics.model.MonthStay
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
-import no.slomic.smarthytte.statistics.model.YearStatsResponse
+import no.slomic.smarthytte.statistics.model.YearStats
 
 private const val PERCENT_FACTOR = 100.0
 private const val TOP_GUESTS_LIMIT = 10
@@ -59,7 +59,7 @@ class StatsService(
     private val reservationRepository: ReservationRepository,
     private val guestRepository: GuestRepository,
 ) {
-    suspend fun getLiveStats(): LiveStatsResponse {
+    suspend fun getLiveStats(): LiveStats {
         val today = osloDateNow()
         val allReservations = reservationRepository.allReservations()
         val allGuests = guestRepository.allGuests()
@@ -84,7 +84,7 @@ class StatsService(
 
         val allTimeStayDays = allReservations.sumOf { it.stayDurationDays }
 
-        return LiveStatsResponse(
+        return LiveStats(
             isOccupied = current != null,
             currentReservation = currentInfo,
             nextReservation = nextInfo,
@@ -118,7 +118,7 @@ class StatsService(
         return allReservations.map { it.startDate.year }.distinct().sorted()
     }
 
-    suspend fun getYearStats(year: Int): YearStatsResponse {
+    suspend fun getYearStats(year: Int): YearStats {
         val allReservations = reservationRepository.allReservations()
         val allGuests = guestRepository.allGuests()
         val guestsById = allGuests.associateBy { it.id }
@@ -141,7 +141,7 @@ class StatsService(
                 buildMonthStats(year, month, allReservations, byYear, guestsById)
             }
 
-        return YearStatsResponse(
+        return YearStats(
             year = year,
             totalVisits = visitStats.totalVisits,
             visitsComparedToLast12Months = visitStats.comparedToLast12,
@@ -180,7 +180,7 @@ class StatsService(
         return buildMonthStats(year, kotlinMonth, allReservations, byYear, guestsById)
     }
 
-    suspend fun getGuestStats(): GuestStatsResponse {
+    suspend fun getGuestStats(): GuestStats {
         val allGuests = guestRepository.allGuests()
         val allReservations = reservationRepository.allReservations()
         val guestsById = allGuests.associateBy { it.id }
@@ -233,7 +233,7 @@ class StatsService(
                 AgeGroup(label, guestCount = count, percent = (count / total * PERCENT_FACTOR).round1())
             }
 
-        return GuestStatsResponse(topByVisits, topByDays, genderDist, ageGroups)
+        return GuestStats(topByVisits, topByDays, genderDist, ageGroups)
     }
 
     private fun buildMonthStats(
