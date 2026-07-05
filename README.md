@@ -179,10 +179,13 @@ Occupancy = 94 / 365 × 100 = 25.8%
 ## Stay
 
 **Definition**  
-The duration of a cabin visit, measured in **calendar days**.
+The duration of a single cabin visit, measured in **calendar days**. A stay always represents the **full duration of a
+visit** and is **not split across reporting periods**. For period-based statistics, a stay is attributed to the period
+in which the **visit started** (arrival date).
 
 **Source**  
-Calculated from **Days** for a single visit.
+Calculated from the total number of **Days** for a single visit. The complete stay is always associated with the arrival
+period.
 
 **Example**
 
@@ -192,13 +195,17 @@ Stay:
 
 Result:
 
-- **11-day stay**
-- **10 nights**
+- Duration: **11-day stay**
+- Arrival month: **March**
 
-Examples:
+Examples of period-based statistics:
 
-- Longest stay: **11 days**
-- Average stay: **3.2 days**
+- March:
+    - Longest stay: **11 days**
+    - Average stay: **11 days**
+- April:
+    - Longest stay: **—**
+    - Average stay: **—**
 
 ## Metrics
 

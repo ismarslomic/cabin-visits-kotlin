@@ -38,9 +38,9 @@ import no.slomic.smarthytte.statistics.model.GenderDistribution
 import no.slomic.smarthytte.statistics.model.GuestRanking
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.LiveStats
-import no.slomic.smarthytte.statistics.model.MonthCount
+import no.slomic.smarthytte.statistics.model.MonthlyDaysCount
+import no.slomic.smarthytte.statistics.model.MonthlyVisitCount
 import no.slomic.smarthytte.statistics.model.MonthStats
-import no.slomic.smarthytte.statistics.model.MonthStay
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
 import no.slomic.smarthytte.statistics.model.YearStats
 
@@ -158,7 +158,7 @@ class StatsService(
             percentMonthsOccupied = visitStats.occupancy.percentMonthsOccupied,
             monthMostVisits = visitStats.monthMostVisits,
             monthFewestVisits = visitStats.monthFewestVisits,
-            monthWithLongestStay = visitStats.longestStay,
+            monthLongestVisit = visitStats.monthLongestVisit,
             topGuestByDays = guestStats.topGuestByDays,
             newGuests = guestStats.newGuests,
             guests = guestStats.allGuestsSorted,
@@ -297,9 +297,9 @@ class StatsService(
         val occupancy: no.slomic.smarthytte.statistics.calculator.YearOccupancy,
         val nightsComparedToLast12: Int,
         val avgMonthlyNights: Double,
-        val monthMostVisits: MonthCount?,
-        val monthFewestVisits: MonthCount?,
-        val longestStay: MonthStay?,
+        val monthMostVisits: MonthlyVisitCount?,
+        val monthFewestVisits: MonthlyVisitCount?,
+        val monthLongestVisit: MonthlyDaysCount?,
     )
 
     private fun computeYearVisitStats(
@@ -338,16 +338,16 @@ class StatsService(
             countsByMonth
                 .maxByOrNull { it.value }
                 ?.takeIf { it.value > 0 }
-                ?.let { MonthCount(it.key.ordinal + 1, monthNameOf(it.key), visitCount = it.value) }
+                ?.let { MonthlyVisitCount(it.key.ordinal + 1, monthNameOf(it.key), visitCount = it.value) }
         val monthFewestVisits =
             countsByMonth
                 .filter { it.value > 0 }
                 .minByOrNull { it.value }
-                ?.let { MonthCount(it.key.ordinal + 1, monthNameOf(it.key), visitCount = it.value) }
-        val longestStay =
+                ?.let { MonthlyVisitCount(it.key.ordinal + 1, monthNameOf(it.key), visitCount = it.value) }
+        val monthLongestVisit =
             yearReservations
                 .findMonthWithLongestStay()
-                ?.let { (month, days) -> MonthStay(month.ordinal + 1, monthNameOf(month), totalDays = days) }
+                ?.let { (month, days) -> MonthlyDaysCount(month.ordinal + 1, monthNameOf(month), daysCount = days) }
         return YearVisitStats(
             totalVisits,
             comparedToLast12,
@@ -359,7 +359,7 @@ class StatsService(
             avgMonthlyNights,
             monthMostVisits,
             monthFewestVisits,
-            longestStay,
+            monthLongestVisit,
         )
     }
 

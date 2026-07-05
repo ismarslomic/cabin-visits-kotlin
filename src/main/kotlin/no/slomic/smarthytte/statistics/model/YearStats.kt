@@ -18,9 +18,9 @@ data class YearStats(
     val percentDaysOccupied: Double,
     val percentWeeksOccupied: Double,
     val percentMonthsOccupied: Double,
-    val monthMostVisits: MonthCount?,
-    val monthFewestVisits: MonthCount?,
-    val monthWithLongestStay: MonthStay?,
+    val monthMostVisits: MonthlyVisitCount?,
+    val monthFewestVisits: MonthlyVisitCount?,
+    val monthLongestVisit: MonthlyDaysCount?,
     val topGuestByDays: GuestVisitStats?,
     val newGuests: List<GuestVisitStats>,
     val guests: List<GuestVisitStats>,
@@ -34,10 +34,10 @@ data class YearStats(
 )
 
 @Serializable
-data class MonthCount(val monthNumber: Int, val monthName: String, val visitCount: Int)
+data class MonthlyVisitCount(val monthNumber: Int, val monthName: String, val visitCount: Int)
 
 @Serializable
-data class MonthStay(val monthNumber: Int, val monthName: String, val totalDays: Int)
+data class MonthlyDaysCount(val monthNumber: Int, val monthName: String, val daysCount: Int)
 
 @Serializable
 data class GuestVisitStats(
