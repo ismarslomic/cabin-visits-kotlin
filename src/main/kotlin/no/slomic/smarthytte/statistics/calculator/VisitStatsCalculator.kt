@@ -20,7 +20,6 @@ import no.slomic.smarthytte.statistics.model.DaysStats
 import no.slomic.smarthytte.statistics.model.NightsStats
 
 private const val PERCENT_FACTOR: Double = 100.0
-private const val DAYS_IN_MONTHLY_COMPARE_WINDOW: Int = 30
 private const val DAY_OFFSET_PREVIOUS: Int = 1
 
 data class MonthDates(
@@ -28,7 +27,10 @@ data class MonthDates(
     val month: Month,
     val firstOfMonth: LocalDate = firstDateOfThisMonth(year, month),
     val firstOfNextMonth: LocalDate = firstDateOfNextMonth(year, month),
-)
+) {
+    val firstOfPreviousMonth: LocalDate = firstOfMonth.minus(DatePeriod(months = 1))
+    val lastOfPreviousMonth: LocalDate = firstOfMonth.minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
+}
 
 data class YearOccupancy(
     val totalNights: Int,
@@ -99,7 +101,7 @@ fun computeMonthOccupancy(allReservations: List<Reservation>, dates: MonthDates)
 }
 
 data class MonthlyVisitDeltas(
-    val visitsComparedToLast30Days: Int,
+    val visitsComparedToPreviousMonth: Int,
     val visitsComparedToSameMonthLastYear: Int,
     val visitsComparedToYearToDateAverage: Double,
 )
@@ -110,13 +112,9 @@ fun calculateMonthlyVisitDeltas(
     dates: MonthDates,
     totalVisits: Int,
 ): MonthlyVisitDeltas {
-    val last30DaysRange = with(dates.firstOfMonth) {
-        val startWindow = minus(DatePeriod(days = DAYS_IN_MONTHLY_COMPARE_WINDOW))
-        val lastDayPrev = minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
-        startWindow..lastDayPrev
+    val prevMonthCount = allReservations.count {
+        it.startDate in dates.firstOfPreviousMonth..dates.lastOfPreviousMonth
     }
-
-    val prev30DaysCount = allReservations.count { it.startDate in last30DaysRange }
     val sameMonthLastYearCount = allReservations.count {
         it.startDate.year == (dates.year - 1) && it.startDate.month == dates.month
     }
@@ -127,29 +125,26 @@ fun calculateMonthlyVisitDeltas(
     val yearToDateAverage = yearToDateTotal.toDouble() / (dates.month.ordinal + 1)
 
     return MonthlyVisitDeltas(
-        visitsComparedToLast30Days = totalVisits - prev30DaysCount,
+        visitsComparedToPreviousMonth = totalVisits - prevMonthCount,
         visitsComparedToSameMonthLastYear = totalVisits - sameMonthLastYearCount,
         visitsComparedToYearToDateAverage = (totalVisits.toDouble() - yearToDateAverage).round1(),
     )
 }
 
-fun calculateMonthlyDaysStats(
-    allReservations: List<Reservation>,
-    monthlyReservations: List<Reservation>,
-    dates: MonthDates,
-): DaysStats {
+fun calculateMonthlyDaysStats(allReservations: List<Reservation>, dates: MonthDates): DaysStats {
     val totalDays = allReservations.countOccupiedDaysInWindow(dates.firstOfMonth, dates.firstOfNextMonth)
 
-    val perReservationDays = monthlyReservations.map {
+    val overlappingReservations = allReservations.filter {
+        it.startDate < dates.firstOfNextMonth && it.endDate >= dates.firstOfMonth
+    }
+    val perReservationDays = overlappingReservations.map {
         it.daysInPeriod(dates.firstOfMonth, dates.firstOfNextMonth)
     }
     val minDays = perReservationDays.minOrNull()
     val maxDays = perReservationDays.maxOrNull()
     val avgDays = perReservationDays.takeIf { it.isNotEmpty() }?.average()?.round1()
 
-    val last30DaysStart = dates.firstOfMonth.minus(DatePeriod(days = DAYS_IN_MONTHLY_COMPARE_WINDOW))
-    val last30DaysEnd = dates.firstOfMonth.minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
-    val daysLast30 = allReservations.countOccupiedDaysInWindow(last30DaysStart, last30DaysEnd)
+    val daysPrevMonth = allReservations.countOccupiedDaysInWindow(dates.firstOfPreviousMonth, dates.firstOfMonth)
 
     val sameMonthLastYearStart = dates.firstOfMonth.minus(DatePeriod(years = 1))
     val sameMonthLastYearEnd = dates.firstOfNextMonth.minus(DatePeriod(years = 1))
@@ -161,28 +156,25 @@ fun calculateMonthlyDaysStats(
         minDays = minDays,
         maxDays = maxDays,
         avgDays = avgDays,
-        totalDaysComparedToLast30Days = totalDays - daysLast30,
+        totalDaysComparedToPreviousMonth = totalDays - daysPrevMonth,
         totalDaysComparedToSameMonthLastYear = totalDays - daysSameMonthLastYear,
     )
 }
 
-fun calculateMonthlyNightsStats(
-    allReservations: List<Reservation>,
-    monthlyReservations: List<Reservation>,
-    dates: MonthDates,
-): NightsStats {
+fun calculateMonthlyNightsStats(allReservations: List<Reservation>, dates: MonthDates): NightsStats {
     val totalNights = allReservations.countOccupiedNightsInWindow(dates.firstOfMonth, dates.firstOfNextMonth)
 
-    val perReservationNights = monthlyReservations.map {
+    val overlappingReservations = allReservations.filter {
+        it.startDate < dates.firstOfNextMonth && it.endDate >= dates.firstOfMonth
+    }
+    val perReservationNights = overlappingReservations.map {
         it.nightsInPeriod(dates.firstOfMonth, dates.firstOfNextMonth)
     }
     val minNights = perReservationNights.minOrNull()
     val maxNights = perReservationNights.maxOrNull()
     val avgNights = perReservationNights.takeIf { it.isNotEmpty() }?.average()?.round1()
 
-    val last30DaysStart = dates.firstOfMonth.minus(DatePeriod(days = DAYS_IN_MONTHLY_COMPARE_WINDOW))
-    val last30DaysEnd = dates.firstOfMonth.minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
-    val nightsLast30 = allReservations.countOccupiedNightsInWindow(last30DaysStart, last30DaysEnd)
+    val nightsPrevMonth = allReservations.countOccupiedNightsInWindow(dates.firstOfPreviousMonth, dates.firstOfMonth)
 
     val sameMonthLastYearStart = dates.firstOfMonth.minus(DatePeriod(years = 1))
     val sameMonthLastYearEnd = dates.firstOfNextMonth.minus(DatePeriod(years = 1))
@@ -194,7 +186,7 @@ fun calculateMonthlyNightsStats(
         minNights = minNights,
         maxNights = maxNights,
         avgNights = avgNights,
-        totalNightsComparedToLast30Days = totalNights - nightsLast30,
+        totalNightsComparedToPreviousMonth = totalNights - nightsPrevMonth,
         totalNightsComparedToSameMonthLastYear = totalNights - nightsSameMonthLastYear,
     )
 }

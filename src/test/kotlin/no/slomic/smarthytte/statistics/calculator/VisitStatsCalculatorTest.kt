@@ -33,7 +33,6 @@ class VisitStatsCalculatorTest :
 
                 val result = calculateMonthlyDaysStats(
                     allReservations = listOf(r1, r2, r3),
-                    monthlyReservations = listOf(r1),
                     dates = dates,
                 )
 
@@ -55,7 +54,6 @@ class VisitStatsCalculatorTest :
 
                 val result = calculateMonthlyDaysStats(
                     allReservations = listOf(r1, r2, r3),
-                    monthlyReservations = listOf(r1, r2, r3),
                     dates = dates,
                 )
 
@@ -64,41 +62,40 @@ class VisitStatsCalculatorTest :
                 result.avgDays shouldBe 5.7 // (4 + 8 + 5) / 3
             }
 
-            should("return null min, max and avg when no monthly reservations") {
+            should("include cross-month reservation in min, max and avg for the overlapping month") {
                 val year = 2024
                 val month = Month.APRIL
                 val dates = MonthDates(year, month)
 
+                // Spans March-April: endDate=April 6 inclusive -> days in April: 1,2,3,4,5,6 = 6 days
                 val r1 = createReservation("r1", LocalDate(2024, 3, 27), LocalDate(2024, 4, 6))
 
                 val result = calculateMonthlyDaysStats(
                     allReservations = listOf(r1),
-                    monthlyReservations = emptyList(),
                     dates = dates,
                 )
 
-                result.minDays shouldBe null
-                result.maxDays shouldBe null
-                result.avgDays shouldBe null
+                result.minDays shouldBe 6
+                result.maxDays shouldBe 6
+                result.avgDays shouldBe 6.0
             }
 
-            should("calculate totalDaysComparedToLast30Days") {
+            should("calculate totalDaysComparedToPreviousMonth") {
                 val year = 2024
                 val month = Month.MARCH
                 val dates = MonthDates(year, month)
 
                 // March: startDate=1, endDate=6 -> days 1-6 = 6 days
                 val march = createReservation("march", LocalDate(2024, 3, 1), LocalDate(2024, 3, 6))
-                // Previous 30 days window (30 Jan - 29 Feb): endDate=13 -> days 10-13 = 4 days
-                val prev30 = createReservation("prev30", LocalDate(2024, 2, 10), LocalDate(2024, 2, 13))
+                // Previous month (February): endDate=13 -> days 10-13 = 4 days
+                val prevMonth = createReservation("prevMonth", LocalDate(2024, 2, 10), LocalDate(2024, 2, 13))
 
                 val result = calculateMonthlyDaysStats(
-                    allReservations = listOf(march, prev30),
-                    monthlyReservations = listOf(march),
+                    allReservations = listOf(march, prevMonth),
                     dates = dates,
                 )
 
-                result.totalDaysComparedToLast30Days shouldBe 2 // 6 - 4
+                result.totalDaysComparedToPreviousMonth shouldBe 2 // 6 - 4
             }
 
             should("calculate totalDaysComparedToSameMonthLastYear") {
@@ -113,7 +110,6 @@ class VisitStatsCalculatorTest :
 
                 val result = calculateMonthlyDaysStats(
                     allReservations = listOf(thisYear, lastYear),
-                    monthlyReservations = listOf(thisYear),
                     dates = dates,
                 )
 
@@ -136,7 +132,6 @@ class VisitStatsCalculatorTest :
 
                 val result = calculateMonthlyNightsStats(
                     allReservations = listOf(r1, r2, r3),
-                    monthlyReservations = listOf(r1),
                     dates = dates,
                 )
 
@@ -158,7 +153,6 @@ class VisitStatsCalculatorTest :
 
                 val result = calculateMonthlyNightsStats(
                     allReservations = listOf(r1, r2, r3),
-                    monthlyReservations = listOf(r1, r2, r3),
                     dates = dates,
                 )
 
@@ -167,23 +161,22 @@ class VisitStatsCalculatorTest :
                 result.avgNights shouldBe 5.0 // (3 + 7 + 5) / 3
             }
 
-            should("calculate totalNightsComparedToLast30Days") {
+            should("calculate totalNightsComparedToPreviousMonth") {
                 val year = 2024
                 val month = Month.MARCH
                 val dates = MonthDates(year, month)
 
                 // March: nights 1-5 = 5 nights
                 val march = createReservation("march", LocalDate(2024, 3, 1), LocalDate(2024, 3, 6))
-                // Previous 30 days window: nights 10-12 = 3 nights
-                val prev30 = createReservation("prev30", LocalDate(2024, 2, 10), LocalDate(2024, 2, 13))
+                // Previous month (February): nights 10-12 = 3 nights
+                val prevMonth = createReservation("prevMonth", LocalDate(2024, 2, 10), LocalDate(2024, 2, 13))
 
                 val result = calculateMonthlyNightsStats(
-                    allReservations = listOf(march, prev30),
-                    monthlyReservations = listOf(march),
+                    allReservations = listOf(march, prevMonth),
                     dates = dates,
                 )
 
-                result.totalNightsComparedToLast30Days shouldBe 2 // 5 - 3
+                result.totalNightsComparedToPreviousMonth shouldBe 2 // 5 - 3
             }
         }
 
@@ -194,7 +187,7 @@ class VisitStatsCalculatorTest :
                 val dates = MonthDates(year, month)
                 val totalVisits = 3
 
-                val last30DaysReservations = listOf(
+                val prevMonthReservations = listOf(
                     createReservation("prev1", LocalDate(2024, 2, 10), LocalDate(2024, 2, 15)),
                     createReservation("prev2", LocalDate(2024, 2, 20), LocalDate(2024, 2, 25)),
                 )
@@ -209,7 +202,7 @@ class VisitStatsCalculatorTest :
                     Month.FEBRUARY to 4,
                     Month.MARCH to totalVisits,
                 )
-                val allReservations = last30DaysReservations + sameMonthLastYearReservations
+                val allReservations = prevMonthReservations + sameMonthLastYearReservations
 
                 val result = calculateMonthlyVisitDeltas(
                     allReservations = allReservations,
@@ -218,12 +211,12 @@ class VisitStatsCalculatorTest :
                     totalVisits = totalVisits,
                 )
 
-                result.visitsComparedToLast30Days shouldBe 1
+                result.visitsComparedToPreviousMonth shouldBe 1
                 result.visitsComparedToSameMonthLastYear shouldBe -1
                 result.visitsComparedToYearToDateAverage shouldBe 0.0
             }
 
-            should("handle leap year correctly in last 30 days window") {
+            should("count only previous month visits, not earlier months") {
                 val year = 2024
                 val month = Month.MARCH
                 val dates = MonthDates(year, month)
@@ -242,7 +235,8 @@ class VisitStatsCalculatorTest :
                     dates = dates,
                     totalVisits = 0,
                 )
-                result.visitsComparedToLast30Days shouldBe -3
+                // Previous month = February: feb1 and feb29 = 2 visits
+                result.visitsComparedToPreviousMonth shouldBe -2
             }
         }
     })

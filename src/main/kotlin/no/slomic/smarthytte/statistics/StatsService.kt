@@ -257,8 +257,8 @@ class StatsService(
 
         val countsByMonth = yearReservations.countByMonth()
         val deltas = calculateMonthlyVisitDeltas(allReservations, countsByMonth, dates, totalVisits)
-        val daysStats = calculateMonthlyDaysStats(allReservations, monthlyReservations, dates)
-        val nightsStats = calculateMonthlyNightsStats(allReservations, monthlyReservations, dates)
+        val daysStats = calculateMonthlyDaysStats(allReservations, dates)
+        val nightsStats = calculateMonthlyNightsStats(allReservations, dates)
         val occupancy = computeMonthOccupancy(allReservations, dates)
 
         val guestStats = calculateMonthlyGuestStats(year, guestsById, dates, allReservations)
@@ -275,7 +275,7 @@ class StatsService(
             monthNumber = month.ordinal + 1,
             monthName = monthNameOf(month),
             totalVisits = totalVisits,
-            visitsComparedToLast30Days = deltas.visitsComparedToLast30Days,
+            visitsComparedToPreviousMonth = deltas.visitsComparedToPreviousMonth,
             visitsComparedToSameMonthLastYear = deltas.visitsComparedToSameMonthLastYear,
             visitsComparedToYearToDateAverage = deltas.visitsComparedToYearToDateAverage,
             days = daysStats,

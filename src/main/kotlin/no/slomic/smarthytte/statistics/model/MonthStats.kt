@@ -10,7 +10,7 @@ data class MonthStats(
     val monthNumber: Int,
     val monthName: String,
     val totalVisits: Int,
-    val visitsComparedToLast30Days: Int,
+    val visitsComparedToPreviousMonth: Int,
     val visitsComparedToSameMonthLastYear: Int,
     val visitsComparedToYearToDateAverage: Double,
     val days: DaysStats,
@@ -28,7 +28,7 @@ data class DaysStats(
     val minDays: Int?,
     val maxDays: Int?,
     val avgDays: Double?,
-    val totalDaysComparedToLast30Days: Int,
+    val totalDaysComparedToPreviousMonth: Int,
     val totalDaysComparedToSameMonthLastYear: Int,
 )
 
@@ -38,6 +38,6 @@ data class NightsStats(
     val minNights: Int?,
     val maxNights: Int?,
     val avgNights: Double?,
-    val totalNightsComparedToLast30Days: Int,
+    val totalNightsComparedToPreviousMonth: Int,
     val totalNightsComparedToSameMonthLastYear: Int,
 )
