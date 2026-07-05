@@ -46,12 +46,12 @@ class GuestStatsCalculatorTest :
                 result shouldHaveSize 2
                 val g1Stats = result.find { it.guestId == "g1" }!!
                 g1Stats.totalVisits shouldBe 2
-                g1Stats.totalNights shouldBe 10
+                g1Stats.totalDays shouldBe 12 // reservation 1: days 1-6 (6), reservation 2: days 10-15 (6)
                 g1Stats.age shouldBe 34
 
                 val g2Stats = result.find { it.guestId == "g2" }!!
                 g2Stats.totalVisits shouldBe 1
-                g2Stats.totalNights shouldBe 5
+                g2Stats.totalDays shouldBe 6 // reservation 1: days 1-6 (6)
                 g2Stats.age shouldBe 29
             }
 

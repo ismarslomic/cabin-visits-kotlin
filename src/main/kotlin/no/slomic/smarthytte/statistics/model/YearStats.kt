@@ -46,10 +46,10 @@ data class GuestVisitStats(
     val lastName: String,
     val age: Int,
     val totalVisits: Int,
-    val totalNights: Int,
+    val totalDays: Int,
 ) {
     companion object {
-        val COMPARATOR: Comparator<GuestVisitStats> = compareByDescending<GuestVisitStats> { it.totalNights }
+        val COMPARATOR: Comparator<GuestVisitStats> = compareByDescending<GuestVisitStats> { it.totalDays }
             .thenByDescending { it.totalVisits }
             .thenBy { it.lastName }
             .thenBy { it.firstName }

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GuestStats(
     val topGuestsByVisits: List<GuestRanking>,
-    val topGuestsByStayDays: List<GuestRanking>,
+    val topGuestsByDays: List<GuestRanking>,
     val genderDistribution: GenderDistribution,
     val ageGroups: List<AgeGroup>,
 )
@@ -16,7 +16,7 @@ data class GuestRanking(
     val firstName: String,
     val lastName: String,
     val totalVisits: Int,
-    val totalNights: Int,
+    val totalDays: Int,
 )
 
 @Serializable

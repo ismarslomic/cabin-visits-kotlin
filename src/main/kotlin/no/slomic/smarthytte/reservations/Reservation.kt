@@ -96,8 +96,8 @@ fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxBy
 
 fun List<Reservation>.visitsByGuest(): Map<String, Int> = this.flatMap { it.guestIds }.groupingBy { it }.eachCount()
 
-fun List<Reservation>.nightsByGuest(periodStart: LocalDate, periodEndExclusive: LocalDate): Map<String, Int> =
+fun List<Reservation>.daysByGuest(periodStart: LocalDate, periodEndExclusive: LocalDate): Map<String, Int> =
     this.flatMap { reservation ->
-        val nights = reservation.nightsInPeriod(periodStart, periodEndExclusive)
-        reservation.guestIds.map { it to nights }
-    }.groupingBy { (guestId, _) -> guestId }.fold(0) { acc, (_, nights) -> acc + nights }
+        val days = reservation.daysInPeriod(periodStart, periodEndExclusive)
+        reservation.guestIds.map { it to days }
+    }.groupingBy { (guestId, _) -> guestId }.fold(0) { acc, (_, days) -> acc + days }

@@ -15,9 +15,9 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.countByMonth
 import no.slomic.smarthytte.reservations.countOccupiedNightsInWindow
+import no.slomic.smarthytte.reservations.daysByGuest
 import no.slomic.smarthytte.reservations.diffVisitsCurrentYearWithLast12Months
 import no.slomic.smarthytte.reservations.findMonthWithLongestStay
-import no.slomic.smarthytte.reservations.nightsByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
 import no.slomic.smarthytte.statistics.calculator.MonthDates
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingMomentStats
@@ -192,22 +192,22 @@ class StatsService(
         val jan1Next = firstDayOfYearAfter(osloDateNow().year)
 
         val visitsByGuest = allReservations.visitsByGuest()
-        val nightsByGuest = allReservations.nightsByGuest(jan1, jan1Next)
+        val daysByGuest = allReservations.daysByGuest(jan1, jan1Next)
 
         val rankings =
-            (visitsByGuest.keys + nightsByGuest.keys).toSet().mapNotNull { guestId ->
+            (visitsByGuest.keys + daysByGuest.keys).toSet().mapNotNull { guestId ->
                 val guest = guestsById[guestId] ?: return@mapNotNull null
                 GuestRanking(
                     guestId = guestId,
                     firstName = guest.firstName,
                     lastName = guest.lastName,
                     totalVisits = visitsByGuest[guestId] ?: 0,
-                    totalNights = nightsByGuest[guestId] ?: 0,
+                    totalDays = daysByGuest[guestId] ?: 0,
                 )
             }
 
         val topByVisits = rankings.sortedByDescending { it.totalVisits }.take(TOP_GUESTS_LIMIT)
-        val topByDays = rankings.sortedByDescending { it.totalNights }.take(TOP_GUESTS_LIMIT)
+        val topByDays = rankings.sortedByDescending { it.totalDays }.take(TOP_GUESTS_LIMIT)
 
         val maleCount = allGuests.count { it.gender == Gender.MALE }
         val femaleCount = allGuests.count { it.gender == Gender.FEMALE }
@@ -235,7 +235,12 @@ class StatsService(
                 AgeGroup(label, guestCount = count, percent = (count / total * PERCENT_FACTOR).round1())
             }
 
-        return GuestStats(topByVisits, topByDays, genderDist, ageGroups)
+        return GuestStats(
+            topGuestsByVisits = topByVisits,
+            topGuestsByDays = topByDays,
+            genderDistribution = genderDist,
+            ageGroups = ageGroups,
+        )
     }
 
     private fun buildMonthStats(

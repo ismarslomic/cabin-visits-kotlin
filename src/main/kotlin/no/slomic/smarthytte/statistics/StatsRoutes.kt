@@ -13,13 +13,13 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
         // GET /api/stats
         // Returns live occupancy status: whether the cabin is currently occupied, details about the
         // ongoing and next reservation (dates, guest names, remaining/upcoming nights), and all-time
-        // totals (visits, stay days, unique guests). Suitable for a smart mirror or real-time dashboard.
+        // totals (visits, nights, unique guests). Suitable for a smart mirror or real-time dashboard.
         get("/api/stats") {
             call.respond(statsService.getLiveStats())
         }
 
         // GET /api/stats/current-year
-        // Returns a quick summary for the current calendar year: number of visits, total stay days,
+        // Returns a quick summary for the current calendar year: number of visits, total nights,
         // and total driving distance to/from the cabin. Suitable for a summary card or widget.
         get("/api/stats/current-year") {
             call.respond(statsService.getCurrentYearStats())
@@ -33,7 +33,7 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
         }
 
         // GET /api/stats/years/{year}
-        // Returns full statistics for a given year, including visit counts, stay days, occupancy
+        // Returns full statistics for a given year, including visit counts, nights, occupancy
         // percentages (days/weeks/months), guest overview (new guests, top guest, all guests),
         // EV statistics (distance, energy consumption, regeneration), driving time stats
         // (avg/min/max to and from cabin), typical departure and arrival times, and a monthly
@@ -47,7 +47,7 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
 
         // GET /api/stats/years/{year}/months/{month}
         // Returns statistics for a specific month: visit count with comparisons against the previous
-        // 30 days, the same month last year, and the year-to-date monthly average; stay day
+        // 30 days, the same month last year, and the year-to-date monthly average; nights
         // min/avg/max; occupancy percentages; guest list; and driving time and moment stats for
         // the month including diff vs. the previous month.
         // Path parameters:
@@ -63,7 +63,7 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
 
         // GET /api/stats/guests
         // Returns guest statistics across all years: top 10 guests by number of visits and by total
-        // stay days, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+).
+        // nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+).
         // Suitable for a hall-of-fame view or demographic overview.
         get("/api/stats/guests") {
             call.respond(statsService.getGuestStats())
