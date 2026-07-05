@@ -91,8 +91,8 @@ fun List<Reservation>.diffVisitsCurrentYearWithLast12Months(currentYear: Int, vi
 
 fun List<Reservation>.countInInterval(start: LocalDate, end: LocalDate): Int = count { it.startDate in start..end }
 
-fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxByOrNull { it.durationNights }
-    ?.let { reservation -> reservation.startDate.month to reservation.durationNights }
+fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxByOrNull { it.durationDays }
+    ?.let { reservation -> reservation.startDate.month to reservation.durationDays }
 
 fun List<Reservation>.visitsByGuest(): Map<String, Int> = this.flatMap { it.guestIds }.groupingBy { it }.eachCount()
 

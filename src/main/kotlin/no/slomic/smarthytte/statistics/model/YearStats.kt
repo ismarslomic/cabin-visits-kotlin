@@ -37,7 +37,7 @@ data class YearStats(
 data class MonthCount(val monthNumber: Int, val monthName: String, val visitCount: Int)
 
 @Serializable
-data class MonthStay(val monthNumber: Int, val monthName: String, val totalNights: Int)
+data class MonthStay(val monthNumber: Int, val monthName: String, val totalDays: Int)
 
 @Serializable
 data class GuestVisitStats(

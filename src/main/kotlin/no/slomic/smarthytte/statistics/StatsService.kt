@@ -342,7 +342,7 @@ class StatsService(
         val longestStay =
             yearReservations
                 .findMonthWithLongestStay()
-                ?.let { (month, nights) -> MonthStay(month.ordinal + 1, monthNameOf(month), totalNights = nights) }
+                ?.let { (month, days) -> MonthStay(month.ordinal + 1, monthNameOf(month), totalDays = days) }
         return YearVisitStats(
             totalVisits,
             comparedToLast12,
