@@ -95,7 +95,7 @@ class VisitStatsCalculatorTest :
                     dates = dates,
                 )
 
-                result.totalDaysComparedToPreviousMonth shouldBe 2 // 6 - 4
+                result.comparedToPreviousMonth shouldBe 2 // 6 - 4
             }
 
             should("calculate totalDaysComparedToSameMonthLastYear") {
@@ -113,7 +113,7 @@ class VisitStatsCalculatorTest :
                     dates = dates,
                 )
 
-                result.totalDaysComparedToSameMonthLastYear shouldBe -3 // 6 - 9
+                result.comparedToSameMonthLastYear shouldBe -3 // 6 - 9
             }
         }
 
@@ -176,7 +176,7 @@ class VisitStatsCalculatorTest :
                     dates = dates,
                 )
 
-                result.totalNightsComparedToPreviousMonth shouldBe 2 // 5 - 3
+                result.comparedToPreviousMonth shouldBe 2 // 5 - 3
             }
         }
 

@@ -28,8 +28,8 @@ data class DaysStats(
     val minDays: Int?,
     val maxDays: Int?,
     val avgDays: Double?,
-    val totalDaysComparedToPreviousMonth: Int,
-    val totalDaysComparedToSameMonthLastYear: Int,
+    val comparedToPreviousMonth: Int,
+    val comparedToSameMonthLastYear: Int,
 )
 
 @Serializable
@@ -38,6 +38,6 @@ data class NightsStats(
     val minNights: Int?,
     val maxNights: Int?,
     val avgNights: Double?,
-    val totalNightsComparedToPreviousMonth: Int,
-    val totalNightsComparedToSameMonthLastYear: Int,
+    val comparedToPreviousMonth: Int,
+    val comparedToSameMonthLastYear: Int,
 )

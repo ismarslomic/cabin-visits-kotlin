@@ -156,8 +156,8 @@ fun calculateMonthlyDaysStats(allReservations: List<Reservation>, dates: MonthDa
         minDays = minDays,
         maxDays = maxDays,
         avgDays = avgDays,
-        totalDaysComparedToPreviousMonth = totalDays - daysPrevMonth,
-        totalDaysComparedToSameMonthLastYear = totalDays - daysSameMonthLastYear,
+        comparedToPreviousMonth = totalDays - daysPrevMonth,
+        comparedToSameMonthLastYear = totalDays - daysSameMonthLastYear,
     )
 }
 
@@ -186,7 +186,7 @@ fun calculateMonthlyNightsStats(allReservations: List<Reservation>, dates: Month
         minNights = minNights,
         maxNights = maxNights,
         avgNights = avgNights,
-        totalNightsComparedToPreviousMonth = totalNights - nightsPrevMonth,
-        totalNightsComparedToSameMonthLastYear = totalNights - nightsSameMonthLastYear,
+        comparedToPreviousMonth = totalNights - nightsPrevMonth,
+        comparedToSameMonthLastYear = totalNights - nightsSameMonthLastYear,
     )
 }
