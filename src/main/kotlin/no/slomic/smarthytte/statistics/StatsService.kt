@@ -14,15 +14,17 @@ import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.countByMonth
-import no.slomic.smarthytte.reservations.countOccupiedDaysInWindow
+import no.slomic.smarthytte.reservations.countOccupiedNightsInWindow
 import no.slomic.smarthytte.reservations.diffVisitsCurrentYearWithLast12Months
 import no.slomic.smarthytte.reservations.findMonthWithLongestStay
-import no.slomic.smarthytte.reservations.stayDaysByGuest
+import no.slomic.smarthytte.reservations.nightsByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
 import no.slomic.smarthytte.statistics.calculator.MonthDates
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingMomentStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingTimeStats
+import no.slomic.smarthytte.statistics.calculator.calculateMonthlyDaysStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthlyGuestStats
+import no.slomic.smarthytte.statistics.calculator.calculateMonthlyNightsStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthlyVisitDeltas
 import no.slomic.smarthytte.statistics.calculator.calculateYearDrivingMomentStats
 import no.slomic.smarthytte.statistics.calculator.calculateYearDrivingTimeStats
@@ -82,14 +84,14 @@ class StatsService(
                 NextReservationInfo(r.startDate, r.endDate, guestNames, daysUntil)
             }
 
-        val allTimeStayDays = allReservations.sumOf { it.stayDurationDays }
+        val allTimeNights = allReservations.sumOf { it.durationNights }
 
         return LiveStats(
             isOccupied = current != null,
             currentReservation = currentInfo,
             nextReservation = nextInfo,
             allTimeVisits = allReservations.size,
-            allTimeStayDays = allTimeStayDays,
+            allTimeNights = allTimeNights,
             allTimeUniqueGuests = allGuests.size,
         )
     }
@@ -98,7 +100,7 @@ class StatsService(
         val currentYear = osloDateNow().year
         val allReservations = reservationRepository.allReservations()
         val yearReservations = allReservations.filter { it.startDate.year == currentYear }
-        val stayDays = yearReservations.sumOf { it.stayDurationDays }
+        val totalNights = yearReservations.sumOf { it.durationNights }
         val totalKm =
             yearReservations
                 .flatMap { it.toCabinVehicleTrips + it.fromCabinVehicleTrips }
@@ -108,7 +110,7 @@ class StatsService(
         return CurrentYearStats(
             year = currentYear,
             visits = yearReservations.size,
-            stayDays = stayDays,
+            totalNights = totalNights,
             totalDistanceKm = totalKm?.round1(),
         )
     }
@@ -147,10 +149,10 @@ class StatsService(
             visitsComparedToLast12Months = visitStats.comparedToLast12,
             averageMonthlyVisits = visitStats.avgMonthlyVisits,
             averageGroupSize = visitStats.avgGroupSize,
-            averageStayDays = visitStats.avgStayDays,
-            totalStayDays = visitStats.occupancy.totalStayDays,
-            stayDaysComparedToLast12Months = visitStats.stayDaysComparedToLast12,
-            averageMonthlyStayDays = visitStats.avgMonthlyStayDays,
+            averageNightsPerVisit = visitStats.avgNightsPerVisit,
+            totalNights = visitStats.occupancy.totalNights,
+            totalNightsComparedToLast12Months = visitStats.nightsComparedToLast12,
+            averageMonthlyNights = visitStats.avgMonthlyNights,
             percentDaysOccupied = visitStats.occupancy.percentDaysOccupied,
             percentWeeksOccupied = visitStats.occupancy.percentWeeksOccupied,
             percentMonthsOccupied = visitStats.occupancy.percentMonthsOccupied,
@@ -190,22 +192,22 @@ class StatsService(
         val jan1Next = firstDayOfYearAfter(osloDateNow().year)
 
         val visitsByGuest = allReservations.visitsByGuest()
-        val stayDaysByGuest = allReservations.stayDaysByGuest(jan1, jan1Next)
+        val nightsByGuest = allReservations.nightsByGuest(jan1, jan1Next)
 
         val rankings =
-            (visitsByGuest.keys + stayDaysByGuest.keys).toSet().mapNotNull { guestId ->
+            (visitsByGuest.keys + nightsByGuest.keys).toSet().mapNotNull { guestId ->
                 val guest = guestsById[guestId] ?: return@mapNotNull null
                 GuestRanking(
                     guestId = guestId,
                     firstName = guest.firstName,
                     lastName = guest.lastName,
                     totalVisits = visitsByGuest[guestId] ?: 0,
-                    totalStayDays = stayDaysByGuest[guestId] ?: 0,
+                    totalNights = nightsByGuest[guestId] ?: 0,
                 )
             }
 
         val topByVisits = rankings.sortedByDescending { it.totalVisits }.take(TOP_GUESTS_LIMIT)
-        val topByDays = rankings.sortedByDescending { it.totalStayDays }.take(TOP_GUESTS_LIMIT)
+        val topByDays = rankings.sortedByDescending { it.totalNights }.take(TOP_GUESTS_LIMIT)
 
         val maleCount = allGuests.count { it.gender == Gender.MALE }
         val femaleCount = allGuests.count { it.gender == Gender.FEMALE }
@@ -250,9 +252,10 @@ class StatsService(
 
         val countsByMonth = yearReservations.countByMonth()
         val deltas = calculateMonthlyVisitDeltas(allReservations, countsByMonth, dates, totalVisits)
+        val daysStats = calculateMonthlyDaysStats(allReservations, monthlyReservations, dates)
+        val nightsStats = calculateMonthlyNightsStats(allReservations, monthlyReservations, dates)
         val occupancy = computeMonthOccupancy(allReservations, dates)
 
-        val stayDays = monthlyReservations.map { it.stayDurationDays }
         val guestStats = calculateMonthlyGuestStats(year, guestsById, dates, monthlyReservations)
 
         val drivingTime =
@@ -270,9 +273,8 @@ class StatsService(
             visitsComparedToLast30Days = deltas.visitsComparedToLast30Days,
             visitsComparedToSameMonthLastYear = deltas.visitsComparedToSameMonthLastYear,
             visitsComparedToYearToDateAverage = deltas.visitsComparedToYearToDateAverage,
-            minStayDays = stayDays.minOrNull(),
-            maxStayDays = stayDays.maxOrNull(),
-            avgStayDays = stayDays.takeIf { it.isNotEmpty() }?.average()?.round1(),
+            days = daysStats,
+            nights = nightsStats,
             percentDaysOccupied = occupancy.percentDaysOccupied,
             percentWeeksOccupied = occupancy.percentWeeksOccupied,
             guests = guestStats,
@@ -286,10 +288,10 @@ class StatsService(
         val comparedToLast12: Int,
         val avgMonthlyVisits: Double,
         val avgGroupSize: Double?,
-        val avgStayDays: Double?,
+        val avgNightsPerVisit: Double?,
         val occupancy: no.slomic.smarthytte.statistics.calculator.YearOccupancy,
-        val stayDaysComparedToLast12: Int,
-        val avgMonthlyStayDays: Double,
+        val nightsComparedToLast12: Int,
+        val avgMonthlyNights: Double,
         val monthMostVisits: MonthCount?,
         val monthFewestVisits: MonthCount?,
         val longestStay: MonthStay?,
@@ -310,22 +312,22 @@ class StatsService(
                 ?.average()
                 ?.round1()
                 ?.takeIf { it > 0 }
-        val avgStayDays =
+        val avgNightsPerVisit =
             yearReservations
-                .map { it.stayDurationDays }
+                .map { it.durationNights }
                 .takeIf { it.isNotEmpty() }
                 ?.average()
                 ?.round1()
                 ?.takeIf { it > 0 }
         val occupancy = computeYearOccupancy(year, allReservations)
         val jan1 = firstDayOfYear(year)
-        val stayDaysComparedToLast12 =
-            occupancy.totalStayDays -
-                allReservations.countOccupiedDaysInWindow(
+        val nightsComparedToLast12 =
+            occupancy.totalNights -
+                allReservations.countOccupiedNightsInWindow(
                     firstDayOfYearBefore(year),
                     jan1,
                 )
-        val avgMonthlyStayDays = (occupancy.totalStayDays.toDouble() / MONTHS_PER_YEAR).round1()
+        val avgMonthlyNights = (occupancy.totalNights.toDouble() / MONTHS_PER_YEAR).round1()
         val countsByMonth = yearReservations.countByMonth()
         val monthMostVisits =
             countsByMonth
@@ -340,16 +342,16 @@ class StatsService(
         val longestStay =
             yearReservations
                 .findMonthWithLongestStay()
-                ?.let { (month, days) -> MonthStay(month.ordinal + 1, monthNameOf(month), totalDays = days) }
+                ?.let { (month, nights) -> MonthStay(month.ordinal + 1, monthNameOf(month), totalNights = nights) }
         return YearVisitStats(
             totalVisits,
             comparedToLast12,
             avgMonthlyVisits,
             avgGroupSize,
-            avgStayDays,
+            avgNightsPerVisit,
             occupancy,
-            stayDaysComparedToLast12,
-            avgMonthlyStayDays,
+            nightsComparedToLast12,
+            avgMonthlyNights,
             monthMostVisits,
             monthFewestVisits,
             longestStay,

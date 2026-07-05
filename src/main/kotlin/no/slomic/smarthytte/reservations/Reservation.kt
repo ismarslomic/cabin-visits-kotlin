@@ -1,7 +1,9 @@
 package no.slomic.smarthytte.reservations
 
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import kotlinx.datetime.plus
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.datesUntil
@@ -40,12 +42,22 @@ data class Reservation(
     val endDate: LocalDate
         get() = endTime.toUtcDate()
 
-    val stayDurationDays: Int
+    val durationNights: Int
         get() = startDate.daysUntilSafe(endExclusive = endDate)
 
-    fun stayDurationDaysInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
+    val durationDays: Int
+        get() = durationNights + 1
+
+    fun nightsInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
         val overlapStart = maxOf(startDate, periodStart)
         val overlapEndExclusive = minOf(endDate, periodEndExclusive)
+        return if (overlapStart < overlapEndExclusive) overlapStart.daysUntilSafe(overlapEndExclusive) else 0
+    }
+
+    fun daysInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
+        val endDateInclusive = endDate.plus(DatePeriod(days = 1))
+        val overlapStart = maxOf(startDate, periodStart)
+        val overlapEndExclusive = minOf(endDateInclusive, periodEndExclusive)
         return if (overlapStart < overlapEndExclusive) overlapStart.daysUntilSafe(overlapEndExclusive) else 0
     }
 }
@@ -53,11 +65,20 @@ data class Reservation(
 fun List<Reservation>.countByMonth(): Map<Month, Int> =
     Month.entries.associateWith { month -> count { it.startDate.month == month } }
 
-fun List<Reservation>.countOccupiedDaysInWindow(startInclusive: LocalDate, endExclusive: LocalDate): Int {
+fun List<Reservation>.countOccupiedNightsInWindow(startInclusive: LocalDate, endExclusive: LocalDate): Int {
     if (startInclusive >= endExclusive) return 0
     return this.asSequence().flatMap { r ->
         val start = maxOf(r.startDate, startInclusive)
         val endEx = minOf(r.endDate, endExclusive)
+        if (start < endEx) start.datesUntil(endEx).toList() else emptyList()
+    }.toSet().size
+}
+
+fun List<Reservation>.countOccupiedDaysInWindow(startInclusive: LocalDate, endExclusive: LocalDate): Int {
+    if (startInclusive >= endExclusive) return 0
+    return this.asSequence().flatMap { r ->
+        val start = maxOf(r.startDate, startInclusive)
+        val endEx = minOf(r.endDate.plus(DatePeriod(days = 1)), endExclusive)
         if (start < endEx) start.datesUntil(endEx).toList() else emptyList()
     }.toSet().size
 }
@@ -70,13 +91,13 @@ fun List<Reservation>.diffVisitsCurrentYearWithLast12Months(currentYear: Int, vi
 
 fun List<Reservation>.countInInterval(start: LocalDate, end: LocalDate): Int = count { it.startDate in start..end }
 
-fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxByOrNull { it.stayDurationDays }
-    ?.let { reservation -> reservation.startDate.month to reservation.stayDurationDays }
+fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxByOrNull { it.durationNights }
+    ?.let { reservation -> reservation.startDate.month to reservation.durationNights }
 
 fun List<Reservation>.visitsByGuest(): Map<String, Int> = this.flatMap { it.guestIds }.groupingBy { it }.eachCount()
 
-fun List<Reservation>.stayDaysByGuest(periodStart: LocalDate, periodEndExclusive: LocalDate): Map<String, Int> =
+fun List<Reservation>.nightsByGuest(periodStart: LocalDate, periodEndExclusive: LocalDate): Map<String, Int> =
     this.flatMap { reservation ->
-        val days = reservation.stayDurationDaysInPeriod(periodStart, periodEndExclusive)
-        reservation.guestIds.map { it to days }
-    }.groupingBy { it.first }.fold(0) { acc, element -> acc + element.second }
+        val nights = reservation.nightsInPeriod(periodStart, periodEndExclusive)
+        reservation.guestIds.map { it to nights }
+    }.groupingBy { (guestId, _) -> guestId }.fold(0) { acc, (_, nights) -> acc + nights }

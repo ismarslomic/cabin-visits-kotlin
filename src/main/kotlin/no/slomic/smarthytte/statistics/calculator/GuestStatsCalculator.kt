@@ -5,7 +5,7 @@ import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
-import no.slomic.smarthytte.reservations.stayDaysByGuest
+import no.slomic.smarthytte.reservations.nightsByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
 
@@ -52,7 +52,7 @@ fun computeYearGuestStats(
 
     val newGuests = guestYearStats.filter { it.guestId !in prevYearGuests }.sortedWith(GuestVisitStats.COMPARATOR)
     val allGuestsSorted = guestYearStats.sortedWith(GuestVisitStats.COMPARATOR)
-    val topGuestByDays = allGuestsSorted.maxByOrNull { it.totalStayDays }
+    val topGuestByDays = allGuestsSorted.maxByOrNull { it.totalNights }
 
     return YearGuestStats(topGuestByDays, newGuests, allGuestsSorted)
 }
@@ -67,9 +67,9 @@ fun aggregateGuestVisitStats(
     if (reservations.isEmpty()) return emptyList()
 
     val visitsByGuest = reservations.visitsByGuest()
-    val stayDaysByGuest = reservations.stayDaysByGuest(periodStart, periodEndExclusive)
+    val nightsByGuest = reservations.nightsByGuest(periodStart, periodEndExclusive)
 
-    return (visitsByGuest.keys + stayDaysByGuest.keys)
+    return (visitsByGuest.keys + nightsByGuest.keys)
         .toSet()
         .mapNotNull { guestId ->
             val guest = guestsById[guestId] ?: return@mapNotNull null
@@ -79,7 +79,7 @@ fun aggregateGuestVisitStats(
                 lastName = guest.lastName,
                 age = (ageYear - guest.birthYear.toInt()).coerceAtLeast(0),
                 totalVisits = visitsByGuest[guestId] ?: 0,
-                totalStayDays = stayDaysByGuest[guestId] ?: 0,
+                totalNights = nightsByGuest[guestId] ?: 0,
             )
         }
 }

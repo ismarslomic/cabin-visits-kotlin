@@ -11,10 +11,10 @@ data class YearStats(
     val visitsComparedToLast12Months: Int,
     val averageMonthlyVisits: Double,
     val averageGroupSize: Double?,
-    val averageStayDays: Double?,
-    val totalStayDays: Int,
-    val stayDaysComparedToLast12Months: Int,
-    val averageMonthlyStayDays: Double,
+    val averageNightsPerVisit: Double?,
+    val totalNights: Int,
+    val totalNightsComparedToLast12Months: Int,
+    val averageMonthlyNights: Double,
     val percentDaysOccupied: Double,
     val percentWeeksOccupied: Double,
     val percentMonthsOccupied: Double,
@@ -37,7 +37,7 @@ data class YearStats(
 data class MonthCount(val monthNumber: Int, val monthName: String, val visitCount: Int)
 
 @Serializable
-data class MonthStay(val monthNumber: Int, val monthName: String, val totalDays: Int)
+data class MonthStay(val monthNumber: Int, val monthName: String, val totalNights: Int)
 
 @Serializable
 data class GuestVisitStats(
@@ -46,10 +46,10 @@ data class GuestVisitStats(
     val lastName: String,
     val age: Int,
     val totalVisits: Int,
-    val totalStayDays: Int,
+    val totalNights: Int,
 ) {
     companion object {
-        val COMPARATOR: Comparator<GuestVisitStats> = compareByDescending<GuestVisitStats> { it.totalStayDays }
+        val COMPARATOR: Comparator<GuestVisitStats> = compareByDescending<GuestVisitStats> { it.totalNights }
             .thenByDescending { it.totalVisits }
             .thenBy { it.lastName }
             .thenBy { it.firstName }

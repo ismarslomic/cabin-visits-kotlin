@@ -9,7 +9,7 @@ data class LiveStats(
     val currentReservation: CurrentReservationInfo?,
     val nextReservation: NextReservationInfo?,
     val allTimeVisits: Int,
-    val allTimeStayDays: Int,
+    val allTimeNights: Int,
     val allTimeUniqueGuests: Int,
 )
 

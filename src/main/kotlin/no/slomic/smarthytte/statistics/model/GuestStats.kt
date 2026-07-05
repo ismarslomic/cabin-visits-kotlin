@@ -16,7 +16,7 @@ data class GuestRanking(
     val firstName: String,
     val lastName: String,
     val totalVisits: Int,
-    val totalStayDays: Int,
+    val totalNights: Int,
 )
 
 @Serializable
