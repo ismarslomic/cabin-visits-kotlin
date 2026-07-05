@@ -92,7 +92,7 @@ class GuestStatsCalculatorTest :
                     year = 2024,
                     guestsById = guestsById,
                     dates = dates,
-                    monthlyReservations = reservations,
+                    allReservations = reservations,
                 )
 
                 result shouldHaveSize 2

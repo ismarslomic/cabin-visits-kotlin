@@ -13,14 +13,19 @@ fun calculateMonthlyGuestStats(
     year: Int,
     guestsById: Map<String, Guest>,
     dates: MonthDates,
-    monthlyReservations: List<Reservation>,
-): List<GuestVisitStats> = aggregateGuestVisitStats(
-    periodStart = dates.firstOfMonth,
-    periodEndExclusive = dates.firstOfNextMonth,
-    reservations = monthlyReservations,
-    guestsById = guestsById,
-    ageYear = year,
-).sortedWith(GuestVisitStats.COMPARATOR)
+    allReservations: List<Reservation>,
+): List<GuestVisitStats> {
+    val overlappingReservations = allReservations.filter {
+        it.startDate < dates.firstOfNextMonth && it.endDate >= dates.firstOfMonth
+    }
+    return aggregateGuestVisitStats(
+        periodStart = dates.firstOfMonth,
+        periodEndExclusive = dates.firstOfNextMonth,
+        reservations = overlappingReservations,
+        guestsById = guestsById,
+        ageYear = year,
+    ).sortedWith(GuestVisitStats.COMPARATOR)
+}
 
 data class YearGuestStats(
     val topGuestByDays: GuestVisitStats?,

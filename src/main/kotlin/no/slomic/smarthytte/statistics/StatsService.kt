@@ -38,9 +38,9 @@ import no.slomic.smarthytte.statistics.model.GenderDistribution
 import no.slomic.smarthytte.statistics.model.GuestRanking
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.LiveStats
+import no.slomic.smarthytte.statistics.model.MonthStats
 import no.slomic.smarthytte.statistics.model.MonthlyDaysCount
 import no.slomic.smarthytte.statistics.model.MonthlyVisitCount
-import no.slomic.smarthytte.statistics.model.MonthStats
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
 import no.slomic.smarthytte.statistics.model.YearStats
 
@@ -261,7 +261,7 @@ class StatsService(
         val nightsStats = calculateMonthlyNightsStats(allReservations, monthlyReservations, dates)
         val occupancy = computeMonthOccupancy(allReservations, dates)
 
-        val guestStats = calculateMonthlyGuestStats(year, guestsById, dates, monthlyReservations)
+        val guestStats = calculateMonthlyGuestStats(year, guestsById, dates, allReservations)
 
         val drivingTime =
             calculateMonthDrivingTimeStats(year, month, allReservations)
