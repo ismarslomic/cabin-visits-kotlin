@@ -81,6 +81,125 @@ docker compose up  -d
 curl http://localhost:8079
 ```
 
+# Cabin Usage Metrics
+
+## Visits
+
+**Definition**  
+The number of distinct cabin visits. A visit starts at the arrival time and ends at the departure time.
+
+**Source**  
+Each stay is counted **once**, based on its **arrival date**.
+
+**Example**
+
+- 2026-03-27 18:00 → 2026-04-06 15:00
+
+Result:
+
+- March: **1 visit**
+- April: **0 visits**
+
+---
+
+## Days
+
+**Definition**  
+The number of **calendar days** during which the cabin was occupied **within a specified period** (e.g. a month,
+quarter, or year). Both the arrival day and departure day are included.
+
+**Source**  
+Count all calendar dates within the selected period that overlap the stay.
+
+**Example**
+
+Stay:
+
+- 2026-03-27 18:00 → 2026-04-06 15:00
+
+Result:
+
+- March: **5 days** (27–31)
+- April: **6 days** (1–6)
+- Total: **11 days**
+
+---
+
+## Nights
+
+**Definition**  
+The number of nights spent at the cabin **within a specified period** (e.g. a month, quarter, or year).
+
+**Source**  
+Count all nights within the selected period. A night belongs to the calendar date on which it begins.
+
+**Example**
+
+Stay:
+
+- 2026-03-27 18:00 → 2026-04-06 15:00
+
+Result:
+
+- March: **5 nights**
+- April: **5 nights**
+- Total: **10 nights**
+
+---
+
+## Occupancy
+
+**Definition**  
+The percentage of calendar days that the cabin was occupied during a given period.
+
+**Source**  
+Calculated from **Days**.
+
+Formula:
+
+```
+Occupancy = Days / Total calendar days in period × 100
+```
+
+**Example**
+
+Year:
+
+- Days: **94**
+- Total days: **365**
+
+Result:
+
+```
+Occupancy = 94 / 365 × 100 = 25.8%
+```
+
+---
+
+## Stay
+
+**Definition**  
+The duration of a cabin visit, measured in **calendar days**.
+
+**Source**  
+Calculated from **Days** for a single visit.
+
+**Example**
+
+Stay:
+
+- 2026-03-27 18:00 → 2026-04-06 15:00
+
+Result:
+
+- **11-day stay**
+- **10 nights**
+
+Examples:
+
+- Longest stay: **11 days**
+- Average stay: **3.2 days**
+
 ## Metrics
 
 ```bash
