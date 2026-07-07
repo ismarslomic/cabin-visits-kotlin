@@ -12,6 +12,7 @@ import no.slomic.smarthytte.common.lastYearInterval
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 data class Reservation(
@@ -47,6 +48,30 @@ data class Reservation(
 
     val durationDays: Int
         get() = durationNights + 1
+
+    val toCabinDrivingDuration: Duration?
+        get() = toCabinVehicleTrips
+            .takeIf { it.isNotEmpty() }
+            ?.map { it.duration }
+            ?.reduce { acc, d -> acc + d }
+
+    val fromCabinDrivingDuration: Duration?
+        get() = fromCabinVehicleTrips
+            .takeIf { it.isNotEmpty() }
+            ?.map { it.duration }
+            ?.reduce { acc, d -> acc + d }
+
+    val toCabinDrivingDepartureTime: Instant?
+        get() = toCabinVehicleTrips.firstOrNull()?.startTime
+
+    val toCabinDrivingArrivalTime: Instant?
+        get() = toCabinVehicleTrips.lastOrNull()?.endTime
+
+    val fromCabinDrivingDepartureTime: Instant?
+        get() = fromCabinVehicleTrips.firstOrNull()?.startTime
+
+    val fromCabinDrivingArrivalTime: Instant?
+        get() = fromCabinVehicleTrips.lastOrNull()?.endTime
 
     fun nightsInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
         val overlapStart = maxOf(startDate, periodStart)

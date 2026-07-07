@@ -13,7 +13,6 @@ import no.slomic.smarthytte.common.minutesOfDay
 import no.slomic.smarthytte.common.monthNameOf
 import no.slomic.smarthytte.common.previousMonth
 import no.slomic.smarthytte.reservations.Reservation
-import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import kotlin.time.Instant
 
 private val osloTimeZone: TimeZone = TimeZone.of("Europe/Oslo")
@@ -133,64 +132,66 @@ fun calculateMonthDrivingMomentStats(
 
 // --- Private extension functions on List<Reservation> ---
 
-// Filters toCabinVehicleTrips by year (based on trip startTime) and returns total durations in minutes
-private fun List<Reservation>.toCabinDurationsForYear(year: Int): List<Int> =
-    flatMap { it.toCabinVehicleTrips }.filter { it.startYear() == year }.map { it.durationMinutes() }
+private fun List<Reservation>.toCabinDurationsForYear(year: Int): List<Int> = mapNotNull { reservation ->
+    val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
+    if (departure.year() != year) return@mapNotNull null
+    reservation.toCabinDrivingDuration?.inWholeMinutes?.toInt()
+}
 
-private fun List<Reservation>.toCabinDurationsForMonth(year: Int, month: Month): List<Int> =
-    flatMap { it.toCabinVehicleTrips }.filter { it.startYear() == year && it.startMonth() == month }
-        .map { it.durationMinutes() }
+private fun List<Reservation>.toCabinDurationsForMonth(year: Int, month: Month): List<Int> = mapNotNull { reservation ->
+    val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
+    if (departure.year() != year || departure.month() != month) return@mapNotNull null
+    reservation.toCabinDrivingDuration?.inWholeMinutes?.toInt()
+}
 
-private fun List<Reservation>.fromCabinDurationsForYear(year: Int): List<Int> =
-    flatMap { it.fromCabinVehicleTrips }.filter { it.startYear() == year }.map { it.durationMinutes() }
+private fun List<Reservation>.fromCabinDurationsForYear(year: Int): List<Int> = mapNotNull { reservation ->
+    val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
+    if (departure.year() != year) return@mapNotNull null
+    reservation.fromCabinDrivingDuration?.inWholeMinutes?.toInt()
+}
 
 private fun List<Reservation>.fromCabinDurationsForMonth(year: Int, month: Month): List<Int> =
-    flatMap { it.fromCabinVehicleTrips }.filter { it.startYear() == year && it.startMonth() == month }
-        .map { it.durationMinutes() }
+    mapNotNull { reservation ->
+        val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
+        if (departure.year() != year || departure.month() != month) return@mapNotNull null
+        reservation.fromCabinDrivingDuration?.inWholeMinutes?.toInt()
+    }
 
 private fun List<Reservation>.avgDepartureHomeMinutes(year: Int, month: Month? = null): Int? =
-    flatMap { it.toCabinVehicleTrips }
-        .filter {
-            (month == null && it.startYear() == year) ||
-                (month != null && it.startYear() == year && it.startMonth() == month)
-        }
-        .map { it.startTime.minutesOfDayOslo() }
-        .averageOrNullInt()
+    mapNotNull { reservation ->
+        val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
+        if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
+        departure.minutesOfDayOslo()
+    }.averageOrNullInt()
 
 private fun List<Reservation>.avgArrivalCabinMinutes(year: Int, month: Month? = null): Int? =
-    flatMap { it.toCabinVehicleTrips }
-        .filter {
-            (month == null && it.startYear() == year) ||
-                (month != null && it.startYear() == year && it.startMonth() == month)
-        }
-        .map { it.endTime.minutesOfDayOslo() }
-        .averageOrNullInt()
+    mapNotNull { reservation ->
+        val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
+        if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
+        reservation.toCabinDrivingArrivalTime?.minutesOfDayOslo()
+    }.averageOrNullInt()
 
 private fun List<Reservation>.avgDepartureCabinMinutes(year: Int, month: Month? = null): Int? =
-    flatMap { it.fromCabinVehicleTrips }
-        .filter {
-            (month == null && it.startYear() == year) ||
-                (month != null && it.startYear() == year && it.startMonth() == month)
-        }
-        .map { it.startTime.minutesOfDayOslo() }
-        .averageOrNullInt()
+    mapNotNull { reservation ->
+        val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
+        if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
+        departure.minutesOfDayOslo()
+    }.averageOrNullInt()
 
-private fun List<Reservation>.avgArrivalHomeMinutes(year: Int, month: Month? = null): Int? =
-    flatMap { it.fromCabinVehicleTrips }
-        .filter {
-            (month == null && it.startYear() == year) ||
-                (month != null && it.startYear() == year && it.startMonth() == month)
-        }
-        .map { it.endTime.minutesOfDayOslo() }
-        .averageOrNullInt()
+private fun List<Reservation>.avgArrivalHomeMinutes(year: Int, month: Month? = null): Int? = mapNotNull { reservation ->
+    val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
+    if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
+    reservation.fromCabinDrivingArrivalTime?.minutesOfDayOslo()
+}.averageOrNullInt()
 
-// --- VehicleTrip helpers ---
+// --- Instant helpers ---
 
-private fun VehicleTrip.durationMinutes(): Int = duration.inWholeMinutes.toInt()
+private fun Instant.year(): Int = toLocalDateTime(osloTimeZone).year
 
-private fun VehicleTrip.startYear(): Int = startTime.toLocalDateTime(osloTimeZone).year
+private fun Instant.month(): Month = toLocalDateTime(osloTimeZone).month
 
-private fun VehicleTrip.startMonth(): Month = startTime.toLocalDateTime(osloTimeZone).month
+private fun Instant.matchesYearMonth(year: Int, month: Month?): Boolean =
+    year() == year && (month == null || month() == month)
 
 private fun Instant.minutesOfDayOslo(): Int {
     val localTime: LocalTime = toLocalDateTime(osloTimeZone).time

@@ -114,6 +114,37 @@ class DrivingStatsCalculatorTest :
                 result.maxFromCabinMinutes shouldBe 130
             }
 
+            should("sum all legs per reservation when multiple trips exist") {
+                val start = LocalDate(2024, 6, 1)
+                val end = LocalDate(2024, 6, 5)
+                val t0 = start.atTime(9, 0).toInstant(TimeZone.UTC)
+                val reservation = Reservation(
+                    id = "r1",
+                    startTime = start.atTime(0, 0).toInstant(TimeZone.UTC),
+                    endTime = end.atTime(0, 0).toInstant(TimeZone.UTC),
+                    guestIds = emptyList(),
+                    toCabinVehicleTrips = listOf(
+                        createTrip(t0, t0 + 90.minutes), // leg 1: 90 min
+                        createTrip(t0 + 100.minutes, t0 + 130.minutes), // leg 2: 30 min
+                    ),
+                    fromCabinVehicleTrips = listOf(
+                        createTrip(t0, t0 + 60.minutes), // leg 1: 60 min
+                        createTrip(t0 + 70.minutes, t0 + 100.minutes), // leg 2: 30 min
+                    ),
+                )
+
+                val result = calculateYearDrivingTimeStats(2024, listOf(reservation))
+
+                // Total toCabin = 90 + 30 = 120 min (one data point, so avg = min = max)
+                result.avgToCabinMinutes shouldBe 120
+                result.minToCabinMinutes shouldBe 120
+                result.maxToCabinMinutes shouldBe 120
+                // Total fromCabin = 60 + 30 = 90 min
+                result.avgFromCabinMinutes shouldBe 90
+                result.minFromCabinMinutes shouldBe 90
+                result.maxFromCabinMinutes shouldBe 90
+            }
+
             should("handle rounding in average calculation") {
                 val reservations = listOf(
                     createReservation("r1", LocalDate(2024, 1, 1), LocalDate(2024, 1, 5), toCabinDurationMinutes = 100),
@@ -177,6 +208,52 @@ class DrivingStatsCalculatorTest :
                 // Arrival Home: 18:00 and 20:00 Oslo. Avg: 19:00 (1140 min)
                 result.avgArrivalHomeMinutes shouldBe 1140
                 result.avgArrivalHome shouldBe "19:00"
+            }
+
+            should("use first leg departure and last leg arrival when multiple trips per reservation") {
+                // toCabin: leg1 09:00–11:00 Oslo, leg2 (stop) 11:30–12:30 Oslo
+                val toTrip1Start = Instant.parse("2024-06-01T07:00:00Z") // 09:00 Oslo (UTC+2)
+                val toTrip1End = Instant.parse("2024-06-01T09:00:00Z") // 11:00 Oslo
+                val toTrip2Start = Instant.parse("2024-06-01T09:30:00Z") // 11:30 Oslo
+                val toTrip2End = Instant.parse("2024-06-01T10:30:00Z") // 12:30 Oslo
+
+                // fromCabin: leg1 14:00–15:00 Oslo, leg2 (stop) 15:30–17:00 Oslo
+                val fromTrip1Start = Instant.parse("2024-06-03T12:00:00Z") // 14:00 Oslo
+                val fromTrip1End = Instant.parse("2024-06-03T13:00:00Z") // 15:00 Oslo
+                val fromTrip2Start = Instant.parse("2024-06-03T13:30:00Z") // 15:30 Oslo
+                val fromTrip2End = Instant.parse("2024-06-03T15:00:00Z") // 17:00 Oslo
+
+                val reservations = listOf(
+                    Reservation(
+                        id = "r1",
+                        startTime = Instant.parse("2024-06-01T00:00:00Z"),
+                        endTime = Instant.parse("2024-06-03T00:00:00Z"),
+                        guestIds = emptyList(),
+                        toCabinVehicleTrips = listOf(
+                            createTrip(toTrip1Start, toTrip1End),
+                            createTrip(toTrip2Start, toTrip2End),
+                        ),
+                        fromCabinVehicleTrips = listOf(
+                            createTrip(fromTrip1Start, fromTrip1End),
+                            createTrip(fromTrip2Start, fromTrip2End),
+                        ),
+                    ),
+                )
+
+                val result = calculateYearDrivingMomentStats(2024, reservations)
+
+                // Departure Home = startTime of first toCabin leg = 09:00 Oslo (540 min)
+                result.avgDepartureHomeMinutes shouldBe 540
+                result.avgDepartureHome shouldBe "09:00"
+                // Arrival Cabin = endTime of last toCabin leg = 12:30 Oslo (750 min)
+                result.avgArrivalCabinMinutes shouldBe 750
+                result.avgArrivalCabin shouldBe "12:30"
+                // Departure Cabin = startTime of first fromCabin leg = 14:00 Oslo (840 min)
+                result.avgDepartureCabinMinutes shouldBe 840
+                result.avgDepartureCabin shouldBe "14:00"
+                // Arrival Home = endTime of last fromCabin leg = 17:00 Oslo (1020 min)
+                result.avgArrivalHomeMinutes shouldBe 1020
+                result.avgArrivalHome shouldBe "17:00"
             }
         }
 
