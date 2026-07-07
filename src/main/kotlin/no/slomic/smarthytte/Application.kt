@@ -35,6 +35,7 @@ import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
 import no.slomic.smarthytte.statistics.StatsService
+import no.slomic.smarthytte.statistics.configureOpenApi
 import no.slomic.smarthytte.statistics.configureStatsRoutes
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointRepository
@@ -129,6 +130,7 @@ fun Application.module() {
     // Configure stats REST API
     val statsService = StatsService(reservationRepository, SqliteGuestRepository())
     configureStatsRoutes(statsService)
+    configureOpenApi()
 }
 
 /***

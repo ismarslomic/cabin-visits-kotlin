@@ -1,13 +1,22 @@
+@file:Suppress("MaxLineLength")
+
 package no.slomic.smarthytte.statistics.model
 
+import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class OccupancyStats(
-    /** Percentage of calendar days occupied (including departure day) out of total days in the period. **/
+    @JsonSchema.Description(
+        "Percentage of calendar days in the period where the cabin was occupied, including the departure day. E.g. 25.0 means 25%.",
+    )
     val dayOccupancy: Double,
-    /** Percentage of ISO weeks with at least one occupied day out of total weeks in the period. **/
+    @JsonSchema.Description(
+        "Percentage of ISO weeks in the period that contained at least one occupied day. E.g. 50.0 means half of all weeks had at least one visit.",
+    )
     val weekOccupancy: Double,
-    /** Percentage of months with at least one occupied day out of 12. Null when used in MonthStats context. **/
+    @JsonSchema.Description(
+        "Percentage of the 12 calendar months in the year that contained at least one occupied day. Only present in yearly statistics, null in monthly context.",
+    )
     val monthOccupancy: Double? = null,
 )

@@ -17,6 +17,13 @@ plugins {
 group = "no.slomic.smarthytte"
 version = "0.0.1"
 
+ktor {
+    openApi {
+        enabled = true
+        codeInferenceEnabled = true
+    }
+}
+
 application {
     mainClass.set("no.slomic.smarthytte.ApplicationKt")
 
@@ -32,6 +39,7 @@ dependencies {
     implementation(libs.bundles.database)
     implementation(libs.bundles.google.calendar)
     implementation(libs.bundles.ktor)
+    implementation(libs.ktor.server.routing.openapi)
     implementation(libs.bundles.metrics)
     implementation(libs.hoplite.yaml)
     implementation(libs.influxdb.client)
@@ -61,33 +69,7 @@ graalvmNative {
             buildArgs.addAll(additionalArgs)
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
-                "--initialize-at-build-time=io.ktor,kotlin",
-                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
-                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
-                "--initialize-at-build-time=kotlinx.coroutines.LazyStandaloneCoroutine",
-                "--initialize-at-build-time=kotlinx.coroutines.NonDisposableHandle",
-                "--initialize-at-build-time=kotlinx.coroutines.channels.BufferedChannel",
-                "--initialize-at-build-time=kotlinx.coroutines.scheduling.DefaultIoScheduler",
-                "--initialize-at-build-time=kotlinx.coroutines.Empty",
-                "--initialize-at-build-time=kotlinx.coroutines.internal.LimitedDispatcher",
-                "--initialize-at-build-time=kotlinx.coroutines.internal.LockFreeTaskQueue",
-                "--initialize-at-build-time=kotlinx.coroutines.internal.LockFreeTaskQueueCore",
-                "--initialize-at-build-time=kotlinx.coroutines.scheduling.CoroutineScheduler",
-                "--initialize-at-build-time=kotlinx.coroutines.scheduling.DefaultScheduler",
-                "--initialize-at-build-time=kotlinx.coroutines.scheduling.GlobalQueue",
-                "--initialize-at-build-time=kotlinx.coroutines.scheduling.UnlimitedIoScheduler",
-                "--initialize-at-build-time=kotlinx.coroutines.internal.LockFreeTaskQueueCore\$Companion",
-                "--initialize-at-build-time=kotlinx.coroutines.internal.ResizableAtomicArray",
-                "--initialize-at-build-time=kotlinx.coroutines.internal.Symbol",
-                "--initialize-at-build-time=kotlinx.coroutines.Job\$Key",
-                "--initialize-at-build-time=kotlinx.coroutines.DefaultExecutor",
-                "--initialize-at-build-time=kotlinx.coroutines.channels.ChannelSegment",
-                "--initialize-at-build-time=kotlinx.coroutines.CoroutineDispatcher\$Key",
-                "--initialize-at-build-time=kotlinx.io.Buffer",
-                "--initialize-at-build-time=kotlinx.io.Segment",
-                "--initialize-at-build-time=kotlinx.io.Segment\$Companion",
-                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString",
-                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString\$Companion",
+                "--initialize-at-build-time=io.ktor,kotlin,kotlinx.coroutines,kotlinx.io,kotlinx.serialization",
                 "--initialize-at-build-time=org.slf4j.LoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
@@ -124,20 +106,7 @@ graalvmNative {
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.kotest",
-                "--initialize-at-build-time=io.ktor,kotlin",
-                "--initialize-at-build-time=kotlinx.coroutines.CoroutineDispatcher\$Key",
-                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
-                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
-                "--initialize-at-build-time=kotlinx.coroutines.ExecutorCoroutineDispatcherImpl",
-                "--initialize-at-build-time=kotlinx.coroutines.internal.Symbol",
-                "--initialize-at-build-time=kotlinx.coroutines.Job\$Key",
-                "--initialize-at-build-time=kotlinx.coroutines.sync.MutexImpl",
-                "--initialize-at-build-time=kotlinx.coroutines.sync.SemaphoreSegment",
-                "--initialize-at-build-time=kotlinx.io.Buffer",
-                "--initialize-at-build-time=kotlinx.io.Segment",
-                "--initialize-at-build-time=kotlinx.io.Segment\$Companion",
-                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString",
-                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString\$Companion",
+                "--initialize-at-build-time=io.ktor,kotlin,kotlinx.coroutines,kotlinx.io,kotlinx.serialization",
                 "--initialize-at-build-time=org.slf4j.LoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
