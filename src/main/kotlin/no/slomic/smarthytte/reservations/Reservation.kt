@@ -8,7 +8,6 @@ import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.datesUntil
 import no.slomic.smarthytte.common.daysUntilSafe
-import no.slomic.smarthytte.common.lastYearInterval
 import no.slomic.smarthytte.common.toUtcDate
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
