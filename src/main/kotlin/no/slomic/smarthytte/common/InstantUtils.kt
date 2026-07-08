@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package no.slomic.smarthytte.common
 
 import com.google.api.client.util.DateTime
@@ -94,6 +96,8 @@ fun Instant.toIsoUtcString(): String {
 fun Instant.toUtcDate(): LocalDate = toLocalDateTime(utcTimeZone).date
 
 fun Instant.toOsloDate(): LocalDate = toLocalDateTime(osloTimeZone).date
+
+fun Instant.minutesOfDayOslo(): Int = toLocalDateTime(osloTimeZone).time.minutesOfDay()
 
 fun utcDateNow(): LocalDate = Clock.System.now().toLocalDateTime(utcTimeZone).date
 

@@ -12,13 +12,18 @@ import no.slomic.smarthytte.common.firstDateOfNextMonth
 import no.slomic.smarthytte.common.firstDateOfThisMonth
 import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
+import no.slomic.smarthytte.common.firstDayOfYearBefore
 import no.slomic.smarthytte.common.isoWeekId
+import no.slomic.smarthytte.common.monthNameOf
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.countOccupiedDaysInWindow
 import no.slomic.smarthytte.reservations.countOccupiedNightsInWindow
-import no.slomic.smarthytte.statistics.model.DaysStats
-import no.slomic.smarthytte.statistics.model.NightsStats
+import no.slomic.smarthytte.statistics.model.MonthDaysStats
+import no.slomic.smarthytte.statistics.model.MonthNightsStats
+import no.slomic.smarthytte.statistics.model.MonthlyDaysCount
+import no.slomic.smarthytte.statistics.model.YearDaysStats
+import no.slomic.smarthytte.statistics.model.YearNightsStats
 
 private const val PERCENT_FACTOR: Double = 100.0
 private const val DAY_OFFSET_PREVIOUS: Int = 1
@@ -126,7 +131,7 @@ fun calculateMonthlyVisitDeltas(
     )
 }
 
-fun calculateMonthlyDaysStats(allReservations: List<Reservation>, dates: MonthDates): DaysStats {
+fun calculateMonthlyDaysStats(allReservations: List<Reservation>, dates: MonthDates): MonthDaysStats {
     val totalDays = allReservations.countOccupiedDaysInWindow(dates.firstOfMonth, dates.firstOfNextMonth)
 
     val overlappingReservations = allReservations.filter {
@@ -146,7 +151,7 @@ fun calculateMonthlyDaysStats(allReservations: List<Reservation>, dates: MonthDa
     val daysSameMonthLastYear =
         allReservations.countOccupiedDaysInWindow(sameMonthLastYearStart, sameMonthLastYearEnd)
 
-    return DaysStats(
+    return MonthDaysStats(
         totalDays = totalDays,
         minDays = minDays,
         maxDays = maxDays,
@@ -156,7 +161,7 @@ fun calculateMonthlyDaysStats(allReservations: List<Reservation>, dates: MonthDa
     )
 }
 
-fun calculateMonthlyNightsStats(allReservations: List<Reservation>, dates: MonthDates): NightsStats {
+fun calculateMonthlyNightsStats(allReservations: List<Reservation>, dates: MonthDates): MonthNightsStats {
     val totalNights = allReservations.countOccupiedNightsInWindow(dates.firstOfMonth, dates.firstOfNextMonth)
 
     val overlappingReservations = allReservations.filter {
@@ -176,12 +181,77 @@ fun calculateMonthlyNightsStats(allReservations: List<Reservation>, dates: Month
     val nightsSameMonthLastYear =
         allReservations.countOccupiedNightsInWindow(sameMonthLastYearStart, sameMonthLastYearEnd)
 
-    return NightsStats(
+    return MonthNightsStats(
         totalNights = totalNights,
         minNights = minNights,
         maxNights = maxNights,
         avgNights = avgNights,
         comparedToPreviousMonth = totalNights - nightsPrevMonth,
         comparedToSameMonthLastYear = totalNights - nightsSameMonthLastYear,
+    )
+}
+
+fun calculateYearDaysStats(
+    year: Int,
+    allReservations: List<Reservation>,
+    yearReservations: List<Reservation>,
+): YearDaysStats {
+    val jan1 = firstDayOfYear(year)
+    val jan1Next = firstDayOfYearAfter(year)
+    val jan1Prev = firstDayOfYearBefore(year)
+
+    val totalDays = allReservations.countOccupiedDaysInWindow(jan1, jan1Next)
+    val daysPrevYear = allReservations.countOccupiedDaysInWindow(jan1Prev, jan1)
+
+    val perReservationDays = yearReservations.map { it.daysInPeriod(jan1, jan1Next) }
+    val minDays = perReservationDays.minOrNull()
+    val maxDays = perReservationDays.maxOrNull()
+    val avgDays = perReservationDays.takeIf { it.isNotEmpty() }?.average()?.round1()
+
+    val monthLongestVisit = yearReservations
+        .maxByOrNull { it.daysInPeriod(jan1, jan1Next) }
+        ?.let { r ->
+            MonthlyDaysCount(
+                monthNumber = r.startDate.month.ordinal + 1,
+                monthName = monthNameOf(r.startDate.month),
+                daysCount = r.daysInPeriod(jan1, jan1Next),
+            )
+        }
+
+    return YearDaysStats(
+        totalDays = totalDays,
+        minDays = minDays,
+        maxDays = maxDays,
+        avgDays = avgDays,
+        comparedToPreviousYear = totalDays - daysPrevYear,
+        monthLongestVisit = monthLongestVisit,
+    )
+}
+
+fun calculateYearNightsStats(
+    year: Int,
+    allReservations: List<Reservation>,
+    yearReservations: List<Reservation>,
+): YearNightsStats {
+    val jan1 = firstDayOfYear(year)
+    val jan1Next = firstDayOfYearAfter(year)
+    val jan1Prev = firstDayOfYearBefore(year)
+
+    val totalNights = allReservations.countOccupiedNightsInWindow(jan1, jan1Next)
+    val nightsPrevYear = allReservations.countOccupiedNightsInWindow(jan1Prev, jan1)
+    val avgMonthlyNights = (totalNights.toDouble() / MONTHS_IN_YEAR).round1()
+
+    val perReservationNights = yearReservations.map { it.nightsInPeriod(jan1, jan1Next) }
+    val minNights = perReservationNights.minOrNull()
+    val maxNights = perReservationNights.maxOrNull()
+    val avgNights = perReservationNights.takeIf { it.isNotEmpty() }?.average()?.round1()
+
+    return YearNightsStats(
+        totalNights = totalNights,
+        minNights = minNights,
+        maxNights = maxNights,
+        avgNights = avgNights,
+        avgMonthlyNights = avgMonthlyNights,
+        comparedToPreviousYear = totalNights - nightsPrevYear,
     )
 }

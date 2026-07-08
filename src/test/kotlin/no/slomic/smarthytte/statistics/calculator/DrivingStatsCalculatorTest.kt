@@ -1,9 +1,10 @@
+@file:Suppress("MaxLineLength")
+
 package no.slomic.smarthytte.statistics.calculator
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
@@ -70,7 +71,7 @@ class DrivingStatsCalculatorTest :
 
         context("calculateYearDrivingTimeStats") {
             should("return null stats when no trips are provided") {
-                val result = calculateYearDrivingTimeStats(2024, emptyList())
+                val result = calculateYearDrivingTimeStats(LocalDate(2024, 1, 1), LocalDate(2025, 1, 1), emptyList())
 
                 result.year shouldBe 2024
                 result.avgToCabinMinutes shouldBe null
@@ -86,7 +87,7 @@ class DrivingStatsCalculatorTest :
                     createReservation("r3", LocalDate(2025, 6, 1), LocalDate(2025, 6, 5), toCabinDurationMinutes = 140),
                 )
 
-                val result = calculateYearDrivingTimeStats(2024, reservations)
+                val result = calculateYearDrivingTimeStats(LocalDate(2024, 1, 1), LocalDate(2025, 1, 1), reservations)
 
                 result.avgToCabinMinutes shouldBe 120
                 result.minToCabinMinutes shouldBe 120
@@ -100,7 +101,7 @@ class DrivingStatsCalculatorTest :
                     createReservation("r3", LocalDate(2024, 6, 1), LocalDate(2024, 6, 5), 140, 130),
                 )
 
-                val result = calculateYearDrivingTimeStats(2024, reservations)
+                val result = calculateYearDrivingTimeStats(LocalDate(2024, 1, 1), LocalDate(2025, 1, 1), reservations)
 
                 result.avgToCabinMinutes shouldBe 120
                 result.minToCabinMinutes shouldBe 100
@@ -133,7 +134,8 @@ class DrivingStatsCalculatorTest :
                     ),
                 )
 
-                val result = calculateYearDrivingTimeStats(2024, listOf(reservation))
+                val result =
+                    calculateYearDrivingTimeStats(LocalDate(2024, 1, 1), LocalDate(2025, 1, 1), listOf(reservation))
 
                 // Total toCabin = 90 + 30 = 120 min (one data point, so avg = min = max)
                 result.avgToCabinMinutes shouldBe 120
@@ -151,7 +153,7 @@ class DrivingStatsCalculatorTest :
                     createReservation("r2", LocalDate(2024, 3, 1), LocalDate(2024, 3, 5), toCabinDurationMinutes = 101),
                 )
 
-                val result = calculateYearDrivingTimeStats(2024, reservations)
+                val result = calculateYearDrivingTimeStats(LocalDate(2024, 1, 1), LocalDate(2025, 1, 1), reservations)
 
                 // (100 + 101) / 2 = 100.5 -> toInt() truncates to 100
                 result.avgToCabinMinutes shouldBe 100
@@ -193,7 +195,7 @@ class DrivingStatsCalculatorTest :
                     ),
                 )
 
-                val result = calculateYearDrivingMomentStats(2024, reservations)
+                val result = calculateYearDrivingMomentStats(LocalDate(2024, 1, 1), LocalDate(2025, 1, 1), reservations)
 
                 result.year shouldBe 2024
                 // Departure Home: 09:00 and 11:00 Oslo. Avg: 10:00 (600 min)
@@ -240,7 +242,7 @@ class DrivingStatsCalculatorTest :
                     ),
                 )
 
-                val result = calculateYearDrivingMomentStats(2024, reservations)
+                val result = calculateYearDrivingMomentStats(LocalDate(2024, 1, 1), LocalDate(2025, 1, 1), reservations)
 
                 // Departure Home = startTime of first toCabin leg = 09:00 Oslo (540 min)
                 result.avgDepartureHomeMinutes shouldBe 540
@@ -264,7 +266,7 @@ class DrivingStatsCalculatorTest :
                     createReservation("r2", LocalDate(2024, 2, 1), LocalDate(2024, 2, 5), 100, 90),
                 )
 
-                val result = calculateMonthDrivingTimeStats(2024, Month.MARCH, reservations)
+                val result = calculateMonthDrivingTimeStats(LocalDate(2024, 3, 1), LocalDate(2024, 4, 1), reservations)
 
                 result.monthNumber shouldBe 3
                 result.year shouldBe 2024
@@ -287,7 +289,7 @@ class DrivingStatsCalculatorTest :
                     ),
                 )
 
-                val result = calculateMonthDrivingTimeStats(2024, Month.JANUARY, reservations)
+                val result = calculateMonthDrivingTimeStats(LocalDate(2024, 1, 1), LocalDate(2024, 2, 1), reservations)
 
                 result.monthNumber shouldBe 1
                 result.avgToCabinMinutes shouldBe 120
@@ -299,7 +301,7 @@ class DrivingStatsCalculatorTest :
                     createReservation("r1", LocalDate(2024, 2, 1), LocalDate(2024, 2, 5), toCabinDurationMinutes = 100),
                 )
 
-                val result = calculateMonthDrivingTimeStats(2024, Month.MARCH, reservations)
+                val result = calculateMonthDrivingTimeStats(LocalDate(2024, 3, 1), LocalDate(2024, 4, 1), reservations)
 
                 result.avgToCabinMinutes shouldBe null
                 result.diffAvgToCabinMinutesVsPrevMonth shouldBe null
@@ -310,7 +312,7 @@ class DrivingStatsCalculatorTest :
                     createReservation("r1", LocalDate(2024, 3, 1), LocalDate(2024, 3, 5), toCabinDurationMinutes = 120),
                 )
 
-                val result = calculateMonthDrivingTimeStats(2024, Month.MARCH, reservations)
+                val result = calculateMonthDrivingTimeStats(LocalDate(2024, 3, 1), LocalDate(2024, 4, 1), reservations)
 
                 result.avgToCabinMinutes shouldBe 120
                 result.diffAvgToCabinMinutesVsPrevMonth shouldBe null
@@ -322,7 +324,7 @@ class DrivingStatsCalculatorTest :
                     createReservation("r2", LocalDate(2024, 2, 1), LocalDate(2024, 2, 5), toCabinDurationMinutes = 120),
                 )
 
-                val result = calculateMonthDrivingTimeStats(2024, Month.MARCH, reservations)
+                val result = calculateMonthDrivingTimeStats(LocalDate(2024, 3, 1), LocalDate(2024, 4, 1), reservations)
 
                 result.diffAvgToCabinMinutesVsPrevMonth shouldBe -20
                 result.diffAvgToCabinVsPrevMonth shouldBe "-00:20"

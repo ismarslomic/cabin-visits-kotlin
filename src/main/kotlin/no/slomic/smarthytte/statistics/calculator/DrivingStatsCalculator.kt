@@ -2,33 +2,35 @@
 
 package no.slomic.smarthytte.statistics.calculator
 
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.Month
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import no.slomic.smarthytte.common.averageOrNullInt
 import no.slomic.smarthytte.common.formatClock
 import no.slomic.smarthytte.common.formatMinutes
-import no.slomic.smarthytte.common.minutesOfDay
+import no.slomic.smarthytte.common.minutesOfDayOslo
 import no.slomic.smarthytte.common.monthNameOf
-import no.slomic.smarthytte.common.previousMonth
+import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.reservations.Reservation
-import kotlin.time.Instant
+import no.slomic.smarthytte.statistics.model.MonthDrivingDistanceStats
+import no.slomic.smarthytte.statistics.model.YearDrivingDistanceStats
 
-private val osloTimeZone: TimeZone = TimeZone.of("Europe/Oslo")
-
-fun calculateYearDrivingTimeStats(year: Int, reservations: List<Reservation>): DrivingTimeStatsYear {
+fun calculateYearDrivingTimeStats(
+    fromDate: LocalDate,
+    toDateExclusive: LocalDate,
+    reservations: List<Reservation>,
+): YearDrivingTimeStats {
     fun getStats(durations: List<Int>) = object {
         val avg = durations.averageOrNullInt()
         val min = durations.minOrNull()
         val max = durations.maxOrNull()
     }
 
-    val toStats = getStats(reservations.toCabinDurationsForYear(year))
-    val fromStats = getStats(reservations.fromCabinDurationsForYear(year))
+    val toStats = getStats(reservations.toCabinDurations(fromDate, toDateExclusive))
+    val fromStats = getStats(reservations.fromCabinDurations(fromDate, toDateExclusive))
 
-    return DrivingTimeStatsYear(
-        year = year,
+    return YearDrivingTimeStats(
+        year = fromDate.year,
         avgToCabinMinutes = toStats.avg,
         avgToCabin = formatMinutes(toStats.avg),
         minToCabinMinutes = toStats.min,
@@ -44,8 +46,12 @@ fun calculateYearDrivingTimeStats(year: Int, reservations: List<Reservation>): D
     )
 }
 
-fun calculateMonthDrivingTimeStats(year: Int, month: Month, reservations: List<Reservation>): DrivingTimeStatsMonth {
-    val (prevYear, prevMonth) = previousMonth(currentYear = year, currentMonth = month)
+fun calculateMonthDrivingTimeStats(
+    fromDate: LocalDate,
+    toDateExclusive: LocalDate,
+    reservations: List<Reservation>,
+): MonthDrivingTimeStats {
+    val prevFromDate = fromDate.minus(DatePeriod(months = 1))
 
     fun getStats(durations: List<Int>) = object {
         val avg = durations.averageOrNullInt()
@@ -53,20 +59,20 @@ fun calculateMonthDrivingTimeStats(year: Int, month: Month, reservations: List<R
         val max = durations.maxOrNull()
     }
 
-    val toCabinStats = getStats(reservations.toCabinDurationsForMonth(year, month))
-    val fromCabinStats = getStats(reservations.fromCabinDurationsForMonth(year, month))
+    val toCabinStats = getStats(reservations.toCabinDurations(fromDate, toDateExclusive))
+    val fromCabinStats = getStats(reservations.fromCabinDurations(fromDate, toDateExclusive))
 
-    val avgToPrev = reservations.toCabinDurationsForMonth(prevYear, prevMonth).averageOrNullInt()
-    val avgFromPrev = reservations.fromCabinDurationsForMonth(prevYear, prevMonth).averageOrNullInt()
+    val avgToPrev = reservations.toCabinDurations(prevFromDate, fromDate).averageOrNullInt()
+    val avgFromPrev = reservations.fromCabinDurations(prevFromDate, fromDate).averageOrNullInt()
 
     fun diff(current: Int?, prev: Int?) = if (current != null && prev != null) current - prev else null
     val diffTo = diff(toCabinStats.avg, avgToPrev)
     val diffFrom = diff(fromCabinStats.avg, avgFromPrev)
 
-    return DrivingTimeStatsMonth(
-        monthNumber = month.ordinal + 1,
-        monthName = monthNameOf(month),
-        year = year,
+    return MonthDrivingTimeStats(
+        monthNumber = fromDate.month.ordinal + 1,
+        monthName = monthNameOf(fromDate.month),
+        year = fromDate.year,
         avgToCabinMinutes = toCabinStats.avg,
         avgToCabin = formatMinutes(toCabinStats.avg),
         minToCabinMinutes = toCabinStats.min,
@@ -86,14 +92,18 @@ fun calculateMonthDrivingTimeStats(year: Int, month: Month, reservations: List<R
     )
 }
 
-fun calculateYearDrivingMomentStats(year: Int, reservations: List<Reservation>): DrivingMomentStatsYear {
-    val avgDepHome = reservations.avgDepartureHomeMinutes(year)
-    val avgArrCabin = reservations.avgArrivalCabinMinutes(year)
-    val avgDepCabin = reservations.avgDepartureCabinMinutes(year)
-    val avgArrHome = reservations.avgArrivalHomeMinutes(year)
+fun calculateYearDrivingMomentStats(
+    fromDate: LocalDate,
+    toDateExclusive: LocalDate,
+    reservations: List<Reservation>,
+): YearDrivingMomentStats {
+    val avgDepHome = reservations.avgDepartureHomeMinutes(fromDate, toDateExclusive)
+    val avgArrCabin = reservations.avgArrivalCabinMinutes(fromDate, toDateExclusive)
+    val avgDepCabin = reservations.avgDepartureCabinMinutes(fromDate, toDateExclusive)
+    val avgArrHome = reservations.avgArrivalHomeMinutes(fromDate, toDateExclusive)
 
-    return DrivingMomentStatsYear(
-        year = year,
+    return YearDrivingMomentStats(
+        year = fromDate.year,
         avgDepartureHomeMinutes = avgDepHome,
         avgDepartureHome = formatClock(avgDepHome),
         avgArrivalCabinMinutes = avgArrCabin,
@@ -106,19 +116,19 @@ fun calculateYearDrivingMomentStats(year: Int, reservations: List<Reservation>):
 }
 
 fun calculateMonthDrivingMomentStats(
-    year: Int,
-    month: Month,
+    fromDate: LocalDate,
+    toDateExclusive: LocalDate,
     reservations: List<Reservation>,
-): DrivingMomentStatsMonth {
-    val avgDepHome = reservations.avgDepartureHomeMinutes(year, month)
-    val avgArrCabin = reservations.avgArrivalCabinMinutes(year, month)
-    val avgDepCabin = reservations.avgDepartureCabinMinutes(year, month)
-    val avgArrHome = reservations.avgArrivalHomeMinutes(year, month)
+): MonthDrivingMomentStats {
+    val avgDepHome = reservations.avgDepartureHomeMinutes(fromDate, toDateExclusive)
+    val avgArrCabin = reservations.avgArrivalCabinMinutes(fromDate, toDateExclusive)
+    val avgDepCabin = reservations.avgDepartureCabinMinutes(fromDate, toDateExclusive)
+    val avgArrHome = reservations.avgArrivalHomeMinutes(fromDate, toDateExclusive)
 
-    return DrivingMomentStatsMonth(
-        monthNumber = month.ordinal + 1,
-        monthName = monthNameOf(month),
-        year = year,
+    return MonthDrivingMomentStats(
+        monthNumber = fromDate.month.ordinal + 1,
+        monthName = monthNameOf(fromDate.month),
+        year = fromDate.year,
         avgDepartureHomeMinutes = avgDepHome,
         avgDepartureHome = formatClock(avgDepHome),
         avgArrivalCabinMinutes = avgArrCabin,
@@ -130,70 +140,169 @@ fun calculateMonthDrivingMomentStats(
     )
 }
 
-// --- Private extension functions on List<Reservation> ---
+fun calculateYearDrivingDistanceStats(
+    fromDate: LocalDate,
+    toDateExclusive: LocalDate,
+    reservations: List<Reservation>,
+): YearDrivingDistanceStats? = calculateDrivingDistanceStats(fromDate, toDateExclusive, reservations)
+    ?.let { s ->
+        YearDrivingDistanceStats(
+            totalToCabinKm = s.totalToCabinKm,
+            minToCabinKm = s.minToCabinKm,
+            maxToCabinKm = s.maxToCabinKm,
+            avgToCabinKm = s.avgToCabinKm,
+            totalFromCabinKm = s.totalFromCabinKm,
+            minFromCabinKm = s.minFromCabinKm,
+            maxFromCabinKm = s.maxFromCabinKm,
+            avgFromCabinKm = s.avgFromCabinKm,
+            totalAtCabinKm = s.totalAtCabinKm,
+            minAvgSpeedToCabinKmh = s.minAvgSpeedToCabinKmh,
+            maxAvgSpeedToCabinKmh = s.maxAvgSpeedToCabinKmh,
+            avgAvgSpeedToCabinKmh = s.avgAvgSpeedToCabinKmh,
+            minAvgSpeedFromCabinKmh = s.minAvgSpeedFromCabinKmh,
+            maxAvgSpeedFromCabinKmh = s.maxAvgSpeedFromCabinKmh,
+            avgAvgSpeedFromCabinKmh = s.avgAvgSpeedFromCabinKmh,
+        )
+    }
 
-private fun List<Reservation>.toCabinDurationsForYear(year: Int): List<Int> = mapNotNull { reservation ->
-    val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
-    if (departure.year() != year) return@mapNotNull null
-    reservation.toCabinDrivingDuration?.inWholeMinutes?.toInt()
+fun calculateMonthDrivingDistanceStats(
+    fromDate: LocalDate,
+    toDateExclusive: LocalDate,
+    reservations: List<Reservation>,
+): MonthDrivingDistanceStats? = calculateDrivingDistanceStats(fromDate, toDateExclusive, reservations)
+    ?.let { s ->
+        MonthDrivingDistanceStats(
+            totalToCabinKm = s.totalToCabinKm,
+            minToCabinKm = s.minToCabinKm,
+            maxToCabinKm = s.maxToCabinKm,
+            avgToCabinKm = s.avgToCabinKm,
+            totalFromCabinKm = s.totalFromCabinKm,
+            minFromCabinKm = s.minFromCabinKm,
+            maxFromCabinKm = s.maxFromCabinKm,
+            avgFromCabinKm = s.avgFromCabinKm,
+            totalAtCabinKm = s.totalAtCabinKm,
+            minAvgSpeedToCabinKmh = s.minAvgSpeedToCabinKmh,
+            maxAvgSpeedToCabinKmh = s.maxAvgSpeedToCabinKmh,
+            avgAvgSpeedToCabinKmh = s.avgAvgSpeedToCabinKmh,
+            minAvgSpeedFromCabinKmh = s.minAvgSpeedFromCabinKmh,
+            maxAvgSpeedFromCabinKmh = s.maxAvgSpeedFromCabinKmh,
+            avgAvgSpeedFromCabinKmh = s.avgAvgSpeedFromCabinKmh,
+        )
+    }
+
+// --- Private helpers ---
+
+private data class DrivingDistanceRawStats(
+    val totalToCabinKm: Double,
+    val minToCabinKm: Double?,
+    val maxToCabinKm: Double?,
+    val avgToCabinKm: Double?,
+    val totalFromCabinKm: Double,
+    val minFromCabinKm: Double?,
+    val maxFromCabinKm: Double?,
+    val avgFromCabinKm: Double?,
+    val totalAtCabinKm: Double,
+    val minAvgSpeedToCabinKmh: Double?,
+    val maxAvgSpeedToCabinKmh: Double?,
+    val avgAvgSpeedToCabinKmh: Double?,
+    val minAvgSpeedFromCabinKmh: Double?,
+    val maxAvgSpeedFromCabinKmh: Double?,
+    val avgAvgSpeedFromCabinKmh: Double?,
+)
+
+private fun calculateDrivingDistanceStats(
+    fromDate: LocalDate,
+    toDateExclusive: LocalDate,
+    reservations: List<Reservation>,
+): DrivingDistanceRawStats? {
+    val matched = reservations.filter { r ->
+        r.toCabinDrivingDepartureDate?.inPeriod(fromDate, toDateExclusive) == true ||
+            r.fromCabinDrivingDepartureDate?.inPeriod(fromDate, toDateExclusive) == true ||
+            r.atCabinVehicleTrips.any { it.startDate.inPeriod(fromDate, toDateExclusive) }
+    }
+    if (matched.isEmpty()) return null
+
+    val toDistances = matched.mapNotNull { r ->
+        r.toCabinDrivingDepartureDate?.takeIf { it.inPeriod(fromDate, toDateExclusive) }
+            ?.let { r.toCabinDrivingDistanceKm }
+    }
+    val fromDistances = matched.mapNotNull { r ->
+        r.fromCabinDrivingDepartureDate?.takeIf { it.inPeriod(fromDate, toDateExclusive) }
+            ?.let { r.fromCabinDrivingDistanceKm }
+    }
+    val atTotal = matched.mapNotNull { r ->
+        r.atCabinVehicleTrips.filter { it.startDate.inPeriod(fromDate, toDateExclusive) }
+            .takeIf { it.isNotEmpty() }?.sumOf { it.distance }
+    }.sum()
+    val toSpeeds = matched.mapNotNull { r ->
+        r.toCabinDrivingDepartureDate?.takeIf { it.inPeriod(fromDate, toDateExclusive) }
+            ?.let { r.toCabinAvgSpeedKmh }
+    }
+    val fromSpeeds = matched.mapNotNull { r ->
+        r.fromCabinDrivingDepartureDate?.takeIf { it.inPeriod(fromDate, toDateExclusive) }
+            ?.let { r.fromCabinAvgSpeedKmh }
+    }
+
+    return DrivingDistanceRawStats(
+        totalToCabinKm = toDistances.sum().round1(),
+        minToCabinKm = toDistances.minOrNull()?.round1(),
+        maxToCabinKm = toDistances.maxOrNull()?.round1(),
+        avgToCabinKm = toDistances.takeIf { it.isNotEmpty() }?.average()?.round1(),
+        totalFromCabinKm = fromDistances.sum().round1(),
+        minFromCabinKm = fromDistances.minOrNull()?.round1(),
+        maxFromCabinKm = fromDistances.maxOrNull()?.round1(),
+        avgFromCabinKm = fromDistances.takeIf { it.isNotEmpty() }?.average()?.round1(),
+        totalAtCabinKm = atTotal.round1(),
+        minAvgSpeedToCabinKmh = toSpeeds.minOrNull()?.round1(),
+        maxAvgSpeedToCabinKmh = toSpeeds.maxOrNull()?.round1(),
+        avgAvgSpeedToCabinKmh = toSpeeds.takeIf { it.isNotEmpty() }?.average()?.round1(),
+        minAvgSpeedFromCabinKmh = fromSpeeds.minOrNull()?.round1(),
+        maxAvgSpeedFromCabinKmh = fromSpeeds.maxOrNull()?.round1(),
+        avgAvgSpeedFromCabinKmh = fromSpeeds.takeIf { it.isNotEmpty() }?.average()?.round1(),
+    )
 }
 
-private fun List<Reservation>.toCabinDurationsForMonth(year: Int, month: Month): List<Int> = mapNotNull { reservation ->
-    val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
-    if (departure.year() != year || departure.month() != month) return@mapNotNull null
-    reservation.toCabinDrivingDuration?.inWholeMinutes?.toInt()
-}
+private fun LocalDate.inPeriod(fromDate: LocalDate, toDateExclusive: LocalDate): Boolean =
+    this in fromDate..<toDateExclusive
 
-private fun List<Reservation>.fromCabinDurationsForYear(year: Int): List<Int> = mapNotNull { reservation ->
-    val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
-    if (departure.year() != year) return@mapNotNull null
-    reservation.fromCabinDrivingDuration?.inWholeMinutes?.toInt()
-}
-
-private fun List<Reservation>.fromCabinDurationsForMonth(year: Int, month: Month): List<Int> =
+private fun List<Reservation>.toCabinDurations(fromDate: LocalDate, toDateExclusive: LocalDate): List<Int> =
     mapNotNull { reservation ->
-        val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
-        if (departure.year() != year || departure.month() != month) return@mapNotNull null
+        val departure = reservation.toCabinDrivingDepartureDate ?: return@mapNotNull null
+        if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
+        reservation.toCabinDrivingDuration?.inWholeMinutes?.toInt()
+    }
+
+private fun List<Reservation>.fromCabinDurations(fromDate: LocalDate, toDateExclusive: LocalDate): List<Int> =
+    mapNotNull { reservation ->
+        val departure = reservation.fromCabinDrivingDepartureDate ?: return@mapNotNull null
+        if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
         reservation.fromCabinDrivingDuration?.inWholeMinutes?.toInt()
     }
 
-private fun List<Reservation>.avgDepartureHomeMinutes(year: Int, month: Month? = null): Int? =
+private fun List<Reservation>.avgDepartureHomeMinutes(fromDate: LocalDate, toDateExclusive: LocalDate): Int? =
     mapNotNull { reservation ->
-        val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
-        if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
-        departure.minutesOfDayOslo()
+        val departure = reservation.toCabinDrivingDepartureDate ?: return@mapNotNull null
+        if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
+        reservation.toCabinDrivingDepartureTime?.minutesOfDayOslo()
     }.averageOrNullInt()
 
-private fun List<Reservation>.avgArrivalCabinMinutes(year: Int, month: Month? = null): Int? =
+private fun List<Reservation>.avgArrivalCabinMinutes(fromDate: LocalDate, toDateExclusive: LocalDate): Int? =
     mapNotNull { reservation ->
-        val departure = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
-        if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
+        val departure = reservation.toCabinDrivingDepartureDate ?: return@mapNotNull null
+        if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
         reservation.toCabinDrivingArrivalTime?.minutesOfDayOslo()
     }.averageOrNullInt()
 
-private fun List<Reservation>.avgDepartureCabinMinutes(year: Int, month: Month? = null): Int? =
+private fun List<Reservation>.avgDepartureCabinMinutes(fromDate: LocalDate, toDateExclusive: LocalDate): Int? =
     mapNotNull { reservation ->
-        val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
-        if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
-        departure.minutesOfDayOslo()
+        val departure = reservation.fromCabinDrivingDepartureDate ?: return@mapNotNull null
+        if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
+        reservation.fromCabinDrivingDepartureTime?.minutesOfDayOslo()
     }.averageOrNullInt()
 
-private fun List<Reservation>.avgArrivalHomeMinutes(year: Int, month: Month? = null): Int? = mapNotNull { reservation ->
-    val departure = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
-    if (!departure.matchesYearMonth(year, month)) return@mapNotNull null
-    reservation.fromCabinDrivingArrivalTime?.minutesOfDayOslo()
-}.averageOrNullInt()
-
-// --- Instant helpers ---
-
-private fun Instant.year(): Int = toLocalDateTime(osloTimeZone).year
-
-private fun Instant.month(): Month = toLocalDateTime(osloTimeZone).month
-
-private fun Instant.matchesYearMonth(year: Int, month: Month?): Boolean =
-    year() == year && (month == null || month() == month)
-
-private fun Instant.minutesOfDayOslo(): Int {
-    val localTime: LocalTime = toLocalDateTime(osloTimeZone).time
-    return localTime.minutesOfDay()
-}
+private fun List<Reservation>.avgArrivalHomeMinutes(fromDate: LocalDate, toDateExclusive: LocalDate): Int? =
+    mapNotNull { reservation ->
+        val departure = reservation.fromCabinDrivingDepartureDate ?: return@mapNotNull null
+        if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
+        reservation.fromCabinDrivingArrivalTime?.minutesOfDayOslo()
+    }.averageOrNullInt()

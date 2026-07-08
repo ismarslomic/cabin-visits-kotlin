@@ -6,7 +6,7 @@ import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class DrivingMomentStatsYear(
+data class YearDrivingMomentStats(
     @JsonSchema.Description("The calendar year these driving moment statistics cover.")
     val year: Int,
     @JsonSchema.Description(
@@ -44,7 +44,7 @@ data class DrivingMomentStatsYear(
 )
 
 @Serializable
-data class DrivingMomentStatsMonth(
+data class MonthDrivingMomentStats(
     @JsonSchema.Description("Month number (1 = January, 12 = December).")
     val monthNumber: Int,
     @JsonSchema.Description("Localised month name (e.g. \"Januar\").")
@@ -86,7 +86,7 @@ data class DrivingMomentStatsMonth(
 )
 
 @Serializable
-data class DrivingTimeStatsYear(
+data class YearDrivingTimeStats(
     @JsonSchema.Description("The calendar year these driving time statistics cover.")
     val year: Int,
     @JsonSchema.Description(
@@ -128,7 +128,7 @@ data class DrivingTimeStatsYear(
 )
 
 @Serializable
-data class DrivingTimeStatsMonth(
+data class MonthDrivingTimeStats(
     @JsonSchema.Description("Month number (1 = January, 12 = December).")
     val monthNumber: Int,
     @JsonSchema.Description("Localised month name (e.g. \"Januar\").")

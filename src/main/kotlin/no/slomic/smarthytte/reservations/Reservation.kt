@@ -46,9 +46,6 @@ data class Reservation(
     val durationNights: Int
         get() = startDate.daysUntilSafe(endExclusive = endDate)
 
-    val durationDays: Int
-        get() = durationNights + 1
-
     val toCabinDrivingDuration: Duration?
         get() = toCabinVehicleTrips
             .takeIf { it.isNotEmpty() }
@@ -64,14 +61,37 @@ data class Reservation(
     val toCabinDrivingDepartureTime: Instant?
         get() = toCabinVehicleTrips.firstOrNull()?.startTime
 
+    val toCabinDrivingDepartureDate: LocalDate?
+        get() = toCabinVehicleTrips.firstOrNull()?.startDate
+
     val toCabinDrivingArrivalTime: Instant?
         get() = toCabinVehicleTrips.lastOrNull()?.endTime
 
     val fromCabinDrivingDepartureTime: Instant?
         get() = fromCabinVehicleTrips.firstOrNull()?.startTime
 
+    val fromCabinDrivingDepartureDate: LocalDate?
+        get() = fromCabinVehicleTrips.firstOrNull()?.startDate
+
     val fromCabinDrivingArrivalTime: Instant?
         get() = fromCabinVehicleTrips.lastOrNull()?.endTime
+
+    val toCabinDrivingDistanceKm: Double?
+        get() = toCabinVehicleTrips.takeIf { it.isNotEmpty() }?.sumOf { it.distance }
+
+    val fromCabinDrivingDistanceKm: Double?
+        get() = fromCabinVehicleTrips.takeIf { it.isNotEmpty() }?.sumOf { it.distance }
+
+    val atCabinDrivingDistanceKm: Double?
+        get() = atCabinVehicleTrips.takeIf { it.isNotEmpty() }?.sumOf { it.distance }
+
+    val toCabinAvgSpeedKmh: Double?
+        get() = toCabinVehicleTrips.takeIf { it.isNotEmpty() }
+            ?.let { trips -> trips.sumOf { it.averageSpeed } / trips.size }
+
+    val fromCabinAvgSpeedKmh: Double?
+        get() = fromCabinVehicleTrips.takeIf { it.isNotEmpty() }
+            ?.let { trips -> trips.sumOf { it.averageSpeed } / trips.size }
 
     fun nightsInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
         val overlapStart = maxOf(startDate, periodStart)
@@ -107,17 +127,6 @@ fun List<Reservation>.countOccupiedDaysInWindow(startInclusive: LocalDate, endEx
         if (start < endEx) start.datesUntil(endEx).toList() else emptyList()
     }.toSet().size
 }
-
-fun List<Reservation>.diffVisitsCurrentYearWithLast12Months(currentYear: Int, visitsCurrentYear: Int): Int {
-    val (start, end) = lastYearInterval(currentYear)
-    val visitsLast12Months = countInInterval(start, end)
-    return visitsCurrentYear - visitsLast12Months
-}
-
-fun List<Reservation>.countInInterval(start: LocalDate, end: LocalDate): Int = count { it.startDate in start..end }
-
-fun List<Reservation>.findMonthWithLongestStay(): Pair<Month, Int>? = this.maxByOrNull { it.durationDays }
-    ?.let { reservation -> reservation.startDate.month to reservation.durationDays }
 
 fun List<Reservation>.visitsByGuest(): Map<String, Int> = this.flatMap { it.guestIds }.groupingBy { it }.eachCount()
 

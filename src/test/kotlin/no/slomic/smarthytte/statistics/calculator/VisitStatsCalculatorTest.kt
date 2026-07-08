@@ -18,7 +18,7 @@ class VisitStatsCalculatorTest :
             guestIds = emptyList(),
         )
 
-        context("calculateMonthlyDaysStats") {
+        context("calculateMonthlyDaysStats returns MonthDaysStats") {
             should("calculate totalDays using occupied days in month window") {
                 val year = 2024
                 val month = Month.MARCH
@@ -117,7 +117,7 @@ class VisitStatsCalculatorTest :
             }
         }
 
-        context("calculateMonthlyNightsStats") {
+        context("calculateMonthlyNightsStats returns MonthNightsStats") {
             should("calculate totalNights using occupied nights in month window") {
                 val year = 2024
                 val month = Month.MARCH
