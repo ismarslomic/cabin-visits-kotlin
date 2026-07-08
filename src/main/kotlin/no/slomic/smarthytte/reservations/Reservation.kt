@@ -81,9 +81,6 @@ data class Reservation(
     val fromCabinDrivingDistanceKm: Double?
         get() = fromCabinVehicleTrips.takeIf { it.isNotEmpty() }?.sumOf { it.distance }
 
-    val atCabinDrivingDistanceKm: Double?
-        get() = atCabinVehicleTrips.takeIf { it.isNotEmpty() }?.sumOf { it.distance }
-
     val toCabinAvgSpeedKmh: Double?
         get() = toCabinVehicleTrips.takeIf { it.isNotEmpty() }
             ?.let { trips -> trips.sumOf { it.averageSpeed } / trips.size }
