@@ -1,6 +1,4 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 
 plugins {
     application
@@ -51,7 +49,6 @@ graalvmNative {
     binaries {
 
         named("main") {
-            fallback = false // Sets the fallback mode of native-image, defaults to false
             verbose = true // Add verbose output, defaults to false
             imageName.set("graalvm-server")
 
@@ -113,7 +110,6 @@ graalvmNative {
 
         // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html#testing-support
         named("test") {
-            fallback.set(false)
             verbose.set(true)
             imageName.set("graalvm-test-server")
 
@@ -203,26 +199,26 @@ tasks.withType<Test>().configureEach {
     finalizedBy(tasks.jacocoTestReport)
 }
 
-// Detekt
-tasks.withType<Detekt>().configureEach {
-    jvmTarget = "21" // Currently max supported java version in Detekt
-}
-tasks.withType<DetektCreateBaselineTask>().configureEach {
-    jvmTarget = "21" // Currently max supported java version in Detekt
-}
-
-tasks.withType<Detekt>().configureEach {
-    reports {
-        html.required.set(true) // observe findings in your browser with structure and code snippets
-        xml.required.set(true) // checkstyle like format mainly for integrations like Jenkins
-        sarif.required.set(true) // standardized SARIF format (https://sarifweb.azurewebsites.net/) to support integrations with GitHub Code Scanning
-        md.required.set(true) // simple Markdown format
-    }
-}
-
 // Kotlinter - install the hook automatically when someone runs the build
 tasks.check {
     dependsOn("installKotlinterPrePushHook")
+}
+
+detekt {
+    buildUponDefaultConfig = true // preconfigure defaults
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    reports {
+        html.required.set(true) // observe findings in your browser with structure and code snippets
+        checkstyle.required.set(true) // checkstyle(xml) like format mainly for integrations like Jenkins
+        sarif.required.set(true) // standardized SARIF format (https://sarifweb.azurewebsites.net/) to support integrations with GitHub Code Scanning
+        markdown.required.set(true) // simple Markdown format
+    }
+    jvmTarget.set("25")
+}
+tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
+    jvmTarget.set("25")
 }
 
 // Activate locking for all configurations
@@ -253,7 +249,7 @@ tasks.withType<DependencyUpdatesTask> {
 val migrationDir = layout.projectDirectory.dir("src/main/resources/db/migration")
 val generatedResourcesDir = layout.buildDirectory.dir("generated/resources/main")
 
-val generateMigrationIndex by tasks.registering {
+val generateMigrationIndex = tasks.register("generateMigrationIndex") {
     description = "Generates an index file listing all Flyway SQL migration resources"
     group = "build setup"
 

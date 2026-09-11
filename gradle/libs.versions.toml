@@ -1,21 +1,21 @@
 [versions]
-detekt = "1.23.8"
-exposed = "1.4.0"
-flyway = "13.3.0"
+detekt = "2.0.0-alpha.6"
+exposed = "1.5.0"
+flyway = "13.6.0"
 googleCalendarService = "v3-rev20260708-2.0.0"
-googleOauthClient ="1.50.0"
-graalvm = "1.1.9"
+googleOauthClient ="1.52.0"
+graalvm = "1.1.12"
 hoplite = "2.9.0"
 influxdb = "8.0.0"
 jacoco = "0.8.15"
-kotest = "6.2.4"
-kotlin = "2.4.10"
+kotest = "6.2.5"
+kotlin = "2.4.20"
 kotlinter = "5.7.0"
 ktor = "3.5.2"
-logback = "1.6.2"
+logback = "1.6.3"
 mockk = "1.14.11"
-prometheus = "1.17.0"
-sqlite = "3.53.2.1"
+prometheus = "1.17.1"
+sqlite = "3.53.4.0"
 versions = "0.61.0"
 
 [libraries]
@@ -53,7 +53,7 @@ ktor = ["ktor-server-core-jvm", "ktor-server-cio-jvm", "ktor-client", "ktor-clie
 metrics = ["ktor-micrometer-metrics", "micrometer-registry-prometheus"]
 
 [plugins]
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm" }
 jacoco = { id = "jacoco" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
