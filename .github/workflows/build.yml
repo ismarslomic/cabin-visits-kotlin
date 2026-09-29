@@ -41,13 +41,6 @@ jobs:
           distribution: "graalvm" # GraalVM distribution
           java-version: "25" # Use Java 24 to match GraalVM v24
 
-      # Set up Java 21 for the Gradle daemon (detekt does not support Java 25+)
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: "21"
-
       # Set up Gradle
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3

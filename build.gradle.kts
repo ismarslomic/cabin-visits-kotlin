@@ -1,6 +1,4 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 
 plugins {
     application
@@ -59,7 +57,6 @@ graalvmNative {
     binaries {
 
         named("main") {
-            fallback = false // Sets the fallback mode of native-image, defaults to false
             verbose = true // Add verbose output, defaults to false
             imageName.set("graalvm-server")
 
@@ -70,6 +67,33 @@ graalvmNative {
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.ktor,kotlin,kotlinx.coroutines,kotlinx.io,kotlinx.serialization",
+                "--initialize-at-run-time=io.ktor.util.NonceKt",
+                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
+                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
+                "--initialize-at-build-time=kotlinx.coroutines.LazyStandaloneCoroutine",
+                "--initialize-at-build-time=kotlinx.coroutines.NonDisposableHandle",
+                "--initialize-at-build-time=kotlinx.coroutines.channels.BufferedChannel",
+                "--initialize-at-build-time=kotlinx.coroutines.scheduling.DefaultIoScheduler",
+                "--initialize-at-build-time=kotlinx.coroutines.Empty",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.LimitedDispatcher",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.LockFreeTaskQueue",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.LockFreeTaskQueueCore",
+                "--initialize-at-build-time=kotlinx.coroutines.scheduling.CoroutineScheduler",
+                "--initialize-at-build-time=kotlinx.coroutines.scheduling.DefaultScheduler",
+                "--initialize-at-build-time=kotlinx.coroutines.scheduling.GlobalQueue",
+                "--initialize-at-build-time=kotlinx.coroutines.scheduling.UnlimitedIoScheduler",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.LockFreeTaskQueueCore\$Companion",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.ResizableAtomicArray",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.Symbol",
+                "--initialize-at-build-time=kotlinx.coroutines.Job\$Key",
+                "--initialize-at-build-time=kotlinx.coroutines.DefaultExecutor",
+                "--initialize-at-build-time=kotlinx.coroutines.channels.ChannelSegment",
+                "--initialize-at-build-time=kotlinx.coroutines.CoroutineDispatcher\$Key",
+                "--initialize-at-build-time=kotlinx.io.Buffer",
+                "--initialize-at-build-time=kotlinx.io.Segment",
+                "--initialize-at-build-time=kotlinx.io.Segment\$Companion",
+                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString",
+                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString\$Companion",
                 "--initialize-at-build-time=org.slf4j.LoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
@@ -95,7 +119,6 @@ graalvmNative {
 
         // See https://graalvm.github.io/native-build-tools/0.10.4/gradle-plugin.html#testing-support
         named("test") {
-            fallback.set(false)
             verbose.set(true)
             imageName.set("graalvm-test-server")
 
@@ -107,6 +130,20 @@ graalvmNative {
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.kotest",
                 "--initialize-at-build-time=io.ktor,kotlin,kotlinx.coroutines,kotlinx.io,kotlinx.serialization",
+                "--initialize-at-run-time=io.ktor.util.NonceKt",
+                "--initialize-at-build-time=kotlinx.coroutines.CoroutineDispatcher\$Key",
+                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
+                "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
+                "--initialize-at-build-time=kotlinx.coroutines.ExecutorCoroutineDispatcherImpl",
+                "--initialize-at-build-time=kotlinx.coroutines.internal.Symbol",
+                "--initialize-at-build-time=kotlinx.coroutines.Job\$Key",
+                "--initialize-at-build-time=kotlinx.coroutines.sync.MutexImpl",
+                "--initialize-at-build-time=kotlinx.coroutines.sync.SemaphoreSegment",
+                "--initialize-at-build-time=kotlinx.io.Buffer",
+                "--initialize-at-build-time=kotlinx.io.Segment",
+                "--initialize-at-build-time=kotlinx.io.Segment\$Companion",
+                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString",
+                "--initialize-at-build-time=kotlinx.io.bytestring.ByteString\$Companion",
                 "--initialize-at-build-time=org.slf4j.LoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOPLoggerFactory",
                 "--initialize-at-build-time=org.slf4j.helpers.NOP_FallbackServiceProvider",
@@ -172,26 +209,26 @@ tasks.withType<Test>().configureEach {
     finalizedBy(tasks.jacocoTestReport)
 }
 
-// Detekt
-tasks.withType<Detekt>().configureEach {
-    jvmTarget = "21" // Currently max supported java version in Detekt
-}
-tasks.withType<DetektCreateBaselineTask>().configureEach {
-    jvmTarget = "21" // Currently max supported java version in Detekt
-}
-
-tasks.withType<Detekt>().configureEach {
-    reports {
-        html.required.set(true) // observe findings in your browser with structure and code snippets
-        xml.required.set(true) // checkstyle like format mainly for integrations like Jenkins
-        sarif.required.set(true) // standardized SARIF format (https://sarifweb.azurewebsites.net/) to support integrations with GitHub Code Scanning
-        md.required.set(true) // simple Markdown format
-    }
-}
-
 // Kotlinter - install the hook automatically when someone runs the build
 tasks.check {
     dependsOn("installKotlinterPrePushHook")
+}
+
+detekt {
+    buildUponDefaultConfig = true // preconfigure defaults
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    reports {
+        html.required.set(true) // observe findings in your browser with structure and code snippets
+        checkstyle.required.set(true) // checkstyle(xml) like format mainly for integrations like Jenkins
+        sarif.required.set(true) // standardized SARIF format (https://sarifweb.azurewebsites.net/) to support integrations with GitHub Code Scanning
+        markdown.required.set(true) // simple Markdown format
+    }
+    jvmTarget.set("25")
+}
+tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
+    jvmTarget.set("25")
 }
 
 // Activate locking for all configurations
@@ -222,7 +259,7 @@ tasks.withType<DependencyUpdatesTask> {
 val migrationDir = layout.projectDirectory.dir("src/main/resources/db/migration")
 val generatedResourcesDir = layout.buildDirectory.dir("generated/resources/main")
 
-val generateMigrationIndex by tasks.registering {
+val generateMigrationIndex = tasks.register("generateMigrationIndex") {
     description = "Generates an index file listing all Flyway SQL migration resources"
     group = "build setup"
 
