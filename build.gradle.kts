@@ -59,6 +59,7 @@ graalvmNative {
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.ktor,kotlin",
+                "--initialize-at-run-time=io.ktor.util.NonceKt",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
                 "--initialize-at-build-time=kotlinx.coroutines.LazyStandaloneCoroutine",
@@ -121,6 +122,7 @@ graalvmNative {
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.kotest",
                 "--initialize-at-build-time=io.ktor,kotlin",
+                "--initialize-at-run-time=io.ktor.util.NonceKt",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineDispatcher\$Key",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",

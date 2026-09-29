@@ -210,12 +210,6 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setAuthorization",
-          "parameterTypes": [
             "java.util.List"
           ]
         },
