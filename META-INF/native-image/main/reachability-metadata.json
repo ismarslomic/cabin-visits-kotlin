@@ -210,6 +210,12 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setAuthorization",
+          "parameterTypes": [
             "java.util.List"
           ]
         },
@@ -1072,9 +1078,6 @@
       ]
     },
     {
-      "type": "int"
-    },
-    {
       "type": "io.grpc.override.ContextStorageOverride"
     },
     {
@@ -1105,9 +1108,6 @@
       "type": "io.ktor.http.HttpStatusCode"
     },
     {
-      "type": "io.ktor.http.content.TextContent"
-    },
-    {
       "type": "io.ktor.network.selector.InterestSuspensionsMap"
     },
     {
@@ -1123,22 +1123,25 @@
       "type": "io.ktor.network.selector.SelectableBase"
     },
     {
+      "type": "io.ktor.openapi.JsonSchemaInference"
+    },
+    {
+      "type": "io.ktor.openapi.Operation"
+    },
+    {
+      "type": "io.ktor.openapi.Operation$Builder"
+    },
+    {
       "type": "io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider"
     },
     {
       "type": "io.ktor.server.application.PluginInstance"
     },
     {
-      "type": "io.ktor.server.auth.Authentication"
-    },
-    {
       "type": "io.ktor.server.engine.BaseApplicationResponse"
     },
     {
       "type": "io.ktor.server.metrics.micrometer.CallMeasure"
-    },
-    {
-      "type": "io.ktor.server.plugins.MutableOriginConnectionPoint"
     },
     {
       "type": "io.ktor.server.routing.RoutingCall"
@@ -1830,154 +1833,6 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.statistics.calculator.DrivingMomentStatsMonth$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.calculator.DrivingMomentStatsYear$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.calculator.DrivingTimeStatsMonth$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.calculator.DrivingTimeStatsYear$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.AgeGroup$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.CurrentReservationInfo$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.DaysStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.GenderDistribution$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.GuestRanking$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.GuestStats",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.GuestStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.GuestStats$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.GuestVisitStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.LiveStats",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.LiveStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.LiveStats$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.MonthStats",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.MonthStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.MonthStats$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.MonthlyDaysCount$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.MonthlyVisitCount$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.NextReservationInfo$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.NightsStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.OccupancyStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.VisitsStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.YearStats",
-      "fields": [
-        {
-          "name": "Companion"
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.YearStats$$serializer"
-    },
-    {
-      "type": "no.slomic.smarthytte.statistics.model.YearStats$Companion",
-      "methods": [
-        {
-          "name": "serializer",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "no.slomic.smarthytte.sync.checkpoint.SyncCheckpointEntity",
       "methods": [
         {
@@ -1998,41 +1853,6 @@
           ]
         }
       ]
-    },
-    {
-      "type": "org.HdrHistogram.AbstractHistogram"
-    },
-    {
-      "type": "org.HdrHistogram.ConcurrentHistogram",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "long",
-            "long",
-            "int"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.HdrHistogram.DoubleRecorder[]"
-    },
-    {
-      "type": "org.HdrHistogram.Histogram",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "long",
-            "long",
-            "int"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "org.HdrHistogram.WriterReaderPhaser"
     },
     {
       "type": "org.flywaydb.core.api.migration.baseline.BaselineAppliedMigration"
@@ -2837,15 +2657,6 @@
           ]
         }
       ]
-    },
-    {
-      "type": "sun.text.resources.FormatData"
-    },
-    {
-      "type": "sun.text.resources.FormatData_en"
-    },
-    {
-      "type": "sun.text.resources.JavaTimeSupplementary"
     },
     {
       "type": "sun.text.resources.cldr.FormatData"
