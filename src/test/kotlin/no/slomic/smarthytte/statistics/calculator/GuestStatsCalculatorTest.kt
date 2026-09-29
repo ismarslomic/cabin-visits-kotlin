@@ -11,6 +11,7 @@ import kotlinx.datetime.toInstant
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.statistics.model.GuestPeriodStats
 
 class GuestStatsCalculatorTest :
     ShouldSpec({
@@ -98,6 +99,88 @@ class GuestStatsCalculatorTest :
                 result shouldHaveSize 2
                 result[0].guestId shouldBe "g2"
                 result[1].guestId shouldBe "g1"
+            }
+        }
+
+        context("calculateLiveGuestStats") {
+            val guest3 = Guest("g3", "Ola", "Nordmann", 2000, null, Gender.MALE)
+            val allGuestsById = guestsById + ("g3" to guest3)
+            val today = LocalDate(2026, 9, 29)
+
+            val pastLastYear = createReservation("1", LocalDate(2025, 6, 1), LocalDate(2025, 6, 5), listOf("g1", "g2"))
+            val pastThisYear = createReservation("2", LocalDate(2026, 3, 10), LocalDate(2026, 3, 12), listOf("g1"))
+            val current = createReservation("3", LocalDate(2026, 9, 27), LocalDate(2026, 10, 2), listOf("g2", "g1"))
+            val next = createReservation("4", LocalDate(2026, 10, 10), LocalDate(2026, 10, 12), listOf("g3", "g2"))
+            val allReservations = listOf(pastLastYear, pastThisYear, current, next)
+
+            should("count started reservations and days up to today for guests in current reservation") {
+                val result = calculateLiveGuestStats(current, today, allReservations, allGuestsById)
+
+                result.map { it.guestId } shouldBe listOf("g1", "g2")
+
+                val g1 = result[0]
+                g1.firstName shouldBe "John"
+                g1.lastName shouldBe "Doe"
+                g1.age shouldBe 36
+                g1.isFirstVisit shouldBe false
+                g1.firstVisitDate shouldBe LocalDate(2025, 6, 1)
+                g1.lastVisitDate shouldBe LocalDate(2026, 3, 12)
+                g1.yearsVisited shouldBe listOf(2026, 2025)
+                g1.currentYear shouldBe GuestPeriodStats(totalVisits = 2, totalDays = 6, visitsRank = 1, daysRank = 1)
+                g1.allTime shouldBe GuestPeriodStats(totalVisits = 3, totalDays = 11, visitsRank = 1, daysRank = 1)
+
+                val g2 = result[1]
+                g2.isFirstVisit shouldBe false
+                g2.lastVisitDate shouldBe LocalDate(2025, 6, 5)
+                g2.currentYear shouldBe GuestPeriodStats(totalVisits = 1, totalDays = 3, visitsRank = 2, daysRank = 2)
+                g2.allTime shouldBe GuestPeriodStats(totalVisits = 2, totalDays = 8, visitsRank = 2, daysRank = 2)
+            }
+
+            should("use last completed visit and exclude future visits for guests in next reservation") {
+                val result = calculateLiveGuestStats(next, today, allReservations, allGuestsById)
+
+                result.map { it.guestId } shouldBe listOf("g2", "g3")
+
+                val g2 = result[0]
+                g2.isFirstVisit shouldBe false
+                g2.lastVisitDate shouldBe LocalDate(2025, 6, 5) // current reservation has not ended yet
+
+                val g3 = result[1]
+                g3.isFirstVisit shouldBe true
+                g3.firstVisitDate shouldBe null
+                g3.lastVisitDate shouldBe null
+                g3.yearsVisited shouldBe emptyList()
+                g3.currentYear shouldBe
+                    GuestPeriodStats(totalVisits = 0, totalDays = 0, visitsRank = null, daysRank = null)
+                g3.allTime shouldBe GuestPeriodStats(totalVisits = 0, totalDays = 0, visitsRank = null, daysRank = null)
+            }
+
+            should("use current reservation as first visit for first-time guests in current reservation") {
+                val firstTimer = createReservation("1", LocalDate(2026, 9, 28), LocalDate(2026, 9, 30), listOf("g3"))
+
+                val g3 = calculateLiveGuestStats(firstTimer, today, listOf(firstTimer), allGuestsById).single()
+
+                g3.isFirstVisit shouldBe true
+                g3.firstVisitDate shouldBe LocalDate(2026, 9, 28)
+                g3.lastVisitDate shouldBe null
+                g3.yearsVisited shouldBe listOf(2026)
+            }
+
+            should("give tied guests the same rank and skip the next rank") {
+                val shared = createReservation("1", LocalDate(2026, 1, 1), LocalDate(2026, 1, 3), listOf("g1", "g2"))
+                val single = createReservation("2", LocalDate(2026, 2, 1), LocalDate(2026, 2, 1), listOf("g3"))
+
+                val result = calculateLiveGuestStats(single, today, listOf(shared, single), allGuestsById)
+
+                result.single().currentYear shouldBe
+                    GuestPeriodStats(totalVisits = 1, totalDays = 1, visitsRank = 1, daysRank = 3)
+            }
+
+            should("ignore guests not found in guestsById") {
+                val reservation =
+                    createReservation("1", LocalDate(2026, 1, 1), LocalDate(2026, 1, 2), listOf("unknown"))
+
+                calculateLiveGuestStats(reservation, today, listOf(reservation), allGuestsById) shouldBe emptyList()
             }
         }
     })

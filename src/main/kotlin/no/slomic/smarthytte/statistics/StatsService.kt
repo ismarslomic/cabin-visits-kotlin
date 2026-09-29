@@ -16,6 +16,7 @@ import no.slomic.smarthytte.reservations.countByMonth
 import no.slomic.smarthytte.reservations.daysByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
 import no.slomic.smarthytte.statistics.calculator.MonthDates
+import no.slomic.smarthytte.statistics.calculator.calculateLiveGuestStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingDistanceStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingMomentStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingTimeStats
@@ -75,16 +76,16 @@ class StatsService(
 
         val currentInfo =
             current?.let { r ->
-                val guestNames = r.guestIds.mapNotNull { guestsById[it]?.firstName }
+                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById)
                 val remaining = today.daysUntilSafe(r.endDate)
-                CurrentReservationInfo(r.startDate, r.endDate, guestNames, remaining)
+                CurrentReservationInfo(r.startDate, r.endDate, guests, remaining)
             }
 
         val nextInfo =
             next?.let { r ->
-                val guestNames = r.guestIds.mapNotNull { guestsById[it]?.firstName }
+                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById)
                 val daysUntil = today.daysUntilSafe(r.startDate)
-                NextReservationInfo(r.startDate, r.endDate, guestNames, daysUntil)
+                NextReservationInfo(r.startDate, r.endDate, guests, daysUntil)
             }
 
         val allTimeNights = allReservations.sumOf { it.durationNights }

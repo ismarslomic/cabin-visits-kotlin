@@ -1,13 +1,17 @@
 package no.slomic.smarthytte.statistics.calculator
 
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.daysByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
+import no.slomic.smarthytte.statistics.model.GuestPeriodStats
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
+import no.slomic.smarthytte.statistics.model.LiveGuestStats
 
 fun calculateMonthlyGuestStats(
     year: Int,
@@ -87,4 +91,87 @@ fun aggregateGuestVisitStats(
                 totalDays = daysByGuest[guestId] ?: 0,
             )
         }
+}
+
+/**
+ * Builds live statistics for each guest in [reservation]. Only reservations started on or before [today]
+ * are counted, and days are counted up to and including [today].
+ */
+fun calculateLiveGuestStats(
+    reservation: Reservation,
+    today: LocalDate,
+    allReservations: List<Reservation>,
+    guestsById: Map<String, Guest>,
+): List<LiveGuestStats> {
+    val startedReservations = allReservations.filter { it.startDate <= today }
+    val periodEndExclusive = today.plus(DatePeriod(days = 1))
+    val firstYear = startedReservations.minOfOrNull { it.startDate.year } ?: today.year
+
+    val currentYearStats = aggregateGuestVisitStats(
+        periodStart = firstDayOfYear(today.year),
+        periodEndExclusive = periodEndExclusive,
+        reservations = startedReservations.filter { it.startDate.year == today.year },
+        guestsById = guestsById,
+        ageYear = today.year,
+    )
+    val allTimeStats = aggregateGuestVisitStats(
+        periodStart = firstDayOfYear(firstYear),
+        periodEndExclusive = periodEndExclusive,
+        reservations = startedReservations,
+        guestsById = guestsById,
+        ageYear = today.year,
+    )
+    val currentYearRanking = PeriodRanking(currentYearStats)
+    val allTimeRanking = PeriodRanking(allTimeStats)
+
+    return reservation.guestIds
+        .mapNotNull { guestId ->
+            val guest = guestsById[guestId] ?: return@mapNotNull null
+            val previousVisits = allReservations.filter {
+                guestId in it.guestIds && it.id != reservation.id && it.startDate < reservation.startDate
+            }
+            val startedVisits = startedReservations.filter { guestId in it.guestIds }
+            LiveGuestStats(
+                guestId = guestId,
+                firstName = guest.firstName,
+                lastName = guest.lastName,
+                age = (today.year - guest.birthYear.toInt()).coerceAtLeast(0),
+                isFirstVisit = previousVisits.isEmpty(),
+                firstVisitDate = startedVisits.minOfOrNull { it.startDate },
+                lastVisitDate = previousVisits.filter { it.endDate <= today }.maxOfOrNull { it.endDate },
+                yearsVisited = startedVisits.map { it.startDate.year }.distinct().sortedDescending(),
+                currentYear = currentYearRanking.periodStatsFor(guestId),
+                allTime = allTimeRanking.periodStatsFor(guestId),
+            )
+        }
+        .sortedWith(
+            compareBy<LiveGuestStats, Int?>(nullsLast()) { it.currentYear.daysRank }
+                .thenBy(nullsLast()) { it.allTime.daysRank }
+                .thenBy { it.lastName }
+                .thenBy { it.firstName },
+        )
+}
+
+private class PeriodRanking(private val stats: List<GuestVisitStats>) {
+    private val statsById = stats.associateBy { it.guestId }
+    private val visitsRanks = ranksBy { it.totalVisits }
+    private val daysRanks = ranksBy { it.totalDays }
+
+    fun periodStatsFor(guestId: String): GuestPeriodStats {
+        val guestStats = statsById[guestId]
+        return GuestPeriodStats(
+            totalVisits = guestStats?.totalVisits ?: 0,
+            totalDays = guestStats?.totalDays ?: 0,
+            visitsRank = visitsRanks[guestId],
+            daysRank = daysRanks[guestId],
+        )
+    }
+
+    // Standard competition ranking: tied guests share rank and the next rank is skipped (1, 2, 2, 4).
+    private fun ranksBy(selector: (GuestVisitStats) -> Int): Map<String, Int> {
+        val values = stats.map(selector)
+        return stats
+            .filter { it.totalVisits > 0 }
+            .associate { guestStats -> guestStats.guestId to 1 + values.count { it > selector(guestStats) } }
+    }
 }
