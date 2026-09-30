@@ -56,6 +56,33 @@ class GuestStatsCalculatorTest :
                 g2Stats.age shouldBe 29
             }
 
+            should("count visits by arrival date and days within the period for cross-period stays") {
+                val reservations = listOf(
+                    // Started in June, continues into July: July days but no July visit
+                    createReservation("1", LocalDate(2025, 6, 27), LocalDate(2025, 7, 14), listOf("g1", "g2")),
+                    // Started in July
+                    createReservation("2", LocalDate(2025, 7, 20), LocalDate(2025, 7, 23), listOf("g1")),
+                    // Started and ended in June: not present in July
+                    createReservation("3", LocalDate(2025, 6, 1), LocalDate(2025, 6, 3), listOf("g2")),
+                )
+
+                val result = aggregateGuestVisitStats(
+                    periodStart = LocalDate(2025, 7, 1),
+                    periodEndExclusive = LocalDate(2025, 8, 1),
+                    reservations = reservations,
+                    guestsById = guestsById,
+                    ageYear = 2025,
+                )
+
+                result shouldHaveSize 2
+                val g1 = result.single { it.guestId == "g1" }
+                g1.totalVisits shouldBe 1
+                g1.totalDays shouldBe 18 // 1-14 July (14) + 20-23 July (4)
+                val g2 = result.single { it.guestId == "g2" }
+                g2.totalVisits shouldBe 0
+                g2.totalDays shouldBe 14
+            }
+
             should("return empty list when no reservations are provided") {
                 val result = aggregateGuestVisitStats(
                     periodStart = LocalDate(2024, 1, 1),

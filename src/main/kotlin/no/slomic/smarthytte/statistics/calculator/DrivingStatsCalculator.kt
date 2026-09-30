@@ -5,15 +5,22 @@ package no.slomic.smarthytte.statistics.calculator
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
+import no.slomic.smarthytte.common.HOURS_PER_DAY
+import no.slomic.smarthytte.common.MINUTES_PER_HOUR
 import no.slomic.smarthytte.common.averageOrNullInt
+import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.formatClock
 import no.slomic.smarthytte.common.formatMinutes
 import no.slomic.smarthytte.common.minutesOfDayOslo
 import no.slomic.smarthytte.common.monthNameOf
 import no.slomic.smarthytte.common.round1
+import no.slomic.smarthytte.common.toOsloDate
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.statistics.model.MonthDrivingDistanceStats
 import no.slomic.smarthytte.statistics.model.YearDrivingDistanceStats
+import kotlin.time.Instant
+
+private const val MINUTES_PER_DAY = MINUTES_PER_HOUR * HOURS_PER_DAY
 
 fun calculateYearDrivingTimeStats(
     fromDate: LocalDate,
@@ -290,8 +297,9 @@ private fun List<Reservation>.avgArrivalCabinMinutes(fromDate: LocalDate, toDate
     mapNotNull { reservation ->
         val departure = reservation.toCabinDrivingDepartureDate ?: return@mapNotNull null
         if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
-        reservation.toCabinDrivingArrivalTime?.minutesOfDayOslo()
-    }.averageOrNullInt()
+        val departureTime = reservation.toCabinDrivingDepartureTime ?: return@mapNotNull null
+        reservation.toCabinDrivingArrivalTime?.minutesSinceDepartureDayOslo(departureTime)
+    }.averageOrNullInt()?.rem(MINUTES_PER_DAY)
 
 private fun List<Reservation>.avgDepartureCabinMinutes(fromDate: LocalDate, toDateExclusive: LocalDate): Int? =
     mapNotNull { reservation ->
@@ -304,5 +312,10 @@ private fun List<Reservation>.avgArrivalHomeMinutes(fromDate: LocalDate, toDateE
     mapNotNull { reservation ->
         val departure = reservation.fromCabinDrivingDepartureDate ?: return@mapNotNull null
         if (!departure.inPeriod(fromDate, toDateExclusive)) return@mapNotNull null
-        reservation.fromCabinDrivingArrivalTime?.minutesOfDayOslo()
-    }.averageOrNullInt()
+        val departureTime = reservation.fromCabinDrivingDepartureTime ?: return@mapNotNull null
+        reservation.fromCabinDrivingArrivalTime?.minutesSinceDepartureDayOslo(departureTime)
+    }.averageOrNullInt()?.rem(MINUTES_PER_DAY)
+
+// Minutes from midnight (Oslo) of the departure day, so an arrival after midnight counts as e.g. 24:04, not 00:04.
+private fun Instant.minutesSinceDepartureDayOslo(departureTime: Instant): Int =
+    departureTime.toOsloDate().daysUntilSafe(toOsloDate()) * MINUTES_PER_DAY + minutesOfDayOslo()

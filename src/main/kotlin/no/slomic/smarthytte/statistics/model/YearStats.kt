@@ -25,7 +25,9 @@ data class YearStats(
         "Guests who appear in this year's reservations but did not appear in any reservation in the previous year. Sorted by total days descending.",
     )
     val newGuests: List<GuestVisitStats>,
-    @JsonSchema.Description("All guests who appear in this year's reservations, sorted by total days descending.")
+    @JsonSchema.Description(
+        "All guests present in this year, sorted by total days descending. Visits count reservations that started in this year, days count days within this year.",
+    )
     val guests: List<GuestVisitStats>,
     @JsonSchema.Description(
         "Driving distance statistics for trips to, from, and at the cabin this year. Null if no vehicle trip data exists.",
@@ -76,15 +78,15 @@ data class YearDaysStats(
     )
     val totalDays: Int,
     @JsonSchema.Description(
-        "Minimum number of days of any single reservation in this year. Null if no reservations exist.",
+        "Shortest stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist.",
     )
     val minDays: Int?,
     @JsonSchema.Description(
-        "Maximum number of days of any single reservation in this year. Null if no reservations exist.",
+        "Longest stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist.",
     )
     val maxDays: Int?,
     @JsonSchema.Description(
-        "Average number of days per reservation in this year. Null if no reservations exist.",
+        "Average stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist.",
     )
     val avgDays: Double?,
     @JsonSchema.Description(
@@ -104,15 +106,15 @@ data class YearNightsStats(
     )
     val totalNights: Int,
     @JsonSchema.Description(
-        "Minimum number of nights of any single reservation in this year. Null if no reservations exist.",
+        "Shortest stay in nights (full duration) among reservations that started in this year. Null if no reservations exist.",
     )
     val minNights: Int?,
     @JsonSchema.Description(
-        "Maximum number of nights of any single reservation in this year. Null if no reservations exist.",
+        "Longest stay in nights (full duration) among reservations that started in this year. Null if no reservations exist.",
     )
     val maxNights: Int?,
     @JsonSchema.Description(
-        "Average number of nights per reservation in this year. Null if no reservations exist.",
+        "Average stay in nights (full duration) among reservations that started in this year. Null if no reservations exist.",
     )
     val avgNights: Double?,
     @JsonSchema.Description("Average number of occupied nights per calendar month (totalNights / 12).")
@@ -221,7 +223,7 @@ data class GuestVisitStats(
     val lastName: String,
     @JsonSchema.Description("Guest's age in the reference year (ageYear - birthYear).")
     val age: Int,
-    @JsonSchema.Description("Number of reservations the guest was part of in the period.")
+    @JsonSchema.Description("Number of reservations the guest was part of that started in the period (arrival date).")
     val totalVisits: Int,
     @JsonSchema.Description(
         "Total number of days the guest was present at the cabin in the period, counting only days that fall within the period boundary.",

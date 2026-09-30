@@ -18,18 +18,13 @@ fun calculateMonthlyGuestStats(
     guestsById: Map<String, Guest>,
     dates: MonthDates,
     allReservations: List<Reservation>,
-): List<GuestVisitStats> {
-    val overlappingReservations = allReservations.filter {
-        it.startDate < dates.firstOfNextMonth && it.endDate >= dates.firstOfMonth
-    }
-    return aggregateGuestVisitStats(
-        periodStart = dates.firstOfMonth,
-        periodEndExclusive = dates.firstOfNextMonth,
-        reservations = overlappingReservations,
-        guestsById = guestsById,
-        ageYear = year,
-    ).sortedWith(GuestVisitStats.COMPARATOR)
-}
+): List<GuestVisitStats> = aggregateGuestVisitStats(
+    periodStart = dates.firstOfMonth,
+    periodEndExclusive = dates.firstOfNextMonth,
+    reservations = allReservations,
+    guestsById = guestsById,
+    ageYear = year,
+).sortedWith(GuestVisitStats.COMPARATOR)
 
 data class YearGuestStats(
     val topGuestByDays: GuestVisitStats?,
@@ -39,9 +34,8 @@ data class YearGuestStats(
 
 fun computeYearGuestStats(
     year: Int,
-    yearReservations: List<Reservation>,
+    allReservations: List<Reservation>,
     guestsById: Map<String, Guest>,
-    byYear: Map<Int, List<Reservation>>,
 ): YearGuestStats {
     val jan1 = firstDayOfYear(year)
     val jan1Next = firstDayOfYearAfter(year)
@@ -49,15 +43,15 @@ fun computeYearGuestStats(
     val guestYearStats = aggregateGuestVisitStats(
         periodStart = jan1,
         periodEndExclusive = jan1Next,
-        reservations = yearReservations,
+        reservations = allReservations,
         guestsById = guestsById,
         ageYear = year,
     )
 
-    val prevYearGuests: Set<String> = byYear[year - 1]
-        ?.flatMap { it.guestIds }
-        ?.toSet()
-        ?: emptySet()
+    val prevYearGuests: Set<String> = allReservations
+        .filter { it.startDate.year == year - 1 }
+        .flatMap { it.guestIds }
+        .toSet()
 
     val newGuests = guestYearStats.filter { it.guestId !in prevYearGuests }.sortedWith(GuestVisitStats.COMPARATOR)
     val allGuestsSorted = guestYearStats.sortedWith(GuestVisitStats.COMPARATOR)
@@ -66,6 +60,11 @@ fun computeYearGuestStats(
     return YearGuestStats(topGuestByDays, newGuests, allGuestsSorted)
 }
 
+/**
+ * Aggregates visits and days per guest for the period. Visits are counted for reservations that started in the period
+ * (arrival date), while days are counted within the period for all overlapping reservations. Guests without any
+ * visits or days in the period are excluded.
+ */
 fun aggregateGuestVisitStats(
     periodStart: LocalDate,
     periodEndExclusive: LocalDate,
@@ -73,10 +72,12 @@ fun aggregateGuestVisitStats(
     guestsById: Map<String, Guest>,
     ageYear: Int,
 ): List<GuestVisitStats> {
-    if (reservations.isEmpty()) return emptyList()
-
-    val visitsByGuest = reservations.visitsByGuest()
-    val daysByGuest = reservations.daysByGuest(periodStart, periodEndExclusive)
+    val visitsByGuest = reservations
+        .filter { it.startDate >= periodStart && it.startDate < periodEndExclusive }
+        .visitsByGuest()
+    val daysByGuest = reservations
+        .daysByGuest(periodStart, periodEndExclusive)
+        .filterValues { it > 0 }
 
     return (visitsByGuest.keys + daysByGuest.keys)
         .toSet()
@@ -110,7 +111,7 @@ fun calculateLiveGuestStats(
     val currentYearStats = aggregateGuestVisitStats(
         periodStart = firstDayOfYear(today.year),
         periodEndExclusive = periodEndExclusive,
-        reservations = startedReservations.filter { it.startDate.year == today.year },
+        reservations = startedReservations,
         guestsById = guestsById,
         ageYear = today.year,
     )

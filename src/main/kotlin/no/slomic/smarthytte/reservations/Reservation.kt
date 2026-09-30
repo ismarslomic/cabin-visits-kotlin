@@ -45,6 +45,10 @@ data class Reservation(
     val durationNights: Int
         get() = startDate.daysUntilSafe(endExclusive = endDate)
 
+    // Calendar days of the full stay, including both arrival and departure day
+    val durationDays: Int
+        get() = durationNights + 1
+
     val toCabinDrivingDuration: Duration?
         get() = toCabinVehicleTrips
             .takeIf { it.isNotEmpty() }

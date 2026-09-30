@@ -13,9 +13,8 @@ import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.countByMonth
-import no.slomic.smarthytte.reservations.daysByGuest
-import no.slomic.smarthytte.reservations.visitsByGuest
 import no.slomic.smarthytte.statistics.calculator.MonthDates
+import no.slomic.smarthytte.statistics.calculator.aggregateGuestVisitStats
 import no.slomic.smarthytte.statistics.calculator.calculateLiveGuestStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingDistanceStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingMomentStats
@@ -38,6 +37,7 @@ import no.slomic.smarthytte.statistics.model.CurrentYearStats
 import no.slomic.smarthytte.statistics.model.GenderDistribution
 import no.slomic.smarthytte.statistics.model.GuestRanking
 import no.slomic.smarthytte.statistics.model.GuestStats
+import no.slomic.smarthytte.statistics.model.GuestVisitStats
 import no.slomic.smarthytte.statistics.model.LiveStats
 import no.slomic.smarthytte.statistics.model.MonthStats
 import no.slomic.smarthytte.statistics.model.MonthVisitsStats
@@ -102,7 +102,7 @@ class StatsService(
 
     suspend fun getCurrentYearStats(): CurrentYearStats {
         val currentYear = osloDateNow().year
-        val allReservations = reservationRepository.allReservations()
+        val allReservations = startedReservations()
         val yearReservations = allReservations.filter { it.startDate.year == currentYear }
         val totalNights = yearReservations.sumOf { it.durationNights }
         val totalKm =
@@ -120,12 +120,12 @@ class StatsService(
     }
 
     suspend fun getAvailableYears(): List<Int> {
-        val allReservations = reservationRepository.allReservations()
+        val allReservations = startedReservations()
         return allReservations.map { it.startDate.year }.distinct().sorted()
     }
 
     suspend fun getYearStats(year: Int): YearStats {
-        val allReservations = reservationRepository.allReservations()
+        val allReservations = startedReservations()
         val allGuests = guestRepository.allGuests()
         val guestsById = allGuests.associateBy { it.id }
         val byYear = allReservations.groupBy { it.startDate.year }
@@ -138,7 +138,7 @@ class StatsService(
         val daysStats = calculateYearDaysStats(year, allReservations, yearReservations)
         val nightsStats = calculateYearNightsStats(year, allReservations, yearReservations)
         val occupancy = computeYearOccupancy(year, allReservations)
-        val guestStats = computeYearGuestStats(year, yearReservations, guestsById, byYear)
+        val guestStats = computeYearGuestStats(year, allReservations, guestsById)
         val drivingDistance = calculateYearDrivingDistanceStats(jan1, jan1Next, allReservations)
         val ev = computeYearEvStats(yearReservations)
 
@@ -177,7 +177,7 @@ class StatsService(
 
     suspend fun getMonthStats(year: Int, month: Int): MonthStats {
         val kotlinMonth = Month.entries[month - 1]
-        val allReservations = reservationRepository.allReservations()
+        val allReservations = startedReservations()
         val allGuests = guestRepository.allGuests()
         val guestsById = allGuests.associateBy { it.id }
         val byYear = allReservations.groupBy { it.startDate.year }
@@ -187,30 +187,23 @@ class StatsService(
 
     suspend fun getGuestStats(): GuestStats {
         val allGuests = guestRepository.allGuests()
-        val allReservations = reservationRepository.allReservations()
+        val allReservations = startedReservations()
         val guestsById = allGuests.associateBy { it.id }
 
         val firstYear = allReservations.minOfOrNull { it.startDate.year } ?: osloDateNow().year
         val jan1 = firstDayOfYear(firstYear)
         val jan1Next = firstDayOfYearAfter(osloDateNow().year)
 
-        val visitsByGuest = allReservations.visitsByGuest()
-        val daysByGuest = allReservations.daysByGuest(jan1, jan1Next)
+        val guestVisitStats = aggregateGuestVisitStats(jan1, jan1Next, allReservations, guestsById, osloDateNow().year)
 
-        val rankings =
-            (visitsByGuest.keys + daysByGuest.keys).toSet().mapNotNull { guestId ->
-                val guest = guestsById[guestId] ?: return@mapNotNull null
-                GuestRanking(
-                    guestId = guestId,
-                    firstName = guest.firstName,
-                    lastName = guest.lastName,
-                    totalVisits = visitsByGuest[guestId] ?: 0,
-                    totalDays = daysByGuest[guestId] ?: 0,
-                )
-            }
-
-        val topByVisits = rankings.sortedByDescending { it.totalVisits }.take(TOP_GUESTS_LIMIT)
-        val topByDays = rankings.sortedByDescending { it.totalDays }.take(TOP_GUESTS_LIMIT)
+        val topByVisits = guestVisitStats
+            .sortedWith(compareByDescending<GuestVisitStats> { it.totalVisits }.then(GuestVisitStats.COMPARATOR))
+            .take(TOP_GUESTS_LIMIT)
+            .map { it.toGuestRanking() }
+        val topByDays = guestVisitStats
+            .sortedWith(GuestVisitStats.COMPARATOR)
+            .take(TOP_GUESTS_LIMIT)
+            .map { it.toGuestRanking() }
 
         val maleCount = allGuests.count { it.gender == Gender.MALE }
         val femaleCount = allGuests.count { it.gender == Gender.FEMALE }
@@ -245,6 +238,18 @@ class StatsService(
             ageGroups = ageGroups,
         )
     }
+
+    // Year, month and guest stats only count reservations that have started, i.e. future bookings are excluded
+    private suspend fun startedReservations(): List<Reservation> =
+        reservationRepository.allReservations().filter { it.hasStarted }
+
+    private fun GuestVisitStats.toGuestRanking() = GuestRanking(
+        guestId = guestId,
+        firstName = firstName,
+        lastName = lastName,
+        totalVisits = totalVisits,
+        totalDays = totalDays,
+    )
 
     private fun buildMonthStats(
         year: Int,

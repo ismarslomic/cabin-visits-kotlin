@@ -83,6 +83,10 @@ curl http://localhost:8079
 
 # Cabin Usage Metrics
 
+All statistics only include visits that have **started** (arrival date is today or earlier). Future bookings are
+excluded, while an ongoing visit is included. The live endpoint (`/api/stats`) is the exception, since it also shows the
+next upcoming visit.
+
 ## Visits
 
 **Definition**  
@@ -185,7 +189,7 @@ in which the **visit started** (arrival date).
 
 **Source**  
 Calculated from the total number of **Days** for a single visit. The complete stay is always associated with the arrival
-period.
+period. The same rule applies when a stay is measured in **Nights**.
 
 **Example**
 
@@ -195,17 +199,40 @@ Stay:
 
 Result:
 
-- Duration: **11-day stay**
+- Duration: **11-day stay** (**10 nights**)
 - Arrival month: **March**
 
 Examples of period-based statistics:
 
 - March:
-    - Longest stay: **11 days**
-    - Average stay: **11 days**
+    - Longest stay: **11 days** (**10 nights**)
+    - Average stay: **11 days** (**10 nights**)
 - April:
     - Longest stay: **—**
     - Average stay: **—**
+
+---
+
+## Guests
+
+**Definition**  
+Visits and days per guest within a specified period (e.g. a month or year).
+
+**Source**  
+Guest **visits** follow the **Visits** definition: each stay is counted once per guest, based on its **arrival date**.
+Guest **days** follow the **Days** definition: all calendar dates within the selected period that overlap the guest's
+stays.
+
+**Example**
+
+Stay with guest A:
+
+- 2026-03-27 18:00 → 2026-04-06 15:00
+
+Result:
+
+- March: guest A has **1 visit** and **5 days**
+- April: guest A has **0 visits** and **6 days**
 
 ## Metrics
 

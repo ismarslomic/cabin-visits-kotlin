@@ -40,7 +40,7 @@ class VisitStatsCalculatorTest :
                 result.totalDays shouldBe 10
             }
 
-            should("calculate min, max and avg days clipped to month boundary") {
+            should("calculate min, max and avg days using full stay duration attributed to the arrival month") {
                 val year = 2024
                 val month = Month.MARCH
                 val dates = MonthDates(year, month)
@@ -49,25 +49,28 @@ class VisitStatsCalculatorTest :
                 val r1 = createReservation("r1", LocalDate(2024, 3, 1), LocalDate(2024, 3, 4))
                 // Fully within March: startDate=10, endDate=17 -> 8 days (10-17)
                 val r2 = createReservation("r2", LocalDate(2024, 3, 10), LocalDate(2024, 3, 17))
-                // Spans March-April: endDate=April 6 inclusive, clips to March 31 -> days 27-31 = 5 days
+                // Spans March-April: full stay 27 March - 6 April = 11 days, attributed to March
                 val r3 = createReservation("r3", LocalDate(2024, 3, 27), LocalDate(2024, 4, 6))
+                // Started in February, checks out in March: not a March stay
+                val r4 = createReservation("r4", LocalDate(2024, 2, 27), LocalDate(2024, 3, 1))
 
                 val result = calculateMonthlyDaysStats(
-                    allReservations = listOf(r1, r2, r3),
+                    allReservations = listOf(r1, r2, r3, r4),
                     dates = dates,
                 )
 
                 result.minDays shouldBe 4
-                result.maxDays shouldBe 8 // r3 clips to 5, so r2's 8 is still max
-                result.avgDays shouldBe 5.7 // (4 + 8 + 5) / 3
+                result.maxDays shouldBe 11
+                result.avgDays shouldBe 7.7 // (4 + 8 + 11) / 3
+                result.totalDays shouldBe 17 // days within March: 1-4, 10-17, 27-31 (r4 checkout day 1 overlaps r1)
             }
 
-            should("include cross-month reservation in min, max and avg for the overlapping month") {
+            should("exclude stay started in previous month from min, max and avg") {
                 val year = 2024
                 val month = Month.APRIL
                 val dates = MonthDates(year, month)
 
-                // Spans March-April: endDate=April 6 inclusive -> days in April: 1,2,3,4,5,6 = 6 days
+                // Spans March-April: attributed to March, so April has no stays
                 val r1 = createReservation("r1", LocalDate(2024, 3, 27), LocalDate(2024, 4, 6))
 
                 val result = calculateMonthlyDaysStats(
@@ -75,9 +78,10 @@ class VisitStatsCalculatorTest :
                     dates = dates,
                 )
 
-                result.minDays shouldBe 6
-                result.maxDays shouldBe 6
-                result.avgDays shouldBe 6.0
+                result.minDays shouldBe null
+                result.maxDays shouldBe null
+                result.avgDays shouldBe null
+                result.totalDays shouldBe 6 // days within April: 1-6
             }
 
             should("calculate totalDaysComparedToPreviousMonth") {
@@ -139,7 +143,7 @@ class VisitStatsCalculatorTest :
                 result.totalNights shouldBe 9
             }
 
-            should("calculate min, max and avg nights clipped to month boundary") {
+            should("calculate min, max and avg nights using full stay duration attributed to the arrival month") {
                 val year = 2024
                 val month = Month.MARCH
                 val dates = MonthDates(year, month)
@@ -148,17 +152,20 @@ class VisitStatsCalculatorTest :
                 val r1 = createReservation("r1", LocalDate(2024, 3, 1), LocalDate(2024, 3, 4))
                 // Fully within March: 7 nights (10-16)
                 val r2 = createReservation("r2", LocalDate(2024, 3, 10), LocalDate(2024, 3, 17))
-                // Spans March-April: 10 nights total, clips to 5 nights in March (27,28,29,30,31)
+                // Spans March-April: full stay = 10 nights, attributed to March
                 val r3 = createReservation("r3", LocalDate(2024, 3, 27), LocalDate(2024, 4, 6))
+                // Started in February, checks out on 1 March: not a March stay, so no 0-night stay in March
+                val r4 = createReservation("r4", LocalDate(2024, 2, 27), LocalDate(2024, 3, 1))
 
                 val result = calculateMonthlyNightsStats(
-                    allReservations = listOf(r1, r2, r3),
+                    allReservations = listOf(r1, r2, r3, r4),
                     dates = dates,
                 )
 
                 result.minNights shouldBe 3
-                result.maxNights shouldBe 7 // r3 clips to 5, so r2's 7 is still max
-                result.avgNights shouldBe 5.0 // (3 + 7 + 5) / 3
+                result.maxNights shouldBe 10
+                result.avgNights shouldBe 6.7 // (3 + 7 + 10) / 3
+                result.totalNights shouldBe 15 // nights within March: 1-3, 10-16, 27-31
             }
 
             should("calculate totalNightsComparedToPreviousMonth") {
@@ -177,6 +184,29 @@ class VisitStatsCalculatorTest :
                 )
 
                 result.comparedToPreviousMonth shouldBe 2 // 5 - 3
+            }
+        }
+
+        context("calculateYearDaysStats and calculateYearNightsStats") {
+            should("use full stay duration for a stay spanning new year, attributed to the arrival year") {
+                // 28 December 2024 - 3 January 2025: 7 days, 6 nights
+                val newYear = createReservation("r1", LocalDate(2024, 12, 28), LocalDate(2025, 1, 3))
+                val short = createReservation("r2", LocalDate(2024, 6, 1), LocalDate(2024, 6, 3))
+                val all = listOf(newYear, short)
+                val yearReservations = all.filter { it.startDate.year == 2024 }
+
+                val days = calculateYearDaysStats(2024, all, yearReservations)
+                val nights = calculateYearNightsStats(2024, all, yearReservations)
+
+                days.minDays shouldBe 3
+                days.maxDays shouldBe 7
+                days.avgDays shouldBe 5.0
+                days.monthLongestVisit?.monthNumber shouldBe 12
+                days.monthLongestVisit?.daysCount shouldBe 7
+                days.totalDays shouldBe 7 // days within 2024: 1-3 June, 28-31 December
+                nights.minNights shouldBe 2
+                nights.maxNights shouldBe 6
+                nights.totalNights shouldBe 6 // nights within 2024: 1-2 June, 28-31 December
             }
         }
 

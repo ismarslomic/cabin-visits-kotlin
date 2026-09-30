@@ -257,6 +257,60 @@ class DrivingStatsCalculatorTest :
                 result.avgArrivalHomeMinutes shouldBe 1020
                 result.avgArrivalHome shouldBe "17:00"
             }
+
+            should("treat arrival after midnight as later than arrival before midnight when averaging") {
+                // Arrival home 00:04 Oslo the day after departure, and 14:54 Oslo on the same day as departure
+                val lateStart = Instant.parse("2025-07-08T16:57:00Z") // 18:57 Oslo (UTC+2)
+                val lateEnd = Instant.parse("2025-07-08T22:04:00Z") // 00:04 Oslo next day
+                val earlyStart = Instant.parse("2025-07-23T10:00:00Z") // 12:00 Oslo
+                val earlyEnd = Instant.parse("2025-07-23T12:54:00Z") // 14:54 Oslo
+
+                val reservations = listOf(
+                    Reservation(
+                        id = "r1",
+                        startTime = Instant.parse("2025-07-01T00:00:00Z"),
+                        endTime = Instant.parse("2025-07-08T00:00:00Z"),
+                        guestIds = emptyList(),
+                        fromCabinVehicleTrips = listOf(createTrip(lateStart, lateEnd)),
+                    ),
+                    Reservation(
+                        id = "r2",
+                        startTime = Instant.parse("2025-07-20T00:00:00Z"),
+                        endTime = Instant.parse("2025-07-23T00:00:00Z"),
+                        guestIds = emptyList(),
+                        fromCabinVehicleTrips = listOf(createTrip(earlyStart, earlyEnd)),
+                    ),
+                )
+
+                val result = calculateYearDrivingMomentStats(LocalDate(2025, 1, 1), LocalDate(2026, 1, 1), reservations)
+
+                // (24:04 + 14:54) / 2 = 19:29 (1169 min), not (00:04 + 14:54) / 2 = 07:29
+                result.avgArrivalHomeMinutes shouldBe 1169
+                result.avgArrivalHome shouldBe "19:29"
+            }
+
+            should("wrap average arrival time past midnight back into a single day") {
+                // Both arrivals after midnight Oslo: 00:10 and 00:30 the day after departure
+                val t1Start = Instant.parse("2025-01-10T20:00:00Z") // 21:00 Oslo (UTC+1)
+                val t1End = Instant.parse("2025-01-10T23:10:00Z") // 00:10 Oslo next day
+                val t2Start = Instant.parse("2025-01-17T20:00:00Z")
+                val t2End = Instant.parse("2025-01-17T23:30:00Z") // 00:30 Oslo next day
+
+                val reservations = listOf(t1Start to t1End, t2Start to t2End).mapIndexed { i, (start, end) ->
+                    Reservation(
+                        id = "r$i",
+                        startTime = start,
+                        endTime = start,
+                        guestIds = emptyList(),
+                        toCabinVehicleTrips = listOf(createTrip(start, end)),
+                    )
+                }
+
+                val result = calculateYearDrivingMomentStats(LocalDate(2025, 1, 1), LocalDate(2026, 1, 1), reservations)
+
+                result.avgArrivalCabinMinutes shouldBe 20
+                result.avgArrivalCabin shouldBe "00:20"
+            }
         }
 
         context("calculateMonthDrivingTimeStats") {

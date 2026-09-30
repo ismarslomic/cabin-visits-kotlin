@@ -23,7 +23,9 @@ data class MonthStats(
     val nights: MonthNightsStats,
     @JsonSchema.Description("Occupancy percentages for this month across days and weeks.")
     val occupancy: OccupancyStats,
-    @JsonSchema.Description("All guests present in this month, sorted by total days descending.")
+    @JsonSchema.Description(
+        "All guests present in this month, sorted by total days descending. Visits count reservations that started in this month, days count days within this month.",
+    )
     val guests: List<GuestVisitStats>,
     @JsonSchema.Description(
         "Driving distance statistics for trips to, from, and at the cabin in this month. Null if no vehicle trip data exists.",
@@ -64,15 +66,15 @@ data class MonthDaysStats(
     )
     val totalDays: Int,
     @JsonSchema.Description(
-        "Minimum number of days any single reservation overlapped with this month. Null if no reservations overlap.",
+        "Shortest stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month.",
     )
     val minDays: Int?,
     @JsonSchema.Description(
-        "Maximum number of days any single reservation overlapped with this month. Null if no reservations overlap.",
+        "Longest stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month.",
     )
     val maxDays: Int?,
     @JsonSchema.Description(
-        "Average number of days per reservation overlapping this month. Null if no reservations overlap.",
+        "Average stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month.",
     )
     val avgDays: Double?,
     @JsonSchema.Description(
@@ -92,15 +94,15 @@ data class MonthNightsStats(
     )
     val totalNights: Int,
     @JsonSchema.Description(
-        "Minimum number of nights any single reservation overlapped with this month. Null if no reservations overlap.",
+        "Shortest stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month.",
     )
     val minNights: Int?,
     @JsonSchema.Description(
-        "Maximum number of nights any single reservation overlapped with this month. Null if no reservations overlap.",
+        "Longest stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month.",
     )
     val maxNights: Int?,
     @JsonSchema.Description(
-        "Average number of nights per reservation overlapping this month. Null if no reservations overlap.",
+        "Average stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month.",
     )
     val avgNights: Double?,
     @JsonSchema.Description(

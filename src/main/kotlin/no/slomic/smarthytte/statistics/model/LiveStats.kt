@@ -78,7 +78,7 @@ data class LiveGuestStats(
 
 @Serializable
 data class GuestPeriodStats(
-    @JsonSchema.Description("Number of started reservations the guest was part of in the period.")
+    @JsonSchema.Description("Number of reservations the guest was part of that started in the period (arrival date).")
     val totalVisits: Int,
     @JsonSchema.Description(
         "Number of days the guest was present at the cabin in the period, up to and including today.",
