@@ -93,12 +93,6 @@ data class Reservation(
         get() = fromCabinVehicleTrips.takeIf { it.isNotEmpty() }
             ?.let { trips -> trips.sumOf { it.averageSpeed } / trips.size }
 
-    fun nightsInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
-        val overlapStart = maxOf(startDate, periodStart)
-        val overlapEndExclusive = minOf(endDate, periodEndExclusive)
-        return if (overlapStart < overlapEndExclusive) overlapStart.daysUntilSafe(overlapEndExclusive) else 0
-    }
-
     fun daysInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
         val endDateInclusive = endDate.plus(DatePeriod(days = 1))
         val overlapStart = maxOf(startDate, periodStart)
