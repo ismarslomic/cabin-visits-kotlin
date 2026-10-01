@@ -1,5 +1,20 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
+// Build-classpath only (not shipped in the app): the Ktor plugin pulls in vulnerable transitive versions via
+// Shadow (log4j, plexus-utils) and Jib (jackson).
+// TODO: Force patched versions until the Ktor plugin ships fixes, then remove these constraints.
+buildscript {
+    dependencies {
+        constraints {
+            classpath(libs.jackson.core)
+            classpath(libs.jackson.databind)
+            classpath(libs.log4j.api)
+            classpath(libs.log4j.core)
+            classpath(libs.plexus.utils)
+        }
+    }
+}
+
 plugins {
     application
     alias(libs.plugins.jacoco)
