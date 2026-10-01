@@ -69,8 +69,8 @@ private fun Route.describeLiveStats() = describe {
     tag("Stats")
     summary = "Live occupancy status"
     description = "Returns whether the cabin is currently occupied, details about the ongoing and next " +
-        "reservation (dates, guest names, remaining/upcoming nights), and all-time totals (visits, nights, " +
-        "unique guests). Suitable for a smart mirror or real-time dashboard."
+        "reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, " +
+        "unique guests) excluding future bookings. Suitable for a smart mirror or real-time dashboard."
     responses {
         HttpStatusCode.OK { description = "Live occupancy status." }
     }

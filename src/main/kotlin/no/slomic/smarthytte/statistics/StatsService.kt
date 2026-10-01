@@ -5,8 +5,8 @@ import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.common.monthNameOf
-import no.slomic.smarthytte.common.osloDateNow
 import no.slomic.smarthytte.common.round1
+import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
@@ -66,7 +66,7 @@ class StatsService(
     private val guestRepository: GuestRepository,
 ) {
     suspend fun getLiveStats(): LiveStats {
-        val today = osloDateNow()
+        val today = utcDateNow()
         val allReservations = reservationRepository.allReservations()
         val allGuests = guestRepository.allGuests()
         val guestsById = allGuests.associateBy { it.id }
@@ -88,20 +88,21 @@ class StatsService(
                 NextReservationInfo(r.startDate, r.endDate, guests, daysUntil)
             }
 
-        val allTimeNights = allReservations.sumOf { it.durationNights }
+        // All-time totals only count reservations that have started, i.e. future bookings are excluded
+        val startedReservations = allReservations.filter { it.hasStarted }
 
         return LiveStats(
             isOccupied = current != null,
             currentReservation = currentInfo,
             nextReservation = nextInfo,
-            allTimeVisits = allReservations.size,
-            allTimeNights = allTimeNights,
+            allTimeVisits = startedReservations.size,
+            allTimeNights = startedReservations.sumOf { it.durationNights },
             allTimeUniqueGuests = allGuests.size,
         )
     }
 
     suspend fun getCurrentYearStats(): CurrentYearStats {
-        val currentYear = osloDateNow().year
+        val currentYear = utcDateNow().year
         val allReservations = startedReservations()
         val yearReservations = allReservations.filter { it.startDate.year == currentYear }
         val totalNights = yearReservations.sumOf { it.durationNights }
@@ -190,11 +191,12 @@ class StatsService(
         val allReservations = startedReservations()
         val guestsById = allGuests.associateBy { it.id }
 
-        val firstYear = allReservations.minOfOrNull { it.startDate.year } ?: osloDateNow().year
+        val currentYear = utcDateNow().year
+        val firstYear = allReservations.minOfOrNull { it.startDate.year } ?: currentYear
         val jan1 = firstDayOfYear(firstYear)
-        val jan1Next = firstDayOfYearAfter(osloDateNow().year)
+        val jan1Next = firstDayOfYearAfter(currentYear)
 
-        val guestVisitStats = aggregateGuestVisitStats(jan1, jan1Next, allReservations, guestsById, osloDateNow().year)
+        val guestVisitStats = aggregateGuestVisitStats(jan1, jan1Next, allReservations, guestsById, currentYear)
 
         val topByVisits = guestVisitStats
             .sortedWith(compareByDescending<GuestVisitStats> { it.totalVisits }.then(GuestVisitStats.COMPARATOR))
@@ -216,7 +218,6 @@ class StatsService(
                 femalePercent = (femaleCount / total * PERCENT_FACTOR).round1(),
             )
 
-        val currentYear = osloDateNow().year
         val ageBuckets =
             listOf(
                 "0-12" to (0..AGE_CHILD_MAX),

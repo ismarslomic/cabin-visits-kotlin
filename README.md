@@ -83,9 +83,9 @@ curl http://localhost:8079
 
 # Cabin Usage Metrics
 
-All statistics only include visits that have **started** (arrival date is today or earlier). Future bookings are
-excluded, while an ongoing visit is included. The live endpoint (`/api/stats`) is the exception, since it also shows the
-next upcoming visit.
+All statistics only include visits that have **started** (arrival date is today or earlier, in UTC). Future bookings
+are excluded, while an ongoing visit is included. The only exception is the next upcoming visit shown by the live
+endpoint (`/api/stats`).
 
 ## Visits
 

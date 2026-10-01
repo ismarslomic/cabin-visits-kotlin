@@ -14,9 +14,13 @@ data class LiveStats(
     val currentReservation: CurrentReservationInfo?,
     @JsonSchema.Description("Details about the next upcoming reservation. Null if no future reservation exists.")
     val nextReservation: NextReservationInfo?,
-    @JsonSchema.Description("Total number of reservations ever recorded, across all years.")
+    @JsonSchema.Description(
+        "Total number of reservations that have started, across all years. Future bookings are excluded.",
+    )
     val allTimeVisits: Int,
-    @JsonSchema.Description("Total number of nights spent at the cabin across all reservations ever recorded.")
+    @JsonSchema.Description(
+        "Total number of nights across all reservations that have started. Future bookings are excluded.",
+    )
     val allTimeNights: Int,
     @JsonSchema.Description("Total number of unique guests registered in the system.")
     val allTimeUniqueGuests: Int,
