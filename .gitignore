@@ -49,3 +49,6 @@ data
 
 ### Local Docker usage
 docker
+
+### Claude
+.claude/plans/**
