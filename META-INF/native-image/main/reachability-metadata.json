@@ -210,6 +210,12 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setAuthorization",
+          "parameterTypes": [
             "java.util.List"
           ]
         },
@@ -1115,6 +1121,15 @@
     },
     {
       "type": "io.ktor.network.selector.SelectableBase"
+    },
+    {
+      "type": "io.ktor.openapi.JsonSchemaInference"
+    },
+    {
+      "type": "io.ktor.openapi.Operation"
+    },
+    {
+      "type": "io.ktor.openapi.Operation$Builder"
     },
     {
       "type": "io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider"

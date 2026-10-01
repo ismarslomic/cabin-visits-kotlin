@@ -447,6 +447,24 @@ class ReservationRepositoryTest :
             reservationFromList.fromCabinVehicleTrips shouldHaveSize 1
         }
 
+        "reading reservation should return linked vehicle trips sorted by start time" {
+            val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
+            val laterLeg = createTrip("stop", CABIN_CITY_NAME, "2025-01-01T12:30:00Z", "2025-01-01T13:00:00Z", "trip2")
+            val firstLeg = createTrip(HOME_CITY_NAME, "stop", "2025-01-01T10:00:00Z", "2025-01-01T12:00:00Z", "trip1")
+
+            // Stored and linked in reverse chronological order
+            vehicleTripRepository.addOrUpdate(laterLeg)
+            vehicleTripRepository.addOrUpdate(firstLeg)
+            repository.addOrUpdate(reservation)
+            repository.addVehicleTripLink(reservation.id, laterLeg.id, ReservationVehicleTripType.TO_CABIN)
+            repository.addVehicleTripLink(reservation.id, firstLeg.id, ReservationVehicleTripType.TO_CABIN)
+
+            repository.reservationById(reservation.id)!!.toCabinVehicleTrips.map { it.id } shouldBe
+                listOf(firstLeg.id, laterLeg.id)
+            repository.allReservations().single().toCabinVehicleTrips.map { it.id } shouldBe
+                listOf(firstLeg.id, laterLeg.id)
+        }
+
         "reading reservation without linked vehicle trips should return empty vehicle trip lists" {
             repository.addOrUpdate(reservation)
 

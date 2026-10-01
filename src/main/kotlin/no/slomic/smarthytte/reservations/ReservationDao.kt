@@ -80,7 +80,7 @@ fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap
     description = dao.description,
     startTime = dao.startTime,
     endTime = dao.endTime,
-    guestIds = listOf(),
+    guestIds = dao.guests.map { it.id.value }.sorted(),
     toCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, TO_CABIN),
     atCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, AT_CABIN),
     fromCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, FROM_CABIN),
@@ -110,7 +110,8 @@ fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap
  * @param vehicleTrips a collection of `VehicleTripEntity` objects to be converted.
  * @param tripTypes a map where the key represents a vehicle trip ID and the value corresponds to a trip type name.
  * @param tripType the specific trip type to filter the vehicle trips.
- * @return a list of `VehicleTrip` objects that match the provided trip type or an empty list if no matches are found.
+ * @return a list of `VehicleTrip` objects that match the provided trip type, sorted by start time, or an empty list if
+ * no matches are found.
  */
 private fun daoToModel(
     vehicleTrips: SizedIterable<VehicleTripEntity>,
@@ -119,3 +120,4 @@ private fun daoToModel(
 ): List<VehicleTrip> = vehicleTrips
     .filter { tripTypes[it.id.value] == tripType.name }
     .map { daoToModel(it) }
+    .sortedBy { it.startTime }

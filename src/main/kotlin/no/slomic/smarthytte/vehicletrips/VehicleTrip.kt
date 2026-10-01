@@ -1,5 +1,7 @@
 package no.slomic.smarthytte.vehicletrips
 
+import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.common.toUtcDate
 import kotlin.time.Duration
 import kotlin.time.Instant
 
@@ -28,6 +30,9 @@ data class VehicleTrip(
     val extraStops: List<String> = listOf(),
     val notionId: String? = null,
 ) {
+    val startDate: LocalDate
+        get() = startTime.toUtcDate()
+
     override fun toString(): String {
         val extraStopCityNames =
             if (extraStops.isEmpty()) {

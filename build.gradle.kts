@@ -15,6 +15,13 @@ plugins {
 group = "no.slomic.smarthytte"
 version = "0.0.1"
 
+ktor {
+    openApi {
+        enabled = true
+        codeInferenceEnabled = true
+    }
+}
+
 application {
     mainClass.set("no.slomic.smarthytte.ApplicationKt")
 
@@ -30,6 +37,7 @@ dependencies {
     implementation(libs.bundles.database)
     implementation(libs.bundles.google.calendar)
     implementation(libs.bundles.ktor)
+    implementation(libs.ktor.server.routing.openapi)
     implementation(libs.bundles.metrics)
     implementation(libs.hoplite.yaml)
     implementation(libs.influxdb.client)
@@ -58,7 +66,7 @@ graalvmNative {
             buildArgs.addAll(additionalArgs)
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
-                "--initialize-at-build-time=io.ktor,kotlin",
+                "--initialize-at-build-time=io.ktor,kotlin,kotlinx.coroutines,kotlinx.io,kotlinx.serialization",
                 "--initialize-at-run-time=io.ktor.util.NonceKt",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName\$Key",
@@ -121,7 +129,7 @@ graalvmNative {
             buildArgs.addAll(
                 "--initialize-at-build-time=ch.qos.logback",
                 "--initialize-at-build-time=io.kotest",
-                "--initialize-at-build-time=io.ktor,kotlin",
+                "--initialize-at-build-time=io.ktor,kotlin,kotlinx.coroutines,kotlinx.io,kotlinx.serialization",
                 "--initialize-at-run-time=io.ktor.util.NonceKt",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineDispatcher\$Key",
                 "--initialize-at-build-time=kotlinx.coroutines.CoroutineName",

@@ -34,6 +34,9 @@ import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
+import no.slomic.smarthytte.statistics.StatsService
+import no.slomic.smarthytte.statistics.configureOpenApi
+import no.slomic.smarthytte.statistics.configureStatsRoutes
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
@@ -123,6 +126,11 @@ fun Application.module() {
 
     // Configure Ktor routing (after the initial load is completed)
     configureRouting()
+
+    // Configure stats REST API
+    val statsService = StatsService(reservationRepository, SqliteGuestRepository())
+    configureStatsRoutes(statsService)
+    configureOpenApi()
 }
 
 /***
