@@ -137,6 +137,7 @@ fun calculateLiveGuestStats(
                 firstName = guest.firstName,
                 lastName = guest.lastName,
                 age = (today.year - guest.birthYear.toInt()).coerceAtLeast(0),
+                isFamily = guest.isFamily,
                 isFirstVisit = previousVisits.isEmpty(),
                 firstVisitDate = startedVisits.minOfOrNull { it.startDate },
                 lastVisitDate = previousVisits.filter { it.endDate <= today }.maxOfOrNull { it.endDate },

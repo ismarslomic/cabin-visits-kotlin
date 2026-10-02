@@ -99,6 +99,31 @@ class GuestRepositoryTest :
             }
         }
 
+        "add or update should store isFamily" {
+            val familyGuest = guest.copy(isFamily = true)
+            repository.addOrUpdate(familyGuest)
+
+            repository.guestById(guest.id) shouldBe familyGuest
+        }
+
+        "add or update should store avatar image in the same write and only update when it changes" {
+            val image = byteArrayOf(1, 2, 3)
+
+            repository.addOrUpdate(guest, image) shouldBe PersistenceResult.ADDED
+            repository.avatarImageById(guest.id) shouldBe image
+
+            repository.addOrUpdate(guest, image) shouldBe PersistenceResult.NO_ACTION
+
+            val newImage = byteArrayOf(4, 5)
+            repository.addOrUpdate(guest, newImage) shouldBe PersistenceResult.UPDATED
+            repository.avatarImageById(guest.id) shouldBe newImage
+
+            repository.addOrUpdate(guest, guestAvatarImage = null) shouldBe PersistenceResult.UPDATED
+            repository.avatarImageById(guest.id).shouldBeNull()
+
+            transaction { GuestEntity.findById(guest.id)!!.version shouldBe 3 }
+        }
+
         "delete should remove reservation guests from the intermediate table (cascade)" {
             val reservationRepository: ReservationRepository = SqliteReservationRepository()
             repository.addOrUpdate(guest)
@@ -134,6 +159,7 @@ private fun GuestEntity.shouldBeEqualToGuest(
     email shouldBe other.email
     gender shouldBe other.gender
     notionId shouldBe other.notionId
+    isFamily shouldBe other.isFamily
 
     if (shouldCreatedTimeBeNull) {
         createdTime.shouldBeNull()

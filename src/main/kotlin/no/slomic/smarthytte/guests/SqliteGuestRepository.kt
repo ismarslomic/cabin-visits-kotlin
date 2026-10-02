@@ -6,6 +6,7 @@ import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import kotlin.time.Clock
 
 class SqliteGuestRepository : GuestRepository {
@@ -19,16 +20,17 @@ class SqliteGuestRepository : GuestRepository {
         GuestEntity.findById(id)?.let(::daoToModel)
     }
 
-    override suspend fun addOrUpdate(guest: Guest): PersistenceResult = suspendTransaction {
-        val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
-        val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
+    override suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray?): PersistenceResult =
+        suspendTransaction {
+            val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
+            val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
 
-        if (storedGuest == null) {
-            addGuest(guest)
-        } else {
-            updateGuest(guest)
+            if (storedGuest == null) {
+                addGuest(guest, guestAvatarImage)
+            } else {
+                updateGuest(guest, guestAvatarImage)
+            }
         }
-    }
 
     override suspend fun setNotionId(notionId: String, guestId: String): PersistenceResult = suspendTransaction {
         logger.trace("Setting notion Id for guest with id: $guestId")
@@ -46,7 +48,11 @@ class SqliteGuestRepository : GuestRepository {
         PersistenceResult.UPDATED
     }
 
-    private fun addGuest(guest: Guest): PersistenceResult {
+    override suspend fun avatarImageById(guestId: String): ByteArray? = suspendTransaction {
+        GuestEntity.findById(guestId)?.avatarImage?.bytes
+    }
+
+    private fun addGuest(guest: Guest, guestAvatarImage: ByteArray?): PersistenceResult {
         logger.trace("Adding guest with id: ${guest.id}")
 
         GuestEntity.new(guest.id) {
@@ -55,6 +61,8 @@ class SqliteGuestRepository : GuestRepository {
             birthYear = guest.birthYear
             email = guest.email
             gender = guest.gender
+            isFamily = guest.isFamily
+            avatarImage = guestAvatarImage?.let { ExposedBlob(it) }
             createdTime = Clock.System.now().truncatedToMillis()
         }
 
@@ -67,7 +75,7 @@ class SqliteGuestRepository : GuestRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * guest.
      */
-    private fun updateGuest(guest: Guest): PersistenceResult {
+    private fun updateGuest(guest: Guest, guestAvatarImage: ByteArray?): PersistenceResult {
         logger.trace("Updating guest with id: ${guest.id}")
 
         val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return PersistenceResult.NO_ACTION
@@ -78,6 +86,8 @@ class SqliteGuestRepository : GuestRepository {
             birthYear = guest.birthYear
             email = guest.email
             gender = guest.gender
+            isFamily = guest.isFamily
+            avatarImage = guestAvatarImage?.let { ExposedBlob(it) }
         }
 
         val isDirty: Boolean = updatedGuest.writeValues.isNotEmpty()
