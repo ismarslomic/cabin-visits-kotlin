@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.statistics
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDayOfYear
@@ -10,11 +11,15 @@ import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.properties.StatisticsPropertiesHolder
+import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.countByMonth
 import no.slomic.smarthytte.statistics.calculator.MonthDates
 import no.slomic.smarthytte.statistics.calculator.aggregateGuestVisitStats
+import no.slomic.smarthytte.statistics.calculator.calculateCabinFunFacts
+import no.slomic.smarthytte.statistics.calculator.calculateGuestFunFacts
 import no.slomic.smarthytte.statistics.calculator.calculateLiveGuestStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingDistanceStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingMomentStats
@@ -65,6 +70,8 @@ class StatsService(
     private val reservationRepository: ReservationRepository,
     private val guestRepository: GuestRepository,
 ) {
+    private val dataStartDate = LocalDate.parse(loadProperties<StatisticsPropertiesHolder>().statistics.dataStartDate)
+
     suspend fun getLiveStats(): LiveStats {
         val today = utcDateNow()
         val allReservations = reservationRepository.allReservations()
@@ -91,6 +98,10 @@ class StatsService(
         // All-time totals only count reservations that have started, i.e. future bookings are excluded
         val startedReservations = allReservations.filter { it.hasStarted }
 
+        val guestFunFacts = currentInfo?.let {
+            calculateGuestFunFacts(it.guests, today, it.remainingNights, startedReservations.size)
+        }.orEmpty()
+
         return LiveStats(
             isOccupied = current != null,
             currentReservation = currentInfo,
@@ -98,6 +109,14 @@ class StatsService(
             allTimeVisits = startedReservations.size,
             allTimeNights = startedReservations.sumOf { it.durationNights },
             allTimeUniqueGuests = allGuests.size,
+            guestFunFacts = guestFunFacts,
+            cabinFunFacts = calculateCabinFunFacts(
+                dataStartDate = dataStartDate,
+                isOccupied = current != null,
+                allTimeVisits = startedReservations.size,
+                allTimeNights = startedReservations.sumOf { it.durationNights },
+                allTimeUniqueGuests = allGuests.size,
+            ),
         )
     }
 

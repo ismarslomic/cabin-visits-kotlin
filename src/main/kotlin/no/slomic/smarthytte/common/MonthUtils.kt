@@ -11,6 +11,16 @@ import java.time.Month as JavaMonth
 fun monthNameOf(month: Month): String =
     JavaMonth.of(month.ordinal + 1).getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH)
 
+// Hand-written instead of java.time with a Norwegian locale: the GraalVM native image only includes English locale
+// data by default, so a Norwegian locale would silently fall back to English month names.
+private val NORWEGIAN_SHORT_MONTH_NAMES =
+    listOf("jan", "feb", "mars", "april", "mai", "juni", "juli", "aug", "sept", "okt", "nov", "des")
+
+fun norwegianShortMonthNameOf(month: Month): String = NORWEGIAN_SHORT_MONTH_NAMES[month.ordinal]
+
+/** Short month and year, e.g. "sept 2020". */
+fun LocalDate.norwegianShortMonthYear(): String = "${norwegianShortMonthNameOf(month)} $year"
+
 fun previousMonth(currentYear: Int, currentMonth: Month): Pair<Int, Month> =
     firstDateOfThisMonth(currentYear, currentMonth)
         .minus(DatePeriod(months = 1))
