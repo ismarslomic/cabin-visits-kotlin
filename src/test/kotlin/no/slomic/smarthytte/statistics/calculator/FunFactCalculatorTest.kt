@@ -1,7 +1,6 @@
 package no.slomic.smarthytte.statistics.calculator
 
 import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
