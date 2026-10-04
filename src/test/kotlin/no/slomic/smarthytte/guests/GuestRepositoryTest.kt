@@ -119,14 +119,14 @@ class GuestRepositoryTest :
 
             repository.addOrUpdate(guest, image) shouldBe PersistenceResult.ADDED
 
-            repository.avatarImageById(guest.id) shouldBe image
+            repository.avatarById(guest.id)?.image shouldBe image
             avatarUpdatedTime(guest.id) shouldBeGreaterThanOrEqualTo before
         }
 
         "add or update with new id without avatar image should not add avatar image" {
             repository.addOrUpdate(guest, guestAvatarImage = null) shouldBe PersistenceResult.ADDED
 
-            repository.avatarImageById(guest.id).shouldBeNull()
+            repository.avatarById(guest.id).shouldBeNull()
             transaction { GuestAvatarTable.selectAll().toList().shouldBeEmpty() }
         }
 
@@ -135,7 +135,7 @@ class GuestRepositoryTest :
 
             repository.addOrUpdate(guest, byteArrayOf(1, 2, 3)) shouldBe PersistenceResult.UPDATED
 
-            repository.avatarImageById(guest.id) shouldBe byteArrayOf(1, 2, 3)
+            repository.avatarById(guest.id)?.image shouldBe byteArrayOf(1, 2, 3)
         }
 
         "add or update with existing id and changed avatar image should update avatar image" {
@@ -144,7 +144,7 @@ class GuestRepositoryTest :
 
             repository.addOrUpdate(guest, byteArrayOf(4, 5)) shouldBe PersistenceResult.UPDATED
 
-            repository.avatarImageById(guest.id) shouldBe byteArrayOf(4, 5)
+            repository.avatarById(guest.id)?.image shouldBe byteArrayOf(4, 5)
             avatarUpdatedTime(guest.id) shouldBeGreaterThan oldTime
             transaction { GuestAvatarTable.selectAll().toList() shouldHaveSize 1 }
         }
@@ -156,7 +156,7 @@ class GuestRepositoryTest :
 
             repository.addOrUpdate(guest, image) shouldBe PersistenceResult.NO_ACTION
 
-            repository.avatarImageById(guest.id) shouldBe image
+            repository.avatarById(guest.id)?.image shouldBe image
             avatarUpdatedTime(guest.id) shouldBe oldTime
         }
 
@@ -165,7 +165,7 @@ class GuestRepositoryTest :
 
             repository.addOrUpdate(guest, guestAvatarImage = null) shouldBe PersistenceResult.UPDATED
 
-            repository.avatarImageById(guest.id).shouldBeNull()
+            repository.avatarById(guest.id).shouldBeNull()
             transaction { GuestAvatarTable.selectAll().toList().shouldBeEmpty() }
         }
 
@@ -196,8 +196,28 @@ class GuestRepositoryTest :
             repository.addOrUpdate(updatedGuest, image) shouldBe PersistenceResult.UPDATED
 
             repository.guestById(guest.id) shouldBe updatedGuest
-            repository.avatarImageById(guest.id) shouldBe image
+            repository.avatarById(guest.id)?.image shouldBe image
             avatarUpdatedTime(guest.id) shouldBe oldTime
+        }
+
+        "avatar by id should return image and updated time" {
+            val image = byteArrayOf(1, 2, 3)
+            repository.addOrUpdate(guest, image)
+            setOldAvatarUpdatedTime(guest.id)
+
+            val avatar = repository.avatarById(guest.id).shouldNotBeNull()
+
+            avatar.image shouldBe image
+            avatar.updatedTime shouldBe oldTime
+        }
+
+        "all avatar updated times should only include guests with avatar image" {
+            val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
+            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
+            repository.addOrUpdate(guest2)
+            setOldAvatarUpdatedTime(guest.id)
+
+            repository.allAvatarUpdatedTimes() shouldBe mapOf(guest.id to oldTime)
         }
 
         "delete guest should delete avatar image (cascade)" {

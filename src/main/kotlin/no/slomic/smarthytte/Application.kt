@@ -17,8 +17,10 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.toLocalDateTime
 import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.checkinouts.CheckInOutService
+import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.GuestService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.guests.configureGuestRoutes
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
@@ -88,6 +90,7 @@ fun Application.module() {
     val reservationRepository: ReservationRepository = SqliteReservationRepository()
     val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
     val checkInOutSensorRepository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
+    val guestRepository: GuestRepository = SqliteGuestRepository()
 
     // Initialize services
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
@@ -99,6 +102,7 @@ fun Application.module() {
         checkInOutSensorRepository = checkInOutSensorRepository,
         vehicleTripRepository = vehicleTripRepository,
     )
+    val statsService = StatsService(reservationRepository, guestRepository)
 
     // Run initial load BEFORE starting to handle requests and running synchronization processes in the background
     runBlocking {
@@ -126,9 +130,9 @@ fun Application.module() {
 
     // Configure Ktor routing (after the initial load is completed)
     configureRouting()
+    configureGuestRoutes(guestRepository)
 
     // Configure stats REST API
-    val statsService = StatsService(reservationRepository, SqliteGuestRepository())
     configureStatsRoutes(statsService)
     configureOpenApi()
 }

@@ -11,6 +11,7 @@ import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.guestAvatarUrl
 import no.slomic.smarthytte.properties.StatisticsPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.Reservation
@@ -77,20 +78,22 @@ class StatsService(
         val allReservations = reservationRepository.allReservations()
         val allGuests = guestRepository.allGuests()
         val guestsById = allGuests.associateBy { it.id }
+        val avatarUrlsByGuestId = guestRepository.allAvatarUpdatedTimes()
+            .mapValues { (guestId, updatedTime) -> guestAvatarUrl(guestId, updatedTime) }
 
         val current = allReservations.firstOrNull { it.hasStarted && !it.hasEnded }
         val next = allReservations.filter { !it.hasStarted }.minByOrNull { it.startDate }
 
         val currentInfo =
             current?.let { r ->
-                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById)
+                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val remaining = today.daysUntilSafe(r.endDate)
                 CurrentReservationInfo(r.startDate, r.endDate, guests, remaining)
             }
 
         val nextInfo =
             next?.let { r ->
-                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById)
+                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val daysUntil = today.daysUntilSafe(r.startDate)
                 NextReservationInfo(r.startDate, r.endDate, guests, daysUntil)
             }

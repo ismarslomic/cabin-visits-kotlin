@@ -70,6 +70,11 @@ data class LiveGuestStats(
     val age: Int,
     @JsonSchema.Description("True if the guest is a family member (owner of the cabin), false for other guests.")
     val isFamily: Boolean,
+    @JsonSchema.Description(
+        "Relative URL to the guest's avatar image (JPEG), see GET /api/guests/{guestId}/avatar. " +
+            "Null if the guest has no avatar.",
+    )
+    val avatarUrl: String?,
     @JsonSchema.Description("True if the guest has no reservations that started before this reservation.")
     val isFirstVisit: Boolean,
     @JsonSchema.Description(

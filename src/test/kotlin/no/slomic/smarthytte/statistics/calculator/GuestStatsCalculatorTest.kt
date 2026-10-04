@@ -163,6 +163,15 @@ class GuestStatsCalculatorTest :
                 g2.allTime shouldBe GuestPeriodStats(totalVisits = 2, totalDays = 8, visitsRank = 2, daysRank = 2)
             }
 
+            should("set avatar url only for guests with an avatar") {
+                val avatarUrls = mapOf("g1" to "/api/guests/g1/avatar?v=1")
+
+                val result = calculateLiveGuestStats(current, today, allReservations, allGuestsById, avatarUrls)
+
+                result.single { it.guestId == "g1" }.avatarUrl shouldBe "/api/guests/g1/avatar?v=1"
+                result.single { it.guestId == "g2" }.avatarUrl shouldBe null
+            }
+
             should("use last completed visit and exclude future visits for guests in next reservation") {
                 val result = calculateLiveGuestStats(next, today, allReservations, allGuestsById)
 

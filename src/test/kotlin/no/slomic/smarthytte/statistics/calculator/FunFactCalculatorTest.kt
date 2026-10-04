@@ -33,6 +33,7 @@ class FunFactCalculatorTest :
             lastName = "Test",
             age = 30,
             isFamily = isFamily,
+            avatarUrl = null,
             isFirstVisit = isFirstVisit,
             firstVisitDate = firstVisitDate,
             lastVisitDate = lastVisitDate,

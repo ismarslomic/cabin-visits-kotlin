@@ -13,8 +13,10 @@ import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class SqliteGuestRepository : GuestRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteGuestRepository::class.java.name)
@@ -59,8 +61,18 @@ class SqliteGuestRepository : GuestRepository {
         PersistenceResult.UPDATED
     }
 
-    override suspend fun avatarImageById(guestId: String): ByteArray? = suspendTransaction {
-        storedAvatarImage(guestId)
+    override suspend fun avatarById(guestId: String): GuestAvatar? = suspendTransaction {
+        GuestAvatarTable
+            .selectAll()
+            .where { GuestAvatarTable.guest eq guestId }
+            .singleOrNull()
+            ?.let { GuestAvatar(it[GuestAvatarTable.image].bytes, it[GuestAvatarTable.updatedTime]) }
+    }
+
+    override suspend fun allAvatarUpdatedTimes(): Map<String, Instant> = suspendTransaction {
+        GuestAvatarTable
+            .select(GuestAvatarTable.guest, GuestAvatarTable.updatedTime)
+            .associate { it[GuestAvatarTable.guest].value to it[GuestAvatarTable.updatedTime] }
     }
 
     private fun storedAvatarImage(guestId: String): ByteArray? = GuestAvatarTable

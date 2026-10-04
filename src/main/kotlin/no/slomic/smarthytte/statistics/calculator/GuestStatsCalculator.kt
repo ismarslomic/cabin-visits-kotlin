@@ -96,13 +96,15 @@ fun aggregateGuestVisitStats(
 
 /**
  * Builds live statistics for each guest in [reservation]. Only reservations started on or before [today]
- * are counted, and days are counted up to and including [today].
+ * are counted, and days are counted up to and including [today]. Guests without an entry in
+ * [avatarUrlsByGuestId] have no avatar.
  */
 fun calculateLiveGuestStats(
     reservation: Reservation,
     today: LocalDate,
     allReservations: List<Reservation>,
     guestsById: Map<String, Guest>,
+    avatarUrlsByGuestId: Map<String, String> = emptyMap(),
 ): List<LiveGuestStats> {
     val startedReservations = allReservations.filter { it.startDate <= today }
     val periodEndExclusive = today.plus(DatePeriod(days = 1))
@@ -138,6 +140,7 @@ fun calculateLiveGuestStats(
                 lastName = guest.lastName,
                 age = (today.year - guest.birthYear.toInt()).coerceAtLeast(0),
                 isFamily = guest.isFamily,
+                avatarUrl = avatarUrlsByGuestId[guestId],
                 isFirstVisit = previousVisits.isEmpty(),
                 firstVisitDate = startedVisits.minOfOrNull { it.startDate },
                 lastVisitDate = previousVisits.filter { it.endDate <= today }.maxOfOrNull { it.endDate },
