@@ -3,10 +3,13 @@ package no.slomic.smarthytte.statistics.calculator
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
@@ -217,6 +220,36 @@ class GuestStatsCalculatorTest :
                     createReservation("1", LocalDate(2026, 1, 1), LocalDate(2026, 1, 2), listOf("unknown"))
 
                 calculateLiveGuestStats(reservation, today, listOf(reservation), allGuestsById) shouldBe emptyList()
+            }
+        }
+
+        context("calculateGuestStandings") {
+            should("count visits this year and all time and mark family") {
+                val dina = Guest("dina", "Dina", "T", 1990, gender = Gender.FEMALE, isFamily = true)
+                val anders = Guest("anders", "Anders", "T", 2010, gender = Gender.MALE)
+                val now = LocalDate(2026, 6, 15)
+
+                fun reservation(id: String, start: LocalDate, vararg guestIds: String) = Reservation(
+                    id = id,
+                    startTime = start.atStartOfDayIn(TimeZone.UTC),
+                    endTime = start.plus(DatePeriod(days = 2)).atStartOfDayIn(TimeZone.UTC),
+                    guestIds = guestIds.toList(),
+                )
+
+                val standings = calculateGuestStandings(
+                    today = now,
+                    allReservations = listOf(
+                        reservation("r1", LocalDate(2025, 5, 1), "dina", "anders"),
+                        reservation("r2", LocalDate(2026, 3, 1), "dina"),
+                        reservation("r3", LocalDate(2026, 9, 1), "dina", "anders"),
+                    ),
+                    guestsById = mapOf("dina" to dina, "anders" to anders),
+                ).sortedBy { it.guestId }
+
+                standings shouldBe listOf(
+                    GuestStanding("anders", "Anders", false, yearVisits = 0, allTimeVisits = 1),
+                    GuestStanding("dina", "Dina", true, yearVisits = 1, allTimeVisits = 2),
+                )
             }
         }
     })

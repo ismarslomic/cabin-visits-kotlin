@@ -2,8 +2,11 @@
 
 package no.slomic.smarthytte.statistics.calculator
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import no.slomic.smarthytte.statistics.model.GuestPeriodStats
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
+import no.slomic.smarthytte.statistics.model.LiveGuestStats
 import no.slomic.smarthytte.statistics.model.MonthDaysStats
 import no.slomic.smarthytte.statistics.model.MonthNightsStats
 import no.slomic.smarthytte.statistics.model.MonthStats
@@ -151,3 +154,33 @@ fun monthsFixture(
         drivingMoments = null,
     )
 }
+
+private fun periodFixture(visits: Int = 0, days: Int = 0) = GuestPeriodStats(visits, days, visitsRank = 1, daysRank = 1)
+
+/** Minimal [LiveGuestStats] for fun fact tests: only the given values are set. */
+fun liveGuestFixture(
+    id: String,
+    isFamily: Boolean = false,
+    isFirstVisit: Boolean = false,
+    firstVisitDate: LocalDate? = LocalDate(2021, 1, 1),
+    lastVisitDate: LocalDate? = LocalDate(2026, 9, 1),
+    yearsVisited: List<Int> = listOf(2026),
+    currentYearVisits: Int = 2,
+    allTimeVisits: Int = 3,
+    currentYearDays: Int = 0,
+    allTimeDays: Int = 0,
+    age: Int = 30,
+) = LiveGuestStats(
+    guestId = id,
+    firstName = id.replaceFirstChar { it.uppercase() },
+    lastName = "Test",
+    age = age,
+    isFamily = isFamily,
+    avatarUrl = null,
+    isFirstVisit = isFirstVisit,
+    firstVisitDate = firstVisitDate,
+    lastVisitDate = lastVisitDate,
+    yearsVisited = yearsVisited,
+    currentYear = periodFixture(visits = currentYearVisits, days = currentYearDays),
+    allTime = periodFixture(visits = allTimeVisits, days = allTimeDays),
+)
