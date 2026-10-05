@@ -17,49 +17,6 @@ import no.slomic.smarthytte.statistics.model.YearStats
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private const val PRIORITY_FIRST_VISIT = 100
-private const val PRIORITY_VISIT_MILESTONE = 95
-private const val PRIORITY_DAYS_MILESTONE = 85
-private const val PRIORITY_DRIVING_RECORD = 85
-private const val PRIORITY_CABIN_VISIT_MILESTONE = 85
-private const val PRIORITY_LONG_ABSENCE = 80
-private const val PRIORITY_ARRIVAL_SOON = 70
-private const val PRIORITY_VISIT_STREAK = 70
-private const val PRIORITY_YEAR_TIED_LEAD = 70
-private const val PRIORITY_TOP_GUEST_ALL_TIME = 70
-private const val PRIORITY_YEAR_LEADER = 65
-private const val PRIORITY_YEAR_GAP_TO_LEADER = 60
-private const val PRIORITY_DRIVING_TIME_VS_LAST_YEAR = 60
-private const val PRIORITY_LAST_DAY = 60
-private const val PRIORITY_FIRST_VISIT_THIS_YEAR = 55
-private const val PRIORITY_NEW_IN_GROUP = 55
-private const val PRIORITY_SHARE_OF_TRIPS_GUEST = 50
-private const val PRIORITY_SHARE_OF_DAYS = 45
-private const val PRIORITY_SHARE_OF_LIFE = 45
-private const val PRIORITY_NEXT_FIRST_TIMER = 45
-private const val PRIORITY_COUNTDOWN_TO_NEXT_VISIT = 45
-private const val PRIORITY_NEW_GUESTS_THIS_YEAR = 40
-private const val PRIORITY_DAYS_THIS_YEAR = 40
-private const val PRIORITY_MOST_EXPERIENCED = 40
-private const val PRIORITY_YEARS_SINCE_FIRST_VISIT = 40
-private const val PRIORITY_NEXT_VISIT_MILESTONE = 40
-private const val PRIORITY_SHARE_OF_TRIPS_FAMILY = 30
-private const val PRIORITY_NIGHTS_LEFT = 30
-private const val PRIORITY_OCCUPANCY = 35
-private const val PRIORITY_MOST_VISITED_MONTH = 35
-private const val PRIORITY_MONTH_VS_LAST_YEAR = 35
-private const val PRIORITY_LONGEST_STAY = 30
-private const val PRIORITY_AVG_GROUP_SIZE = 30
-private const val PRIORITY_TOTAL_DISTANCE = 30
-private const val PRIORITY_STAY_PROGRESS = 30
-private const val PRIORITY_TOTAL_DAYS = 30
-private const val PRIORITY_LAST_VISIT_DATE = 30
-private const val PRIORITY_CABIN_TOTALS = 25
-private const val PRIORITY_EV_CONSUMPTION = 20
-private const val PRIORITY_AVG_DRIVING_TIME = 20
-private const val PRIORITY_YEARS_OF_OWNERSHIP = 15
-private const val FAMILY_PRIORITY_PENALTY = 30
-
 private val GUEST_VISIT_MILESTONES = setOf(5, 10, 25, 50, 75, 100, 150, 200)
 private const val FAMILY_VISIT_MILESTONE_STEP = 50
 private const val CABIN_VISIT_MILESTONE_STEP = 50
@@ -132,7 +89,7 @@ fun calculateGuestFunFacts(guests: List<LiveGuestStats>, context: GuestFunFactCo
             .sortedByDescending { it.priority }
             .take(MAX_FACTS_PER_GUEST)
         if (guest.isFamily && hasNonFamilyGuests) {
-            facts.map { it.copy(priority = it.priority - FAMILY_PRIORITY_PENALTY) }
+            facts.map { it.copy(priority = it.priority - FunFactPriority.FAMILY_PENALTY) }
         } else {
             facts
         }
@@ -200,12 +157,12 @@ private fun groupFunFacts(guests: List<LiveGuestStats>, context: GuestFunFactCon
 )
 
 private fun firstVisit(guest: LiveGuestStats): FunFact? =
-    FunFact(guest.guestId, "Første registrerte besøk for ${guest.firstName}! 🎉", PRIORITY_FIRST_VISIT)
+    FunFact(guest.guestId, "Første registrerte besøk for ${guest.firstName}! 🎉", FunFactPriority.FIRST_VISIT)
         .takeIf { !guest.isFamily && guest.isFirstVisit }
 
 private fun visitMilestone(guest: LiveGuestStats): FunFact? {
     val visits = guest.allTime.totalVisits
-    return FunFact(guest.guestId, "Dette er besøk nr. $visits for ${guest.firstName}!", PRIORITY_VISIT_MILESTONE)
+    return FunFact(guest.guestId, "Dette er besøk nr. $visits for ${guest.firstName}!", FunFactPriority.VISIT_MILESTONE)
         .takeIf { isVisitMilestone(guest, visits) }
 }
 
@@ -218,13 +175,17 @@ private fun isVisitMilestone(guest: LiveGuestStats, visits: Int): Boolean = if (
 private fun longAbsence(guest: LiveGuestStats, today: LocalDate): FunFact? {
     val lastVisit = guest.lastVisitDate ?: return null
     val months = lastVisit.monthsUntil(today)
-    return FunFact(guest.guestId, "Det er $months måneder siden sist, ${guest.firstName}!", PRIORITY_LONG_ABSENCE)
+    return FunFact(
+        guest.guestId,
+        "Det er $months måneder siden sist, ${guest.firstName}!",
+        FunFactPriority.LONG_ABSENCE,
+    )
         .takeIf { !guest.isFamily && months >= MIN_MONTHS_FOR_LONG_ABSENCE }
 }
 
 private fun visitStreak(guest: LiveGuestStats, today: LocalDate): FunFact? {
     val years = consecutiveYearsUpTo(today.year, guest.yearsVisited)
-    return FunFact(guest.guestId, "${guest.firstName} har besøkt hytta $years år på rad", PRIORITY_VISIT_STREAK)
+    return FunFact(guest.guestId, "${guest.firstName} har besøkt hytta $years år på rad", FunFactPriority.VISIT_STREAK)
         .takeIf { !guest.isFamily && years >= MIN_YEARS_FOR_STREAK }
 }
 
@@ -233,13 +194,13 @@ private fun consecutiveYearsUpTo(year: Int, yearsVisited: List<Int>): Int =
     generateSequence(year) { it - 1 }.takeWhile { it in yearsVisited }.count()
 
 private fun firstVisitThisYear(guest: LiveGuestStats): FunFact? =
-    FunFact(guest.guestId, "Årets første besøk for ${guest.firstName}", PRIORITY_FIRST_VISIT_THIS_YEAR)
+    FunFact(guest.guestId, "Årets første besøk for ${guest.firstName}", FunFactPriority.FIRST_VISIT_THIS_YEAR)
         .takeIf { !guest.isFirstVisit && guest.currentYear.totalVisits == 1 }
 
 private fun shareOfTrips(guest: LiveGuestStats, allTimeVisits: Int): FunFact? {
     if (allTimeVisits <= 0) return null
     val percent = guest.allTime.totalVisits * PERCENT_FACTOR / allTimeVisits
-    val priority = if (guest.isFamily) PRIORITY_SHARE_OF_TRIPS_FAMILY else PRIORITY_SHARE_OF_TRIPS_GUEST
+    val priority = if (guest.isFamily) FunFactPriority.SHARE_OF_TRIPS_FAMILY else FunFactPriority.SHARE_OF_TRIPS_GUEST
     return FunFact(guest.guestId, "${guest.firstName} har vært med på $percent % av alle hytteturer", priority)
         .takeIf { percent >= MIN_SHARE_OF_TRIPS_PERCENT }
 }
@@ -250,22 +211,22 @@ private fun yearsSinceFirstVisit(guest: LiveGuestStats, today: LocalDate): FunFa
     return FunFact(
         guest.guestId,
         "${guest.firstName} hadde sitt første registrerte besøk for $years år siden",
-        PRIORITY_YEARS_SINCE_FIRST_VISIT,
+        FunFactPriority.YEARS_SINCE_FIRST_VISIT,
     ).takeIf { !guest.isFamily && years >= 1 }
 }
 
 private fun lastDay(remainingNights: Int): FunFact? =
-    FunFact(null, "Siste dag på hytta, ha en trygg hjemreise!", PRIORITY_LAST_DAY)
+    FunFact(null, "Siste dag på hytta, ha en trygg hjemreise!", FunFactPriority.LAST_DAY)
         .takeIf { remainingNights <= LAST_DAY_REMAINING_NIGHTS }
 
 private fun newInGroup(guests: List<LiveGuestStats>): FunFact? {
     val newGuests = guests.count { !it.isFamily && it.isFirstVisit }
-    return FunFact(null, "$newGuests av ${guests.size} er her for første gang", PRIORITY_NEW_IN_GROUP)
+    return FunFact(null, "$newGuests av ${guests.size} er her for første gang", FunFactPriority.NEW_IN_GROUP)
         .takeIf { newGuests >= MIN_NEW_GUESTS_IN_GROUP }
 }
 
 private fun nightsLeft(remainingNights: Int): FunFact? =
-    FunFact(null, "$remainingNights netter igjen av oppholdet", PRIORITY_NIGHTS_LEFT)
+    FunFact(null, "$remainingNights netter igjen av oppholdet", FunFactPriority.NIGHTS_LEFT)
         .takeIf { remainingNights > LAST_DAY_REMAINING_NIGHTS }
 
 private fun daysMilestone(guest: LiveGuestStats, context: GuestFunFactContext): FunFact? {
@@ -273,7 +234,11 @@ private fun daysMilestone(guest: LiveGuestStats, context: GuestFunFactContext): 
     val daysThisStay = (context.stay.startDate.daysUntil(context.today) + 1).coerceAtLeast(0)
     val daysBeforeStay = total - daysThisStay
     val milestone = DAYS_MILESTONES.lastOrNull { daysBeforeStay < it && it <= total } ?: return null
-    return FunFact(guest.guestId, "${guest.firstName} passerer $milestone dager på hytta! 🎉", PRIORITY_DAYS_MILESTONE)
+    return FunFact(
+        guest.guestId,
+        "${guest.firstName} passerer $milestone dager på hytta! 🎉",
+        FunFactPriority.DAYS_MILESTONE,
+    )
 }
 
 /** Leader, tied for the lead or gap to the leader this year, within the family or among the other guests. */
@@ -298,13 +263,13 @@ private fun raceFact(
         gap > 0 -> FunFact(
             guest.guestId,
             "${guest.firstName} ligger $gap besøk bak ${leaders.first().firstName} $scope i år",
-            PRIORITY_YEAR_GAP_TO_LEADER,
+            FunFactPriority.YEAR_GAP_TO_LEADER,
         ).takeIf { gap <= MAX_GAP_TO_LEADER }
 
         leaders.size == 1 -> FunFact(
             guest.guestId,
             "${guest.firstName} leder $scope i år med $leaderVisits besøk",
-            PRIORITY_YEAR_LEADER,
+            FunFactPriority.YEAR_LEADER,
         )
 
         else -> FunFact(
@@ -312,7 +277,7 @@ private fun raceFact(
             "${guest.firstName} deler ledelsen $scope i år med " +
                 leaders.filter { it.guestId != guest.guestId }.joinToString(" og ") { it.firstName } +
                 " ($leaderVisits besøk)",
-            PRIORITY_YEAR_TIED_LEAD,
+            FunFactPriority.YEAR_TIED_LEAD,
         ).takeIf { leaders.size <= MAX_TIED_LEADERS }
     }
 }
@@ -326,7 +291,7 @@ private fun topGuestAllTime(guest: LiveGuestStats, context: GuestFunFactContext)
         guest.guestId,
         "${guest.firstName} er gjesten med flest besøk siden ${context.dataStartDate.norwegianShortMonthYear()} " +
             "($maxVisits)",
-        PRIORITY_TOP_GUEST_ALL_TIME,
+        FunFactPriority.TOP_GUEST_ALL_TIME,
     ).takeIf { !guest.isFamily && leader?.guestId == guest.guestId }
 }
 
@@ -338,7 +303,7 @@ private fun shareOfDays(guest: LiveGuestStats, context: GuestFunFactContext): Fu
         guest.guestId,
         "${guest.firstName} har vært på hytta $percent % av dagene siden " +
             context.dataStartDate.norwegianShortMonthYear(),
-        PRIORITY_SHARE_OF_DAYS,
+        FunFactPriority.SHARE_OF_DAYS,
     ).takeIf { percent >= MIN_SHARE_PERCENT }
 }
 
@@ -350,7 +315,7 @@ private fun shareOfLife(guest: LiveGuestStats, context: GuestFunFactContext): Fu
     return FunFact(
         guest.guestId,
         "${guest.firstName} har vært på hytta ca. $percent % av livet sitt",
-        PRIORITY_SHARE_OF_LIFE,
+        FunFactPriority.SHARE_OF_LIFE,
     ).takeIf { percent >= MIN_SHARE_PERCENT }
 }
 
@@ -360,7 +325,7 @@ private fun daysThisYear(guest: LiveGuestStats, today: LocalDate): FunFact? {
     return FunFact(
         guest.guestId,
         "${guest.firstName} har vært $days dager på hytta i år ($percent % av året så langt)",
-        PRIORITY_DAYS_THIS_YEAR,
+        FunFactPriority.DAYS_THIS_YEAR,
     ).takeIf { days >= MIN_DAYS_THIS_YEAR }
 }
 
@@ -368,14 +333,14 @@ private fun totalDays(guest: LiveGuestStats, dataStartDate: LocalDate): FunFact?
     guest.guestId,
     "${guest.firstName} har tilbrakt ${guest.allTime.totalDays} dager på hytta siden " +
         dataStartDate.norwegianShortMonthYear(),
-    PRIORITY_TOTAL_DAYS,
+    FunFactPriority.TOTAL_DAYS,
 ).takeIf { guest.allTime.totalDays >= MIN_TOTAL_DAYS }
 
 private fun lastVisitDate(guest: LiveGuestStats): FunFact? = guest.lastVisitDate?.let {
     FunFact(
         guest.guestId,
         "${guest.firstName} var sist her i ${it.norwegianShortMonthYear()}",
-        PRIORITY_LAST_VISIT_DATE,
+        FunFactPriority.LAST_VISIT_DATE,
     )
 }
 
@@ -389,7 +354,7 @@ private fun mostExperienced(guests: List<LiveGuestStats>): FunFact? {
             FunFact(
                 it.guestId,
                 "${it.firstName} er mest erfaren i gjengen med $maxVisits besøk",
-                PRIORITY_MOST_EXPERIENCED,
+                FunFactPriority.MOST_EXPERIENCED,
             )
         }
 }
@@ -397,7 +362,7 @@ private fun mostExperienced(guests: List<LiveGuestStats>): FunFact? {
 private fun stayProgress(context: GuestFunFactContext): FunFact? {
     val day = context.stay.startDate.daysUntil(context.today) + 1
     val totalDays = day + context.stay.remainingNights
-    return FunFact(null, "Dag $day av $totalDays på hytta", PRIORITY_STAY_PROGRESS)
+    return FunFact(null, "Dag $day av $totalDays på hytta", FunFactPriority.STAY_PROGRESS)
         .takeIf { day >= 1 && totalDays > 1 }
 }
 
@@ -407,7 +372,7 @@ private fun drivingRecord(driving: ToCabinDriving?): FunFact? {
     val previous = driving?.previousMinutes.orEmpty()
     val isRecord = current != null && previous.size >= MIN_TRIPS_FOR_DRIVING_RECORD && current < previous.min()
     return current?.takeIf { isRecord }?.let {
-        FunFact(null, "Ny rekord! Raskeste tur til hytta: ${norwegianDuration(it)}", PRIORITY_DRIVING_RECORD)
+        FunFact(null, "Ny rekord! Raskeste tur til hytta: ${norwegianDuration(it)}", FunFactPriority.DRIVING_RECORD)
     }
 }
 
@@ -422,15 +387,15 @@ private fun arrivalSoon(daysUntil: Int): FunFact? {
         1 -> "Neste besøk starter i morgen"
         else -> "Neste besøk starter i overmorgen"
     }
-    return FunFact(null, text, PRIORITY_ARRIVAL_SOON).takeIf { daysUntil in 0..ARRIVAL_SOON_MAX_DAYS }
+    return FunFact(null, text, FunFactPriority.ARRIVAL_SOON).takeIf { daysUntil in 0..ARRIVAL_SOON_MAX_DAYS }
 }
 
 private fun countdownToNextVisit(daysUntil: Int, isOccupied: Boolean): FunFact? =
-    FunFact(null, "Neste besøk om $daysUntil dager", PRIORITY_COUNTDOWN_TO_NEXT_VISIT)
+    FunFact(null, "Neste besøk om $daysUntil dager", FunFactPriority.COUNTDOWN_TO_NEXT_VISIT)
         .takeIf { isOccupied && daysUntil > ARRIVAL_SOON_MAX_DAYS }
 
 private fun nextFirstTimer(guest: LiveGuestStats): FunFact? =
-    FunFact(guest.guestId, "${guest.firstName} kommer på hytta for første gang! 🎉", PRIORITY_NEXT_FIRST_TIMER)
+    FunFact(guest.guestId, "${guest.firstName} kommer på hytta for første gang! 🎉", FunFactPriority.NEXT_FIRST_TIMER)
         .takeIf { !guest.isFamily && guest.isFirstVisit }
 
 /** The visit is already counted for started reservations only, so the next visit is `totalVisits + 1`. */
@@ -439,21 +404,21 @@ private fun nextVisitMilestone(guest: LiveGuestStats): FunFact? {
     return FunFact(
         guest.guestId,
         "Neste besøk blir besøk nr. $visits for ${guest.firstName}",
-        PRIORITY_NEXT_VISIT_MILESTONE,
+        FunFactPriority.NEXT_VISIT_MILESTONE,
     ).takeIf { isVisitMilestone(guest, visits) }
 }
 
 private fun cabinVisitMilestone(context: CabinFunFactContext): FunFact? = FunFact(
     null,
     "Dette er hyttebesøk nr. ${context.totals.visits} siden ${context.dataStartDate.norwegianShortMonthYear()}",
-    PRIORITY_CABIN_VISIT_MILESTONE,
+    FunFactPriority.CABIN_VISIT_MILESTONE,
 ).takeIf { context.isOccupied && context.totals.visits > 0 && context.totals.visits % CABIN_VISIT_MILESTONE_STEP == 0 }
 
 private fun cabinTotals(context: CabinFunFactContext): FunFact = FunFact(
     guestId = null,
     text = "Siden ${context.dataStartDate.norwegianShortMonthYear()}: ${context.totals.visits} besøk, " +
         "${context.totals.nights} netter og ${context.totals.uniqueGuests} ulike gjester",
-    priority = PRIORITY_CABIN_TOTALS,
+    priority = FunFactPriority.CABIN_TOTALS,
 )
 
 /** Average driving time compared with the same month last year, or with last year when the month has no data. */
@@ -497,7 +462,7 @@ private fun drivingTimeFact(
         ?.takeIf { abs(it) >= MIN_DRIVING_TIME_DIFF_MINUTES }
         ?.let {
             val direction = if (it < 0) "kortere" else "lengre"
-            FunFact(null, "$subject er ${abs(it)} min $direction enn $label", PRIORITY_DRIVING_TIME_VS_LAST_YEAR)
+            FunFact(null, "$subject er ${abs(it)} min $direction enn $label", FunFactPriority.DRIVING_TIME_VS_LAST_YEAR)
         }
 }
 
@@ -511,19 +476,23 @@ private fun newGuestsThisYear(year: YearStats?): FunFact? = year?.newGuests?.siz
         } else {
             "$it nye gjester på hytta i år"
         },
-        PRIORITY_NEW_GUESTS_THIS_YEAR,
+        FunFactPriority.NEW_GUESTS_THIS_YEAR,
     )
 }
 
 private fun occupancyThisYear(year: YearStats?): FunFact? =
     year?.occupancy?.dayOccupancy?.roundToInt()?.takeIf { it >= 1 }?.let {
-        FunFact(null, "Hytta har vært i bruk $it % av årets dager", PRIORITY_OCCUPANCY)
+        FunFact(null, "Hytta har vært i bruk $it % av årets dager", FunFactPriority.OCCUPANCY)
     }
 
 private fun mostVisitedMonth(year: YearStats?): FunFact? =
     year?.visits?.monthMostVisits?.takeIf { it.visitCount >= MIN_MONTH_VISITS_FOR_MOST_VISITED }?.let {
         val monthName = norwegianMonthNameOf(Month(it.monthNumber))
-        FunFact(null, "Mest besøkte måned i år: $monthName (${it.visitCount} besøk)", PRIORITY_MOST_VISITED_MONTH)
+        FunFact(
+            null,
+            "Mest besøkte måned i år: $monthName (${it.visitCount} besøk)",
+            FunFactPriority.MOST_VISITED_MONTH,
+        )
     }
 
 private fun monthVsSameMonthLastYear(context: CabinFunFactContext): FunFact? {
@@ -534,17 +503,17 @@ private fun monthVsSameMonthLastYear(context: CabinFunFactContext): FunFact? {
         FunFact(
             null,
             "Så langt i ${norwegianMonthNameOf(month)}: ${abs(it)} $moreOrFewer besøk enn i fjor",
-            PRIORITY_MONTH_VS_LAST_YEAR,
+            FunFactPriority.MONTH_VS_LAST_YEAR,
         )
     }
 }
 
 private fun longestStay(year: YearStats?): FunFact? = year?.nights?.maxNights?.takeIf { it >= 1 }?.let {
-    FunFact(null, "Årets lengste opphold: $it netter", PRIORITY_LONGEST_STAY)
+    FunFact(null, "Årets lengste opphold: $it netter", FunFactPriority.LONGEST_STAY)
 }
 
 private fun avgGroupSize(year: YearStats?): FunFact? = year?.visits?.avgGroupSize?.let {
-    FunFact(null, "I snitt ${it.round1().toNorwegianDecimal()} personer per besøk i år", PRIORITY_AVG_GROUP_SIZE)
+    FunFact(null, "I snitt ${it.round1().toNorwegianDecimal()} personer per besøk i år", FunFactPriority.AVG_GROUP_SIZE)
 }
 
 /** Total km driven to and from the cabin this year, as laps around the earth. */
@@ -555,7 +524,7 @@ private fun totalDistance(year: YearStats?): FunFact? {
     return FunFact(
         null,
         "Årets hytteturer: ${km.roundToInt().groupThousands()} km, ${laps.toNorwegianDecimal()} ganger rundt jorda",
-        PRIORITY_TOTAL_DISTANCE,
+        FunFactPriority.TOTAL_DISTANCE,
     ).takeIf { laps >= MIN_LAPS_AROUND_EARTH }
 }
 
@@ -563,7 +532,7 @@ private fun evConsumption(year: YearStats?): FunFact? = year?.ev?.avgEnergyConsu
     FunFact(
         null,
         "Strømforbruk på hyttetur i år: ${it.round1().toNorwegianDecimal()} kWh per 100 km",
-        PRIORITY_EV_CONSUMPTION,
+        FunFactPriority.EV_CONSUMPTION,
     )
 }
 
@@ -575,7 +544,7 @@ private fun avgDrivingTime(year: YearStats?): FunFact? {
         FunFact(
             null,
             "Snitt kjøretid i år: ${norwegianDuration(toCabin)} til hytta og ${norwegianDuration(fromCabin)} hjem",
-            PRIORITY_AVG_DRIVING_TIME,
+            FunFactPriority.AVG_DRIVING_TIME,
         )
     } else {
         null
@@ -583,7 +552,7 @@ private fun avgDrivingTime(year: YearStats?): FunFact? {
 }
 
 private fun yearsOfOwnership(today: LocalDate): FunFact? = OWNERSHIP_START.yearsUntil(today).takeIf { it >= 1 }?.let {
-    FunFact(null, "Hytta har vært i familien i $it år", PRIORITY_YEARS_OF_OWNERSHIP)
+    FunFact(null, "Hytta har vært i familien i $it år", FunFactPriority.YEARS_OF_OWNERSHIP)
 }
 
 private fun Double.toNorwegianDecimal(): String = toString().replace('.', ',')
