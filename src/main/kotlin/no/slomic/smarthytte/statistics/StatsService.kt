@@ -77,8 +77,9 @@ private const val AGE_SENIOR_MIN = 51
 class StatsService(
     private val reservationRepository: ReservationRepository,
     private val guestRepository: GuestRepository,
+    private val dataStartDate: LocalDate =
+        LocalDate.parse(loadProperties<StatisticsPropertiesHolder>().statistics.dataStartDate),
 ) {
-    private val dataStartDate = LocalDate.parse(loadProperties<StatisticsPropertiesHolder>().statistics.dataStartDate)
 
     suspend fun getLiveStats(): LiveStats {
         val today = utcDateNow()
