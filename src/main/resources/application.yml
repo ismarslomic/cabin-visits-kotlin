@@ -23,6 +23,10 @@ database:
 
 guest:
   file-path: ${GUEST_FILE_PATH}
+  avatars-directory: ${GUEST_AVATARS_DIRECTORY_PATH}
+
+statistics:
+  data-start-date: ${STATISTICS_DATA_START_DATE}
 
 influx-db:
   url: ${INFLUXDB_URL}

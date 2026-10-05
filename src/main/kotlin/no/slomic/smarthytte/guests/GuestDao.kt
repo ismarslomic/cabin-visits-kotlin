@@ -14,6 +14,7 @@ object GuestTable : BaseIdTable<String>(name = "guest") {
     val email: Column<String?> = varchar(name = "email", length = 255).nullable()
     val gender: Column<Gender> = enumerationByName("gender", length = 10, Gender::class)
     val notionId: Column<String?> = varchar(name = "notion_id", length = 50).nullable()
+    val isFamily: Column<Boolean> = bool("is_family").default(false)
 
     override val primaryKey = PrimaryKey(id, name = "pk_guest_id")
 }
@@ -27,6 +28,7 @@ class GuestEntity(id: EntityID<String>) : BaseEntity<String>(id, GuestTable) {
     var email: String? by GuestTable.email
     var gender: Gender by GuestTable.gender
     var notionId: String? by GuestTable.notionId
+    var isFamily: Boolean by GuestTable.isFamily
 }
 
 fun daoToModel(dao: GuestEntity) = Guest(
@@ -37,4 +39,5 @@ fun daoToModel(dao: GuestEntity) = Guest(
     email = dao.email,
     gender = dao.gender,
     notionId = dao.notionId,
+    isFamily = dao.isFamily,
 )

@@ -6,11 +6,13 @@ import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.readGuestsFromJsonFile
 import no.slomic.smarthytte.properties.GuestPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
+import java.io.File
 
 class GuestService(private val guestRepository: GuestRepository) {
     private val logger: Logger = KtorSimpleLogger(GuestService::class.java.name)
     private val guestProperties = loadProperties<GuestPropertiesHolder>().guest
     private val filePath = guestProperties.filePath
+    private val avatarsDirectory = guestProperties.avatarsDirectory
 
     suspend fun insertGuestsFromFile() {
         logger.info("Reading guests from file $filePath and updating database..")
@@ -19,7 +21,8 @@ class GuestService(private val guestRepository: GuestRepository) {
 
         val guestsFromFile: List<Guest> = readGuestsFromJsonFile(filePath)
         for (guest in guestsFromFile) {
-            persistenceResults.add(guestRepository.addOrUpdate(guest))
+            val guestAvatarImage: ByteArray? = readAvatarImage(guest.id)
+            persistenceResults.add(guestRepository.addOrUpdate(guest, guestAvatarImage))
         }
 
         val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }
@@ -31,5 +34,16 @@ class GuestService(private val guestRepository: GuestRepository) {
                 "Total guests in file: ${guestsFromFile.size}, added: $addedCount, " +
                 "updated: $updatedCount, no actions: $noActionCount",
         )
+    }
+
+    /** Avatar is expected at `{avatarsDirectory}/{guestId}.jpg`. Null if the file is missing, i.e. no avatar. */
+    private fun readAvatarImage(guestId: String): ByteArray? {
+        val avatarFile = File(avatarsDirectory, "$guestId.jpg")
+        return if (avatarFile.isFile) {
+            avatarFile.readBytes()
+        } else {
+            logger.warn("No avatar file ${avatarFile.path} for guest $guestId")
+            null
+        }
     }
 }

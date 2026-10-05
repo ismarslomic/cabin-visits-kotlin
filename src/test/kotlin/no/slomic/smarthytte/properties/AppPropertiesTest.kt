@@ -14,6 +14,7 @@ class AppPropertiesTest :
         val envVarCalendarId = "abcdefghijkl"
         val envVarSummaryToGuestFilePath = "/data/summaryToGuestIds.json"
         val envVarGuestFilePath = "/data/guests.json"
+        val envVarGuestAvatarDirectoryPath = "/data/avatars"
         val envVarInfluxDbUrl = "http://localhost:8086"
         val envVarInfluxDbToken = "foobar"
         val envVarInfluxDbOrg = "my.org"
@@ -30,6 +31,7 @@ class AppPropertiesTest :
         val envVarVehicleTripUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
         val envVarVehicleTripReferrer = "https://myapp.com"
         val envVarVehicleTripLocale = "key=nb_NO"
+        val envVarStatisticsDataStartDate = "2020-09-01"
 
         Given("required environment variables are set") {
             val requiredEnvVars = mapOf(
@@ -52,6 +54,8 @@ class AppPropertiesTest :
                 "VEHICLE_TRIP_USER_AGENT" to envVarVehicleTripUserAgent,
                 "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
                 "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
+                "GUEST_AVATARS_DIRECTORY_PATH" to envVarGuestAvatarDirectoryPath,
+                "STATISTICS_DATA_START_DATE" to envVarStatisticsDataStartDate,
             )
             withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -87,9 +91,22 @@ class AppPropertiesTest :
                 When("reading guest properties") {
                     val guestProperties = loadProperties<GuestPropertiesHolder>().guest
                     val guestFilePath = guestProperties.filePath
+                    val avatarsDirectory = guestProperties.avatarsDirectory
 
                     Then("guest.filePath should be set to the environment variable value") {
                         guestFilePath shouldBe envVarGuestFilePath
+                    }
+
+                    Then("guest.avatarsDirectory should be set to the avatars folder inside the data folder") {
+                        avatarsDirectory shouldBe envVarGuestAvatarDirectoryPath
+                    }
+                }
+
+                When("reading statistics properties") {
+                    val statisticsProperties = loadProperties<StatisticsPropertiesHolder>().statistics
+
+                    Then("statistics.dataStartDate should be set to the default value") {
+                        statisticsProperties.dataStartDate shouldBe envVarStatisticsDataStartDate
                     }
                 }
 

@@ -24,6 +24,16 @@ data class LiveStats(
     val allTimeNights: Int,
     @JsonSchema.Description("Total number of unique guests registered in the system.")
     val allTimeUniqueGuests: Int,
+    @JsonSchema.Description(
+        "Fun facts about the guests of the current reservation, sorted by priority. Empty if the cabin is not occupied.",
+    )
+    val guestFunFacts: List<FunFact>,
+    @JsonSchema.Description("Fun facts about the cabin as a whole, sorted by priority.")
+    val cabinFunFacts: List<FunFact>,
+    @JsonSchema.Description(
+        "Fun facts about the next upcoming reservation, sorted by priority. Empty if no future reservation exists.",
+    )
+    val nextVisitFunFacts: List<FunFact>,
 )
 
 @Serializable
@@ -62,6 +72,13 @@ data class LiveGuestStats(
     val lastName: String,
     @JsonSchema.Description("Guest's age in the current year (current year - birthYear).")
     val age: Int,
+    @JsonSchema.Description("True if the guest is a family member (owner of the cabin), false for other guests.")
+    val isFamily: Boolean,
+    @JsonSchema.Description(
+        "Relative URL to the guest's avatar image (JPEG), see GET /api/guests/{guestId}/avatar. " +
+            "Null if the guest has no avatar.",
+    )
+    val avatarUrl: String?,
     @JsonSchema.Description("True if the guest has no reservations that started before this reservation.")
     val isFirstVisit: Boolean,
     @JsonSchema.Description(

@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.statistics
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDayOfYear
@@ -10,11 +11,22 @@ import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.guestAvatarUrl
+import no.slomic.smarthytte.properties.StatisticsPropertiesHolder
+import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.countByMonth
+import no.slomic.smarthytte.statistics.calculator.CabinFunFactContext
+import no.slomic.smarthytte.statistics.calculator.CabinTotals
+import no.slomic.smarthytte.statistics.calculator.GuestFunFactContext
 import no.slomic.smarthytte.statistics.calculator.MonthDates
+import no.slomic.smarthytte.statistics.calculator.StayInfo
+import no.slomic.smarthytte.statistics.calculator.ToCabinDriving
 import no.slomic.smarthytte.statistics.calculator.aggregateGuestVisitStats
+import no.slomic.smarthytte.statistics.calculator.calculateCabinFunFacts
+import no.slomic.smarthytte.statistics.calculator.calculateGuestFunFacts
+import no.slomic.smarthytte.statistics.calculator.calculateGuestStandings
 import no.slomic.smarthytte.statistics.calculator.calculateLiveGuestStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingDistanceStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingMomentStats
@@ -23,6 +35,7 @@ import no.slomic.smarthytte.statistics.calculator.calculateMonthlyDaysStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthlyGuestStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthlyNightsStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthlyVisitDeltas
+import no.slomic.smarthytte.statistics.calculator.calculateNextVisitFunFacts
 import no.slomic.smarthytte.statistics.calculator.calculateYearDaysStats
 import no.slomic.smarthytte.statistics.calculator.calculateYearDrivingDistanceStats
 import no.slomic.smarthytte.statistics.calculator.calculateYearDrivingMomentStats
@@ -64,32 +77,60 @@ private const val AGE_SENIOR_MIN = 51
 class StatsService(
     private val reservationRepository: ReservationRepository,
     private val guestRepository: GuestRepository,
+    private val dataStartDate: LocalDate =
+        LocalDate.parse(loadProperties<StatisticsPropertiesHolder>().statistics.dataStartDate),
 ) {
+
     suspend fun getLiveStats(): LiveStats {
         val today = utcDateNow()
         val allReservations = reservationRepository.allReservations()
         val allGuests = guestRepository.allGuests()
         val guestsById = allGuests.associateBy { it.id }
+        val avatarUrlsByGuestId = guestRepository.allAvatarUpdatedTimes()
+            .mapValues { (guestId, updatedTime) -> guestAvatarUrl(guestId, updatedTime) }
 
         val current = allReservations.firstOrNull { it.hasStarted && !it.hasEnded }
         val next = allReservations.filter { !it.hasStarted }.minByOrNull { it.startDate }
 
         val currentInfo =
             current?.let { r ->
-                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById)
+                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val remaining = today.daysUntilSafe(r.endDate)
                 CurrentReservationInfo(r.startDate, r.endDate, guests, remaining)
             }
 
         val nextInfo =
             next?.let { r ->
-                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById)
+                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val daysUntil = today.daysUntilSafe(r.startDate)
                 NextReservationInfo(r.startDate, r.endDate, guests, daysUntil)
             }
 
         // All-time totals only count reservations that have started, i.e. future bookings are excluded
         val startedReservations = allReservations.filter { it.hasStarted }
+
+        val guestFunFacts = currentInfo?.let { info ->
+            val context =
+                guestFunFactContext(
+                    current,
+                    info,
+                    startedReservations,
+                    allReservations,
+                    guestsById,
+                    today,
+                    dataStartDate,
+                )
+            calculateGuestFunFacts(info.guests, context)
+        }.orEmpty()
+
+        val cabinContext = CabinFunFactContext(
+            today = today,
+            dataStartDate = dataStartDate,
+            isOccupied = current != null,
+            totals = cabinTotalsOf(startedReservations, allGuests.size),
+            currentYear = getYearStats(today.year),
+            previousYear = getYearStats(today.year - 1),
+        )
 
         return LiveStats(
             isOccupied = current != null,
@@ -98,6 +139,11 @@ class StatsService(
             allTimeVisits = startedReservations.size,
             allTimeNights = startedReservations.sumOf { it.durationNights },
             allTimeUniqueGuests = allGuests.size,
+            guestFunFacts = guestFunFacts,
+            cabinFunFacts = calculateCabinFunFacts(cabinContext),
+            nextVisitFunFacts = nextInfo?.let {
+                calculateNextVisitFunFacts(it, isOccupied = current != null)
+            }.orEmpty(),
         )
     }
 
@@ -367,3 +413,31 @@ class StatsService(
         )
     }
 }
+
+private fun guestFunFactContext(
+    current: Reservation?,
+    info: CurrentReservationInfo,
+    startedReservations: List<Reservation>,
+    allReservations: List<Reservation>,
+    guestsById: Map<String, Guest>,
+    today: LocalDate,
+    dataStartDate: LocalDate,
+) = GuestFunFactContext(
+    today = today,
+    stay = StayInfo(info.startDate, info.remainingNights),
+    allTimeVisits = startedReservations.size,
+    dataStartDate = dataStartDate,
+    standings = calculateGuestStandings(today, allReservations, guestsById),
+    toCabinDriving = ToCabinDriving(
+        currentMinutes = current?.toCabinDrivingDuration?.inWholeMinutes?.toInt(),
+        previousMinutes = startedReservations
+            .filter { it.id != current?.id }
+            .mapNotNull { it.toCabinDrivingDuration?.inWholeMinutes?.toInt() },
+    ),
+)
+
+private fun cabinTotalsOf(startedReservations: List<Reservation>, uniqueGuests: Int) = CabinTotals(
+    visits = startedReservations.size,
+    nights = startedReservations.sumOf { it.durationNights },
+    uniqueGuests = uniqueGuests,
+)

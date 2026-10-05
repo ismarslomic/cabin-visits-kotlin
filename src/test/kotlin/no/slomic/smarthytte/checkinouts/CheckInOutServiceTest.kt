@@ -3,7 +3,11 @@ package no.slomic.smarthytte.checkinouts
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlinx.datetime.atTime
+import kotlinx.datetime.toInstant
 import no.slomic.smarthytte.common.toIsoUtcString
+import no.slomic.smarthytte.common.utcDateNow
+import no.slomic.smarthytte.common.utcTimeZone
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
@@ -17,7 +21,6 @@ import no.slomic.smarthytte.vehicletrips.VehicleTrip
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.createTrip
 import java.util.*
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -406,7 +409,11 @@ data class CheckInOutScenario(
         "trip: [in:$hasCheckInTrip, out:$hasCheckOutTrip], " +
         "expected: [checkIn:$expectedCheckInSet, checkOut:$expectedCheckOutSet]"
 
-    private fun createReservation(now: Instant = Clock.System.now()): Reservation {
+    /**
+     * Sensors and trips are matched to reservations by UTC date, so [now] is anchored to noon UTC to keep the
+     * small time offsets below from crossing midnight when the test runs close to it.
+     */
+    private fun createReservation(now: Instant = noonUtcToday()): Reservation {
         val guest = listOf("guest-1")
         return when (reservationState) {
             ReservationTestState.NOT_STARTED -> Reservation(
@@ -488,3 +495,5 @@ data class CheckInOutScenario(
         null
     }
 }
+
+private fun noonUtcToday(): Instant = utcDateNow().atTime(hour = 12, minute = 0).toInstant(utcTimeZone)

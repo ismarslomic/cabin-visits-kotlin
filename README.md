@@ -25,6 +25,8 @@ with the `-e` option:
 | `GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME`        | No       | `2024-01-01T00:00:00Z` | Lower bound for event's end time in full calendar sync (RFC3339, with time zone).                                                                                                                                                          |
 | `GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH` | Yes      | N/A                    | The path to the JSON file defining the Calendar event summary-to-Guest mapping, inside the container.                                                                                                                                      |
 | `GUEST_FILE_PATH`                            | Yes      | N/A                    | Path to the JSON file with the Guests for database update/insert.                                                                                                                                                                          |
+| `GUEST_AVATARS_DIRECTORY_PATH`               | Yes      | N/A                    | Path to the directory with the Guests avatars images (named in format guestId.jpg).                                                                                                                                                        |
+| `STATISTICS_DATA_START_DATE`                 | Yes      | N/A                    | First date visits are registered (format: `YYYY-MM-DD`), used in fun facts about the cabin.                                                                                                                                                |
 | `GOOGLE_CALENDAR_SYNC_FREQ_MINUTES`          | No       | 10                     | Frequency (in minutes) to poll Google Calendar for updates.                                                                                                                                                                                |
 | `INFLUXDB_URL`                               | Yes      | N/A                    | Url to the InfluxDb database (e.g., `http://192.0.0.1:8086`).                                                                                                                                                                              |
 | `INFLUXDB_TOKEN`                             | Yes      | N/A                    | Access Token for InfluxDb authentication.                                                                                                                                                                                                  |
@@ -65,7 +67,7 @@ services:
       - 8079:8079 # port for REST API
     volumes:
       - ./config:/config # the google credentials file
-      - ./data:/data # sqlite db file, guests.json file, vehicle trips and the summary-to-guest mapping file
+      - ./data:/data # sqlite db file, guests.json file, `avatars/` folder with guest pictures, vehicle trips and the summary-to-guest mapping file
     env_file:
       - .env
     restart: unless-stopped
