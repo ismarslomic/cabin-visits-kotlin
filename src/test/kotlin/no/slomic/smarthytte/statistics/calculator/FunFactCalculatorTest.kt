@@ -4,7 +4,6 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
@@ -22,7 +21,6 @@ import no.slomic.smarthytte.statistics.model.MonthlyVisitCount
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
 import no.slomic.smarthytte.statistics.model.YearEvStats
 import no.slomic.smarthytte.statistics.model.YearStats
-import kotlin.random.Random
 
 class FunFactCalculatorTest :
     ShouldSpec({
@@ -78,7 +76,6 @@ class FunFactCalculatorTest :
                 standings = standings,
                 toCabinDriving = toCabinDriving,
             ),
-            Random(1),
         )
 
         context("calculateGuestFunFacts") {
@@ -87,7 +84,7 @@ class FunFactCalculatorTest :
 
                 result.first().guestId shouldBe "dina"
                 result.first().priority shouldBe 100
-                result.first().text shouldContain "Dina"
+                result.first().text shouldBe "Første registrerte besøk for Dina! 🎉"
                 facts(guest("bjorn", isFamily = true, isFirstVisit = true, allTimeVisits = 1))
                     .none { it.priority == 100 } shouldBe true
             }

@@ -16,7 +16,6 @@ import no.slomic.smarthytte.statistics.model.NextReservationInfo
 import no.slomic.smarthytte.statistics.model.YearStats
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
 private const val PRIORITY_FIRST_VISIT = 100
 private const val PRIORITY_VISIT_MILESTONE = 95
@@ -125,15 +124,11 @@ data class GuestFunFactContext(
  * is present they keep their full priority. Visits are only registered from the configured data start date,
  * so the wording says "registrert" instead of claiming anything about earlier history.
  */
-fun calculateGuestFunFacts(
-    guests: List<LiveGuestStats>,
-    context: GuestFunFactContext,
-    random: Random = Random.Default,
-): List<FunFact> {
+fun calculateGuestFunFacts(guests: List<LiveGuestStats>, context: GuestFunFactContext): List<FunFact> {
     val hasNonFamilyGuests = guests.any { !it.isFamily }
 
     val guestFacts = guests.flatMap { guest ->
-        val facts = guestFunFacts(guest, context, random)
+        val facts = guestFunFacts(guest, context)
             .sortedByDescending { it.priority }
             .take(MAX_FACTS_PER_GUEST)
         if (guest.isFamily && hasNonFamilyGuests) {
@@ -177,24 +172,23 @@ fun calculateNextVisitFunFacts(next: NextReservationInfo, isOccupied: Boolean): 
         next.guests.flatMap { listOfNotNull(nextFirstTimer(it), nextVisitMilestone(it)) }
     ).sortedByDescending { it.priority }
 
-private fun guestFunFacts(guest: LiveGuestStats, context: GuestFunFactContext, random: Random): List<FunFact> =
-    listOfNotNull(
-        firstVisit(guest, random),
-        visitMilestone(guest),
-        daysMilestone(guest, context),
-        longAbsence(guest, context.today),
-        visitStreak(guest, context.today),
-        yearRace(guest, context.standings),
-        topGuestAllTime(guest, context),
-        firstVisitThisYear(guest),
-        shareOfTrips(guest, context.allTimeVisits),
-        shareOfDays(guest, context),
-        shareOfLife(guest, context),
-        daysThisYear(guest, context.today),
-        yearsSinceFirstVisit(guest, context.today),
-        totalDays(guest, context.dataStartDate),
-        lastVisitDate(guest),
-    )
+private fun guestFunFacts(guest: LiveGuestStats, context: GuestFunFactContext): List<FunFact> = listOfNotNull(
+    firstVisit(guest),
+    visitMilestone(guest),
+    daysMilestone(guest, context),
+    longAbsence(guest, context.today),
+    visitStreak(guest, context.today),
+    yearRace(guest, context.standings),
+    topGuestAllTime(guest, context),
+    firstVisitThisYear(guest),
+    shareOfTrips(guest, context.allTimeVisits),
+    shareOfDays(guest, context),
+    shareOfLife(guest, context),
+    daysThisYear(guest, context.today),
+    yearsSinceFirstVisit(guest, context.today),
+    totalDays(guest, context.dataStartDate),
+    lastVisitDate(guest),
+)
 
 private fun groupFunFacts(guests: List<LiveGuestStats>, context: GuestFunFactContext): List<FunFact> = listOfNotNull(
     drivingRecord(context.toCabinDriving),
@@ -205,14 +199,9 @@ private fun groupFunFacts(guests: List<LiveGuestStats>, context: GuestFunFactCon
     stayProgress(context),
 )
 
-private fun firstVisit(guest: LiveGuestStats, random: Random): FunFact? {
-    if (guest.isFamily || !guest.isFirstVisit) return null
-    val text = listOf(
-        "Første registrerte besøk for ${guest.firstName}! 🎉",
-        "${guest.firstName} er på hytta for første gang! 🎉",
-    ).random(random)
-    return FunFact(guest.guestId, text, PRIORITY_FIRST_VISIT)
-}
+private fun firstVisit(guest: LiveGuestStats): FunFact? =
+    FunFact(guest.guestId, "Første registrerte besøk for ${guest.firstName}! 🎉", PRIORITY_FIRST_VISIT)
+        .takeIf { !guest.isFamily && guest.isFirstVisit }
 
 private fun visitMilestone(guest: LiveGuestStats): FunFact? {
     val visits = guest.allTime.totalVisits
