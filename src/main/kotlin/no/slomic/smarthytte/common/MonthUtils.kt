@@ -18,6 +18,24 @@ private val NORWEGIAN_SHORT_MONTH_NAMES =
 
 fun norwegianShortMonthNameOf(month: Month): String = NORWEGIAN_SHORT_MONTH_NAMES[month.ordinal]
 
+private val NORWEGIAN_MONTH_NAMES = listOf(
+    "januar",
+    "februar",
+    "mars",
+    "april",
+    "mai",
+    "juni",
+    "juli",
+    "august",
+    "september",
+    "oktober",
+    "november",
+    "desember",
+)
+
+/** Full lower-case month name, e.g. "september". */
+fun norwegianMonthNameOf(month: Month): String = NORWEGIAN_MONTH_NAMES[month.ordinal]
+
 /** Short month and year, e.g. "sept 2020". */
 fun LocalDate.norwegianShortMonthYear(): String = "${norwegianShortMonthNameOf(month)} $year"
 

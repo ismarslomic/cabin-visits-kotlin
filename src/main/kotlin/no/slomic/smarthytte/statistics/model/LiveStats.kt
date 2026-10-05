@@ -30,6 +30,10 @@ data class LiveStats(
     val guestFunFacts: List<FunFact>,
     @JsonSchema.Description("Fun facts about the cabin as a whole, sorted by priority.")
     val cabinFunFacts: List<FunFact>,
+    @JsonSchema.Description(
+        "Fun facts about the next upcoming reservation, sorted by priority. Empty if no future reservation exists.",
+    )
+    val nextVisitFunFacts: List<FunFact>,
 )
 
 @Serializable
