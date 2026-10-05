@@ -11,24 +11,41 @@ import no.slomic.smarthytte.common.norwegianShortMonthYear
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.LiveGuestStats
 
+// Selection: at most this many facts are kept per guest
+private const val MAX_FACTS_PER_GUEST = 2
+
+// Visit milestones: guests at fixed visit counts, family at every step
 private val GUEST_VISIT_MILESTONES = setOf(5, 10, 25, 50, 75, 100, 150, 200)
 private const val FAMILY_VISIT_MILESTONE_STEP = 50
+
+// Days milestones: total days at the cabin crossed during the stay
+private val DAYS_MILESTONES = listOf(50, 100, 200, 365)
+
+// Long absence and visit streak
 private const val MIN_MONTHS_FOR_LONG_ABSENCE = 12
 private const val MIN_YEARS_FOR_STREAK = 3
+
+// Share of all trips (percent of the cabin's visits)
 private const val MIN_SHARE_OF_TRIPS_PERCENT = 25
-private const val MIN_NEW_GUESTS_IN_GROUP = 2
-private const val LAST_DAY_REMAINING_NIGHTS = 1
-private const val PERCENT_FACTOR = 100
-private const val MAX_FACTS_PER_GUEST = 2
-private const val MIN_SHARE_PERCENT = 5
-private const val MIN_DAYS_THIS_YEAR = 3
-private const val MIN_TOTAL_DAYS = 5
+
+// Year race: minimum visits for a leader, and how close the chasers must be
 private const val MIN_RACE_VISITS = 2
 private const val MAX_GAP_TO_LEADER = 3
 private const val MAX_TIED_LEADERS = 3
-private const val MIN_TRIPS_FOR_DRIVING_RECORD = 5
+
+// Share of days since data start and share of life (percent, shown from this share)
+private const val PERCENT_FACTOR = 100
+private const val MIN_SHARE_PERCENT = 5
 private const val DAYS_PER_YEAR = 365
-private val DAYS_MILESTONES = listOf(50, 100, 200, 365)
+
+// Days this year and total days at the cabin
+private const val MIN_DAYS_THIS_YEAR = 3
+private const val MIN_TOTAL_DAYS = 5
+
+// Group facts: new guests, last day and nights left, driving record
+private const val MIN_NEW_GUESTS_IN_GROUP = 2
+private const val LAST_DAY_REMAINING_NIGHTS = 1
+private const val MIN_TRIPS_FOR_DRIVING_RECORD = 5
 
 /** Where the current stay stands: arrival date and the nights left until check-out. */
 data class StayInfo(val startDate: LocalDate, val remainingNights: Int)

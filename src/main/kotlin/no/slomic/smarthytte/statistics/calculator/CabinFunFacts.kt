@@ -16,11 +16,20 @@ import no.slomic.smarthytte.statistics.model.YearStats
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+// Cabin visit milestone: every this many visits
 private const val CABIN_VISIT_MILESTONE_STEP = 50
+
+// Driving time vs last year: smallest difference worth mentioning
 private const val MIN_DRIVING_TIME_DIFF_MINUTES = 5
+
+// Most visited month: fewest visits in the month to mention it
 private const val MIN_MONTH_VISITS_FOR_MOST_VISITED = 2
+
+// Total distance as laps around the earth: shown from this many laps
 private const val EARTH_CIRCUMFERENCE_KM = 40_075.0
 private const val MIN_LAPS_AROUND_EARTH = 0.1
+
+// Years of ownership: the cabin was bought in December 2019
 private val OWNERSHIP_START = LocalDate(2019, 12, 1)
 
 /** All-time totals for the cabin; reservations that have not started are excluded. */

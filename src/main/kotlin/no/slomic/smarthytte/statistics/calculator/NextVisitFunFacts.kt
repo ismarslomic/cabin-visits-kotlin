@@ -1,10 +1,10 @@
 package no.slomic.smarthytte.statistics.calculator
 
-import kotlinx.datetime.daysUntil
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.LiveGuestStats
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
 
+// Arrival soon (today, tomorrow, the day after) and countdown for later arrivals
 private const val ARRIVAL_SOON_MAX_DAYS = 2
 
 /**
