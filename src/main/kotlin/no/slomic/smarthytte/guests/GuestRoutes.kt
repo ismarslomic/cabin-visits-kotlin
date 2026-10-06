@@ -42,7 +42,11 @@ fun Application.configureGuestRoutes(guestRepository: GuestRepository) {
 }
 
 private fun Route.describeGuestAvatar() = describe {
+    operationId = "getGuestAvatar"
     tag("Guests")
+    parameters {
+        path("guestId") { description = "Internal unique identifier of the guest." }
+    }
     summary = "Guest avatar"
     description = "Returns the guest's avatar as a JPEG image. The response has an ETag and Cache-Control header, " +
         "and a conditional request with If-None-Match returns 304. Use the avatarUrl from the live stats response, " +

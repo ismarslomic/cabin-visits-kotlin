@@ -6,38 +6,9 @@
     "description": "REST API for cabin visit statistics: occupancy, driving, guests and EV metrics."
   },
   "paths": {
-    "/metrics": {
-      "get": {
-        "summary": "",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/": {
-      "get": {
-        "summary": "",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "text/plain": {}
-            }
-          }
-        }
-      }
-    },
     "/api/guests/{guestId}/avatar": {
       "get": {
+        "operationId": "getGuestAvatar",
         "tags": [
           "Guests"
         ],
@@ -47,6 +18,7 @@
           {
             "name": "guestId",
             "in": "path",
+            "description": "Internal unique identifier of the guest.",
             "required": true,
             "schema": {
               "type": "string"
@@ -109,6 +81,7 @@
     },
     "/api/stats": {
       "get": {
+        "operationId": "getLiveStats",
         "tags": [
           "Stats"
         ],
@@ -130,6 +103,7 @@
     },
     "/api/stats/current-year": {
       "get": {
+        "operationId": "getCurrentYearStats",
         "tags": [
           "Stats"
         ],
@@ -151,6 +125,7 @@
     },
     "/api/stats/years": {
       "get": {
+        "operationId": "getAvailableYears",
         "tags": [
           "Stats"
         ],
@@ -175,6 +150,7 @@
     },
     "/api/stats/years/{year}": {
       "get": {
+        "operationId": "getYearStats",
         "tags": [
           "Stats"
         ],
@@ -184,9 +160,10 @@
           {
             "name": "year",
             "in": "path",
+            "description": "The calendar year, for example 2025.",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer"
             }
           }
         ],
@@ -216,6 +193,7 @@
     },
     "/api/stats/years/{year}/months/{month}": {
       "get": {
+        "operationId": "getMonthStats",
         "tags": [
           "Stats"
         ],
@@ -225,17 +203,21 @@
           {
             "name": "year",
             "in": "path",
+            "description": "The calendar year, for example 2025.",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer"
             }
           },
           {
             "name": "month",
             "in": "path",
+            "description": "The month number, 1 (January) to 12 (December).",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "maximum": 12.0,
+              "minimum": 1.0
             }
           }
         ],
@@ -265,6 +247,7 @@
     },
     "/api/stats/guests": {
       "get": {
+        "operationId": "getGuestStats",
         "tags": [
           "Stats"
         ],
@@ -279,19 +262,6 @@
                   "$ref": "#/components/schemas/GuestStats"
                 }
               }
-            }
-          }
-        }
-      }
-    },
-    "/openapi.json": {
-      "get": {
-        "summary": "",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {}
             }
           }
         }
@@ -1898,5 +1868,15 @@
         }
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Stats",
+      "description": "Cabin visit statistics: live status, yearly and monthly summaries, and guest rankings."
+    },
+    {
+      "name": "Guests",
+      "description": "Guest resources, such as avatar images."
+    }
+  ]
 }

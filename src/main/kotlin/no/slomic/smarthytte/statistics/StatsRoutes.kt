@@ -5,6 +5,8 @@ package no.slomic.smarthytte.statistics
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.openapi.JsonSchema
+import io.ktor.openapi.JsonType
 import io.ktor.openapi.OpenApiDoc
 import io.ktor.openapi.OpenApiInfo
 import io.ktor.server.application.Application
@@ -14,6 +16,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.openapi.OpenApiDocSource
 import io.ktor.server.routing.openapi.describe
+import io.ktor.server.routing.openapi.hide
 import io.ktor.server.routing.routing
 
 private const val MONTHS_PER_YEAR = 12
@@ -25,13 +28,15 @@ fun Application.configureOpenApi() {
             version = "1.0",
             description = "REST API for cabin visit statistics: occupancy, driving, guests and EV metrics.",
         )
+        tag("Stats", "Cabin visit statistics: live status, yearly and monthly summaries, and guest rankings.")
+        tag("Guests", "Guest resources, such as avatar images.")
     }.build()
 
     routing {
         get("/openapi.json") {
             val spec = OpenApiDocSource.Routing().read(this@configureOpenApi, baseDoc)
             call.respondText(spec.content, ContentType.Application.Json)
-        }
+        }.hide()
     }
 }
 
@@ -66,6 +71,7 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
 }
 
 private fun Route.describeLiveStats() = describe {
+    operationId = "getLiveStats"
     tag("Stats")
     summary = "Live occupancy status"
     description = "Returns whether the cabin is currently occupied, details about the ongoing and next " +
@@ -77,6 +83,7 @@ private fun Route.describeLiveStats() = describe {
 }
 
 private fun Route.describeCurrentYearStats() = describe {
+    operationId = "getCurrentYearStats"
     tag("Stats")
     summary = "Current year summary"
     description = "Returns a quick summary for the current calendar year: number of visits, total nights, " +
@@ -87,6 +94,7 @@ private fun Route.describeCurrentYearStats() = describe {
 }
 
 private fun Route.describeAvailableYears() = describe {
+    operationId = "getAvailableYears"
     tag("Stats")
     summary = "Available years"
     description = "Returns a sorted list of years for which reservations exist. " +
@@ -97,8 +105,15 @@ private fun Route.describeAvailableYears() = describe {
 }
 
 private fun Route.describeYearStats() = describe {
+    operationId = "getYearStats"
     tag("Stats")
     summary = "Full year statistics"
+    parameters {
+        path("year") {
+            description = "The calendar year, for example 2025."
+            schema = JsonSchema(type = JsonType.INTEGER)
+        }
+    }
     description = "Returns full statistics for a given year, including visit counts, nights, occupancy " +
         "percentages (days/weeks/months), guest overview, EV statistics (distance, energy consumption, " +
         "regeneration), driving time stats (avg/min/max to and from cabin), typical departure and arrival " +
@@ -112,8 +127,19 @@ private fun Route.describeYearStats() = describe {
 }
 
 private fun Route.describeMonthStats() = describe {
+    operationId = "getMonthStats"
     tag("Stats")
     summary = "Monthly statistics"
+    parameters {
+        path("year") {
+            description = "The calendar year, for example 2025."
+            schema = JsonSchema(type = JsonType.INTEGER)
+        }
+        path("month") {
+            description = "The month number, 1 (January) to 12 (December)."
+            schema = JsonSchema(type = JsonType.INTEGER, minimum = 1.0, maximum = MONTHS_PER_YEAR.toDouble())
+        }
+    }
     description = "Returns statistics for a specific month: visit count with comparisons against the " +
         "previous 30 days, the same month last year, and the year-to-date monthly average; nights " +
         "min/avg/max; occupancy percentages; guest list; and driving time and moment stats including " +
@@ -125,6 +151,7 @@ private fun Route.describeMonthStats() = describe {
 }
 
 private fun Route.describeGuestStats() = describe {
+    operationId = "getGuestStats"
     tag("Stats")
     summary = "Guest statistics"
     description = "Returns guest statistics across all years: top 10 guests by number of visits and by " +

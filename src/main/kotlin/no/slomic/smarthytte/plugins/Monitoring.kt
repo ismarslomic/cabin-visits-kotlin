@@ -1,3 +1,5 @@
+@file:OptIn(io.ktor.utils.io.ExperimentalKtorApi::class)
+
 package no.slomic.smarthytte.plugins
 
 import io.ktor.server.application.Application
@@ -5,6 +7,7 @@ import io.ktor.server.application.install
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
+import io.ktor.server.routing.openapi.hide
 import io.ktor.server.routing.routing
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -35,6 +38,6 @@ fun Application.configureMonitoring() {
     routing {
         get("/metrics") {
             call.respond(appMicrometerRegistry.scrape())
-        }
+        }.hide()
     }
 }
