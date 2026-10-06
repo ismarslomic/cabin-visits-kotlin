@@ -25,7 +25,7 @@ fun Application.configureOpenApi() {
     val baseDoc = OpenApiDoc.Builder().apply {
         info = OpenApiInfo(
             title = "Cabin Visits API",
-            version = "1.0",
+            version = "1.0.0",
             description = "REST API for cabin visit statistics: occupancy, driving, guests and EV metrics.",
         )
         tag("Stats", "Cabin visit statistics: live status, yearly and monthly summaries, and guest rankings.")
