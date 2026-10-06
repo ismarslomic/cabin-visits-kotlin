@@ -54,6 +54,7 @@ private fun Route.describeGuestAvatar() = describe {
     responses {
         HttpStatusCode.OK { description = "The avatar image (image/jpeg)." }
         HttpStatusCode.NotModified { description = "The avatar has not changed since the ETag in If-None-Match." }
+        HttpStatusCode.BadRequest { description = "The guestId path parameter is missing." }
         HttpStatusCode.NotFound { description = "The guest does not exist or has no avatar." }
     }
 }

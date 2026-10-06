@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Cabin Visits API",
-    "version": "1.0",
+    "version": "1.0.0",
     "description": "REST API for cabin visit statistics: occupancy, driving, guests and EV metrics."
   },
   "paths": {
@@ -27,7 +27,7 @@
         ],
         "responses": {
           "400": {
-            "description": "",
+            "description": "The guestId path parameter is missing.",
             "headers": {
               "ETag": {
                 "content": {
@@ -88,6 +88,9 @@
         "summary": "Live occupancy status",
         "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. Suitable for a smart mirror or real-time dashboard.",
         "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
           "200": {
             "description": "Live occupancy status.",
             "content": {
@@ -110,6 +113,9 @@
         "summary": "Current year summary",
         "description": "Returns a quick summary for the current calendar year: number of visits, total nights, and total driving distance to/from the cabin. Suitable for a summary card or widget.",
         "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
           "200": {
             "description": "Current year summary.",
             "content": {
@@ -132,6 +138,9 @@
         "summary": "Available years",
         "description": "Returns a sorted list of years for which reservations exist. Use this to populate a year picker in a dashboard.",
         "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
           "200": {
             "description": "Sorted list of available years.",
             "content": {
@@ -254,6 +263,9 @@
         "summary": "Guest statistics",
         "description": "Returns guest statistics across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Suitable for a hall-of-fame view or demographic overview.",
         "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
           "200": {
             "description": "Guest statistics across all years.",
             "content": {

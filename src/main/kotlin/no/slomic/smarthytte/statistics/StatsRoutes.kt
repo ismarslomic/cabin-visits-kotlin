@@ -79,6 +79,7 @@ private fun Route.describeLiveStats() = describe {
         "unique guests) excluding future bookings. Suitable for a smart mirror or real-time dashboard."
     responses {
         HttpStatusCode.OK { description = "Live occupancy status." }
+        default { description = "Unexpected server error." }
     }
 }
 
@@ -90,6 +91,7 @@ private fun Route.describeCurrentYearStats() = describe {
         "and total driving distance to/from the cabin. Suitable for a summary card or widget."
     responses {
         HttpStatusCode.OK { description = "Current year summary." }
+        default { description = "Unexpected server error." }
     }
 }
 
@@ -101,6 +103,7 @@ private fun Route.describeAvailableYears() = describe {
         "Use this to populate a year picker in a dashboard."
     responses {
         HttpStatusCode.OK { description = "Sorted list of available years." }
+        default { description = "Unexpected server error." }
     }
 }
 
@@ -159,5 +162,6 @@ private fun Route.describeGuestStats() = describe {
         "Suitable for a hall-of-fame view or demographic overview."
     responses {
         HttpStatusCode.OK { description = "Guest statistics across all years." }
+        default { description = "Unexpected server error." }
     }
 }
