@@ -5,6 +5,7 @@ package no.slomic.smarthytte.statistics.model
 import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
+@JsonSchema.Description("Occupancy percentages for a period (year or month) across days, weeks and, for years, months.")
 @Serializable
 data class OccupancyStats(
     @JsonSchema.Description(

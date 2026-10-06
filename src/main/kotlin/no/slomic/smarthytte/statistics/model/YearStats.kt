@@ -17,9 +17,7 @@ data class YearStats(
     val days: YearDaysStats,
     @JsonSchema.Description("Occupied-night statistics for this year (excluding departure day).")
     val nights: YearNightsStats,
-    @JsonSchema.Description("Occupancy percentages for the year across days, weeks, and months.")
     val occupancy: OccupancyStats,
-    @JsonSchema.Description("The guest with the most total days at the cabin this year. Null if no guest data exists.")
     val topGuestByDays: GuestVisitStats?,
     @JsonSchema.Description(
         "Guests who appear in this year's reservations but did not appear in any reservation in the previous year. Sorted by total days descending.",
@@ -61,13 +59,7 @@ data class YearVisitsStats(
     val avgMonthlyVisits: Double,
     @JsonSchema.Description("Average number of guests per reservation this year. Null if there are no reservations.")
     val avgGroupSize: Double?,
-    @JsonSchema.Description(
-        "The month with the highest number of reservation starts this year. Null if no reservations exist.",
-    )
     val monthMostVisits: MonthlyVisitCount?,
-    @JsonSchema.Description(
-        "The month with the fewest reservation starts this year, among months that had at least one visit. Null if no reservations exist.",
-    )
     val monthFewestVisits: MonthlyVisitCount?,
 )
 
@@ -193,6 +185,7 @@ data class YearEvStats(
     val totalEnergyRegeneratedKwh: Double?,
 )
 
+@JsonSchema.Description("Number of reservation starts in a given month.")
 @Serializable
 data class MonthlyVisitCount(
     @JsonSchema.Description("Month number (1 = January, 12 = December).")
@@ -213,6 +206,7 @@ data class MonthlyDaysCount(
     val daysCount: Int,
 )
 
+@JsonSchema.Description("A guest's visits and days at the cabin within a period (year or month).")
 @Serializable
 data class GuestVisitStats(
     @JsonSchema.Description("Internal unique identifier of the guest.")

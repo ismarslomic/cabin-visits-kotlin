@@ -91,12 +91,13 @@ data class LiveGuestStats(
     val lastVisitDate: LocalDate?,
     @JsonSchema.Description("Years in which the guest has started reservations, in descending order.")
     val yearsVisited: List<Int>,
-    @JsonSchema.Description("Guest statistics for the current year, counting only started reservations up to today.")
     val currentYear: GuestPeriodStats,
-    @JsonSchema.Description("Guest statistics across all years, counting only started reservations up to today.")
     val allTime: GuestPeriodStats,
 )
 
+@JsonSchema.Description(
+    "Guest statistics for one period (the current year or all years), counting only started reservations up to today.",
+)
 @Serializable
 data class GuestPeriodStats(
     @JsonSchema.Description("Number of reservations the guest was part of that started in the period (arrival date).")
