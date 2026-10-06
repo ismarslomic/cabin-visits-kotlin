@@ -129,10 +129,18 @@ fun Application.module() {
     // checkInOutService.updateCheckInOutStatusForAllReservations()
 
     // Configure Ktor routing (after the initial load is completed)
+    configureApiRoutes(guestRepository, statsService)
+}
+
+/**
+ * Installs every HTTP route group served by the application, except monitoring ([configureMonitoring]).
+ *
+ * Shared with `OpenApiSpecTest`, so the committed OpenAPI spec is generated from the same routes that production
+ * serves. Add new route groups here, not directly in [module].
+ */
+fun Application.configureApiRoutes(guestRepository: GuestRepository, statsService: StatsService) {
     configureRouting()
     configureGuestRoutes(guestRepository)
-
-    // Configure stats REST API
     configureStatsRoutes(statsService)
     configureOpenApi()
 }

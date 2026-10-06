@@ -60,6 +60,7 @@ import no.slomic.smarthytte.statistics.model.OccupancyStats
 import no.slomic.smarthytte.statistics.model.YearEvStats
 import no.slomic.smarthytte.statistics.model.YearStats
 import no.slomic.smarthytte.statistics.model.YearVisitsStats
+import no.slomic.smarthytte.statistics.model.toTopGuestByDays
 
 private const val PERCENT_FACTOR = 100.0
 private const val TOP_GUESTS_LIMIT = 10
@@ -211,7 +212,7 @@ class StatsService(
                 weekOccupancy = occupancy.weekOccupancy,
                 monthOccupancy = occupancy.monthOccupancy,
             ),
-            topGuestByDays = guestStats.topGuestByDays,
+            topGuestByDays = guestStats.topGuestByDays?.toTopGuestByDays(),
             newGuests = guestStats.newGuests,
             guests = guestStats.allGuestsSorted,
             drivingDistance = drivingDistance,

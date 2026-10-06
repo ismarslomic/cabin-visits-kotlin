@@ -17,10 +17,8 @@ data class YearStats(
     val days: YearDaysStats,
     @JsonSchema.Description("Occupied-night statistics for this year (excluding departure day).")
     val nights: YearNightsStats,
-    @JsonSchema.Description("Occupancy percentages for the year across days, weeks, and months.")
     val occupancy: OccupancyStats,
-    @JsonSchema.Description("The guest with the most total days at the cabin this year. Null if no guest data exists.")
-    val topGuestByDays: GuestVisitStats?,
+    val topGuestByDays: TopGuestByDays?,
     @JsonSchema.Description(
         "Guests who appear in this year's reservations but did not appear in any reservation in the previous year. Sorted by total days descending.",
     )
@@ -61,13 +59,7 @@ data class YearVisitsStats(
     val avgMonthlyVisits: Double,
     @JsonSchema.Description("Average number of guests per reservation this year. Null if there are no reservations.")
     val avgGroupSize: Double?,
-    @JsonSchema.Description(
-        "The month with the highest number of reservation starts this year. Null if no reservations exist.",
-    )
     val monthMostVisits: MonthlyVisitCount?,
-    @JsonSchema.Description(
-        "The month with the fewest reservation starts this year, among months that had at least one visit. Null if no reservations exist.",
-    )
     val monthFewestVisits: MonthlyVisitCount?,
 )
 
@@ -193,6 +185,7 @@ data class YearEvStats(
     val totalEnergyRegeneratedKwh: Double?,
 )
 
+@JsonSchema.Description("Number of reservation starts in a given month.")
 @Serializable
 data class MonthlyVisitCount(
     @JsonSchema.Description("Month number (1 = January, 12 = December).")
@@ -213,6 +206,52 @@ data class MonthlyDaysCount(
     val daysCount: Int,
 )
 
+/**
+ * The guest with the most total days at the cabin in the year, exposed as [YearStats.topGuestByDays].
+ *
+ * This is deliberately a field-for-field copy of [GuestVisitStats] and exists only to keep the generated OpenAPI
+ * document clean.
+ *
+ * **Problem it solves:** `topGuestByDays` is nullable, while the guest lists ([YearStats.guests] and
+ * [YearStats.newGuests]) use [GuestVisitStats] as a non-null element type. When Ktor's OpenAPI inference sees the
+ * same class used both as nullable and as non-null, it emits two schema variants: `GuestVisitStats` (typed
+ * `["object", "null"]`) and a suffixed duplicate `GuestVisitStats2`. Client code generators (for example
+ * `openapi-typescript`) then produce confusing, unstable type names.
+ *
+ * **Trade-off:** the six fields are duplicated here and in [GuestVisitStats], so a new field must be added to both
+ * (and to [toTopGuestByDays]). The JSON on the wire is identical to what a [GuestVisitStats] would produce, so
+ * clients are not affected.
+ *
+ * **Alternatives considered:** make `topGuestByDays` non-null (changes the meaning when no guest data exists), or
+ * remove it, since it always equals the first element of [YearStats.guests] (breaking API change).
+ */
+@JsonSchema.Description("The guest with the most total days at the cabin in the year.")
+@Serializable
+data class TopGuestByDays(
+    @JsonSchema.Description("Internal unique identifier of the guest.")
+    val guestId: String,
+    @JsonSchema.Description("Guest's first name.")
+    val firstName: String,
+    @JsonSchema.Description("Guest's last name.")
+    val lastName: String,
+    @JsonSchema.Description("Guest's age in the reference year (ageYear - birthYear).")
+    val age: Int,
+    @JsonSchema.Description("Number of reservations the guest was part of that started in the year (arrival date).")
+    val totalVisits: Int,
+    @JsonSchema.Description("Total number of days the guest was present at the cabin in the year.")
+    val totalDays: Int,
+)
+
+fun GuestVisitStats.toTopGuestByDays() = TopGuestByDays(
+    guestId = guestId,
+    firstName = firstName,
+    lastName = lastName,
+    age = age,
+    totalVisits = totalVisits,
+    totalDays = totalDays,
+)
+
+@JsonSchema.Description("A guest's visits and days at the cabin within a period (year or month).")
 @Serializable
 data class GuestVisitStats(
     @JsonSchema.Description("Internal unique identifier of the guest.")

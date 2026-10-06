@@ -26,6 +26,16 @@ Java HotSpot(TM) 64-Bit Server VM Oracle GraalVM 24+36.1 (build 24+36-jvmci-b01,
 ./gradlew test
 ```
 
+### OpenAPI spec
+
+The API contract is committed as `openapi/cabin-visits.json` and used by API clients (for example the
+MMM-CabinStats MagicMirror module) to generate their types. `OpenApiSpecTest` fails if the spec served at
+`/openapi.json` differs from the committed file. After an intended API change, regenerate it and commit the diff:
+
+```bash
+UPDATE_OPENAPI=true ./gradlew test --tests '*OpenApiSpecTest' --rerun
+```
+
 ### Collect metadata with the Tracing Agent
 
 GraalVM provides a Tracing Agent to easily gather metadata and prepare configuration files. The agent tracks all usages

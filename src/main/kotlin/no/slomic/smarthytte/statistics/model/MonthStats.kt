@@ -21,7 +21,6 @@ data class MonthStats(
     val days: MonthDaysStats,
     @JsonSchema.Description("Occupied-night statistics for this month (excluding departure day).")
     val nights: MonthNightsStats,
-    @JsonSchema.Description("Occupancy percentages for this month across days and weeks.")
     val occupancy: OccupancyStats,
     @JsonSchema.Description(
         "All guests present in this month, sorted by total days descending. Visits count reservations that started in this month, days count days within this month.",

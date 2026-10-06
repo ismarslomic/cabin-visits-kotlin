@@ -53,6 +53,10 @@ jobs:
       - name: Run Tests
         run: ./gradlew test --no-daemon
 
+      # Validate the committed OpenAPI spec
+      - name: Validate OpenAPI spec
+        run: ./gradlew openApiValidate --no-daemon
+
       # Upload code coverage to codecov.io
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

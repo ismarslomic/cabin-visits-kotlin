@@ -42,7 +42,11 @@ fun Application.configureGuestRoutes(guestRepository: GuestRepository) {
 }
 
 private fun Route.describeGuestAvatar() = describe {
+    operationId = "getGuestAvatar"
     tag("Guests")
+    parameters {
+        path("guestId") { description = "Internal unique identifier of the guest." }
+    }
     summary = "Guest avatar"
     description = "Returns the guest's avatar as a JPEG image. The response has an ETag and Cache-Control header, " +
         "and a conditional request with If-None-Match returns 304. Use the avatarUrl from the live stats response, " +
@@ -50,6 +54,7 @@ private fun Route.describeGuestAvatar() = describe {
     responses {
         HttpStatusCode.OK { description = "The avatar image (image/jpeg)." }
         HttpStatusCode.NotModified { description = "The avatar has not changed since the ETag in If-None-Match." }
+        HttpStatusCode.BadRequest { description = "The guestId path parameter is missing." }
         HttpStatusCode.NotFound { description = "The guest does not exist or has no avatar." }
     }
 }
