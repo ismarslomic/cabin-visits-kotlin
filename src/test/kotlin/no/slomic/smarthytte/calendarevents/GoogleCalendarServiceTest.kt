@@ -8,10 +8,12 @@ import com.google.api.services.calendar.model.Events
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import io.mockk.verify
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.reservations.ReservationRepository
@@ -44,6 +46,7 @@ class GoogleCalendarServiceTest :
                 syncFromDateTime = "2024-12-29T00:00:00Z",
                 summaryToGuestFilePath = getResourceFilePath("summaryToGuestIds.json"),
                 syncFrequencyMinutes = 5,
+                syncEnabled = true,
             ),
         )
 
@@ -62,9 +65,7 @@ class GoogleCalendarServiceTest :
         "empty list of new events should not store events to database" {
             every { mockEventsList.execute() } returns Events().apply { items = emptyList() }
 
-            runBlocking {
-                googleCalendarService.fetchGoogleCalendarEvents()
-            }
+            googleCalendarService.fetchGoogleCalendarEvents()
 
             reservationRepository.allReservations().shouldBeEmpty()
         }
@@ -80,9 +81,7 @@ class GoogleCalendarServiceTest :
 
             every { mockEventsList.execute() } returns Events().apply { items = listOf(newEvent) }
 
-            runBlocking {
-                googleCalendarService.fetchGoogleCalendarEvents()
-            }
+            googleCalendarService.fetchGoogleCalendarEvents()
 
             reservationRepository.allReservations() shouldHaveSize 1
         }
@@ -98,9 +97,7 @@ class GoogleCalendarServiceTest :
 
             every { mockEventsList.execute() } returns Events().apply { items = listOf(newEvent) }
 
-            runBlocking {
-                googleCalendarService.fetchGoogleCalendarEvents()
-            }
+            googleCalendarService.fetchGoogleCalendarEvents()
 
             val changedEvent = newEvent.apply {
                 summary = "Updated Event"
@@ -108,9 +105,7 @@ class GoogleCalendarServiceTest :
 
             every { mockEventsList.execute() } returns Events().apply { items = listOf(changedEvent) }
 
-            runBlocking {
-                googleCalendarService.fetchGoogleCalendarEvents()
-            }
+            googleCalendarService.fetchGoogleCalendarEvents()
 
             val allEvents = reservationRepository.allReservations()
             allEvents shouldHaveSize 1
@@ -129,9 +124,7 @@ class GoogleCalendarServiceTest :
 
             every { mockEventsList.execute() } returns Events().apply { items = listOf(newEvent) }
 
-            runBlocking {
-                googleCalendarService.fetchGoogleCalendarEvents()
-            }
+            googleCalendarService.fetchGoogleCalendarEvents()
 
             reservationRepository.allReservations() shouldHaveSize 1
 
@@ -141,10 +134,28 @@ class GoogleCalendarServiceTest :
 
             every { mockEventsList.execute() } returns Events().apply { items = listOf(deletedEvent) }
 
-            runBlocking {
-                googleCalendarService.fetchGoogleCalendarEvents()
-            }
+            googleCalendarService.fetchGoogleCalendarEvents()
 
             reservationRepository.allReservations().shouldBeEmpty()
+        }
+
+        "no events should be fetched when sync is disabled" {
+            // The mock is shared between tests, so forget calls recorded by earlier tests
+            clearMocks(mockEventsList, answers = false)
+
+            val disabledService = GoogleCalendarService(
+                reservationRepository = reservationRepository,
+                syncCheckpointService = syncCheckpointService,
+                googleCalendarPropertiesHolder = GoogleCalendarPropertiesHolder(
+                    googleCalendar = googleCalendarPropertiesHolder.googleCalendar.copy(syncEnabled = false),
+                ),
+                calendarApiClient = mockCalendarApiClient,
+            )
+
+            disabledService.fetchGoogleCalendarEvents()
+
+            verify(exactly = 0) { mockEventsList.execute() }
+            reservationRepository.allReservations().shouldBeEmpty()
+            syncCheckpointService.checkpointForGoogleCalendarEvents().shouldBeNull()
         }
     })

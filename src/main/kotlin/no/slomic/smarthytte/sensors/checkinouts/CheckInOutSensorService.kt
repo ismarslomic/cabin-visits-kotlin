@@ -35,6 +35,7 @@ class CheckInOutSensorService(
     }
     private val bucketName = influxdbProperties.bucket
     private val measurement = checkInOutSensorProperties.measurement
+    private val syncEnabled = checkInOutSensorProperties.syncEnabled
 
     object InfluxDBClientProvider {
         fun client(): InfluxDBClientKotlin {
@@ -49,6 +50,11 @@ class CheckInOutSensorService(
     }
 
     suspend fun fetchCheckInOut() {
+        if (!syncEnabled) {
+            logger.info("Check in/out sensor sync is disabled, skipping fetch from InfluxDB.")
+            return
+        }
+
         val lastCheckInTimestamp: Instant? = syncCheckpointService.checkpointForCheckInOutSensor()
         val filterTimeRange = if (lastCheckInTimestamp == null) {
             val range = FilterTimeRange(

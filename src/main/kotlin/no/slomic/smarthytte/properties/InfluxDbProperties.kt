@@ -11,6 +11,7 @@ data class InfluxDbProperties(
 )
 
 data class CheckInProperties(
+    val syncEnabled: Boolean,
     val syncFrequencyMinutes: Int,
     val measurement: String,
     val rangeStart: String,

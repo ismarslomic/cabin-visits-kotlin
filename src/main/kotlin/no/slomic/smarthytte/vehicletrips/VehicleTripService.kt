@@ -37,6 +37,7 @@ class VehicleTripService(
     private val logger: Logger = KtorSimpleLogger(VehicleTripService::class.java.name)
     private val vehicleTripProperties = vehicleTripPropertiesHolder.vehicleTrip
     private val filePath = vehicleTripProperties.filePath
+    private val syncEnabled = vehicleTripProperties.syncEnabled
     private val username = vehicleTripProperties.username
     private val password = vehicleTripProperties.password
     private val fullSyncFromDate = LocalDate.parse(vehicleTripProperties.syncFromDate)
@@ -69,6 +70,11 @@ class VehicleTripService(
     }
 
     suspend fun fetchVehicleTrips() {
+        if (!syncEnabled) {
+            logger.info("Vehicle trip sync is disabled, skipping fetch of vehicle trips from external source.")
+            return
+        }
+
         logger.info("Started fetching vehicle trips from external source")
 
         val filterTimeRange: FilterTimeRange = createFilterTimeRange()

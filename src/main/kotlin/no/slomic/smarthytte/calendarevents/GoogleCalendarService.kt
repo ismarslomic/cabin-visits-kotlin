@@ -34,6 +34,7 @@ class GoogleCalendarService(
 ) {
     private val logger: Logger = KtorSimpleLogger(GoogleCalendarService::class.java.name)
     private val googleProperties = googleCalendarPropertiesHolder.googleCalendar
+    private val syncEnabled: Boolean = googleProperties.syncEnabled
     private val calendarId: String = googleProperties.calendarId
     private val syncFromDateTime: DateTime = DateTime(googleProperties.syncFromDateTime)
     private val summaryToGuestFilePath: String = googleProperties.summaryToGuestFilePath
@@ -44,6 +45,11 @@ class GoogleCalendarService(
     }
 
     suspend fun fetchGoogleCalendarEvents() {
+        if (!syncEnabled) {
+            logger.info("Google calendar sync is disabled, skipping fetch of google calendar events.")
+            return
+        }
+
         val request: Calendar.Events.List
 
         // Load the sync token stored from the last execution, if any.

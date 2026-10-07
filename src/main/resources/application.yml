@@ -14,6 +14,7 @@ folders:
 google-calendar:
   credentials-file-path: ${GOOGLE_CREDENTIALS_FILE_PATH}
   calendar-id: ${GOOGLE_CALENDAR_ID}
+  sync-enabled: ${GOOGLE_CALENDAR_SYNC_ENABLED:-true}
   sync-from-date-time: ${GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME:-2024-01-01T00:00:00Z}
   summary-to-guest-file-path: ${GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH}
   sync-frequency-minutes: ${GOOGLE_CALENDAR_SYNC_FREQ_MINUTES:-10}
@@ -37,7 +38,7 @@ influx-db:
     measurement: ${INFLUXDB_CHECK_IN_MEASUREMENT}
     range-start: ${INFLUXDB_CHECK_IN_RANGE_START}
     range-stop: ${INFLUXDB_CHECK_IN_RANGE_STOP:-}
-    # TODO: consider removing, not used in the orchestration logic
+    sync-enabled: ${INFLUXDB_CHECK_IN_SYNC_ENABLED:-true}
     sync-frequency-minutes: ${INFLUXDB_CHECK_IN_SYNC_FREQ_MINUTES:-10}
 
 vehicle-trip:
@@ -46,8 +47,8 @@ vehicle-trip:
   trips-url: ${VEHICLE_TRIP_TRIPS_URL}
   username: ${VEHICLE_TRIP_USERNAME}
   password: ${VEHICLE_TRIP_PASSWORD}
+  sync-enabled: ${VEHICLE_TRIP_SYNC_ENABLED:-true}
   sync-from-date: ${VEHICLE_TRIP_SYNC_FROM_DATE}
-  sync-frequency-minutes: ${VEHICLE_TRIP_SYNC_FREQ_MINUTES:-60}
   user-agent: ${VEHICLE_TRIP_USER_AGENT}
   referrer: ${VEHICLE_TRIP_REFERRER}
   locale: ${VEHICLE_TRIP_LOCALE}

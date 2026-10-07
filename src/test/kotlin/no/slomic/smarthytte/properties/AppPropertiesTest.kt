@@ -67,6 +67,9 @@ class AppPropertiesTest :
                     Then("calendarId should be set to the environment variable value") {
                         googleCalendarProperties.calendarId shouldBe envVarCalendarId
                     }
+                    Then("syncEnabled should be set to the default value true") {
+                        googleCalendarProperties.syncEnabled shouldBe true
+                    }
                     Then("syncFromDateTime should be set to the default value") {
                         val defaultSyntFromDateTime = "2024-01-01T00:00:00Z"
                         googleCalendarProperties.syncFromDateTime shouldBe defaultSyntFromDateTime
@@ -133,6 +136,10 @@ class AppPropertiesTest :
                         influxDbProperties.bucket shouldBe envVarInfluxDbBucket
                     }
 
+                    Then("checkIn.syncEnabled should be set to the default value true") {
+                        influxDbProperties.checkIn.syncEnabled shouldBe true
+                    }
+
                     Then("checkIn.measurement should be set to the environment variable value") {
                         influxDbProperties.checkIn.measurement shouldBe envVarInfluxDbCheckInMeasurement
                     }
@@ -147,6 +154,10 @@ class AppPropertiesTest :
 
                     Then("filePath should be set to the environment variable value") {
                         vehicleTripProperties.filePath shouldBe envVarVehicleTripFilePath
+                    }
+
+                    Then("syncEnabled should be set to the default value true") {
+                        vehicleTripProperties.syncEnabled shouldBe true
                     }
 
                     Then("properties for external service should be set to the environment variable value") {
@@ -169,6 +180,9 @@ class AppPropertiesTest :
                     "GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME" to envVarSyncFromDateTime,
                     "DATA_FOLDER" to envVarDataFolder,
                     "INFLUXDB_CHECK_IN_RANGE_STOP" to envVarInfluxDbCheckInRangeStop,
+                    "GOOGLE_CALENDAR_SYNC_ENABLED" to "false",
+                    "INFLUXDB_CHECK_IN_SYNC_ENABLED" to "false",
+                    "VEHICLE_TRIP_SYNC_ENABLED" to "false",
                 )
                 val requiredAndOptionalEnvVars = requiredEnvVars + optionalEnvVars
 
@@ -179,6 +193,10 @@ class AppPropertiesTest :
 
                         Then("syncFromDateTime should be set to the environment variable value") {
                             syncFromDateTime shouldBe envVarSyncFromDateTime
+                        }
+
+                        Then("syncEnabled should be set to the environment variable value") {
+                            googleCalendarProperties.syncEnabled shouldBe false
                         }
                     }
 
@@ -198,6 +216,18 @@ class AppPropertiesTest :
 
                         Then("checkIn.rangeStop should be set to the environment variable value") {
                             influxDbProperties.checkIn.rangeStop shouldBe envVarInfluxDbCheckInRangeStop
+                        }
+
+                        Then("checkIn.syncEnabled should be set to the environment variable value") {
+                            influxDbProperties.checkIn.syncEnabled shouldBe false
+                        }
+                    }
+
+                    When("reading vehicle trip properties") {
+                        val vehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
+
+                        Then("syncEnabled should be set to the environment variable value") {
+                            vehicleTripProperties.syncEnabled shouldBe false
                         }
                     }
                 }

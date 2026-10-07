@@ -4,12 +4,14 @@ import com.influxdb.client.kotlin.InfluxDBClientKotlin
 import com.influxdb.client.kotlin.QueryKotlinApi
 import com.influxdb.query.FluxRecord
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.verify
 import kotlinx.coroutines.channels.Channel
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
@@ -58,6 +60,7 @@ class CheckInOutSensorServiceTest :
                 org = "my-org",
                 bucket = "foo",
                 checkIn = CheckInProperties(
+                    syncEnabled = true,
                     syncFrequencyMinutes = 10,
                     measurement = "checked_in",
                     rangeStart = "2025-01-14T10:00:00Z",
@@ -162,5 +165,22 @@ class CheckInOutSensorServiceTest :
 
             val storedCheckIns = checkInOutSensorRepository.allCheckInOuts()
             storedCheckIns shouldHaveSize 0
+        }
+
+        "nothing should be fetched from influxdb when sync is disabled" {
+            val disabledService = CheckInOutSensorService(
+                checkInOutSensorRepository = checkInOutSensorRepository,
+                influxDbPropertiesHolder = InfluxDbPropertiesHolder(
+                    influxDb = influxDbPropertiesHolder.influxDb.copy(
+                        checkIn = influxDbPropertiesHolder.influxDb.checkIn.copy(syncEnabled = false),
+                    ),
+                ),
+                syncCheckpointService = syncCheckpointService,
+            )
+
+            disabledService.fetchCheckInOut()
+
+            verify(exactly = 0) { CheckInOutSensorService.InfluxDBClientProvider.client() }
+            checkInOutSensorRepository.allCheckInOuts().shouldBeEmpty()
         }
     })

@@ -3,6 +3,7 @@
 package no.slomic.smarthytte.vehicletrips
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
@@ -48,11 +49,11 @@ class VehicleTripServiceIntegrationTest :
                 username = "foo",
                 password = "bar",
                 syncFromDate = "2025-03-01",
-                syncFrequencyMinutes = 60,
                 userAgent = "Wget/1.21.4",
                 referrer = "http://my-vehicle-api.com/trips",
                 locale = "locale=nb_NO",
                 pageSize = 100,
+                syncEnabled = true,
             ),
         )
 
@@ -73,8 +74,7 @@ class VehicleTripServiceIntegrationTest :
                         when {
                             request.url.toString() == propertiesHolder.vehicleTrip.tripsUrl -> {
                                 // Read the body as ByteArray and convert to JSON text
-                                val bodyContent = request.body
-                                val jsonText = when (bodyContent) {
+                                val jsonText = when (val bodyContent = request.body) {
                                     is TextContent -> bodyContent.bytes().toString(Charset.defaultCharset())
                                     else -> ""
                                 }
@@ -189,8 +189,7 @@ class VehicleTripServiceIntegrationTest :
                 engine {
                     addHandler { request ->
                         if (request.url.toString() == propertiesHolder.vehicleTrip.tripsUrl) {
-                            val bodyContent = request.body
-                            val jsonText = when (bodyContent) {
+                            val jsonText = when (val bodyContent = request.body) {
                                 is TextContent -> bodyContent.bytes().toString(Charset.defaultCharset())
                                 else -> ""
                             }
@@ -255,5 +254,33 @@ class VehicleTripServiceIntegrationTest :
             tripsInDb.first().id shouldBe "1741200104073"
             checkPointBeforeFetching.shouldBeNull()
             checkPointAfterFetching.shouldBeNull()
+        }
+
+        "should not call external source or store trips when sync is disabled" {
+            var requestCount = 0
+            val countingHttpClient = HttpClient(MockEngine) {
+                engine {
+                    addHandler {
+                        requestCount++
+                        respond(content = "", status = HttpStatusCode.OK)
+                    }
+                }
+            }
+            val vehicleTripRepository = SqliteVehicleTripRepository()
+            val syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
+            val tripService = VehicleTripService(
+                vehicleTripRepository = vehicleTripRepository,
+                syncCheckpointService = syncCheckpointService,
+                httpClient = countingHttpClient,
+                vehicleTripPropertiesHolder = VehicleTripPropertiesHolder(
+                    vehicleTrip = propertiesHolder.vehicleTrip.copy(syncEnabled = false),
+                ),
+            )
+
+            tripService.fetchVehicleTrips()
+
+            requestCount shouldBe 0
+            vehicleTripRepository.allVehicleTrips().shouldBeEmpty()
+            syncCheckpointService.checkpointForVehicleTrips().shouldBeNull()
         }
     })

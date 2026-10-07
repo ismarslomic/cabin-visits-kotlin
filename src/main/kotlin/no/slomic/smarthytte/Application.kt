@@ -25,11 +25,12 @@ import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
+import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
+import no.slomic.smarthytte.properties.InfluxDbProperties
+import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
-import no.slomic.smarthytte.properties.VehicleTripProperties
-import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
@@ -189,8 +190,9 @@ fun Application.startBackgroundSync(
     val googleProperties: GoogleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
     val reservationSyncFrequency: Duration = googleProperties.syncFrequencyMinutes.minutes
 
-    val vehicleTripProperties: VehicleTripProperties = loadProperties<VehicleTripPropertiesHolder>().vehicleTrip
-    val vehicleTripSyncFrequency: Duration = vehicleTripProperties.syncFrequencyMinutes.minutes
+    val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
+    val checkInOutSensorProperties: CheckInProperties = influxdbProperties.checkIn
+    val checkInOutSyncFrequency: Duration = checkInOutSensorProperties.syncFrequencyMinutes.minutes
 
     val schedulerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -222,7 +224,7 @@ fun Application.startBackgroundSync(
                 checkInOutSensorService.fetchCheckInOut()
                 checkInOutService.updateCheckInOutStatusForAllReservations()
             }
-            delay(duration = vehicleTripSyncFrequency)
+            delay(duration = checkInOutSyncFrequency)
         }
     }
 }
