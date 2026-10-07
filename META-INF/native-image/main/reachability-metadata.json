@@ -210,12 +210,6 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setAuthorization",
-          "parameterTypes": [
             "java.util.List"
           ]
         },
@@ -1629,6 +1623,7 @@
         {
           "name": "<init>",
           "parameterTypes": [
+            "boolean",
             "int",
             "java.lang.String",
             "java.lang.String",
@@ -1681,6 +1676,7 @@
             "java.lang.String",
             "java.lang.String",
             "java.lang.String",
+            "boolean",
             "int"
           ]
         }
@@ -1703,6 +1699,7 @@
         {
           "name": "<init>",
           "parameterTypes": [
+            "java.lang.String",
             "java.lang.String"
           ]
         }
@@ -1768,6 +1765,28 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.properties.StatisticsProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.StatisticsPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.StatisticsProperties"
+          ]
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.VehicleTripProperties",
       "methods": [
         {
@@ -1778,8 +1797,8 @@
             "java.lang.String",
             "java.lang.String",
             "java.lang.String",
+            "boolean",
             "java.lang.String",
-            "int",
             "java.lang.String",
             "java.lang.String",
             "java.lang.String",
@@ -2791,6 +2810,9 @@
     },
     {
       "glob": "db/migration/V1.1__new_table_reservation_vehicle_trip.sql"
+    },
+    {
+      "glob": "db/migration/V1.2__guest_family_and_avatar.sql"
     },
     {
       "glob": "kotlin/collections/collections.kotlin_builtins"
