@@ -210,6 +210,12 @@
         {
           "name": "setAuthorization",
           "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setAuthorization",
+          "parameterTypes": [
             "java.util.List"
           ]
         },
@@ -1072,6 +1078,9 @@
       ]
     },
     {
+      "type": "int"
+    },
+    {
       "type": "io.grpc.override.ContextStorageOverride"
     },
     {
@@ -1117,6 +1126,9 @@
       "type": "io.ktor.network.selector.SelectableBase"
     },
     {
+      "type": "io.ktor.network.sockets.SocketBase"
+    },
+    {
       "type": "io.ktor.openapi.JsonSchemaInference"
     },
     {
@@ -1138,6 +1150,9 @@
       "type": "io.ktor.server.metrics.micrometer.CallMeasure"
     },
     {
+      "type": "io.ktor.server.plugins.MutableOriginConnectionPoint"
+    },
+    {
       "type": "io.ktor.server.routing.RoutingCall"
     },
     {
@@ -1151,6 +1166,18 @@
     },
     {
       "type": "io.ktor.util.internal.LockFreeLinkedListNode"
+    },
+    {
+      "type": "io.ktor.util.reflect.TypeInfo"
+    },
+    {
+      "type": "io.ktor.utils.io.ByteChannel"
+    },
+    {
+      "type": "io.ktor.utils.io.pool.DefaultPool"
+    },
+    {
+      "type": "io.micrometer.core.instrument.distribution.AbstractTimeWindowHistogram"
     },
     {
       "type": "io.micrometer.core.instrument.distribution.TimeWindowMax"
@@ -1550,6 +1577,11 @@
       "type": "kotlinx.coroutines.EventLoopImplBase"
     },
     {
+      "type": "kotlinx.coroutines.ExecutorCoroutineDispatcher$Key",
+      "allDeclaredMethods": true,
+      "allDeclaredConstructors": true
+    },
+    {
       "type": "kotlinx.coroutines.InvokeOnCancelling"
     },
     {
@@ -1852,6 +1884,91 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestStats",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestStats$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.LiveStats",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.LiveStats$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.MonthStats",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.MonthStats$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearStats",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearStats$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.sync.checkpoint.SyncCheckpointEntity",
       "methods": [
         {
@@ -1872,6 +1989,41 @@
           ]
         }
       ]
+    },
+    {
+      "type": "org.HdrHistogram.AbstractHistogram"
+    },
+    {
+      "type": "org.HdrHistogram.ConcurrentHistogram",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "long",
+            "long",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.HdrHistogram.DoubleRecorder[]"
+    },
+    {
+      "type": "org.HdrHistogram.Histogram",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "long",
+            "long",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.HdrHistogram.WriterReaderPhaser"
     },
     {
       "type": "org.flywaydb.core.api.migration.baseline.BaselineAppliedMigration"
@@ -2676,6 +2828,15 @@
           ]
         }
       ]
+    },
+    {
+      "type": "sun.text.resources.FormatData"
+    },
+    {
+      "type": "sun.text.resources.FormatData_en"
+    },
+    {
+      "type": "sun.text.resources.JavaTimeSupplementary"
     },
     {
       "type": "sun.text.resources.cldr.FormatData"
