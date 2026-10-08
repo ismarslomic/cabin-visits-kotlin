@@ -44,18 +44,18 @@ Read more
 at [Collect Metadata with the Tracing Agent](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/)
 
 ```bash
-# Build
-./gradlew clean build
-
 # Source all env variables from the .env file
 set -a; source .env; set +a
 
-# Run tracing agent
-java -agentlib:native-image-agent=config-output-dir=META-INF/native-image/main -jar ./build/libs/cabin-visits-kotlin-all.jar
+# Run the app with the tracing agent (stop with Ctrl+C when done)
+./gradlew collectNativeMetadata
 ```
 
-The collected metadata will be written to
-the [META-INF/native-image/main/reachability-metadata.json](META-INF/native-image/main/reachability-metadata.json).
+The agent **merges** into the existing
+[META-INF/native-image/main/reachability-metadata.json](META-INF/native-image/main/reachability-metadata.json)
+(`config-merge-dir`), so a run only adds entries and never removes earlier ones. Call all REST endpoints and let the
+sync jobs run (possibly in several runs), then review the diff before committing. Entries are never pruned
+automatically; to start clean, delete the file and rerun.
 
 ### Build GraalVM native image
 

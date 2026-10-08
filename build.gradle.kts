@@ -217,6 +217,21 @@ graalvmNative {
     }
 }
 
+// Runs the fat jar with the GraalVM Tracing Agent and MERGES what it sees into the committed metadata
+// (config-merge-dir), so several runs (REST endpoints, sync jobs, ...) accumulate instead of overwriting each other.
+// Source the env variables first (set -a; source .env; set +a), exercise the app, then stop it with Ctrl+C.
+// Use -Pargs="..." to pass program arguments, e.g. to enable sync jobs.
+tasks.register<JavaExec>("collectNativeMetadata") {
+    group = "graalvm"
+    description = "Runs the app with the Tracing Agent and merges the result into META-INF/native-image/main"
+    val fatJar = tasks.named<Jar>("shadowJar")
+    dependsOn(fatJar)
+    classpath(fatJar.flatMap { it.archiveFile })
+    mainClass.set("no.slomic.smarthytte.ApplicationKt")
+    jvmArgs("-agentlib:native-image-agent=config-merge-dir=$projectDir/META-INF/native-image/main")
+    (project.findProperty("args") as String?)?.let { args(it.split(" ")) }
+}
+
 jacoco {
     toolVersion = libs.versions.jacoco.get()
 }
