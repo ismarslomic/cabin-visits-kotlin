@@ -130,11 +130,13 @@ fun calculateGuestStats(
 }
 
 /**
- * Builds the profile of the guest with [guestId] as of [today]: statistics for the guest and all visits of the guest
- * with their status. Returns null if the guest is unknown. A visit is ongoing from its start date until its end date
- * (exclusive), completed when its end date has been reached and upcoming before its start date. If the guest is at the
- * cabin, [GuestStats.lastVisitDate] is the last visit before the ongoing one and [GuestStats.isFirstVisit] tells if
- * the ongoing visit is the first one. Otherwise [GuestStats.isFirstVisit] is false.
+ * Builds the profile of the guest with [guestId] as of [today]: statistics for the guest, all visits of the guest with
+ * their status, and fun facts. Returns null if the guest is unknown.
+ *
+ * A visit is ongoing from its start date until its end date (exclusive), completed when its end date has been reached
+ * and upcoming before its start date. If the guest is at the cabin, [GuestStats.lastVisitDate] is the last visit
+ * before the ongoing one and [GuestStats.isFirstVisit] tells if the ongoing visit is the first one. Otherwise
+ * [GuestStats.isFirstVisit] is false.
  */
 fun calculateGuestProfileStats(
     guestId: String,
@@ -161,11 +163,14 @@ fun calculateGuestProfileStats(
         rankings = GuestRankings.of(today, startedReservations, guestsById),
     ).copy(isFirstVisit = ongoing != null && previousVisits.isEmpty())
 
+    val guestVisits = visits.map {
+        GuestVisit(it.startDate, it.endDate, it.durationDays, it.durationNights, it.visitStatus(today))
+    }
+
     return GuestProfileStats(
         guest = guestStats,
-        visits = visits.map {
-            GuestVisit(it.startDate, it.endDate, it.durationDays, it.durationNights, it.visitStatus(today))
-        },
+        visits = guestVisits,
+        funFacts = calculateGuestProfileFunFacts(guestStats, guestVisits, GuestProfileFunFactContext(today)),
     )
 }
 

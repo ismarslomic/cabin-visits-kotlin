@@ -28,6 +28,7 @@ internal object FunFactPriority {
 
     // Everyday facts (20-49)
     const val COUNTDOWN_TO_NEXT_VISIT = 45
+    const val FAVOURITE_SEASON = 45
     const val NEXT_FIRST_TIMER = 45
     const val SHARE_OF_DAYS = 45
     const val SHARE_OF_LIFE = 45

@@ -139,12 +139,14 @@ class GuestFunFactsTest :
                 facts(liveGuestFixture("dina", allTimeDays = 50)).none { "av dagene" in it.text } shouldBe true
             }
 
-            should("report share of life only for children born in the data period") {
+            should("report share of life when it is above the threshold, whatever the age") {
                 facts(liveGuestFixture("kid", age = 5, allTimeDays = 360)) shouldContain
                     FunFact("kid", "Kid har vært på hytta ca. 19 % av livet sitt", 45)
+                facts(liveGuestFixture("teen", age = 14, allTimeDays = 472)) shouldContain
+                    FunFact("teen", "Teen har vært på hytta ca. 9 % av livet sitt", 45)
                 facts(liveGuestFixture("adult", age = 30, allTimeDays = 360)).none { "av livet" in it.text } shouldBe
                     true
-                facts(liveGuestFixture("kid", age = 7, allTimeDays = 360)).none { "av livet" in it.text } shouldBe true
+                facts(liveGuestFixture("baby", age = 0, allTimeDays = 3)).none { "av livet" in it.text } shouldBe true
             }
 
             should("report days this year with percent of the year so far") {

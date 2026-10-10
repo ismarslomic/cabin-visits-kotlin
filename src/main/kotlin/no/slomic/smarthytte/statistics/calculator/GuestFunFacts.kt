@@ -99,7 +99,7 @@ private fun guestFunFacts(guest: GuestStats, context: GuestFunFactContext): List
     firstVisitThisYear(guest),
     shareOfTrips(guest, context.allTimeVisits),
     shareOfDays(guest, context),
-    shareOfLife(guest, context),
+    shareOfLife(guest),
     daysThisYear(guest, context.today),
     yearsSinceFirstVisit(guest, context.today),
     totalDays(guest, context.dataStartDate),
@@ -261,9 +261,8 @@ private fun shareOfDays(guest: GuestStats, context: GuestFunFactContext): FunFac
     ).takeIf { percent >= MIN_SHARE_PERCENT }
 }
 
-/** Only for guests born in or after the first data year, so the whole life is covered by the data. */
-private fun shareOfLife(guest: GuestStats, context: GuestFunFactContext): FunFact? {
-    val percent = shareOfLifePercent(guest, context.today, context.dataStartDate) ?: return null
+internal fun shareOfLife(guest: GuestStats): FunFact? {
+    val percent = shareOfLifePercent(guest) ?: return null
     return FunFact(
         guest.guestId,
         "${guest.firstName} har vært på hytta ca. $percent % av livet sitt",
@@ -271,9 +270,12 @@ private fun shareOfLife(guest: GuestStats, context: GuestFunFactContext): FunFac
     ).takeIf { percent >= MIN_SHARE_PERCENT }
 }
 
-/** Percent of the guest's life spent at the cabin, or null if the data does not cover the whole life. */
-internal fun shareOfLifePercent(guest: GuestStats, today: LocalDate, dataStartDate: LocalDate): Int? {
-    if (guest.age !in 1..(today.year - dataStartDate.year)) return null
+/**
+ * Percent of the guest's life spent at the cabin, or null for guests under one year. The cabin was bought in Dec 2019,
+ * so nobody has visits before the data starts, and the whole life is covered for guests of any age.
+ */
+internal fun shareOfLifePercent(guest: GuestStats): Int? {
+    if (guest.age < 1) return null
     return (guest.allTime.totalDays * PERCENT_FACTOR / (guest.age * DAYS_PER_YEAR)).coerceAtMost(PERCENT_FACTOR)
 }
 

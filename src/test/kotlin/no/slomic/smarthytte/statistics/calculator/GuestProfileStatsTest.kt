@@ -118,9 +118,21 @@ class GuestProfileStatsTest :
             }
 
             should("set avatar url only when given") {
-                calculateGuestProfileStats("anna", today, reservations, guestsById, "/api/guests/anna/avatar?v=1")!!
+                calculateGuestProfileStats(
+                    "anna",
+                    today,
+                    reservations,
+                    guestsById,
+                    "/api/guests/anna/avatar?v=1",
+                )!!
                     .guest.avatarUrl shouldBe "/api/guests/anna/avatar?v=1"
-                calculateGuestProfileStats("anna", today, reservations, guestsById)!!.guest.avatarUrl shouldBe null
+                calculateGuestProfileStats(
+                    "anna",
+                    today,
+                    reservations,
+                    guestsById,
+                )!!.guest.avatarUrl shouldBe
+                    null
             }
         }
     })
