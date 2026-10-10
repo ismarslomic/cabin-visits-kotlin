@@ -14,6 +14,7 @@ import no.slomic.smarthytte.statistics.model.VisitStatus
 class GuestProfileFunFactsTest :
     ShouldSpec({
         val today = LocalDate(2026, 10, 2)
+        val dataStart = LocalDate(2020, 9, 1)
 
         fun visit(start: LocalDate, status: VisitStatus = VisitStatus.COMPLETED, days: Int = 4) =
             GuestVisit(start, start.plus(DatePeriod(days = days - 1)), days, nights = days - 1, status = status)
@@ -21,8 +22,16 @@ class GuestProfileFunFactsTest :
         fun visitIn(year: Int, month: Int = 9, status: VisitStatus = VisitStatus.COMPLETED, days: Int = 4) =
             visit(LocalDate(year, month, 10), status, days)
 
-        fun facts(guest: GuestStats, vararg visits: GuestVisit) =
-            calculateGuestProfileFunFacts(guest, visits.toList(), GuestProfileFunFactContext(today))
+        fun context(
+            allTimeVisits: Int = 0,
+            standings: List<GuestStanding> = emptyList(),
+            companions: List<Companion> = emptyList(),
+        ) = GuestProfileFunFactContext(today, dataStart, allTimeVisits, standings, companions)
+
+        fun factsWith(context: GuestProfileFunFactContext, guest: GuestStats, vararg visits: GuestVisit) =
+            calculateGuestProfileFunFacts(guest, visits.toList(), context)
+
+        fun facts(guest: GuestStats, vararg visits: GuestVisit) = factsWith(context(), guest, *visits)
 
         fun texts(guest: GuestStats, vararg visits: GuestVisit) = facts(guest, *visits).map { it.text }
 
@@ -304,6 +313,125 @@ class GuestProfileFunFactsTest :
                 )
 
                 texts(family).none { "siden sist" in it || "første registrerte" in it } shouldBe true
+            }
+        }
+
+        context("companions") {
+            val guest = liveGuestFixture("faruk")
+
+            fun companionFacts(vararg companions: Companion) =
+                factsWith(context(companions = companions.toList()), guest).filter { "sammen med" in it.text }
+
+            should("tell the companion the guest has shared most visits with") {
+                val fact = companionFacts(
+                    Companion("Ismar", isFamily = true, sharedVisits = 3),
+                    Companion("Maja", isFamily = false, sharedVisits = 5),
+                ).single()
+
+                fact.text shouldBe "Oftest på hytta sammen med Maja (5 ganger)"
+                fact.guestId shouldBe "faruk"
+                fact.priority shouldBe 55
+            }
+
+            should("prefer other guests over family, even with fewer shared visits") {
+                companionFacts(
+                    Companion("Ismar", isFamily = true, sharedVisits = 8),
+                    Companion("Maja", isFamily = false, sharedVisits = 2),
+                ).single().text shouldBe "Oftest på hytta sammen med Maja (2 ganger)"
+            }
+
+            should("fall back to family when no other guest shared two visits") {
+                companionFacts(
+                    Companion("Ismar", isFamily = true, sharedVisits = 4),
+                    Companion("Maja", isFamily = false, sharedVisits = 1),
+                ).single().text shouldBe "Oftest på hytta sammen med Ismar (4 ganger)"
+            }
+
+            should("list companions that are tied, up to three") {
+                companionFacts(
+                    Companion("Kjell Olav", isFamily = false, sharedVisits = 6),
+                    Companion("Jørgen", isFamily = false, sharedVisits = 6),
+                ).single().text shouldBe "Oftest på hytta sammen med Jørgen og Kjell Olav (6 ganger)"
+                companionFacts(
+                    Companion("A A", isFamily = false, sharedVisits = 3),
+                    Companion("B B", isFamily = false, sharedVisits = 3),
+                    Companion("C C", isFamily = false, sharedVisits = 3),
+                    Companion("D D", isFamily = false, sharedVisits = 3),
+                ).shouldBeEmpty()
+            }
+
+            should("skip it when nobody has shared at least two visits") {
+                companionFacts(Companion("Maja", isFamily = false, sharedVisits = 1)).shouldBeEmpty()
+                companionFacts().shouldBeEmpty()
+            }
+
+            should("count the different companions from five") {
+                fun different(count: Int) = factsWith(
+                    context(companions = (1..count).map { Companion("G$it G", isFamily = false, sharedVisits = 1) }),
+                    guest,
+                ).filter { "ulike" in it.text }.map { it.text }
+
+                different(5) shouldBe listOf("Faruk har delt hytta med 5 ulike gjester")
+                different(4).shouldBeEmpty()
+            }
+        }
+
+        context("rank among guests") {
+            val standings = listOf(
+                GuestStanding("dzevad", "Dzevad", isFamily = false, yearVisits = 1, allTimeVisits = 9),
+                GuestStanding("faruk", "Faruk", isFamily = false, yearVisits = 1, allTimeVisits = 8),
+                GuestStanding("ismar", "Ismar", isFamily = true, yearVisits = 5, allTimeVisits = 120),
+            )
+
+            fun rankFacts(guest: GuestStats) =
+                factsWith(context(standings = standings), guest).filter { "blant gjestene" in it.text }
+
+            should("tell how far a guest in second place is behind the leader") {
+                val faruk = liveGuestFixture("faruk", allTimeVisits = 8, allTimeRankAmongGuests = 2)
+
+                val fact = rankFacts(faruk).single()
+
+                fact.text shouldBe "Faruk er nr. 2 blant gjestene, bare 1 besøk bak Dzevad"
+                fact.priority shouldBe 50
+            }
+
+            should("name tied leaders") {
+                val tied = standings.map { if (it.guestId == "faruk") it.copy(allTimeVisits = 9) else it }
+                val alma = liveGuestFixture("alma", allTimeVisits = 7, allTimeRankAmongGuests = 3)
+
+                factsWith(context(standings = tied), alma).single { "blant gjestene" in it.text }.text shouldBe
+                    "Alma er nr. 3 blant gjestene, bare 2 besøk bak Dzevad og Faruk"
+            }
+
+            should("skip it for the leader, family and guests far behind") {
+                rankFacts(liveGuestFixture("dzevad", allTimeVisits = 9, allTimeRankAmongGuests = 1)).shouldBeEmpty()
+                rankFacts(
+                    liveGuestFixture("ismar", isFamily = true, allTimeVisits = 120, allTimeRankAmongGuests = null),
+                )
+                    .shouldBeEmpty()
+                rankFacts(liveGuestFixture("alma", allTimeVisits = 2, allTimeRankAmongGuests = 3)).shouldBeEmpty()
+                rankFacts(liveGuestFixture("alma", allTimeVisits = 8, allTimeRankAmongGuests = 4)).shouldBeEmpty()
+            }
+
+            should("tell that a single leader is the guest with most visits") {
+                val dzevad = liveGuestFixture("dzevad", allTimeVisits = 9)
+
+                val fact = factsWith(context(standings = standings), dzevad).single { "flest besøk" in it.text }
+
+                fact.text shouldBe "Dzevad er gjesten med flest besøk siden sept 2020 (9)"
+                fact.priority shouldBe 70
+                factsWith(context(standings = standings), liveGuestFixture("faruk", allTimeVisits = 8))
+                    .none { "flest besøk" in it.text } shouldBe true
+            }
+        }
+
+        context("share of trips") {
+            should("tell the share of all trips from 25 percent") {
+                val facts = factsWith(context(allTimeVisits = 100), liveGuestFixture("alma", allTimeVisits = 30))
+
+                facts.map { it.text } shouldContain "Alma har vært med på 30 % av alle hytteturer"
+                factsWith(context(allTimeVisits = 100), liveGuestFixture("alma", allTimeVisits = 24))
+                    .none { "av alle hytteturer" in it.text } shouldBe true
             }
         }
 

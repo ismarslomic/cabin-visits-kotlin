@@ -1,6 +1,7 @@
 package no.slomic.smarthytte.statistics.calculator
 
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -19,6 +20,7 @@ class GuestProfileStatsTest :
         val family = Guest("fam", "Fam", "Ily", 1980, gender = Gender.MALE, isFamily = true)
         val guestsById = listOf(anna, bo, family).associateBy { it.id }
         val today = LocalDate(2026, 9, 29)
+        val dataStart = LocalDate(2020, 9, 1)
 
         fun reservation(id: String, start: LocalDate, end: LocalDate, vararg guestIds: String) = Reservation(
             id = id,
@@ -35,11 +37,11 @@ class GuestProfileStatsTest :
 
         context("calculateGuestProfileStats") {
             should("return null for an unknown guest") {
-                calculateGuestProfileStats("unknown", today, reservations, guestsById) shouldBe null
+                calculateGuestProfileStats("unknown", today, reservations, guestsById, dataStart) shouldBe null
             }
 
             should("list all visits of the guest oldest first with status, days and nights") {
-                val profile = calculateGuestProfileStats("anna", today, reservations, guestsById)!!
+                val profile = calculateGuestProfileStats("anna", today, reservations, guestsById, dataStart)!!
 
                 profile.visits shouldBe listOf(
                     GuestVisit(LocalDate(2025, 6, 1), LocalDate(2025, 6, 5), 5, 4, VisitStatus.COMPLETED),
@@ -50,13 +52,13 @@ class GuestProfileStatsTest :
             }
 
             should("not include visits of other guests") {
-                val profile = calculateGuestProfileStats("bo", today, reservations, guestsById)!!
+                val profile = calculateGuestProfileStats("bo", today, reservations, guestsById, dataStart)!!
 
                 profile.visits.map { it.startDate } shouldBe listOf(LocalDate(2025, 6, 1), LocalDate(2026, 9, 27))
             }
 
             should("use the visit before the ongoing one as last visit when the guest is at the cabin") {
-                val guest = calculateGuestProfileStats("anna", today, reservations, guestsById)!!.guest
+                val guest = calculateGuestProfileStats("anna", today, reservations, guestsById, dataStart)!!.guest
 
                 guest.lastVisitDate shouldBe LocalDate(2026, 3, 12)
                 guest.firstVisitDate shouldBe LocalDate(2025, 6, 1)
@@ -68,14 +70,14 @@ class GuestProfileStatsTest :
             should("use the last completed visit as last visit when the guest is not at the cabin") {
                 val notAtCabin = listOf(past1, past2, upcoming)
 
-                val guest = calculateGuestProfileStats("anna", today, notAtCabin, guestsById)!!.guest
+                val guest = calculateGuestProfileStats("anna", today, notAtCabin, guestsById, dataStart)!!.guest
 
                 guest.lastVisitDate shouldBe LocalDate(2026, 3, 12)
                 guest.isFirstVisit shouldBe false
             }
 
             should("mark the ongoing visit as first visit when the guest has no earlier visits") {
-                val profile = calculateGuestProfileStats("bo", today, listOf(ongoing), guestsById)!!
+                val profile = calculateGuestProfileStats("bo", today, listOf(ongoing), guestsById, dataStart)!!
 
                 profile.guest.isFirstVisit shouldBe true
                 profile.guest.lastVisitDate shouldBe null
@@ -84,14 +86,14 @@ class GuestProfileStatsTest :
             should("treat a visit ending today as completed") {
                 val leaving = reservation("5", LocalDate(2026, 9, 26), LocalDate(2026, 9, 29), "bo")
 
-                val profile = calculateGuestProfileStats("bo", today, listOf(leaving), guestsById)!!
+                val profile = calculateGuestProfileStats("bo", today, listOf(leaving), guestsById, dataStart)!!
 
                 profile.visits.single().status shouldBe VisitStatus.COMPLETED
                 profile.guest.lastVisitDate shouldBe today
             }
 
             should("return an empty profile for a guest without visits") {
-                val profile = calculateGuestProfileStats("fam", today, reservations, guestsById)!!
+                val profile = calculateGuestProfileStats("fam", today, reservations, guestsById, dataStart)!!
 
                 profile.visits shouldBe emptyList()
                 profile.guest.firstVisitDate shouldBe null
@@ -108,13 +110,28 @@ class GuestProfileStatsTest :
                     reservation("12", LocalDate(2026, 3, 1), LocalDate(2026, 3, 3), "anna"),
                 )
 
-                val guest = calculateGuestProfileStats("anna", today, familyTrips, guestsById)!!.guest
+                val guest = calculateGuestProfileStats("anna", today, familyTrips, guestsById, dataStart)!!.guest
 
                 guest.allTime.visitsRank shouldBe 2
                 guest.allTime.visitsRankAmongGuests shouldBe 1
-                val familyStats = calculateGuestProfileStats("fam", today, familyTrips, guestsById)!!.guest
+                val familyStats = calculateGuestProfileStats("fam", today, familyTrips, guestsById, dataStart)!!.guest
                 familyStats.allTime.visitsRank shouldBe 1
                 familyStats.allTime.visitsRankAmongGuests shouldBe null
+            }
+
+            should("add facts that compare with the other guests and count companions") {
+                val trips = listOf(
+                    reservation("20", LocalDate(2026, 1, 1), LocalDate(2026, 1, 3), "anna", "bo"),
+                    reservation("21", LocalDate(2026, 2, 1), LocalDate(2026, 2, 3), "anna", "bo"),
+                    reservation("22", LocalDate(2026, 3, 1), LocalDate(2026, 3, 3), "anna", "fam"),
+                    reservation("23", LocalDate(2026, 11, 1), LocalDate(2026, 11, 3), "anna", "bo"),
+                )
+
+                val facts = calculateGuestProfileStats("anna", today, trips, guestsById, dataStart)!!.funFacts
+
+                // Bo is the closest companion (2 started visits, the future visit is not counted)
+                facts.map { it.text } shouldContain "Oftest på hytta sammen med Bo (2 ganger)"
+                facts.map { it.text } shouldContain "Anna har vært med på 100 % av alle hytteturer"
             }
 
             should("set avatar url only when given") {
@@ -123,6 +140,7 @@ class GuestProfileStatsTest :
                     today,
                     reservations,
                     guestsById,
+                    dataStart,
                     "/api/guests/anna/avatar?v=1",
                 )!!
                     .guest.avatarUrl shouldBe "/api/guests/anna/avatar?v=1"
@@ -131,6 +149,7 @@ class GuestProfileStatsTest :
                     today,
                     reservations,
                     guestsById,
+                    dataStart,
                 )!!.guest.avatarUrl shouldBe
                     null
             }

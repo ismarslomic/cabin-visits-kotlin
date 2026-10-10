@@ -155,14 +155,14 @@ fun monthsFixture(
     )
 }
 
-private fun periodFixture(visits: Int = 0, days: Int = 0) = GuestPeriodStats(
+private fun periodFixture(visits: Int = 0, days: Int = 0, rankAmongGuests: Int? = 1) = GuestPeriodStats(
     totalVisits = visits,
     totalDays = days,
     totalNights = 0,
     visitsRank = 1,
     daysRank = 1,
-    visitsRankAmongGuests = 1,
-    daysRankAmongGuests = 1,
+    visitsRankAmongGuests = rankAmongGuests,
+    daysRankAmongGuests = rankAmongGuests,
 )
 
 /** Minimal [GuestStats] for fun fact tests: only the given values are set. */
@@ -178,6 +178,7 @@ fun liveGuestFixture(
     currentYearDays: Int = 0,
     allTimeDays: Int = 0,
     age: Int = 30,
+    allTimeRankAmongGuests: Int? = 1,
 ) = GuestStats(
     guestId = id,
     firstName = id.replaceFirstChar { it.uppercase() },
@@ -190,5 +191,5 @@ fun liveGuestFixture(
     lastVisitDate = lastVisitDate,
     yearsVisited = yearsVisited,
     currentYear = periodFixture(visits = currentYearVisits, days = currentYearDays),
-    allTime = periodFixture(visits = allTimeVisits, days = allTimeDays),
+    allTime = periodFixture(visits = allTimeVisits, days = allTimeDays, rankAmongGuests = allTimeRankAmongGuests),
 )

@@ -24,8 +24,10 @@ internal object FunFactPriority {
     const val LAST_DAY = 60
     const val UPCOMING_VISIT = 60
     const val YEAR_GAP_TO_LEADER = 60
+    const val COMPANIONS = 55
     const val FIRST_VISIT_THIS_YEAR = 55
     const val NEW_IN_GROUP = 55
+    const val RANK_AMONG_GUESTS = 50
     const val SHARE_OF_TRIPS_GUEST = 50
 
     // Everyday facts (20-49)
@@ -36,6 +38,7 @@ internal object FunFactPriority {
     const val SHARE_OF_DAYS = 45
     const val SHARE_OF_LIFE = 45
     const val DAYS_THIS_YEAR = 40
+    const val DIFFERENT_COMPANIONS = 40
     const val MOST_EXPERIENCED = 40
     const val NEW_GUESTS_THIS_YEAR = 40
     const val NEXT_VISIT_MILESTONE = 40

@@ -95,7 +95,7 @@ private fun guestFunFacts(guest: GuestStats, context: GuestFunFactContext): List
     longAbsence(guest, context.today),
     visitStreak(guest, context.today),
     yearRace(guest, context.standings),
-    topGuestAllTime(guest, context),
+    topGuestAllTime(guest, context.standings, context.dataStartDate),
     firstVisitThisYear(guest),
     shareOfTrips(guest, context.allTimeVisits),
     shareOfDays(guest, context),
@@ -156,7 +156,7 @@ private fun firstVisitThisYear(guest: GuestStats): FunFact? =
     FunFact(guest.guestId, "Årets første besøk for ${guest.firstName}", FunFactPriority.FIRST_VISIT_THIS_YEAR)
         .takeIf { !guest.isFirstVisit && guest.currentYear.totalVisits == 1 }
 
-private fun shareOfTrips(guest: GuestStats, allTimeVisits: Int): FunFact? {
+internal fun shareOfTrips(guest: GuestStats, allTimeVisits: Int): FunFact? {
     if (allTimeVisits <= 0) return null
     val percent = guest.allTime.totalVisits * PERCENT_FACTOR / allTimeVisits
     val priority = if (guest.isFamily) FunFactPriority.SHARE_OF_TRIPS_FAMILY else FunFactPriority.SHARE_OF_TRIPS_GUEST
@@ -237,13 +237,13 @@ private fun raceFact(guest: GuestStats, me: GuestStanding, peers: List<GuestStan
 }
 
 /** The guest (family excluded) with the most visits since the data start, if there is a single one. */
-private fun topGuestAllTime(guest: GuestStats, context: GuestFunFactContext): FunFact? {
-    val guests = context.standings.filter { !it.isFamily }
+internal fun topGuestAllTime(guest: GuestStats, standings: List<GuestStanding>, dataStartDate: LocalDate): FunFact? {
+    val guests = standings.filter { !it.isFamily }
     val maxVisits = guests.maxOfOrNull { it.allTimeVisits } ?: 0
     val leader = guests.singleOrNull { it.allTimeVisits == maxVisits }
     return FunFact(
         guest.guestId,
-        "${guest.firstName} er gjesten med flest besøk siden ${context.dataStartDate.norwegianShortMonthYear()} " +
+        "${guest.firstName} er gjesten med flest besøk siden ${dataStartDate.norwegianShortMonthYear()} " +
             "($maxVisits)",
         FunFactPriority.TOP_GUEST_ALL_TIME,
     ).takeIf { !guest.isFamily && leader?.guestId == guest.guestId }

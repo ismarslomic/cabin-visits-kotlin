@@ -143,6 +143,7 @@ fun calculateGuestProfileStats(
     today: LocalDate,
     allReservations: List<Reservation>,
     guestsById: Map<String, Guest>,
+    dataStartDate: LocalDate,
     avatarUrl: String? = null,
 ): GuestProfileStats? {
     val guest = guestsById[guestId] ?: return null
@@ -170,9 +171,33 @@ fun calculateGuestProfileStats(
     return GuestProfileStats(
         guest = guestStats,
         visits = guestVisits,
-        funFacts = calculateGuestProfileFunFacts(guestStats, guestVisits, GuestProfileFunFactContext(today)),
+        funFacts = calculateGuestProfileFunFacts(
+            guestStats,
+            guestVisits,
+            GuestProfileFunFactContext(
+                today = today,
+                dataStartDate = dataStartDate,
+                allTimeVisits = startedReservations.size,
+                standings = calculateGuestStandings(today, allReservations, guestsById),
+                companions = companionsOf(guestId, startedReservations, guestsById),
+            ),
+        ),
     )
 }
+
+/** The guests who have been at the cabin together with [guestId], with the number of visits they shared. */
+private fun companionsOf(
+    guestId: String,
+    startedReservations: List<Reservation>,
+    guestsById: Map<String, Guest>,
+): List<Companion> = startedReservations
+    .filter { guestId in it.guestIds }
+    .flatMap { reservation -> reservation.guestIds.filter { it != guestId } }
+    .groupingBy { it }
+    .eachCount()
+    .mapNotNull { (companionId, sharedVisits) ->
+        guestsById[companionId]?.let { Companion(it.firstName, it.isFamily, sharedVisits) }
+    }
 
 private fun Reservation.visitStatus(today: LocalDate): VisitStatus = when {
     startDate > today -> VisitStatus.UPCOMING

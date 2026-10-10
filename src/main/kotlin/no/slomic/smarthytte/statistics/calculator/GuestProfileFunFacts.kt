@@ -20,6 +20,15 @@ private const val MIN_YEARS_FOR_RECORD_YEAR = 3
 // Next milestone: show it when the guest is at most this many visits away
 private const val MAX_VISITS_TO_NEXT_MILESTONE = 3
 
+// Companions: minimum number of shared visits, number of names listed at most and number of different companions
+private const val MIN_SHARED_VISITS = 2
+private const val MAX_TOP_COMPANIONS = 3
+private const val MIN_DIFFERENT_COMPANIONS = 5
+
+// Rank among guests: show second and third place when the leader is at most this many visits ahead
+private const val MAX_RANK_AMONG_GUESTS = 3
+private const val MAX_VISITS_BEHIND_LEADER = 3
+
 // Longest stay and total time at the cabin
 private const val MIN_DAYS_FOR_LONGEST_STAY = 6
 private const val MIN_DAYS_FOR_TOTAL_TIME = 30
@@ -29,8 +38,21 @@ private const val DAYS_PER_YEAR = 365
 private const val MAX_DAYS_IN_WEEKS = 60
 private const val MAX_DAYS_IN_MONTHS = 730
 
-/** Everything besides the guest and the visits that the guest profile fun facts depend on. */
-data class GuestProfileFunFactContext(val today: LocalDate)
+/** Another guest the guest has been at the cabin together with, and the number of visits they shared. */
+data class Companion(val firstName: String, val isFamily: Boolean, val sharedVisits: Int)
+
+/**
+ * Everything besides the guest and the visits that the guest profile fun facts depend on: [allTimeVisits] is the
+ * number of visits that have started for the whole cabin, [standings] compare all guests and [companions] are the
+ * guests the guest has been at the cabin together with.
+ */
+data class GuestProfileFunFactContext(
+    val today: LocalDate,
+    val dataStartDate: LocalDate,
+    val allTimeVisits: Int = 0,
+    val standings: List<GuestStanding> = emptyList(),
+    val companions: List<Companion> = emptyList(),
+)
 
 /**
  * Fun facts for the guest profile, written about the guest by first name like the live fun facts, sorted by priority
@@ -56,6 +78,11 @@ fun calculateGuestProfileFunFacts(
         longAbsence(guest, today),
         recordYear(guest, profileVisits, today),
         daysThisYear(guest, today),
+        shareOfTrips(guest, context.allTimeVisits),
+        topGuestAllTime(guest, context.standings, context.dataStartDate),
+        rankAmongGuests(guest, context.standings),
+        companions(guest, context.companions),
+        differentCompanions(guest, context.companions),
     ).sortedWith(compareByDescending<FunFact> { it.priority }.thenBy { it.text })
 }
 
@@ -189,4 +216,37 @@ private fun recordYear(guest: GuestStats, visits: ProfileVisits, today: LocalDat
             FunFactPriority.RECORD_YEAR,
         )
     }.takeIf { visitsByYear.size >= MIN_YEARS_FOR_RECORD_YEAR && bestYear != today.year }
+}
+
+/** Prefers other guests over family, since a family member is the likeliest companion of almost everyone. */
+private fun companions(guest: GuestStats, companions: List<Companion>): FunFact? {
+    val shared = companions.filter { it.sharedVisits >= MIN_SHARED_VISITS }
+    val candidates = shared.filter { !it.isFamily }.ifEmpty { shared }
+    val mostVisits = candidates.maxOfOrNull { it.sharedVisits } ?: return null
+    val top = candidates.filter { it.sharedVisits == mostVisits }.map { it.firstName }.sorted()
+    return FunFact(
+        guest.guestId,
+        "Oftest på hytta sammen med ${top.joinToString(" og ")} ($mostVisits ganger)",
+        FunFactPriority.COMPANIONS,
+    ).takeIf { top.size <= MAX_TOP_COMPANIONS }
+}
+
+private fun differentCompanions(guest: GuestStats, companions: List<Companion>): FunFact? = FunFact(
+    guest.guestId,
+    "${guest.firstName} har delt hytta med ${companions.size} ulike gjester",
+    FunFactPriority.DIFFERENT_COMPANIONS,
+).takeIf { companions.size >= MIN_DIFFERENT_COMPANIONS }
+
+/** Second and third place among the guests (family excluded) when the leader is close. */
+private fun rankAmongGuests(guest: GuestStats, standings: List<GuestStanding>): FunFact? {
+    val rank = guest.allTime.visitsRankAmongGuests ?: return null
+    val guests = standings.filter { !it.isFamily }
+    val leaderVisits = guests.maxOfOrNull { it.allTimeVisits } ?: 0
+    val leaders = guests.filter { it.allTimeVisits == leaderVisits }.map { it.firstName }.sorted()
+    val visitsBehind = leaderVisits - guest.allTime.totalVisits
+    return FunFact(
+        guest.guestId,
+        "${guest.firstName} er nr. $rank blant gjestene, bare $visitsBehind besøk bak ${leaders.joinToString(" og ")}",
+        FunFactPriority.RANK_AMONG_GUESTS,
+    ).takeIf { rank in 2..MAX_RANK_AMONG_GUESTS && visitsBehind in 1..MAX_VISITS_BEHIND_LEADER }
 }
