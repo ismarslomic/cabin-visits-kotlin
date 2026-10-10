@@ -10,8 +10,8 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.daysByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
 import no.slomic.smarthytte.statistics.model.GuestPeriodStats
+import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
-import no.slomic.smarthytte.statistics.model.LiveGuestStats
 
 fun calculateMonthlyGuestStats(
     year: Int,
@@ -99,13 +99,13 @@ fun aggregateGuestVisitStats(
  * are counted, and days are counted up to and including [today]. Guests without an entry in
  * [avatarUrlsByGuestId] have no avatar.
  */
-fun calculateLiveGuestStats(
+fun calculateGuestStats(
     reservation: Reservation,
     today: LocalDate,
     allReservations: List<Reservation>,
     guestsById: Map<String, Guest>,
     avatarUrlsByGuestId: Map<String, String> = emptyMap(),
-): List<LiveGuestStats> {
+): List<GuestStats> {
     val startedReservations = allReservations.filter { it.startDate <= today }
     val periodEndExclusive = today.plus(DatePeriod(days = 1))
     val firstYear = startedReservations.minOfOrNull { it.startDate.year } ?: today.year
@@ -134,7 +134,7 @@ fun calculateLiveGuestStats(
                 guestId in it.guestIds && it.id != reservation.id && it.startDate < reservation.startDate
             }
             val startedVisits = startedReservations.filter { guestId in it.guestIds }
-            LiveGuestStats(
+            GuestStats(
                 guestId = guestId,
                 firstName = guest.firstName,
                 lastName = guest.lastName,
@@ -150,7 +150,7 @@ fun calculateLiveGuestStats(
             )
         }
         .sortedWith(
-            compareBy<LiveGuestStats, Int?>(nullsLast()) { it.currentYear.daysRank }
+            compareBy<GuestStats, Int?>(nullsLast()) { it.currentYear.daysRank }
                 .thenBy(nullsLast()) { it.allTime.daysRank }
                 .thenBy { it.lastName }
                 .thenBy { it.firstName },

@@ -65,8 +65,8 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
             call.respond(statsService.getMonthStats(year, month))
         }.describeMonthStats()
 
-        get("/api/stats/guests") { call.respond(statsService.getGuestStats()) }
-            .describeGuestStats()
+        get("/api/stats/guests") { call.respond(statsService.getAllGuestsStats()) }
+            .describeAllGuestsStats()
     }
 }
 
@@ -153,8 +153,8 @@ private fun Route.describeMonthStats() = describe {
     }
 }
 
-private fun Route.describeGuestStats() = describe {
-    operationId = "getGuestStats"
+private fun Route.describeAllGuestsStats() = describe {
+    operationId = "getAllGuestsStats"
     tag("Stats")
     summary = "Guest statistics"
     description = "Returns guest statistics across all years: top 10 guests by number of visits and by " +

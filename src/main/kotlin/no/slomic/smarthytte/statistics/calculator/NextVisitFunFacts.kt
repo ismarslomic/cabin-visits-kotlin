@@ -1,7 +1,7 @@
 package no.slomic.smarthytte.statistics.calculator
 
 import no.slomic.smarthytte.statistics.model.FunFact
-import no.slomic.smarthytte.statistics.model.LiveGuestStats
+import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
 
 // Arrival soon (today, tomorrow, the day after) and countdown for later arrivals
@@ -29,12 +29,12 @@ private fun countdownToNextVisit(daysUntil: Int, isOccupied: Boolean): FunFact? 
     FunFact(null, "Neste besøk om $daysUntil dager", FunFactPriority.COUNTDOWN_TO_NEXT_VISIT)
         .takeIf { isOccupied && daysUntil > ARRIVAL_SOON_MAX_DAYS }
 
-private fun nextFirstTimer(guest: LiveGuestStats): FunFact? =
+private fun nextFirstTimer(guest: GuestStats): FunFact? =
     FunFact(guest.guestId, "${guest.firstName} kommer på hytta for første gang! 🎉", FunFactPriority.NEXT_FIRST_TIMER)
         .takeIf { !guest.isFamily && guest.isFirstVisit }
 
 /** The visit is already counted for started reservations only, so the next visit is `totalVisits + 1`. */
-private fun nextVisitMilestone(guest: LiveGuestStats): FunFact? {
+private fun nextVisitMilestone(guest: GuestStats): FunFact? {
     val visits = guest.allTime.totalVisits + 1
     return FunFact(
         guest.guestId,

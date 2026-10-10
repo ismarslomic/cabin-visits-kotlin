@@ -8,7 +8,7 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import no.slomic.smarthytte.statistics.model.FunFact
-import no.slomic.smarthytte.statistics.model.LiveGuestStats
+import no.slomic.smarthytte.statistics.model.GuestStats
 
 class GuestFunFactsTest :
     ShouldSpec({
@@ -19,7 +19,7 @@ class GuestFunFactsTest :
             GuestStanding(id, id.replaceFirstChar { it.uppercase() }, isFamily, yearVisits, allTimeVisits)
 
         fun facts(
-            vararg guests: LiveGuestStats,
+            vararg guests: GuestStats,
             remainingNights: Int = 3,
             allTimeVisits: Int = 100,
             stayStart: LocalDate = today,

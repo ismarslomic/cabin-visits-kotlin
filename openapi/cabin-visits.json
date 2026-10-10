@@ -256,7 +256,7 @@
     },
     "/api/stats/guests": {
       "get": {
-        "operationId": "getGuestStats",
+        "operationId": "getAllGuestsStats",
         "tags": [
           "Stats"
         ],
@@ -271,7 +271,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GuestStats"
+                  "$ref": "#/components/schemas/AllGuestsStats"
                 }
               }
             }
@@ -316,9 +316,9 @@
           }
         }
       },
-      "LiveGuestStats": {
+      "GuestStats": {
         "type": "object",
-        "title": "LiveGuestStats",
+        "title": "GuestStats",
         "required": [
           "guestId",
           "firstName",
@@ -421,7 +421,7 @@
             "type": "array",
             "description": "Statistics for each guest in the current reservation, ordered by current year days rank.",
             "items": {
-              "$ref": "#/components/schemas/LiveGuestStats"
+              "$ref": "#/components/schemas/GuestStats"
             }
           },
           "remainingNights": {
@@ -458,7 +458,7 @@
             "type": "array",
             "description": "Statistics for each guest in the next reservation, ordered by current year days rank.",
             "items": {
-              "$ref": "#/components/schemas/LiveGuestStats"
+              "$ref": "#/components/schemas/GuestStats"
             }
           },
           "daysUntil": {
@@ -1843,9 +1843,9 @@
           }
         }
       },
-      "GuestStats": {
+      "AllGuestsStats": {
         "type": "object",
-        "title": "GuestStats",
+        "title": "AllGuestsStats",
         "required": [
           "topGuestsByVisits",
           "topGuestsByDays",

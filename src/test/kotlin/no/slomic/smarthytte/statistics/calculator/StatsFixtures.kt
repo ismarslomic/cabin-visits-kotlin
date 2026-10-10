@@ -5,8 +5,8 @@ package no.slomic.smarthytte.statistics.calculator
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import no.slomic.smarthytte.statistics.model.GuestPeriodStats
+import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
-import no.slomic.smarthytte.statistics.model.LiveGuestStats
 import no.slomic.smarthytte.statistics.model.MonthDaysStats
 import no.slomic.smarthytte.statistics.model.MonthNightsStats
 import no.slomic.smarthytte.statistics.model.MonthStats
@@ -157,7 +157,7 @@ fun monthsFixture(
 
 private fun periodFixture(visits: Int = 0, days: Int = 0) = GuestPeriodStats(visits, days, visitsRank = 1, daysRank = 1)
 
-/** Minimal [LiveGuestStats] for fun fact tests: only the given values are set. */
+/** Minimal [GuestStats] for fun fact tests: only the given values are set. */
 fun liveGuestFixture(
     id: String,
     isFamily: Boolean = false,
@@ -170,7 +170,7 @@ fun liveGuestFixture(
     currentYearDays: Int = 0,
     allTimeDays: Int = 0,
     age: Int = 30,
-) = LiveGuestStats(
+) = GuestStats(
     guestId = id,
     firstName = id.replaceFirstChar { it.uppercase() },
     lastName = "Test",

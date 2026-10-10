@@ -4,7 +4,7 @@ import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GuestStats(
+data class AllGuestsStats(
     @JsonSchema.Description("Top 10 guests ranked by total number of reservation visits across all years.")
     val topGuestsByVisits: List<GuestRanking>,
     @JsonSchema.Description("Top 10 guests ranked by total number of days spent at the cabin across all years.")

@@ -132,7 +132,7 @@ class GuestStatsCalculatorTest :
             }
         }
 
-        context("calculateLiveGuestStats") {
+        context("calculateGuestStats") {
             val guest3 = Guest("g3", "Ola", "Nordmann", 2000, null, Gender.MALE)
             val allGuestsById = guestsById + ("g3" to guest3)
             val today = LocalDate(2026, 9, 29)
@@ -144,7 +144,7 @@ class GuestStatsCalculatorTest :
             val allReservations = listOf(pastLastYear, pastThisYear, current, next)
 
             should("count started reservations and days up to today for guests in current reservation") {
-                val result = calculateLiveGuestStats(current, today, allReservations, allGuestsById)
+                val result = calculateGuestStats(current, today, allReservations, allGuestsById)
 
                 result.map { it.guestId } shouldBe listOf("g1", "g2")
 
@@ -169,14 +169,14 @@ class GuestStatsCalculatorTest :
             should("set avatar url only for guests with an avatar") {
                 val avatarUrls = mapOf("g1" to "/api/guests/g1/avatar?v=1")
 
-                val result = calculateLiveGuestStats(current, today, allReservations, allGuestsById, avatarUrls)
+                val result = calculateGuestStats(current, today, allReservations, allGuestsById, avatarUrls)
 
                 result.single { it.guestId == "g1" }.avatarUrl shouldBe "/api/guests/g1/avatar?v=1"
                 result.single { it.guestId == "g2" }.avatarUrl shouldBe null
             }
 
             should("use last completed visit and exclude future visits for guests in next reservation") {
-                val result = calculateLiveGuestStats(next, today, allReservations, allGuestsById)
+                val result = calculateGuestStats(next, today, allReservations, allGuestsById)
 
                 result.map { it.guestId } shouldBe listOf("g2", "g3")
 
@@ -197,7 +197,7 @@ class GuestStatsCalculatorTest :
             should("use current reservation as first visit for first-time guests in current reservation") {
                 val firstTimer = createReservation("1", LocalDate(2026, 9, 28), LocalDate(2026, 9, 30), listOf("g3"))
 
-                val g3 = calculateLiveGuestStats(firstTimer, today, listOf(firstTimer), allGuestsById).single()
+                val g3 = calculateGuestStats(firstTimer, today, listOf(firstTimer), allGuestsById).single()
 
                 g3.isFirstVisit shouldBe true
                 g3.firstVisitDate shouldBe LocalDate(2026, 9, 28)
@@ -209,7 +209,7 @@ class GuestStatsCalculatorTest :
                 val shared = createReservation("1", LocalDate(2026, 1, 1), LocalDate(2026, 1, 3), listOf("g1", "g2"))
                 val single = createReservation("2", LocalDate(2026, 2, 1), LocalDate(2026, 2, 1), listOf("g3"))
 
-                val result = calculateLiveGuestStats(single, today, listOf(shared, single), allGuestsById)
+                val result = calculateGuestStats(single, today, listOf(shared, single), allGuestsById)
 
                 result.single().currentYear shouldBe
                     GuestPeriodStats(totalVisits = 1, totalDays = 1, visitsRank = 1, daysRank = 3)
@@ -219,7 +219,7 @@ class GuestStatsCalculatorTest :
                 val reservation =
                     createReservation("1", LocalDate(2026, 1, 1), LocalDate(2026, 1, 2), listOf("unknown"))
 
-                calculateLiveGuestStats(reservation, today, listOf(reservation), allGuestsById) shouldBe emptyList()
+                calculateGuestStats(reservation, today, listOf(reservation), allGuestsById) shouldBe emptyList()
             }
         }
 

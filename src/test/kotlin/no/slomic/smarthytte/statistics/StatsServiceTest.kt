@@ -343,7 +343,7 @@ class StatsServiceTest :
             }
         }
 
-        context("getGuestStats") {
+        context("getAllGuestsStats") {
             should("rank guests, and group them by gender and age") {
                 val year = utcDateNow().year
                 val carl = Guest("carl", "Carl", "Test", (year - 10).toShort(), gender = Gender.MALE)
@@ -355,7 +355,7 @@ class StatsServiceTest :
                 addReservation("r1", daysFromToday(-20), daysFromToday(-18), anna, bjorn)
                 addReservation("r2", daysFromToday(-10), daysFromToday(-7), anna)
 
-                val stats = service.getGuestStats()
+                val stats = service.getAllGuestsStats()
 
                 stats.topGuestsByVisits.map { it.guestId to it.totalVisits } shouldBe listOf("anna" to 2, "bjorn" to 1)
                 stats.topGuestsByDays.first().guestId shouldBe "anna"
@@ -373,7 +373,7 @@ class StatsServiceTest :
             }
 
             should("return empty rankings without reservations") {
-                val stats = service.getGuestStats()
+                val stats = service.getAllGuestsStats()
 
                 stats.topGuestsByVisits.shouldBeEmpty()
                 stats.genderDistribution.maleCount shouldBe 0
