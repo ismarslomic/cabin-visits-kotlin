@@ -11,8 +11,11 @@ import no.slomic.smarthytte.reservations.daysByGuest
 import no.slomic.smarthytte.reservations.nightsByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
 import no.slomic.smarthytte.statistics.model.GuestPeriodStats
+import no.slomic.smarthytte.statistics.model.GuestProfileStats
 import no.slomic.smarthytte.statistics.model.GuestStats
+import no.slomic.smarthytte.statistics.model.GuestVisit
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
+import no.slomic.smarthytte.statistics.model.VisitStatus
 
 fun calculateMonthlyGuestStats(
     year: Int,
@@ -124,6 +127,52 @@ fun calculateGuestStats(
                 .thenBy { it.lastName }
                 .thenBy { it.firstName },
         )
+}
+
+/**
+ * Builds the profile of the guest with [guestId] as of [today]: statistics for the guest and all visits of the guest
+ * with their status. Returns null if the guest is unknown. A visit is ongoing from its start date until its end date
+ * (exclusive), completed when its end date has been reached and upcoming before its start date. If the guest is at the
+ * cabin, [GuestStats.lastVisitDate] is the last visit before the ongoing one and [GuestStats.isFirstVisit] tells if
+ * the ongoing visit is the first one. Otherwise [GuestStats.isFirstVisit] is false.
+ */
+fun calculateGuestProfileStats(
+    guestId: String,
+    today: LocalDate,
+    allReservations: List<Reservation>,
+    guestsById: Map<String, Guest>,
+    avatarUrl: String? = null,
+): GuestProfileStats? {
+    val guest = guestsById[guestId] ?: return null
+    val startedReservations = allReservations.filter { it.startDate <= today }
+    val visits = allReservations.filter { guestId in it.guestIds }.sortedBy { it.startDate }
+    val ongoing = visits.firstOrNull { it.visitStatus(today) == VisitStatus.ONGOING }
+    val previousVisits = visits.filter {
+        it.startDate <= today && (ongoing == null || it.startDate < ongoing.startDate)
+    }
+
+    val guestStats = guestStatsOf(
+        guestId = guestId,
+        guest = guest,
+        previousVisits = previousVisits,
+        today = today,
+        startedReservations = startedReservations,
+        avatarUrlsByGuestId = avatarUrl?.let { mapOf(guestId to it) }.orEmpty(),
+        rankings = GuestRankings.of(today, startedReservations, guestsById),
+    ).copy(isFirstVisit = ongoing != null && previousVisits.isEmpty())
+
+    return GuestProfileStats(
+        guest = guestStats,
+        visits = visits.map {
+            GuestVisit(it.startDate, it.endDate, it.durationDays, it.durationNights, it.visitStatus(today))
+        },
+    )
+}
+
+private fun Reservation.visitStatus(today: LocalDate): VisitStatus = when {
+    startDate > today -> VisitStatus.UPCOMING
+    endDate > today -> VisitStatus.ONGOING
+    else -> VisitStatus.COMPLETED
 }
 
 /**
