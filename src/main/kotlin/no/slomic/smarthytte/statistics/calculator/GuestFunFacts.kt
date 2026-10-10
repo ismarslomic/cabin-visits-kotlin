@@ -15,7 +15,7 @@ import no.slomic.smarthytte.statistics.model.GuestStats
 private const val MAX_FACTS_PER_GUEST = 2
 
 // Visit milestones: guests at fixed visit counts, family at every step
-private val GUEST_VISIT_MILESTONES = setOf(5, 10, 25, 50, 75, 100, 150, 200)
+internal val GUEST_VISIT_MILESTONES = setOf(5, 10, 25, 50, 75, 100, 150, 200)
 private const val FAMILY_VISIT_MILESTONE_STEP = 50
 
 // Days milestones: total days at the cabin crossed during the stay
@@ -119,7 +119,7 @@ private fun firstVisit(guest: GuestStats): FunFact? =
     FunFact(guest.guestId, "Første registrerte besøk for ${guest.firstName}! 🎉", FunFactPriority.FIRST_VISIT)
         .takeIf { !guest.isFamily && guest.isFirstVisit }
 
-private fun visitMilestone(guest: GuestStats): FunFact? {
+internal fun visitMilestone(guest: GuestStats): FunFact? {
     val visits = guest.allTime.totalVisits
     return FunFact(guest.guestId, "Dette er besøk nr. $visits for ${guest.firstName}!", FunFactPriority.VISIT_MILESTONE)
         .takeIf { isVisitMilestone(guest, visits) }
@@ -131,7 +131,7 @@ internal fun isVisitMilestone(guest: GuestStats, visits: Int): Boolean = if (gue
     visits in GUEST_VISIT_MILESTONES
 }
 
-private fun longAbsence(guest: GuestStats, today: LocalDate): FunFact? {
+internal fun longAbsence(guest: GuestStats, today: LocalDate): FunFact? {
     val lastVisit = guest.lastVisitDate ?: return null
     val months = lastVisit.monthsUntil(today)
     return FunFact(
@@ -164,7 +164,7 @@ private fun shareOfTrips(guest: GuestStats, allTimeVisits: Int): FunFact? {
         .takeIf { percent >= MIN_SHARE_OF_TRIPS_PERCENT }
 }
 
-private fun yearsSinceFirstVisit(guest: GuestStats, today: LocalDate): FunFact? {
+internal fun yearsSinceFirstVisit(guest: GuestStats, today: LocalDate): FunFact? {
     val firstVisit = guest.firstVisitDate ?: return null
     val years = firstVisit.yearsUntil(today)
     return FunFact(
@@ -279,7 +279,7 @@ internal fun shareOfLifePercent(guest: GuestStats): Int? {
     return (guest.allTime.totalDays * PERCENT_FACTOR / (guest.age * DAYS_PER_YEAR)).coerceAtMost(PERCENT_FACTOR)
 }
 
-private fun daysThisYear(guest: GuestStats, today: LocalDate): FunFact? {
+internal fun daysThisYear(guest: GuestStats, today: LocalDate): FunFact? {
     val days = guest.currentYear.totalDays
     val percent = days * PERCENT_FACTOR / today.dayOfYear
     return FunFact(

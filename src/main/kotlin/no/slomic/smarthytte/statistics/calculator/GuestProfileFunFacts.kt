@@ -1,14 +1,33 @@
+@file:Suppress("TooManyFunctions")
+
 package no.slomic.smarthytte.statistics.calculator
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import kotlinx.datetime.daysUntil
+import no.slomic.smarthytte.common.norwegianShortMonthYear
+import no.slomic.smarthytte.common.round1
+import no.slomic.smarthytte.common.toNorwegianDecimal
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisit
 import no.slomic.smarthytte.statistics.model.VisitStatus
 
-// Favourite season: minimum number of visits to have a favourite
+// Favourite season and record year: minimum number of visits (years) to have a favourite
 private const val MIN_VISITS_FOR_FAVOURITE_SEASON = 3
+private const val MIN_YEARS_FOR_RECORD_YEAR = 3
+
+// Next milestone: show it when the guest is at most this many visits away
+private const val MAX_VISITS_TO_NEXT_MILESTONE = 3
+
+// Longest stay and total time at the cabin
+private const val MIN_DAYS_FOR_LONGEST_STAY = 6
+private const val MIN_DAYS_FOR_TOTAL_TIME = 30
+private const val DAYS_PER_WEEK = 7
+private const val DAYS_PER_MONTH = 30
+private const val DAYS_PER_YEAR = 365
+private const val MAX_DAYS_IN_WEEKS = 60
+private const val MAX_DAYS_IN_MONTHS = 730
 
 /** Everything besides the guest and the visits that the guest profile fun facts depend on. */
 data class GuestProfileFunFactContext(val today: LocalDate)
@@ -22,20 +41,76 @@ fun calculateGuestProfileFunFacts(
     visits: List<GuestVisit>,
     context: GuestProfileFunFactContext,
 ): List<FunFact> {
-    val happenedVisits = visits.filter { it.status != VisitStatus.UPCOMING }
+    val profileVisits = ProfileVisits(visits)
+    val today = context.today
     return listOfNotNull(
         shareOfLife(guest),
-        loyalGuest(guest, happenedVisits, context.today),
-        favouriteSeason(guest, happenedVisits),
+        visitMilestone(guest, profileVisits),
+        visitsToNextMilestone(guest),
+        upcomingVisit(guest, profileVisits, today),
+        loyalGuest(guest, profileVisits, today),
+        favouriteSeason(guest, profileVisits),
+        longestStay(guest, profileVisits),
+        totalTimeInWords(guest),
+        yearsSinceFirstVisit(guest, today),
+        longAbsence(guest, today),
+        recordYear(guest, profileVisits, today),
+        daysThisYear(guest, today),
     ).sortedWith(compareByDescending<FunFact> { it.priority }.thenBy { it.text })
+}
+
+/** The visits of a guest, oldest first, by status. Upcoming visits have not happened yet. */
+private class ProfileVisits(visits: List<GuestVisit>) {
+    val happened = visits.filter { it.status != VisitStatus.UPCOMING }
+    val ongoing = visits.firstOrNull { it.status == VisitStatus.ONGOING }
+    val nextUpcoming = visits.firstOrNull { it.status == VisitStatus.UPCOMING }
+}
+
+/** The live fact while the guest is at the cabin ("Dette er besøk nr. 10"), otherwise a count of visits so far. */
+private fun visitMilestone(guest: GuestStats, visits: ProfileVisits): FunFact? {
+    val milestone = visitMilestone(guest) ?: return null
+    return if (visits.ongoing != null) {
+        milestone
+    } else {
+        milestone.copy(text = "${guest.firstName} har besøkt hytta ${guest.allTime.totalVisits} ganger!")
+    }
+}
+
+private fun visitsToNextMilestone(guest: GuestStats): FunFact? {
+    val visits = guest.allTime.totalVisits
+    val nextMilestone = GUEST_VISIT_MILESTONES.filter { it > visits }.minOrNull() ?: return null
+    val remaining = nextMilestone - visits
+    return FunFact(
+        guest.guestId,
+        "${guest.firstName} er $remaining besøk unna å nå $nextMilestone besøk på hytta",
+        FunFactPriority.VISITS_TO_NEXT_MILESTONE,
+    ).takeIf { !guest.isFamily && remaining <= MAX_VISITS_TO_NEXT_MILESTONE }
+}
+
+/** The next visit is `totalVisits + 1`, as only visits that have started are counted in the total. */
+private fun upcomingVisit(guest: GuestStats, visits: ProfileVisits, today: LocalDate): FunFact? {
+    val next = visits.nextUpcoming ?: return null
+    val daysUntil = today.daysUntil(next.startDate)
+    val whenText = if (daysUntil == 1) "i morgen" else "om $daysUntil dager"
+    val visitNumber = guest.allTime.totalVisits + 1
+    val text = "Neste besøk for ${guest.firstName} er $whenText"
+    return if (isVisitMilestone(guest, visitNumber)) {
+        FunFact(
+            guest.guestId,
+            "$text, da er det besøk nr. $visitNumber!",
+            FunFactPriority.UPCOMING_VISIT_MILESTONE,
+        )
+    } else {
+        FunFact(guest.guestId, text, FunFactPriority.UPCOMING_VISIT)
+    }
 }
 
 /**
  * Years in a row with a visit, counted backwards from the last year with a visit. The streak is only active if that
  * year is this year or last year. Upcoming visits are not included, they have not happened yet.
  */
-private fun loyalGuest(guest: GuestStats, happenedVisits: List<GuestVisit>, today: LocalDate): FunFact? {
-    val yearsVisited = happenedVisits.map { it.startDate.year }.distinct()
+private fun loyalGuest(guest: GuestStats, visits: ProfileVisits, today: LocalDate): FunFact? {
+    val yearsVisited = visits.happened.map { it.startDate.year }.distinct()
     val lastYear = yearsVisited.maxOrNull()?.takeIf { it >= today.year - 1 } ?: return null
     val years = consecutiveYearsUpTo(lastYear, yearsVisited)
     return FunFact(
@@ -45,17 +120,17 @@ private fun loyalGuest(guest: GuestStats, happenedVisits: List<GuestVisit>, toda
     ).takeIf { !guest.isFamily && years >= MIN_YEARS_FOR_STREAK }
 }
 
-private fun favouriteSeason(guest: GuestStats, happenedVisits: List<GuestVisit>): FunFact? {
-    val visitsBySeason = happenedVisits.groupingBy { Season.of(it.startDate.month) }.eachCount()
+private fun favouriteSeason(guest: GuestStats, visits: ProfileVisits): FunFact? {
+    val visitsBySeason = visits.happened.groupingBy { Season.of(it.startDate.month) }.eachCount()
     val mostVisits = visitsBySeason.values.maxOrNull() ?: 0
     val favourite = visitsBySeason.filterValues { it == mostVisits }.keys.singleOrNull()
     return favourite?.let {
         FunFact(
             guest.guestId,
-            "${guest.firstName} liker hyttelivet mest ${it.inNorwegian} ($mostVisits av ${happenedVisits.size} besøk)",
+            "${guest.firstName} liker hyttelivet mest ${it.inNorwegian} ($mostVisits av ${visits.happened.size} besøk)",
             FunFactPriority.FAVOURITE_SEASON,
         )
-    }.takeIf { happenedVisits.size >= MIN_VISITS_FOR_FAVOURITE_SEASON }
+    }.takeIf { visits.happened.size >= MIN_VISITS_FOR_FAVOURITE_SEASON }
 }
 
 /** Seasons by calendar month, as the meteorological seasons: winter is December to February and so on. */
@@ -74,4 +149,44 @@ private enum class Season(val inNorwegian: String) {
             Month.SEPTEMBER, Month.OCTOBER, Month.NOVEMBER -> AUTUMN
         }
     }
+}
+
+private fun longestStay(guest: GuestStats, visits: ProfileVisits): FunFact? {
+    val longest =
+        visits.happened.maxWithOrNull(compareBy<GuestVisit> { it.days }.thenBy { it.startDate }) ?: return null
+    return FunFact(
+        guest.guestId,
+        "Det lengste oppholdet til ${guest.firstName} var ${longest.days} dager " +
+            "(${longest.startDate.norwegianShortMonthYear()})",
+        FunFactPriority.GUEST_LONGEST_STAY,
+    ).takeIf { longest.days >= MIN_DAYS_FOR_LONGEST_STAY }
+}
+
+private fun totalTimeInWords(guest: GuestStats): FunFact? {
+    val days = guest.allTime.totalDays
+    return FunFact(
+        guest.guestId,
+        "${guest.firstName} har tilbrakt $days dager på hytta, det er ca. ${daysInWords(days)}",
+        FunFactPriority.TOTAL_TIME_IN_WORDS,
+    ).takeIf { days >= MIN_DAYS_FOR_TOTAL_TIME }
+}
+
+/** Weeks below two months, months below two years, otherwise years with one decimal. */
+private fun daysInWords(days: Int): String = when {
+    days < MAX_DAYS_IN_WEEKS -> "${days / DAYS_PER_WEEK} uker"
+    days < MAX_DAYS_IN_MONTHS -> "${days / DAYS_PER_MONTH} måneder"
+    else -> "${(days.toDouble() / DAYS_PER_YEAR).round1().toNorwegianDecimal()} år"
+}
+
+private fun recordYear(guest: GuestStats, visits: ProfileVisits, today: LocalDate): FunFact? {
+    val visitsByYear = visits.happened.groupingBy { it.startDate.year }.eachCount()
+    val mostVisits = visitsByYear.values.maxOrNull() ?: 0
+    val bestYear = visitsByYear.filterValues { it == mostVisits }.keys.singleOrNull()
+    return bestYear?.let {
+        FunFact(
+            guest.guestId,
+            "Rekordåret til ${guest.firstName} var $it med $mostVisits besøk",
+            FunFactPriority.RECORD_YEAR,
+        )
+    }.takeIf { visitsByYear.size >= MIN_YEARS_FOR_RECORD_YEAR && bestYear != today.year }
 }
