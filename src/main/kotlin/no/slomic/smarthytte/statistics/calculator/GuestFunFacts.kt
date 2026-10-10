@@ -23,7 +23,7 @@ private val DAYS_MILESTONES = listOf(50, 100, 200, 365)
 
 // Long absence and visit streak
 private const val MIN_MONTHS_FOR_LONG_ABSENCE = 12
-private const val MIN_YEARS_FOR_STREAK = 3
+internal const val MIN_YEARS_FOR_STREAK = 3
 
 // Share of all trips (percent of the cabin's visits)
 private const val MIN_SHARE_OF_TRIPS_PERCENT = 25
@@ -35,7 +35,7 @@ private const val MAX_TIED_LEADERS = 3
 
 // Share of days since data start and share of life (percent, shown from this share)
 private const val PERCENT_FACTOR = 100
-private const val MIN_SHARE_PERCENT = 5
+internal const val MIN_SHARE_PERCENT = 5
 private const val DAYS_PER_YEAR = 365
 
 // Days this year and total days at the cabin
@@ -149,7 +149,7 @@ private fun visitStreak(guest: GuestStats, today: LocalDate): FunFact? {
 }
 
 /** Number of consecutive years, counting backwards from [year], in which the guest has visited. */
-private fun consecutiveYearsUpTo(year: Int, yearsVisited: List<Int>): Int =
+internal fun consecutiveYearsUpTo(year: Int, yearsVisited: List<Int>): Int =
     generateSequence(year) { it - 1 }.takeWhile { it in yearsVisited }.count()
 
 private fun firstVisitThisYear(guest: GuestStats): FunFact? =
@@ -263,14 +263,18 @@ private fun shareOfDays(guest: GuestStats, context: GuestFunFactContext): FunFac
 
 /** Only for guests born in or after the first data year, so the whole life is covered by the data. */
 private fun shareOfLife(guest: GuestStats, context: GuestFunFactContext): FunFact? {
-    if (guest.age !in 1..(context.today.year - context.dataStartDate.year)) return null
-    val percent = (guest.allTime.totalDays * PERCENT_FACTOR / (guest.age * DAYS_PER_YEAR))
-        .coerceAtMost(PERCENT_FACTOR)
+    val percent = shareOfLifePercent(guest, context.today, context.dataStartDate) ?: return null
     return FunFact(
         guest.guestId,
         "${guest.firstName} har vært på hytta ca. $percent % av livet sitt",
         FunFactPriority.SHARE_OF_LIFE,
     ).takeIf { percent >= MIN_SHARE_PERCENT }
+}
+
+/** Percent of the guest's life spent at the cabin, or null if the data does not cover the whole life. */
+internal fun shareOfLifePercent(guest: GuestStats, today: LocalDate, dataStartDate: LocalDate): Int? {
+    if (guest.age !in 1..(today.year - dataStartDate.year)) return null
+    return (guest.allTime.totalDays * PERCENT_FACTOR / (guest.age * DAYS_PER_YEAR)).coerceAtMost(PERCENT_FACTOR)
 }
 
 private fun daysThisYear(guest: GuestStats, today: LocalDate): FunFact? {
