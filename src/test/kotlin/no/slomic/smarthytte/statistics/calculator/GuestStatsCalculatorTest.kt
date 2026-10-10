@@ -156,14 +156,14 @@ class GuestStatsCalculatorTest :
                 g1.firstVisitDate shouldBe LocalDate(2025, 6, 1)
                 g1.lastVisitDate shouldBe LocalDate(2026, 3, 12)
                 g1.yearsVisited shouldBe listOf(2026, 2025)
-                g1.currentYear shouldBe GuestPeriodStats(totalVisits = 2, totalDays = 6, visitsRank = 1, daysRank = 1)
-                g1.allTime shouldBe GuestPeriodStats(totalVisits = 3, totalDays = 11, visitsRank = 1, daysRank = 1)
+                g1.currentYear shouldBe periodStats(visits = 2, days = 6, nights = 7, visitsRank = 1, daysRank = 1)
+                g1.allTime shouldBe periodStats(visits = 3, days = 11, nights = 11, visitsRank = 1, daysRank = 1)
 
                 val g2 = result[1]
                 g2.isFirstVisit shouldBe false
                 g2.lastVisitDate shouldBe LocalDate(2025, 6, 5)
-                g2.currentYear shouldBe GuestPeriodStats(totalVisits = 1, totalDays = 3, visitsRank = 2, daysRank = 2)
-                g2.allTime shouldBe GuestPeriodStats(totalVisits = 2, totalDays = 8, visitsRank = 2, daysRank = 2)
+                g2.currentYear shouldBe periodStats(visits = 1, days = 3, nights = 5, visitsRank = 2, daysRank = 2)
+                g2.allTime shouldBe periodStats(visits = 2, days = 8, nights = 9, visitsRank = 2, daysRank = 2)
             }
 
             should("set avatar url only for guests with an avatar") {
@@ -190,8 +190,8 @@ class GuestStatsCalculatorTest :
                 g3.lastVisitDate shouldBe null
                 g3.yearsVisited shouldBe emptyList()
                 g3.currentYear shouldBe
-                    GuestPeriodStats(totalVisits = 0, totalDays = 0, visitsRank = null, daysRank = null)
-                g3.allTime shouldBe GuestPeriodStats(totalVisits = 0, totalDays = 0, visitsRank = null, daysRank = null)
+                    periodStats(visits = 0, days = 0, nights = 0, visitsRank = null, daysRank = null)
+                g3.allTime shouldBe periodStats(visits = 0, days = 0, nights = 0, visitsRank = null, daysRank = null)
             }
 
             should("use current reservation as first visit for first-time guests in current reservation") {
@@ -212,7 +212,41 @@ class GuestStatsCalculatorTest :
                 val result = calculateGuestStats(single, today, listOf(shared, single), allGuestsById)
 
                 result.single().currentYear shouldBe
-                    GuestPeriodStats(totalVisits = 1, totalDays = 1, visitsRank = 1, daysRank = 3)
+                    periodStats(visits = 1, days = 1, nights = 0, visitsRank = 1, daysRank = 3)
+            }
+
+            should("rank family and guests together, and guests only without the family") {
+                val dina = Guest("dina", "Dina", "T", 1990, gender = Gender.FEMALE, isFamily = true)
+                val guestsWithFamily = allGuestsById + ("dina" to dina)
+                val familyTrip1 =
+                    createReservation("1", LocalDate(2026, 1, 1), LocalDate(2026, 1, 3), listOf("dina", "g1"))
+                val familyTrip2 =
+                    createReservation("2", LocalDate(2026, 2, 1), LocalDate(2026, 2, 4), listOf("dina", "g2"))
+                val familyTrip3 = createReservation("3", LocalDate(2026, 3, 1), LocalDate(2026, 3, 2), listOf("dina"))
+                val reservations = listOf(familyTrip1, familyTrip2, familyTrip3)
+
+                val result = calculateGuestStats(familyTrip1, today, reservations, guestsWithFamily)
+
+                val dinaStats = result.single { it.guestId == "dina" }.allTime
+                dinaStats.visitsRank shouldBe 1
+                dinaStats.visitsRankAmongGuests shouldBe null
+                dinaStats.daysRankAmongGuests shouldBe null
+                dinaStats.totalNights shouldBe 6
+
+                val g1Stats = result.single { it.guestId == "g1" }.allTime
+                g1Stats.visitsRank shouldBe 2 // behind Dina
+                g1Stats.visitsRankAmongGuests shouldBe 1 // tied with g2, family excluded
+                g1Stats.daysRank shouldBe 3
+                g1Stats.daysRankAmongGuests shouldBe 2 // g2 has more days
+            }
+
+            should("count the nights of an ongoing visit in full") {
+                val ongoing = createReservation("1", LocalDate(2026, 9, 28), LocalDate(2026, 10, 3), listOf("g1"))
+
+                val g1 = calculateGuestStats(ongoing, today, listOf(ongoing), allGuestsById).single()
+
+                g1.allTime.totalDays shouldBe 2 // up to and including today
+                g1.allTime.totalNights shouldBe 5
             }
 
             should("ignore guests not found in guestsById") {
@@ -253,3 +287,14 @@ class GuestStatsCalculatorTest :
             }
         }
     })
+
+private fun periodStats(visits: Int, days: Int, nights: Int, visitsRank: Int?, daysRank: Int?) = GuestPeriodStats(
+    totalVisits = visits,
+    totalDays = days,
+    totalNights = nights,
+    visitsRank = visitsRank,
+    daysRank = daysRank,
+    // No family members among the test guests, so the ranks among guests are the same
+    visitsRankAmongGuests = visitsRank,
+    daysRankAmongGuests = daysRank,
+)

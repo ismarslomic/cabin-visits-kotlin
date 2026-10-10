@@ -155,7 +155,15 @@ fun monthsFixture(
     )
 }
 
-private fun periodFixture(visits: Int = 0, days: Int = 0) = GuestPeriodStats(visits, days, visitsRank = 1, daysRank = 1)
+private fun periodFixture(visits: Int = 0, days: Int = 0) = GuestPeriodStats(
+    totalVisits = visits,
+    totalDays = days,
+    totalNights = 0,
+    visitsRank = 1,
+    daysRank = 1,
+    visitsRankAmongGuests = 1,
+    daysRankAmongGuests = 1,
+)
 
 /** Minimal [GuestStats] for fun fact tests: only the given values are set. */
 fun liveGuestFixture(

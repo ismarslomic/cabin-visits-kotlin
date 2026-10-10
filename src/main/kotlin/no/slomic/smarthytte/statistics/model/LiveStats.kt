@@ -107,11 +107,28 @@ data class GuestPeriodStats(
     )
     val totalDays: Int,
     @JsonSchema.Description(
-        "Guest's rank by total visits among all guests in the period (1 = most). Tied guests share rank. Null if no visits.",
+        "Number of nights of the reservations the guest was part of that started in the period (full stay, " +
+            "also for an ongoing stay). Same counting as totalVisits.",
+    )
+    val totalNights: Int,
+    @JsonSchema.Description(
+        "Guest's rank by total visits among all guests, family included, in the period (1 = most). " +
+            "Tied guests share rank. Null if no visits.",
     )
     val visitsRank: Int?,
     @JsonSchema.Description(
-        "Guest's rank by total days among all guests in the period (1 = most). Tied guests share rank. Null if no visits.",
+        "Guest's rank by total days among all guests, family included, in the period (1 = most). " +
+            "Tied guests share rank. Null if no visits.",
     )
     val daysRank: Int?,
+    @JsonSchema.Description(
+        "Guest's rank by total visits among guests only, family members excluded (1 = most). " +
+            "Tied guests share rank. Null for family members and if no visits.",
+    )
+    val visitsRankAmongGuests: Int?,
+    @JsonSchema.Description(
+        "Guest's rank by total days among guests only, family members excluded (1 = most). " +
+            "Tied guests share rank. Null for family members and if no visits.",
+    )
+    val daysRankAmongGuests: Int?,
 )
