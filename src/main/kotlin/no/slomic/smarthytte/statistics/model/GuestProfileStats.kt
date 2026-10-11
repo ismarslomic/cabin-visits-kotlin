@@ -14,8 +14,8 @@ data class GuestProfileStats(
     )
     val visits: List<GuestVisit>,
     @JsonSchema.Description(
-        "Fun facts about the guest, as ready-to-display Norwegian text that mentions the guest by first name. Sorted by " +
-            "priority, highest first. Not capped, so pick the ones to display.",
+        "Fun facts about the guest, as ready-to-display Norwegian text that mentions the guest by first name. " +
+            "Sorted by priority, highest first. Not capped, so pick the ones to display.",
     )
     val funFacts: List<FunFact>,
 )
