@@ -68,7 +68,7 @@ fun calculateGuestProfileFunFacts(
     return listOfNotNull(
         shareOfLife(guest),
         visitMilestone(guest, profileVisits),
-        visitsToNextMilestone(guest),
+        visitsToNextMilestone(guest, profileVisits),
         upcomingVisit(guest, profileVisits, today),
         loyalGuest(guest, profileVisits, today),
         favouriteSeason(guest, profileVisits),
@@ -76,6 +76,7 @@ fun calculateGuestProfileFunFacts(
         totalTimeInWords(guest),
         yearsSinceFirstVisit(guest, today),
         longAbsence(guest, today),
+        lastVisitDate(guest),
         recordYear(guest, profileVisits, today),
         daysThisYear(guest, today),
         shareOfTrips(guest, context.allTimeVisits),
@@ -103,15 +104,21 @@ private fun visitMilestone(guest: GuestStats, visits: ProfileVisits): FunFact? {
     }
 }
 
-private fun visitsToNextMilestone(guest: GuestStats): FunFact? {
+/** Only for guests close to a milestone, and not when the upcoming visit fact already says it is the milestone. */
+private fun visitsToNextMilestone(guest: GuestStats, profileVisits: ProfileVisits): FunFact? {
     val visits = guest.allTime.totalVisits
     val nextMilestone = GUEST_VISIT_MILESTONES.filter { it > visits }.minOrNull() ?: return null
-    val remaining = nextMilestone - visits
+    val visitsLeft = nextMilestone - visits
+
+    val isCloseToMilestone = visitsLeft <= MAX_VISITS_TO_NEXT_MILESTONE
+    val isNextVisitTheMilestone = visitsLeft == 1 && profileVisits.nextUpcoming != null
+    val showFact = !guest.isFamily && isCloseToMilestone && !isNextVisitTheMilestone
+
     return FunFact(
         guest.guestId,
-        "${guest.firstName} er $remaining besøk unna å nå $nextMilestone besøk på hytta",
+        "${guest.firstName} er $visitsLeft besøk unna å nå $nextMilestone besøk på hytta",
         FunFactPriority.VISITS_TO_NEXT_MILESTONE,
-    ).takeIf { !guest.isFamily && remaining <= MAX_VISITS_TO_NEXT_MILESTONE }
+    ).takeIf { showFact }
 }
 
 /** The next visit is `totalVisits + 1`, as only visits that have started are counted in the total. */
@@ -209,13 +216,18 @@ private fun recordYear(guest: GuestStats, visits: ProfileVisits, today: LocalDat
     val visitsByYear = visits.happened.groupingBy { it.startDate.year }.eachCount()
     val mostVisits = visitsByYear.values.maxOrNull() ?: 0
     val bestYear = visitsByYear.filterValues { it == mostVisits }.keys.singleOrNull()
+
+    val hasEnoughYears = visitsByYear.size >= MIN_YEARS_FOR_RECORD_YEAR
+    val isRecordYearOver = bestYear != today.year
+    val showFact = hasEnoughYears && isRecordYearOver
+
     return bestYear?.let {
         FunFact(
             guest.guestId,
             "Rekordåret til ${guest.firstName} var $it med $mostVisits besøk",
             FunFactPriority.RECORD_YEAR,
         )
-    }.takeIf { visitsByYear.size >= MIN_YEARS_FOR_RECORD_YEAR && bestYear != today.year }
+    }.takeIf { showFact }
 }
 
 /** Prefers other guests over family, since a family member is the likeliest companion of almost everyone. */
@@ -244,9 +256,13 @@ private fun rankAmongGuests(guest: GuestStats, standings: List<GuestStanding>): 
     val leaderVisits = guests.maxOfOrNull { it.allTimeVisits } ?: 0
     val leaders = guests.filter { it.allTimeVisits == leaderVisits }.map { it.firstName }.sorted()
     val visitsBehind = leaderVisits - guest.allTime.totalVisits
+
+    val isSecondOrThird = rank in 2..MAX_RANK_AMONG_GUESTS
+    val isCloseToLeader = visitsBehind in 1..MAX_VISITS_BEHIND_LEADER
+
     return FunFact(
         guest.guestId,
         "${guest.firstName} er nr. $rank blant gjestene, bare $visitsBehind besøk bak ${leaders.joinToString(" og ")}",
         FunFactPriority.RANK_AMONG_GUESTS,
-    ).takeIf { rank in 2..MAX_RANK_AMONG_GUESTS && visitsBehind in 1..MAX_VISITS_BEHIND_LEADER }
+    ).takeIf { isSecondOrThird && isCloseToLeader }
 }

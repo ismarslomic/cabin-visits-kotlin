@@ -7,6 +7,7 @@ import kotlinx.datetime.daysUntil
 import kotlinx.datetime.monthsUntil
 import kotlinx.datetime.yearsUntil
 import no.slomic.smarthytte.common.DAYS_PER_YEAR
+import no.slomic.smarthytte.common.MONTHS_PER_YEAR
 import no.slomic.smarthytte.common.PERCENT_FACTOR
 import no.slomic.smarthytte.common.norwegianDuration
 import no.slomic.smarthytte.common.norwegianShortMonthYear
@@ -25,6 +26,7 @@ private val DAYS_MILESTONES = listOf(50, 100, 200, 365)
 
 // Long absence and visit streak
 private const val MIN_MONTHS_FOR_LONG_ABSENCE = 12
+private const val MIN_MONTHS_FOR_YEARS = 24
 internal const val MIN_YEARS_FOR_STREAK = 3
 
 // Share of all trips (percent of the cabin's visits)
@@ -134,13 +136,18 @@ internal fun isVisitMilestone(guest: GuestStats, visits: Int): Boolean = if (gue
 internal fun longAbsence(guest: GuestStats, today: LocalDate): FunFact? {
     val lastVisit = guest.lastVisitDate ?: return null
     val months = lastVisit.monthsUntil(today)
+    val sinceLast = absenceInWords(months)
     return FunFact(
         guest.guestId,
-        "Det er $months måneder siden sist, ${guest.firstName}!",
+        "Det er $sinceLast siden sist, ${guest.firstName}!",
         FunFactPriority.LONG_ABSENCE,
     )
         .takeIf { !guest.isFamily && months >= MIN_MONTHS_FOR_LONG_ABSENCE }
 }
+
+/** Months below two years, otherwise whole years. */
+private fun absenceInWords(months: Int): String =
+    if (months < MIN_MONTHS_FOR_YEARS) "$months måneder" else "${months / MONTHS_PER_YEAR} år"
 
 private fun visitStreak(guest: GuestStats, today: LocalDate): FunFact? {
     val years = consecutiveYearsUpTo(today.year, guest.yearsVisited)
@@ -296,7 +303,7 @@ private fun totalDays(guest: GuestStats, dataStartDate: LocalDate): FunFact? = F
     FunFactPriority.TOTAL_DAYS,
 ).takeIf { guest.allTime.totalDays >= MIN_TOTAL_DAYS }
 
-private fun lastVisitDate(guest: GuestStats): FunFact? = guest.lastVisitDate?.let {
+internal fun lastVisitDate(guest: GuestStats): FunFact? = guest.lastVisitDate?.let {
     FunFact(
         guest.guestId,
         "${guest.firstName} var sist her i ${it.norwegianShortMonthYear()}",

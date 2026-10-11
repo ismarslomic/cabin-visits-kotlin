@@ -66,6 +66,15 @@ class GuestFunFactsTest :
                 facts(absent.copy(isFamily = true)).map { it.priority } shouldNotContain 80
             }
 
+            should("report a long absence in years from two years") {
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 11, 1))) shouldContain
+                    FunFact("dina", "Det er 23 måneder siden sist, Dina!", 80)
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 10, 1))) shouldContain
+                    FunFact("dina", "Det er 2 år siden sist, Dina!", 80)
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2021, 2, 19))) shouldContain
+                    FunFact("dina", "Det er 5 år siden sist, Dina!", 80)
+            }
+
             should("report visit streak counted backwards from current year") {
                 val streak = liveGuestFixture("dina", yearsVisited = listOf(2026, 2025, 2024, 2022))
 

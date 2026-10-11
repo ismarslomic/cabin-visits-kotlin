@@ -189,6 +189,14 @@ class GuestProfileFunFactsTest :
                     listOf("Dzevad er 1 besøk unna å nå 10 besøk på hytta")
             }
 
+            should("skip it when the next visit is the milestone, as the upcoming visit fact says so") {
+                val upcoming = visit(today.plus(DatePeriod(days = 12)), VisitStatus.UPCOMING)
+
+                textsAbout("unna", liveGuestFixture("dzevad", allTimeVisits = 9), upcoming).shouldBeEmpty()
+                textsAbout("unna", liveGuestFixture("dzevad", allTimeVisits = 8), upcoming) shouldBe
+                    listOf("Dzevad er 2 besøk unna å nå 10 besøk på hytta")
+            }
+
             should("skip it when the milestone is more than three visits away, for family and above the last one") {
                 textsAbout("unna", liveGuestFixture("dzevad", allTimeVisits = 6)).shouldBeEmpty()
                 textsAbout("unna", liveGuestFixture("ismar", isFamily = true, allTimeVisits = 48)).shouldBeEmpty()
@@ -303,6 +311,21 @@ class GuestProfileFunFactsTest :
                 result shouldContain "Faruk hadde sitt første registrerte besøk for 5 år siden"
                 result shouldContain "Det er 16 måneder siden sist, Faruk!"
                 result.single { "i år" in it } shouldBe "Faruk har vært 5 dager på hytta i år (1 % av året så langt)"
+            }
+
+            should("tell when the guest was last at the cabin, so a guest with one visit still gets a fact") {
+                val muzafera = liveGuestFixture(
+                    "muzafera",
+                    firstVisitDate = LocalDate(2025, 11, 21),
+                    lastVisitDate = LocalDate(2025, 11, 23),
+                    yearsVisited = listOf(2025),
+                    currentYearVisits = 0,
+                    allTimeVisits = 1,
+                    allTimeDays = 3,
+                )
+
+                texts(muzafera) shouldBe listOf("Muzafera var sist her i nov 2025")
+                facts(muzafera).single().priority shouldBe 30
             }
 
             should("skip them for family") {
