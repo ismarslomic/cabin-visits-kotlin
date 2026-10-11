@@ -5,7 +5,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import no.slomic.smarthytte.common.MONTHS_IN_YEAR
+import no.slomic.smarthytte.common.MONTHS_PER_YEAR
+import no.slomic.smarthytte.common.PERCENT_FACTOR
 import no.slomic.smarthytte.common.datesUntil
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDateOfNextMonth
@@ -25,7 +26,6 @@ import no.slomic.smarthytte.statistics.model.MonthlyDaysCount
 import no.slomic.smarthytte.statistics.model.YearDaysStats
 import no.slomic.smarthytte.statistics.model.YearNightsStats
 
-private const val PERCENT_FACTOR: Double = 100.0
 private const val DAY_OFFSET_PREVIOUS: Int = 1
 
 data class MonthDates(
@@ -66,7 +66,7 @@ fun computeYearOccupancy(year: Int, allReservations: List<Reservation>): YearOcc
         0.0
     }
     val occupiedMonths = occupiedDays.map { it.month.ordinal + 1 }.toSet().size
-    val monthOccupancy = (occupiedMonths.toDouble() / MONTHS_IN_YEAR.toDouble() * PERCENT_FACTOR).round1()
+    val monthOccupancy = (occupiedMonths.toDouble() / MONTHS_PER_YEAR.toDouble() * PERCENT_FACTOR).round1()
 
     return YearOccupancy(dayOccupancy, weekOccupancy, monthOccupancy)
 }
@@ -232,7 +232,7 @@ fun calculateYearNightsStats(
 
     val totalNights = allReservations.countOccupiedNightsInWindow(jan1, jan1Next)
     val nightsPrevYear = allReservations.countOccupiedNightsInWindow(jan1Prev, jan1)
-    val avgMonthlyNights = (totalNights.toDouble() / MONTHS_IN_YEAR).round1()
+    val avgMonthlyNights = (totalNights.toDouble() / MONTHS_PER_YEAR).round1()
 
     // Stay: full duration of each visit, attributed to the year of arrival
     val perReservationNights = yearReservations.map { it.durationNights }

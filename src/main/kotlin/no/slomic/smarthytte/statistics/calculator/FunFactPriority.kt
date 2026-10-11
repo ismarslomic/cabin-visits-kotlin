@@ -14,6 +14,7 @@ internal object FunFactPriority {
     const val LONG_ABSENCE = 80
 
     // Notable facts (50-79)
+    const val UPCOMING_VISIT_MILESTONE = 75
     const val ARRIVAL_SOON = 70
     const val TOP_GUEST_ALL_TIME = 70
     const val VISIT_STREAK = 70
@@ -21,24 +22,33 @@ internal object FunFactPriority {
     const val YEAR_LEADER = 65
     const val DRIVING_TIME_VS_LAST_YEAR = 60
     const val LAST_DAY = 60
+    const val UPCOMING_VISIT = 60
     const val YEAR_GAP_TO_LEADER = 60
+    const val COMPANIONS = 55
     const val FIRST_VISIT_THIS_YEAR = 55
     const val NEW_IN_GROUP = 55
+    const val RANK_AMONG_GUESTS = 50
     const val SHARE_OF_TRIPS_GUEST = 50
 
     // Everyday facts (20-49)
     const val COUNTDOWN_TO_NEXT_VISIT = 45
+    const val FAVOURITE_SEASON = 45
+    const val GUEST_LONGEST_STAY = 45
     const val NEXT_FIRST_TIMER = 45
     const val SHARE_OF_DAYS = 45
     const val SHARE_OF_LIFE = 45
     const val DAYS_THIS_YEAR = 40
+    const val DIFFERENT_COMPANIONS = 40
     const val MOST_EXPERIENCED = 40
     const val NEW_GUESTS_THIS_YEAR = 40
     const val NEXT_VISIT_MILESTONE = 40
+    const val TOTAL_TIME_IN_WORDS = 40
+    const val VISITS_TO_NEXT_MILESTONE = 40
     const val YEARS_SINCE_FIRST_VISIT = 40
     const val MONTH_VS_LAST_YEAR = 35
     const val MOST_VISITED_MONTH = 35
     const val OCCUPANCY = 35
+    const val RECORD_YEAR = 35
     const val AVG_GROUP_SIZE = 30
     const val LAST_VISIT_DATE = 30
     const val LONGEST_STAY = 30

@@ -18,8 +18,7 @@ import io.ktor.server.routing.openapi.OpenApiDocSource
 import io.ktor.server.routing.openapi.describe
 import io.ktor.server.routing.openapi.hide
 import io.ktor.server.routing.routing
-
-private const val MONTHS_PER_YEAR = 12
+import no.slomic.smarthytte.common.MONTHS_PER_YEAR
 
 fun Application.configureOpenApi() {
     val baseDoc = OpenApiDoc.Builder().apply {
@@ -28,7 +27,10 @@ fun Application.configureOpenApi() {
             version = "1.0.0",
             description = "REST API for cabin visit statistics: occupancy, driving, guests and EV metrics.",
         )
-        tag("Stats", "Cabin visit statistics: live status, yearly and monthly summaries, and guest rankings.")
+        tag(
+            "Stats",
+            "Cabin visit statistics: live status, yearly and monthly summaries, guest rankings and guest profiles.",
+        )
         tag("Guests", "Guest resources, such as avatar images.")
     }.build()
 
@@ -65,8 +67,16 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
             call.respond(statsService.getMonthStats(year, month))
         }.describeMonthStats()
 
-        get("/api/stats/guests") { call.respond(statsService.getGuestStats()) }
-            .describeGuestStats()
+        get("/api/stats/guests") { call.respond(statsService.getAllGuestsStats()) }
+            .describeAllGuestsStats()
+
+        get("/api/stats/guests/{guestId}") {
+            val guestId = call.parameters["guestId"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing guestId")
+            val profile = statsService.getGuestProfileStats(guestId)
+                ?: return@get call.respond(HttpStatusCode.NotFound, "Guest not found")
+            call.respond(profile)
+        }.describeGuestProfileStats()
     }
 }
 
@@ -153,15 +163,39 @@ private fun Route.describeMonthStats() = describe {
     }
 }
 
-private fun Route.describeGuestStats() = describe {
-    operationId = "getGuestStats"
+private fun Route.describeAllGuestsStats() = describe {
+    operationId = "getAllGuestsStats"
     tag("Stats")
-    summary = "Guest statistics"
-    description = "Returns guest statistics across all years: top 10 guests by number of visits and by " +
+    summary = "Statistics for all guests"
+    description = "Returns statistics for all guests across all years: top 10 guests by number of visits and by " +
         "total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). " +
         "Suitable for a hall-of-fame view or demographic overview."
     responses {
         HttpStatusCode.OK { description = "Guest statistics across all years." }
         default { description = "Unexpected server error." }
+    }
+}
+
+private fun Route.describeGuestProfileStats() = describe {
+    operationId = "getGuestProfileStats"
+    tag("Stats")
+    summary = "Guest profile"
+    parameters {
+        path("guestId") { description = "Internal unique identifier of the guest." }
+    }
+    description = "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n" +
+        "* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among " +
+        "guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin " +
+        "right now, the last visit date is the last visit before the current one.\n" +
+        "* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status " +
+        "(COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n" +
+        "* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). " +
+        "The list is not capped, so pick the facts to display. A fact is only included when it is true for the " +
+        "guest, so the list can be short or empty for guests with few visits.\n\n" +
+        "Driving statistics are not included. Upcoming visits are not counted in totals or facts."
+    responses {
+        HttpStatusCode.OK { description = "The profile of the guest." }
+        HttpStatusCode.BadRequest { description = "The guestId path parameter is missing." }
+        HttpStatusCode.NotFound { description = "There is no guest with the given id." }
     }
 }

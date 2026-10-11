@@ -8,7 +8,7 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import no.slomic.smarthytte.statistics.model.FunFact
-import no.slomic.smarthytte.statistics.model.LiveGuestStats
+import no.slomic.smarthytte.statistics.model.GuestStats
 
 class GuestFunFactsTest :
     ShouldSpec({
@@ -19,7 +19,7 @@ class GuestFunFactsTest :
             GuestStanding(id, id.replaceFirstChar { it.uppercase() }, isFamily, yearVisits, allTimeVisits)
 
         fun facts(
-            vararg guests: LiveGuestStats,
+            vararg guests: GuestStats,
             remainingNights: Int = 3,
             allTimeVisits: Int = 100,
             stayStart: LocalDate = today,
@@ -64,6 +64,15 @@ class GuestFunFactsTest :
 
                 facts(absent) shouldContain FunFact("dina", "Det er 16 måneder siden sist, Dina!", 80)
                 facts(absent.copy(isFamily = true)).map { it.priority } shouldNotContain 80
+            }
+
+            should("report a long absence in years from two years") {
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 11, 1))) shouldContain
+                    FunFact("dina", "Det er 23 måneder siden sist, Dina!", 80)
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 10, 1))) shouldContain
+                    FunFact("dina", "Det er 2 år siden sist, Dina!", 80)
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2021, 2, 19))) shouldContain
+                    FunFact("dina", "Det er 5 år siden sist, Dina!", 80)
             }
 
             should("report visit streak counted backwards from current year") {
@@ -139,12 +148,14 @@ class GuestFunFactsTest :
                 facts(liveGuestFixture("dina", allTimeDays = 50)).none { "av dagene" in it.text } shouldBe true
             }
 
-            should("report share of life only for children born in the data period") {
+            should("report share of life when it is above the threshold, whatever the age") {
                 facts(liveGuestFixture("kid", age = 5, allTimeDays = 360)) shouldContain
                     FunFact("kid", "Kid har vært på hytta ca. 19 % av livet sitt", 45)
+                facts(liveGuestFixture("teen", age = 14, allTimeDays = 472)) shouldContain
+                    FunFact("teen", "Teen har vært på hytta ca. 9 % av livet sitt", 45)
                 facts(liveGuestFixture("adult", age = 30, allTimeDays = 360)).none { "av livet" in it.text } shouldBe
                     true
-                facts(liveGuestFixture("kid", age = 7, allTimeDays = 360)).none { "av livet" in it.text } shouldBe true
+                facts(liveGuestFixture("baby", age = 0, allTimeDays = 3)).none { "av livet" in it.text } shouldBe true
             }
 
             should("report days this year with percent of the year so far") {

@@ -2,6 +2,8 @@ package no.slomic.smarthytte.statistics
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import no.slomic.smarthytte.common.MONTHS_PER_YEAR
+import no.slomic.smarthytte.common.PERCENT_FACTOR
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
@@ -26,8 +28,9 @@ import no.slomic.smarthytte.statistics.calculator.ToCabinDriving
 import no.slomic.smarthytte.statistics.calculator.aggregateGuestVisitStats
 import no.slomic.smarthytte.statistics.calculator.calculateCabinFunFacts
 import no.slomic.smarthytte.statistics.calculator.calculateGuestFunFacts
+import no.slomic.smarthytte.statistics.calculator.calculateGuestProfileStats
 import no.slomic.smarthytte.statistics.calculator.calculateGuestStandings
-import no.slomic.smarthytte.statistics.calculator.calculateLiveGuestStats
+import no.slomic.smarthytte.statistics.calculator.calculateGuestStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingDistanceStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingMomentStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingTimeStats
@@ -45,11 +48,12 @@ import no.slomic.smarthytte.statistics.calculator.computeMonthOccupancy
 import no.slomic.smarthytte.statistics.calculator.computeYearGuestStats
 import no.slomic.smarthytte.statistics.calculator.computeYearOccupancy
 import no.slomic.smarthytte.statistics.model.AgeGroup
+import no.slomic.smarthytte.statistics.model.AllGuestsStats
 import no.slomic.smarthytte.statistics.model.CurrentReservationInfo
 import no.slomic.smarthytte.statistics.model.CurrentYearStats
 import no.slomic.smarthytte.statistics.model.GenderDistribution
+import no.slomic.smarthytte.statistics.model.GuestProfileStats
 import no.slomic.smarthytte.statistics.model.GuestRanking
-import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
 import no.slomic.smarthytte.statistics.model.LiveStats
 import no.slomic.smarthytte.statistics.model.MonthStats
@@ -62,9 +66,7 @@ import no.slomic.smarthytte.statistics.model.YearStats
 import no.slomic.smarthytte.statistics.model.YearVisitsStats
 import no.slomic.smarthytte.statistics.model.toTopGuestByDays
 
-private const val PERCENT_FACTOR = 100.0
 private const val TOP_GUESTS_LIMIT = 10
-private const val MONTHS_PER_YEAR = 12
 private const val KWH_PER_100KM_FACTOR = 100
 private const val AGE_CHILD_MAX = 12
 private const val AGE_TEEN_MIN = 13
@@ -75,6 +77,7 @@ private const val AGE_ADULT_MIN = 31
 private const val AGE_ADULT_MAX = 50
 private const val AGE_SENIOR_MIN = 51
 
+@Suppress("TooManyFunctions")
 class StatsService(
     private val reservationRepository: ReservationRepository,
     private val guestRepository: GuestRepository,
@@ -95,14 +98,14 @@ class StatsService(
 
         val currentInfo =
             current?.let { r ->
-                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
+                val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val remaining = today.daysUntilSafe(r.endDate)
                 CurrentReservationInfo(r.startDate, r.endDate, guests, remaining)
             }
 
         val nextInfo =
             next?.let { r ->
-                val guests = calculateLiveGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
+                val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val daysUntil = today.daysUntilSafe(r.startDate)
                 NextReservationInfo(r.startDate, r.endDate, guests, daysUntil)
             }
@@ -233,7 +236,21 @@ class StatsService(
         return buildMonthStats(year, kotlinMonth, allReservations, byYear, guestsById)
     }
 
-    suspend fun getGuestStats(): GuestStats {
+    /** The profile of one guest as of today, or null if there is no guest with [guestId]. */
+    suspend fun getGuestProfileStats(guestId: String): GuestProfileStats? {
+        val guestsById = guestRepository.allGuests().associateBy { it.id }
+        val avatarUrl = guestRepository.allAvatarUpdatedTimes()[guestId]?.let { guestAvatarUrl(guestId, it) }
+        return calculateGuestProfileStats(
+            guestId = guestId,
+            today = utcDateNow(),
+            allReservations = reservationRepository.allReservations(),
+            guestsById = guestsById,
+            dataStartDate = dataStartDate,
+            avatarUrl = avatarUrl,
+        )
+    }
+
+    suspend fun getAllGuestsStats(): AllGuestsStats {
         val allGuests = guestRepository.allGuests()
         val allReservations = startedReservations()
         val guestsById = allGuests.associateBy { it.id }
@@ -279,7 +296,7 @@ class StatsService(
                 AgeGroup(label, guestCount = count, percent = (count / total * PERCENT_FACTOR).round1())
             }
 
-        return GuestStats(
+        return AllGuestsStats(
             topGuestsByVisits = topByVisits,
             topGuestsByDays = topByDays,
             genderDistribution = genderDist,

@@ -124,6 +124,11 @@ fun List<Reservation>.countOccupiedDaysInWindow(startInclusive: LocalDate, endEx
 
 fun List<Reservation>.visitsByGuest(): Map<String, Int> = this.flatMap { it.guestIds }.groupingBy { it }.eachCount()
 
+fun List<Reservation>.nightsByGuest(): Map<String, Int> = this
+    .flatMap { reservation -> reservation.guestIds.map { it to reservation.durationNights } }
+    .groupingBy { (guestId, _) -> guestId }
+    .fold(0) { acc, (_, nights) -> acc + nights }
+
 fun List<Reservation>.daysByGuest(periodStart: LocalDate, periodEndExclusive: LocalDate): Map<String, Int> =
     this.flatMap { reservation ->
         val days = reservation.daysInPeriod(periodStart, periodEndExclusive)

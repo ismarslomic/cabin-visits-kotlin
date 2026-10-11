@@ -528,6 +528,186 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "setCreated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setCreator",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Creator"
+          ]
+        },
+        {
+          "name": "setEnd",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setEtag",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEventType",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setHtmlLink",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setICalUID",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setId",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setKind",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocation",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setOrganizer",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Organizer"
+          ]
+        },
+        {
+          "name": "setReminders",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Reminders"
+          ]
+        },
+        {
+          "name": "setSequence",
+          "parameterTypes": [
+            "java.lang.Integer"
+          ]
+        },
+        {
+          "name": "setStart",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setStatus",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSummary",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setUpdated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Creator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Organizer",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDisplayName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSelf",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Reminders",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setUseDefault",
+          "parameterTypes": [
+            "java.lang.Boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventDateTime",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDateTime",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setTimeZone",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -1111,6 +1291,12 @@
       "type": "io.ktor.http.HttpStatusCode"
     },
     {
+      "type": "io.ktor.http.content.ByteArrayContent"
+    },
+    {
+      "type": "io.ktor.http.content.TextContent"
+    },
+    {
       "type": "io.ktor.network.selector.InterestSuspensionsMap"
     },
     {
@@ -1138,10 +1324,16 @@
       "type": "io.ktor.openapi.Operation$Builder"
     },
     {
+      "type": "io.ktor.openapi.SecurityScheme"
+    },
+    {
       "type": "io.ktor.serialization.kotlinx.json.KotlinxSerializationJsonExtensionProvider"
     },
     {
       "type": "io.ktor.server.application.PluginInstance"
+    },
+    {
+      "type": "io.ktor.server.auth.Authentication"
     },
     {
       "type": "io.ktor.server.engine.BaseApplicationResponse"
@@ -1633,6 +1825,31 @@
       "type": "kotlinx.coroutines.sync.SemaphoreAndMutexImpl"
     },
     {
+      "type": "kotlinx.serialization.internal.AbstractCollectionSerializer"
+    },
+    {
+      "type": "kotlinx.serialization.internal.ArrayListSerializer"
+    },
+    {
+      "type": "kotlinx.serialization.internal.CollectionLikeSerializer",
+      "fields": [
+        {
+          "name": "elementSerializer"
+        }
+      ]
+    },
+    {
+      "type": "kotlinx.serialization.internal.CollectionSerializer"
+    },
+    {
+      "type": "kotlinx.serialization.internal.NullableSerializer",
+      "fields": [
+        {
+          "name": "serializer"
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.checkinouts.CheckInOutSource"
     },
     {
@@ -1884,12 +2101,53 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.statistics.calculator.MonthDrivingMomentStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.calculator.MonthDrivingTimeStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.calculator.YearDrivingMomentStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.calculator.YearDrivingTimeStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.AgeGroup$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.AllGuestsStats",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.AllGuestsStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.AllGuestsStats$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.CurrentReservationInfo$$serializer"
+    },
+    {
       "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats",
       "fields": [
         {
           "name": "Companion"
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats$$serializer"
     },
     {
       "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats$Companion",
@@ -1901,7 +2159,16 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.statistics.model.GuestStats",
+      "type": "no.slomic.smarthytte.statistics.model.FunFact$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GenderDistribution$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestPeriodStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestProfileStats",
       "fields": [
         {
           "name": "Companion"
@@ -1909,7 +2176,10 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.statistics.model.GuestStats$Companion",
+      "type": "no.slomic.smarthytte.statistics.model.GuestProfileStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestProfileStats$Companion",
       "methods": [
         {
           "name": "serializer",
@@ -1918,12 +2188,27 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.statistics.model.GuestRanking$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestVisit$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.GuestVisitStats$$serializer"
+    },
+    {
       "type": "no.slomic.smarthytte.statistics.model.LiveStats",
       "fields": [
         {
           "name": "Companion"
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.LiveStats$$serializer"
     },
     {
       "type": "no.slomic.smarthytte.statistics.model.LiveStats$Companion",
@@ -1935,12 +2220,24 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.statistics.model.MonthDaysStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.MonthDrivingDistanceStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.MonthNightsStats$$serializer"
+    },
+    {
       "type": "no.slomic.smarthytte.statistics.model.MonthStats",
       "fields": [
         {
           "name": "Companion"
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.MonthStats$$serializer"
     },
     {
       "type": "no.slomic.smarthytte.statistics.model.MonthStats$Companion",
@@ -1952,12 +2249,45 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.statistics.model.MonthVisitsStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.MonthlyDaysCount$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.MonthlyVisitCount$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.NextReservationInfo$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.OccupancyStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.TopGuestByDays$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearDaysStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearDrivingDistanceStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearEvStats$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearNightsStats$$serializer"
+    },
+    {
       "type": "no.slomic.smarthytte.statistics.model.YearStats",
       "fields": [
         {
           "name": "Companion"
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearStats$$serializer"
     },
     {
       "type": "no.slomic.smarthytte.statistics.model.YearStats$Companion",
@@ -1967,6 +2297,9 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.YearVisitsStats$$serializer"
     },
     {
       "type": "no.slomic.smarthytte.sync.checkpoint.SyncCheckpointEntity",
@@ -2002,6 +2335,12 @@
             "long",
             "long",
             "int"
+          ]
+        },
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.HdrHistogram.AbstractHistogram"
           ]
         }
       ]

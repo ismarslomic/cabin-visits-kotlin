@@ -85,11 +85,26 @@ docker compose up  -d
 curl http://localhost:8079
 ```
 
+The API contract is committed as [`openapi/cabin-visits.json`](openapi/cabin-visits.json) and served at `/openapi.json`.
+Overview of the endpoints:
+
+| Endpoint                                      | Description                                                                                                                              |
+|-----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `GET /api/stats`                              | Live status: current and next reservation with guest statistics, all-time totals and fun facts about the guests, the cabin and the next visit. |
+| `GET /api/stats/current-year`                 | Quick summary of the current year.                                                                                                       |
+| `GET /api/stats/years`                        | Years with reservations.                                                                                                                 |
+| `GET /api/stats/years/{year}`                 | Full statistics for a year, including a monthly breakdown.                                                                               |
+| `GET /api/stats/years/{year}/months/{month}`  | Statistics for a month.                                                                                                                  |
+| `GET /api/stats/guests`                       | Statistics for all guests: top lists, gender and age groups.                                                                             |
+| `GET /api/stats/guests/{guestId}`             | Profile of one guest: statistics, all visits (completed, ongoing and upcoming) and fun facts. See [Guest profile](#guest-profile).       |
+| `GET /api/guests/{guestId}/avatar`            | The guest's avatar image (JPEG), see `avatarUrl` in the guest statistics.                                                                |
+| `GET /metrics`                                | Application metrics, see [Metrics](#metrics).                                                                                            |
+
 # Cabin Usage Metrics
 
 All statistics only include visits that have **started** (arrival date is today or earlier, in UTC). Future bookings
-are excluded, while an ongoing visit is included. The only exception is the next upcoming visit shown by the live
-endpoint (`/api/stats`).
+are excluded, while an ongoing visit is included. The exceptions are the next upcoming visit shown by the live
+endpoint (`/api/stats`) and the upcoming visits listed in a [guest profile](#guest-profile) (marked as `UPCOMING`).
 
 ## Visits
 
@@ -220,7 +235,7 @@ Examples of period-based statistics:
 ## Guests
 
 **Definition**  
-Visits and days per guest within a specified period (e.g. a month or year).
+Visits, days and nights per guest within a specified period (e.g. a month or year).
 
 **Source**  
 Guest **visits** follow the **Visits** definition: each stay is counted once per guest, based on its **arrival date**.
@@ -237,6 +252,29 @@ Result:
 
 - March: guest A has **1 visit** and **5 days**
 - April: guest A has **0 visits** and **6 days**
+
+Guest **nights** follow the **Stay** definition: the full nights of every stay that started in the period (also for a
+stay that is still ongoing).
+
+**Ranks**  
+Guests are ranked by visits and by days (1 = most, tied guests share a rank and the next rank is skipped). The ranking
+is given both among all guests and among guests only, with the family excluded (`null` for family members).
+
+## Guest profile
+
+`GET /api/stats/guests/{guestId}` returns the profile of one guest as of today, for example for a guest page on a smart
+mirror. It answers `404` if the guest does not exist.
+
+- **guest**: the guest's statistics (visits, days, nights, ranks, first and last visit date, avatar url). If the guest
+  is at the cabin right now, the last visit date is the last visit **before** the current one.
+- **visits**: all visits of the guest, oldest first, each with `startDate`, `endDate`, `days`, `nights` and a `status`:
+  `COMPLETED` (the guest has left), `ONGOING` (the guest is at the cabin) or `UPCOMING` (not started yet, not counted in
+  the statistics).
+- **funFacts**: ready-to-display fun facts in Norwegian, written about the guest by first name and sorted by priority
+  (highest first). The list is **not capped**, so pick the facts to show. A fact is only included when its threshold
+  holds, so the list is short for guests with few visits. Driving statistics are not part of the profile.
+
+Fun facts are calculated by the backend, the same way as the fun facts in `/api/stats`.
 
 ## Metrics
 

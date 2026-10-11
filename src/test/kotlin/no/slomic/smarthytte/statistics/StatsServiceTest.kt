@@ -25,6 +25,7 @@ import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.statistics.model.FunFact
+import no.slomic.smarthytte.statistics.model.VisitStatus
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
@@ -343,7 +344,79 @@ class StatsServiceTest :
             }
         }
 
-        context("getGuestStats") {
+        context("getGuestProfileStats") {
+            should("return null for an unknown guest") {
+                addGuests(anna)
+
+                service.getGuestProfileStats("unknown").shouldBeNull()
+            }
+
+            should("return an empty profile for a guest without visits") {
+                addGuests(anna, bjorn)
+                addReservation("r1", daysFromToday(-10), daysFromToday(-8), bjorn)
+
+                val profile = service.getGuestProfileStats("anna").shouldNotBeNull()
+
+                profile.guest.guestId shouldBe "anna"
+                profile.guest.allTime.totalVisits shouldBe 0
+                profile.guest.firstVisitDate.shouldBeNull()
+                profile.visits.shouldBeEmpty()
+            }
+
+            should("list completed, ongoing and upcoming visits and use the visit before the ongoing as last visit") {
+                addGuests(anna, bjorn)
+                addReservation("r1", daysFromToday(-60), daysFromToday(-57), anna, bjorn)
+                addReservation("r2", daysFromToday(-1), daysFromToday(3), anna)
+                addReservation("r3", daysFromToday(20), daysFromToday(22), anna, bjorn)
+
+                val profile = service.getGuestProfileStats("anna").shouldNotBeNull()
+
+                profile.visits.map { it.status } shouldBe
+                    listOf(VisitStatus.COMPLETED, VisitStatus.ONGOING, VisitStatus.UPCOMING)
+                profile.visits.map { it.nights } shouldBe listOf(3, 4, 2)
+                profile.guest.lastVisitDate shouldBe daysFromToday(-57)
+                profile.guest.firstVisitDate shouldBe daysFromToday(-60)
+                profile.guest.allTime.totalVisits shouldBe 2 // the upcoming visit is not counted
+                profile.guest.allTime.totalNights shouldBe 7
+            }
+
+            should("rank guests with and without the family") {
+                addGuests(anna, bjorn)
+                addReservation("r1", daysFromToday(-30), daysFromToday(-28), anna, bjorn)
+                addReservation("r2", daysFromToday(-20), daysFromToday(-18), bjorn)
+
+                val guest = service.getGuestProfileStats("anna").shouldNotBeNull().guest
+                val family = service.getGuestProfileStats("bjorn").shouldNotBeNull().guest
+
+                guest.allTime.visitsRank shouldBe 2
+                guest.allTime.visitsRankAmongGuests shouldBe 1
+                family.allTime.visitsRank shouldBe 1
+                family.allTime.visitsRankAmongGuests.shouldBeNull()
+            }
+
+            should("create fun facts about the guest") {
+                addGuests(anna, bjorn)
+                addReservation("r1", daysFromToday(-60), daysFromToday(-57), anna, bjorn)
+                addReservation("r2", daysFromToday(-1), daysFromToday(3), anna, bjorn)
+
+                val facts = service.getGuestProfileStats("anna").shouldNotBeNull().funFacts
+
+                facts.map { it.text } shouldContain "Oftest på hytta sammen med Bjorn (2 ganger)"
+                facts.map { it.priority } shouldBe facts.map { it.priority }.sortedDescending()
+                facts.all { it.guestId == "anna" } shouldBe true
+            }
+
+            should("link to the avatar only when the guest has an image") {
+                guestRepository.addOrUpdate(anna, byteArrayOf(1, 2, 3))
+                addGuests(bjorn)
+
+                service.getGuestProfileStats("anna").shouldNotBeNull().guest.avatarUrl
+                    .shouldNotBeNull() shouldStartWith "/api/guests/anna/avatar?v="
+                service.getGuestProfileStats("bjorn").shouldNotBeNull().guest.avatarUrl.shouldBeNull()
+            }
+        }
+
+        context("getAllGuestsStats") {
             should("rank guests, and group them by gender and age") {
                 val year = utcDateNow().year
                 val carl = Guest("carl", "Carl", "Test", (year - 10).toShort(), gender = Gender.MALE)
@@ -355,7 +428,7 @@ class StatsServiceTest :
                 addReservation("r1", daysFromToday(-20), daysFromToday(-18), anna, bjorn)
                 addReservation("r2", daysFromToday(-10), daysFromToday(-7), anna)
 
-                val stats = service.getGuestStats()
+                val stats = service.getAllGuestsStats()
 
                 stats.topGuestsByVisits.map { it.guestId to it.totalVisits } shouldBe listOf("anna" to 2, "bjorn" to 1)
                 stats.topGuestsByDays.first().guestId shouldBe "anna"
@@ -373,7 +446,7 @@ class StatsServiceTest :
             }
 
             should("return empty rankings without reservations") {
-                val stats = service.getGuestStats()
+                val stats = service.getAllGuestsStats()
 
                 stats.topGuestsByVisits.shouldBeEmpty()
                 stats.genderDistribution.maleCount shouldBe 0

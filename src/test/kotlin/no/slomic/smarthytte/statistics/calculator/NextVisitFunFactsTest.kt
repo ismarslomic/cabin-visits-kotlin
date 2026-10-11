@@ -8,7 +8,7 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import no.slomic.smarthytte.statistics.model.FunFact
-import no.slomic.smarthytte.statistics.model.LiveGuestStats
+import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
 
 class NextVisitFunFactsTest :
@@ -16,7 +16,7 @@ class NextVisitFunFactsTest :
         val today = LocalDate(2026, 10, 2)
 
         context("calculateNextVisitFunFacts") {
-            fun nextFacts(vararg guests: LiveGuestStats, daysUntil: Int = 5, isOccupied: Boolean = true) =
+            fun nextFacts(vararg guests: GuestStats, daysUntil: Int = 5, isOccupied: Boolean = true) =
                 calculateNextVisitFunFacts(
                     NextReservationInfo(today.plus(DatePeriod(days = daysUntil)), today, guests.toList(), daysUntil),
                     isOccupied,

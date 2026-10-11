@@ -9,6 +9,7 @@ import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonObject
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.statistics.StatsService
@@ -46,6 +47,14 @@ class OpenApiSpecTest :
                     Json.parseToJsonElement(specFile.readText(Charsets.UTF_8)) shouldBe served
                 }
             }
+        }
+
+        "served OpenAPI spec should not contain duplicate schemas of the same class" {
+            // A property annotated with its own description makes the generator emit a second schema with a number
+            // suffix (for example GuestStats2). Put the description on the class or the referenced fields instead.
+            val schemas = servedSpec().jsonObject.getValue("components").jsonObject.getValue("schemas").jsonObject
+
+            schemas.keys.filter { it.last().isDigit() } shouldBe emptyList()
         }
     })
 
