@@ -6,6 +6,10 @@ import io.ktor.openapi.JsonSchema
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
+@JsonSchema.Description(
+    "Statistics for one guest as of today, counting only reservations that have started. Used for the guests of " +
+        "the current and next reservation in the live stats and for the guest profile.",
+)
 @Serializable
 data class GuestStats(
     @JsonSchema.Description("Internal unique identifier of the guest.")
@@ -23,14 +27,19 @@ data class GuestStats(
             "Null if the guest has no avatar.",
     )
     val avatarUrl: String?,
-    @JsonSchema.Description("True if the guest has no reservations that started before this reservation.")
+    @JsonSchema.Description(
+        "True if the guest has no reservations that started before this reservation. In a guest profile this " +
+            "is true only when the guest is at the cabin right now and the ongoing visit is the first one.",
+    )
     val isFirstVisit: Boolean,
     @JsonSchema.Description(
         "Start date of the guest's first started reservation. Null if the guest has no started reservations.",
     )
     val firstVisitDate: LocalDate?,
     @JsonSchema.Description(
-        "End date of the guest's last completed visit before this reservation. Null if there is no completed visit.",
+        "End date of the guest's last completed visit before this reservation. Null if there is no completed visit. " +
+            "In a guest profile: the last visit before the current one if the guest is at the cabin right now, " +
+            "otherwise the last completed visit.",
     )
     val lastVisitDate: LocalDate?,
     @JsonSchema.Description("Years in which the guest has started reservations, in descending order.")

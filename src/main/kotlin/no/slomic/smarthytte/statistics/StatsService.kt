@@ -26,6 +26,7 @@ import no.slomic.smarthytte.statistics.calculator.ToCabinDriving
 import no.slomic.smarthytte.statistics.calculator.aggregateGuestVisitStats
 import no.slomic.smarthytte.statistics.calculator.calculateCabinFunFacts
 import no.slomic.smarthytte.statistics.calculator.calculateGuestFunFacts
+import no.slomic.smarthytte.statistics.calculator.calculateGuestProfileStats
 import no.slomic.smarthytte.statistics.calculator.calculateGuestStandings
 import no.slomic.smarthytte.statistics.calculator.calculateGuestStats
 import no.slomic.smarthytte.statistics.calculator.calculateMonthDrivingDistanceStats
@@ -49,6 +50,7 @@ import no.slomic.smarthytte.statistics.model.AllGuestsStats
 import no.slomic.smarthytte.statistics.model.CurrentReservationInfo
 import no.slomic.smarthytte.statistics.model.CurrentYearStats
 import no.slomic.smarthytte.statistics.model.GenderDistribution
+import no.slomic.smarthytte.statistics.model.GuestProfileStats
 import no.slomic.smarthytte.statistics.model.GuestRanking
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
 import no.slomic.smarthytte.statistics.model.LiveStats
@@ -75,6 +77,7 @@ private const val AGE_ADULT_MIN = 31
 private const val AGE_ADULT_MAX = 50
 private const val AGE_SENIOR_MIN = 51
 
+@Suppress("TooManyFunctions")
 class StatsService(
     private val reservationRepository: ReservationRepository,
     private val guestRepository: GuestRepository,
@@ -231,6 +234,20 @@ class StatsService(
         val byYear = allReservations.groupBy { it.startDate.year }
 
         return buildMonthStats(year, kotlinMonth, allReservations, byYear, guestsById)
+    }
+
+    /** The profile of one guest as of today, or null if there is no guest with [guestId]. */
+    suspend fun getGuestProfileStats(guestId: String): GuestProfileStats? {
+        val guestsById = guestRepository.allGuests().associateBy { it.id }
+        val avatarUrl = guestRepository.allAvatarUpdatedTimes()[guestId]?.let { guestAvatarUrl(guestId, it) }
+        return calculateGuestProfileStats(
+            guestId = guestId,
+            today = utcDateNow(),
+            allReservations = reservationRepository.allReservations(),
+            guestsById = guestsById,
+            dataStartDate = dataStartDate,
+            avatarUrl = avatarUrl,
+        )
     }
 
     suspend fun getAllGuestsStats(): AllGuestsStats {

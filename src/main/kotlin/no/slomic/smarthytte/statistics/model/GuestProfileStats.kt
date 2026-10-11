@@ -8,10 +8,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GuestProfileStats(
-    @JsonSchema.Description(
-        "Statistics for the guest as of today. lastVisitDate is the last visit before the current one if the guest " +
-            "is at the cabin right now, otherwise the last completed visit.",
-    )
     val guest: GuestStats,
     @JsonSchema.Description(
         "All visits of the guest, historical, ongoing and upcoming, oldest first. Suitable for a timeline.",
@@ -24,10 +20,6 @@ data class GuestProfileStats(
     val funFacts: List<FunFact>,
 )
 
-@JsonSchema.Description(
-    "Where a visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or " +
-        "UPCOMING (the visit has not started yet).",
-)
 @Serializable
 enum class VisitStatus { COMPLETED, ONGOING, UPCOMING }
 
@@ -41,6 +33,9 @@ data class GuestVisit(
     val days: Int,
     @JsonSchema.Description("Number of nights of the whole visit.")
     val nights: Int,
-    @JsonSchema.Description("Whether the visit is completed, ongoing or upcoming today.")
+    @JsonSchema.Description(
+        "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or " +
+            "UPCOMING (the visit has not started yet).",
+    )
     val status: VisitStatus,
 )

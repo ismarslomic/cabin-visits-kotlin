@@ -260,8 +260,8 @@
         "tags": [
           "Stats"
         ],
-        "summary": "Guest statistics",
-        "description": "Returns guest statistics across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Suitable for a hall-of-fame view or demographic overview.",
+        "summary": "Statistics for all guests",
+        "description": "Returns statistics for all guests across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Suitable for a hall-of-fame view or demographic overview.",
         "responses": {
           "default": {
             "description": "Unexpected server error."
@@ -272,6 +272,59 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AllGuestsStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/guests/{guestId}": {
+      "get": {
+        "operationId": "getGuestProfileStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Guest profile",
+        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
+        "parameters": [
+          {
+            "name": "guestId",
+            "in": "path",
+            "description": "Internal unique identifier of the guest.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "The guestId path parameter is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "There is no guest with the given id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The profile of the guest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestProfileStats"
                 }
               }
             }
@@ -338,6 +391,7 @@
       "GuestStats": {
         "type": "object",
         "title": "GuestStats",
+        "description": "Statistics for one guest as of today, counting only reservations that have started. Used for the guests of the current and next reservation in the live stats and for the guest profile.",
         "required": [
           "guestId",
           "firstName",
@@ -379,7 +433,7 @@
           },
           "isFirstVisit": {
             "type": "boolean",
-            "description": "True if the guest has no reservations that started before this reservation."
+            "description": "True if the guest has no reservations that started before this reservation. In a guest profile this is true only when the guest is at the cabin right now and the ongoing visit is the first one."
           },
           "firstVisitDate": {
             "type": [
@@ -394,7 +448,7 @@
               "string",
               "null"
             ],
-            "description": "End date of the guest's last completed visit before this reservation. Null if there is no completed visit.",
+            "description": "End date of the guest's last completed visit before this reservation. Null if there is no completed visit. In a guest profile: the last visit before the current one if the guest is at the cabin right now, otherwise the last completed visit.",
             "format": "date"
           },
           "yearsVisited": {
@@ -1897,13 +1951,81 @@
             }
           }
         }
+      },
+      "GuestVisit": {
+        "type": "object",
+        "title": "GuestVisit",
+        "required": [
+          "startDate",
+          "endDate",
+          "days",
+          "nights",
+          "status"
+        ],
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "description": "First day of the visit (check-in date, inclusive).",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Last day of the visit (check-out date). Same semantics as the end date of a reservation.",
+            "format": "date"
+          },
+          "days": {
+            "type": "integer",
+            "description": "Number of calendar days of the whole visit, including arrival and departure day."
+          },
+          "nights": {
+            "type": "integer",
+            "description": "Number of nights of the whole visit."
+          },
+          "status": {
+            "type": "string",
+            "description": "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the visit has not started yet).",
+            "enum": [
+              "COMPLETED",
+              "ONGOING",
+              "UPCOMING"
+            ]
+          }
+        }
+      },
+      "GuestProfileStats": {
+        "type": "object",
+        "title": "GuestProfileStats",
+        "required": [
+          "guest",
+          "visits",
+          "funFacts"
+        ],
+        "properties": {
+          "guest": {
+            "$ref": "#/components/schemas/GuestStats"
+          },
+          "visits": {
+            "type": "array",
+            "description": "All visits of the guest, historical, ongoing and upcoming, oldest first. Suitable for a timeline.",
+            "items": {
+              "$ref": "#/components/schemas/GuestVisit"
+            }
+          },
+          "funFacts": {
+            "type": "array",
+            "description": "Fun facts about the guest, as ready-to-display Norwegian text that mentions the guest by first name. Sorted by priority, highest first. Not capped, so pick the ones to display.",
+            "items": {
+              "$ref": "#/components/schemas/FunFact"
+            }
+          }
+        }
       }
     }
   },
   "tags": [
     {
       "name": "Stats",
-      "description": "Cabin visit statistics: live status, yearly and monthly summaries, and guest rankings."
+      "description": "Cabin visit statistics: live status, yearly and monthly summaries, guest rankings and guest profiles."
     },
     {
       "name": "Guests",
