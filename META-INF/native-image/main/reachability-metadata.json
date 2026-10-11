@@ -1884,6 +1884,23 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.statistics.model.AllGuestsStats",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.statistics.model.AllGuestsStats$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.statistics.model.CurrentYearStats",
       "fields": [
         {
@@ -1901,7 +1918,7 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.statistics.model.GuestStats",
+      "type": "no.slomic.smarthytte.statistics.model.GuestProfileStats",
       "fields": [
         {
           "name": "Companion"
@@ -1909,7 +1926,7 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.statistics.model.GuestStats$Companion",
+      "type": "no.slomic.smarthytte.statistics.model.GuestProfileStats$Companion",
       "methods": [
         {
           "name": "serializer",
