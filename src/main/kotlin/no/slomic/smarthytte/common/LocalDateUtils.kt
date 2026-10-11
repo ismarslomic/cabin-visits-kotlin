@@ -10,7 +10,14 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import java.time.temporal.WeekFields
 
-const val MONTHS_IN_YEAR: Int = 12
+/** Number of months in a year. */
+const val MONTHS_PER_YEAR: Int = 12
+
+/** Number of days in a (non-leap) year. */
+const val DAYS_PER_YEAR: Int = 365
+
+/** Number of days in a week. */
+const val DAYS_PER_WEEK: Int = 7
 
 fun LocalDate.daysUntilSafe(endExclusive: LocalDate): Int =
     this.until(endExclusive, DateTimeUnit.DAY).let { if (it < 0) 0 else it.toInt() }

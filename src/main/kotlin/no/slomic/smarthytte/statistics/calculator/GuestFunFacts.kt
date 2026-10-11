@@ -6,6 +6,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.monthsUntil
 import kotlinx.datetime.yearsUntil
+import no.slomic.smarthytte.common.DAYS_PER_YEAR
+import no.slomic.smarthytte.common.PERCENT_FACTOR
 import no.slomic.smarthytte.common.norwegianDuration
 import no.slomic.smarthytte.common.norwegianShortMonthYear
 import no.slomic.smarthytte.statistics.model.FunFact
@@ -34,9 +36,7 @@ private const val MAX_GAP_TO_LEADER = 3
 private const val MAX_TIED_LEADERS = 3
 
 // Share of days since data start and share of life (percent, shown from this share)
-private const val PERCENT_FACTOR = 100
 internal const val MIN_SHARE_PERCENT = 5
-private const val DAYS_PER_YEAR = 365
 
 // Days this year and total days at the cabin
 private const val MIN_DAYS_THIS_YEAR = 3

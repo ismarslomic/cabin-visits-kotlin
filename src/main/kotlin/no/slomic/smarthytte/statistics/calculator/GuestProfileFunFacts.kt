@@ -5,6 +5,8 @@ package no.slomic.smarthytte.statistics.calculator
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.daysUntil
+import no.slomic.smarthytte.common.DAYS_PER_WEEK
+import no.slomic.smarthytte.common.DAYS_PER_YEAR
 import no.slomic.smarthytte.common.norwegianShortMonthYear
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.common.toNorwegianDecimal
@@ -32,9 +34,7 @@ private const val MAX_VISITS_BEHIND_LEADER = 3
 // Longest stay and total time at the cabin
 private const val MIN_DAYS_FOR_LONGEST_STAY = 6
 private const val MIN_DAYS_FOR_TOTAL_TIME = 30
-private const val DAYS_PER_WEEK = 7
 private const val DAYS_PER_MONTH = 30
-private const val DAYS_PER_YEAR = 365
 private const val MAX_DAYS_IN_WEEKS = 60
 private const val MAX_DAYS_IN_MONTHS = 730
 

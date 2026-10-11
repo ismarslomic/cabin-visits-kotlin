@@ -18,8 +18,7 @@ import io.ktor.server.routing.openapi.OpenApiDocSource
 import io.ktor.server.routing.openapi.describe
 import io.ktor.server.routing.openapi.hide
 import io.ktor.server.routing.routing
-
-private const val MONTHS_PER_YEAR = 12
+import no.slomic.smarthytte.common.MONTHS_PER_YEAR
 
 fun Application.configureOpenApi() {
     val baseDoc = OpenApiDoc.Builder().apply {

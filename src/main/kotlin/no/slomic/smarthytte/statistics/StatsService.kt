@@ -2,6 +2,8 @@ package no.slomic.smarthytte.statistics
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import no.slomic.smarthytte.common.MONTHS_PER_YEAR
+import no.slomic.smarthytte.common.PERCENT_FACTOR
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
@@ -64,9 +66,7 @@ import no.slomic.smarthytte.statistics.model.YearStats
 import no.slomic.smarthytte.statistics.model.YearVisitsStats
 import no.slomic.smarthytte.statistics.model.toTopGuestByDays
 
-private const val PERCENT_FACTOR = 100.0
 private const val TOP_GUESTS_LIMIT = 10
-private const val MONTHS_PER_YEAR = 12
 private const val KWH_PER_100KM_FACTOR = 100
 private const val AGE_CHILD_MAX = 12
 private const val AGE_TEEN_MIN = 13
