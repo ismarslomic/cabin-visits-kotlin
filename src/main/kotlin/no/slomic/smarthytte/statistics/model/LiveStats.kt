@@ -8,7 +8,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LiveStats(
-    @JsonSchema.Description("True if the cabin is currently occupied (a reservation has started but not yet ended).")
+    @JsonSchema.Description(
+        "True if the cabin is currently occupied: a reservation has started and its check-out date has not passed, so also on the check-out day.",
+    )
     val isOccupied: Boolean,
     @JsonSchema.Description("Details about the ongoing reservation. Null if the cabin is not currently occupied.")
     val currentReservation: CurrentReservationInfo?,
@@ -41,12 +43,14 @@ data class CurrentReservationInfo(
     @JsonSchema.Description("First day of the current reservation (check-in date, inclusive).")
     val startDate: LocalDate,
     @JsonSchema.Description(
-        "Last day of the current reservation (check-out date, exclusive — cabin is free from this date).",
+        "Last day of the current reservation (check-out date). The reservation is still current on this day, and the cabin is free the day after.",
     )
     val endDate: LocalDate,
     @JsonSchema.Description("Statistics for each guest in the current reservation, ordered by current year days rank.")
     val guests: List<GuestStats>,
-    @JsonSchema.Description("Number of nights remaining in the current reservation, from today until check-out.")
+    @JsonSchema.Description(
+        "Number of nights remaining in the current reservation, from today until check-out. 0 on the check-out day.",
+    )
     val remainingNights: Int,
 )
 
