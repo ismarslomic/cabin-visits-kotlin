@@ -487,7 +487,7 @@
           },
           "endDate": {
             "type": "string",
-            "description": "Last day of the current reservation (check-out date, exclusive — cabin is free from this date).",
+            "description": "Last day of the current reservation (check-out date). The reservation is still current on this day, and the cabin is free the day after.",
             "format": "date"
           },
           "guests": {
@@ -499,7 +499,7 @@
           },
           "remainingNights": {
             "type": "integer",
-            "description": "Number of nights remaining in the current reservation, from today until check-out."
+            "description": "Number of nights remaining in the current reservation, from today until check-out. 0 on the check-out day."
           }
         }
       },
@@ -580,7 +580,7 @@
         "properties": {
           "isOccupied": {
             "type": "boolean",
-            "description": "True if the cabin is currently occupied (a reservation has started but not yet ended)."
+            "description": "True if the cabin is currently occupied: a reservation has started and its check-out date has not passed, so also on the check-out day."
           },
           "currentReservation": {
             "$ref": "#/components/schemas/CurrentReservationInfo"

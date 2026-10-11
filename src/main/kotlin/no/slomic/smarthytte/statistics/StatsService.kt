@@ -93,7 +93,9 @@ class StatsService(
         val avatarUrlsByGuestId = guestRepository.allAvatarUpdatedTimes()
             .mapValues { (guestId, updatedTime) -> guestAvatarUrl(guestId, updatedTime) }
 
-        val current = allReservations.firstOrNull { it.hasStarted && !it.hasEnded }
+        // The stay is still current on its check-out day, until the date has passed, so the mirror can show the last
+        // day. If one stay ends and another starts today, the arriving one is current.
+        val current = allReservations.filter { it.hasStarted && it.endDate >= today }.maxByOrNull { it.startDate }
         val next = allReservations.filter { !it.hasStarted }.minByOrNull { it.startDate }
 
         val currentInfo =

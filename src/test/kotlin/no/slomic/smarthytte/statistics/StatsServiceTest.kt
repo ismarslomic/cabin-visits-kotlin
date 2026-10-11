@@ -156,6 +156,101 @@ class StatsServiceTest :
             }
         }
 
+        context("getLiveStats on the check-out day") {
+            should("still report the stay as current, with no nights remaining") {
+                addGuests(anna, bjorn)
+                addReservation("r1", daysFromToday(-3), daysFromToday(0), anna, bjorn)
+
+                val stats = service.getLiveStats()
+
+                stats.isOccupied shouldBe true
+                stats.nextReservation.shouldBeNull()
+                stats.allTimeVisits shouldBe 1
+                stats.allTimeNights shouldBe 3
+                val current = stats.currentReservation.shouldNotBeNull()
+                current.startDate shouldBe daysFromToday(-3)
+                current.endDate shouldBe daysFromToday(0)
+                current.remainingNights shouldBe 0
+                current.guests.map { it.guestId } shouldBe listOf("anna", "bjorn")
+            }
+
+            should("show the last day fact instead of nights left, and the progress of the stay") {
+                addGuests(anna)
+                addReservation("r1", daysFromToday(-3), daysFromToday(0), anna)
+
+                val facts = service.getLiveStats().guestFunFacts
+
+                facts shouldContain FunFact(null, "Siste dag på hytta, ha en trygg hjemreise!", 60)
+                facts shouldContain FunFact(null, "Dag 4 av 4 på hytta", 30)
+                facts.none { it.text.contains("netter igjen") } shouldBe true
+            }
+
+            should("keep reporting the next reservation") {
+                addGuests(anna)
+                addReservation("r1", daysFromToday(-3), daysFromToday(0), anna)
+                addReservation("r2", daysFromToday(7), daysFromToday(9), anna)
+
+                val stats = service.getLiveStats()
+
+                stats.isOccupied shouldBe true
+                stats.nextReservation.shouldNotBeNull().daysUntil shouldBe 7
+                stats.nextVisitFunFacts shouldContain FunFact(null, "Neste besøk om 7 dager", 45)
+            }
+
+            should("report the arriving stay when one stay ends and another starts on the same day") {
+                addGuests(anna, bjorn)
+                addReservation("r1", daysFromToday(-3), daysFromToday(0), anna)
+                addReservation("r2", daysFromToday(0), daysFromToday(2), bjorn)
+
+                val current = service.getLiveStats().currentReservation.shouldNotBeNull()
+
+                current.startDate shouldBe daysFromToday(0)
+                current.remainingNights shouldBe 2
+                current.guests.map { it.guestId } shouldBe listOf("bjorn")
+            }
+
+            should("report the stay as over the day after the check-out day") {
+                addGuests(anna)
+                addReservation("r1", daysFromToday(-4), daysFromToday(-1), anna)
+
+                val stats = service.getLiveStats()
+
+                stats.isOccupied shouldBe false
+                stats.currentReservation.shouldBeNull()
+                stats.guestFunFacts.shouldBeEmpty()
+                stats.allTimeVisits shouldBe 1
+            }
+
+            should("give the guests the same statistics as the day before, and as their profile") {
+                addGuests(anna, bjorn)
+                addReservation("r0", daysFromToday(-20), daysFromToday(-18), anna)
+                addReservation("r1", daysFromToday(-3), daysFromToday(0), anna, bjorn)
+
+                val guests = service.getLiveStats().currentReservation.shouldNotBeNull().guests.associateBy {
+                    it.guestId
+                }
+
+                val annaStats = guests.getValue("anna")
+                annaStats.isFirstVisit shouldBe false
+                annaStats.firstVisitDate shouldBe daysFromToday(-20)
+                annaStats.lastVisitDate shouldBe daysFromToday(-18)
+                annaStats.allTime.totalVisits shouldBe 2
+
+                val bjornStats = guests.getValue("bjorn")
+                bjornStats.isFirstVisit shouldBe true
+                bjornStats.firstVisitDate shouldBe daysFromToday(-3)
+                bjornStats.lastVisitDate.shouldBeNull()
+                bjornStats.allTime.totalVisits shouldBe 1
+
+                // The profile is computed from the same reservations and the same day, so the totals must agree.
+                for ((guestId, liveStats) in guests) {
+                    val profile = service.getGuestProfileStats(guestId).shouldNotBeNull().guest
+                    profile.allTime shouldBe liveStats.allTime
+                    profile.currentYear shouldBe liveStats.currentYear
+                }
+            }
+        }
+
         context("getLiveStats between stays") {
             should("report the next reservation and exclude it from the all-time totals") {
                 addGuests(anna)
