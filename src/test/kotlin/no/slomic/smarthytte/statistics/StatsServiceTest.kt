@@ -139,7 +139,7 @@ class StatsServiceTest :
                 val facts = service.getLiveStats().guestFunFacts
 
                 facts.first { it.priority == 100 }.guestId shouldBe "anna"
-                facts shouldContain FunFact(null, "4 netter igjen av oppholdet", 30)
+                facts shouldContainFact FunFact(null, "4 netter igjen av oppholdet", 30)
                 facts.none { it.text.contains("Neste besøk") } shouldBe true
             }
 
@@ -180,8 +180,8 @@ class StatsServiceTest :
 
                 val facts = service.getLiveStats().guestFunFacts
 
-                facts shouldContain FunFact(null, "Siste dag på hytta, ha en trygg hjemreise!", 60)
-                facts shouldContain FunFact(null, "Dag 4 av 4 på hytta", 30)
+                facts shouldContainFact FunFact(null, "Siste dag på hytta, ha en trygg hjemreise!", 60)
+                facts shouldContainFact FunFact(null, "Dag 4 av 4 på hytta", 30)
                 facts.none { it.text.contains("netter igjen") } shouldBe true
             }
 
@@ -194,7 +194,7 @@ class StatsServiceTest :
 
                 stats.isOccupied shouldBe true
                 stats.nextReservation.shouldNotBeNull().daysUntil shouldBe 7
-                stats.nextVisitFunFacts shouldContain FunFact(null, "Neste besøk om 7 dager", 45)
+                stats.nextVisitFunFacts shouldContainFact FunFact(null, "Neste besøk om 7 dager", 45)
             }
 
             should("report the arriving stay when one stay ends and another starts on the same day") {
@@ -275,8 +275,8 @@ class StatsServiceTest :
 
                 val facts = service.getLiveStats().nextVisitFunFacts
 
-                facts shouldContain FunFact(null, "Neste besøk starter i morgen", 70)
-                facts shouldContain FunFact("anna", "Anna kommer på hytta for første gang! 🎉", 45)
+                facts shouldContainFact FunFact(null, "Neste besøk starter i morgen", 70)
+                facts shouldContainFact FunFact("anna", "Anna kommer på hytta for første gang! 🎉", 45)
             }
 
             should("count down to the next visit only while the cabin is occupied") {
@@ -284,7 +284,7 @@ class StatsServiceTest :
                 addReservation("r1", daysFromToday(0), daysFromToday(2), anna)
                 addReservation("r2", daysFromToday(7), daysFromToday(9), anna)
 
-                service.getLiveStats().nextVisitFunFacts shouldContain FunFact(null, "Neste besøk om 7 dager", 45)
+                service.getLiveStats().nextVisitFunFacts shouldContainFact FunFact(null, "Neste besøk om 7 dager", 45)
             }
         }
 
@@ -343,7 +343,7 @@ class StatsServiceTest :
                 addReservation("current", daysFromToday(0), daysFromToday(2), anna)
                 addTrip("current", daysFromToday(0), ReservationVehicleTripType.TO_CABIN, 80)
 
-                service.getLiveStats().guestFunFacts shouldContain
+                service.getLiveStats().guestFunFacts shouldContainFact
                     FunFact(null, "Ny rekord! Raskeste tur til hytta: 1 t 20 min", 85)
             }
 

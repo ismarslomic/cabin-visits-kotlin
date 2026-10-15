@@ -9,6 +9,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.GuestStats
+import no.slomic.smarthytte.statistics.shouldContainFact
 
 class GuestFunFactsTest :
     ShouldSpec({
@@ -49,7 +50,7 @@ class GuestFunFactsTest :
             }
 
             should("use different visit milestones for guests and family") {
-                facts(liveGuestFixture("dina", allTimeVisits = 10)) shouldContain
+                facts(liveGuestFixture("dina", allTimeVisits = 10)) shouldContainFact
                     FunFact("dina", "Dette er besøk nr. 10 for Dina!", 95)
                 facts(liveGuestFixture("bjorn", isFamily = true, allTimeVisits = 10)).map {
                     it.priority
@@ -62,37 +63,37 @@ class GuestFunFactsTest :
             should("report long absence only for guests") {
                 val absent = liveGuestFixture("dina", lastVisitDate = LocalDate(2025, 6, 1))
 
-                facts(absent) shouldContain FunFact("dina", "Det er 16 måneder siden sist, Dina!", 80)
+                facts(absent) shouldContainFact FunFact("dina", "Det er 16 måneder siden sist, Dina!", 80)
                 facts(absent.copy(isFamily = true)).map { it.priority } shouldNotContain 80
             }
 
             should("report a long absence in years from two years") {
-                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 11, 1))) shouldContain
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 11, 1))) shouldContainFact
                     FunFact("dina", "Det er 23 måneder siden sist, Dina!", 80)
-                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 10, 1))) shouldContain
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2024, 10, 1))) shouldContainFact
                     FunFact("dina", "Det er 2 år siden sist, Dina!", 80)
-                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2021, 2, 19))) shouldContain
+                facts(liveGuestFixture("dina", lastVisitDate = LocalDate(2021, 2, 19))) shouldContainFact
                     FunFact("dina", "Det er 5 år siden sist, Dina!", 80)
             }
 
             should("report visit streak counted backwards from current year") {
                 val streak = liveGuestFixture("dina", yearsVisited = listOf(2026, 2025, 2024, 2022))
 
-                facts(streak) shouldContain FunFact("dina", "Dina har besøkt hytta 3 år på rad", 70)
+                facts(streak) shouldContainFact FunFact("dina", "Dina har besøkt hytta 3 år på rad", 70)
                 facts(streak.copy(yearsVisited = listOf(2025, 2024, 2023))).map { it.priority } shouldNotContain 70
             }
 
             should("report first visit of the year") {
-                facts(liveGuestFixture("dina", currentYearVisits = 1)) shouldContain
+                facts(liveGuestFixture("dina", currentYearVisits = 1)) shouldContainFact
                     FunFact("dina", "Årets første besøk for Dina", 55)
             }
 
             should("report share of trips only above threshold with lower priority for family") {
                 val frequent = liveGuestFixture("dina", allTimeVisits = 30)
 
-                facts(frequent) shouldContain
+                facts(frequent) shouldContainFact
                     FunFact("dina", "Dina har vært med på 30 % av alle hytteturer", 50)
-                facts(frequent.copy(isFamily = true)) shouldContain
+                facts(frequent.copy(isFamily = true)) shouldContainFact
                     FunFact("dina", "Dina har vært med på 30 % av alle hytteturer", 30)
                 facts(liveGuestFixture("dina", allTimeVisits = 3)).map {
                     it.text
@@ -105,9 +106,9 @@ class GuestFunFactsTest :
                 val visitor = liveGuestFixture("dina", allTimeVisits = 10)
 
                 val withGuest = facts(family, visitor)
-                withGuest shouldContain FunFact("bjorn", "Dette er besøk nr. 100 for Bjorn!", 65)
+                withGuest shouldContainFact FunFact("bjorn", "Dette er besøk nr. 100 for Bjorn!", 65)
                 withGuest.map { it.priority } shouldBe withGuest.map { it.priority }.sortedDescending()
-                facts(family) shouldContain FunFact("bjorn", "Dette er besøk nr. 100 for Bjorn!", 95)
+                facts(family) shouldContainFact FunFact("bjorn", "Dette er besøk nr. 100 for Bjorn!", 95)
             }
 
             should("report group facts") {
@@ -116,10 +117,11 @@ class GuestFunFactsTest :
                     liveGuestFixture("anders", isFirstVisit = true, allTimeVisits = 1),
                 )
 
-                facts(*newcomers, remainingNights = 3) shouldContain FunFact(null, "2 av 2 er her for første gang", 55)
-                facts(*newcomers, remainingNights = 3) shouldContain
+                facts(*newcomers, remainingNights = 3) shouldContainFact
+                    FunFact(null, "2 av 2 er her for første gang", 55)
+                facts(*newcomers, remainingNights = 3) shouldContainFact
                     FunFact(null, "3 netter igjen av oppholdet", 30)
-                facts(*newcomers, remainingNights = 1) shouldContain
+                facts(*newcomers, remainingNights = 1) shouldContainFact
                     FunFact(null, "Siste dag på hytta, ha en trygg hjemreise!", 60)
             }
 
@@ -132,7 +134,7 @@ class GuestFunFactsTest :
             should("report days milestone only when crossed during the stay") {
                 val crossing = liveGuestFixture("dina", allTimeDays = 102)
 
-                facts(crossing, stayStart = today.minus(DatePeriod(days = 2))) shouldContain
+                facts(crossing, stayStart = today.minus(DatePeriod(days = 2))) shouldContainFact
                     FunFact("dina", "Dina passerer 100 dager på hytta! 🎉", 85)
                 facts(crossing, stayStart = today).map { it.priority } shouldNotContain 85
                 facts(liveGuestFixture("dina", allTimeDays = 101), stayStart = today).map {
@@ -143,15 +145,15 @@ class GuestFunFactsTest :
 
             should("report share of days since data start above threshold") {
                 // 2020-09-01..2026-10-02 is 2224 days, 5 % is 111
-                facts(liveGuestFixture("dina", allTimeDays = 222)) shouldContain
+                facts(liveGuestFixture("dina", allTimeDays = 222)) shouldContainFact
                     FunFact("dina", "Dina har vært på hytta 9 % av dagene siden sept 2020", 45)
                 facts(liveGuestFixture("dina", allTimeDays = 50)).none { "av dagene" in it.text } shouldBe true
             }
 
             should("report share of life when it is above the threshold, whatever the age") {
-                facts(liveGuestFixture("kid", age = 5, allTimeDays = 360)) shouldContain
+                facts(liveGuestFixture("kid", age = 5, allTimeDays = 360)) shouldContainFact
                     FunFact("kid", "Kid har vært på hytta ca. 19 % av livet sitt", 45)
-                facts(liveGuestFixture("teen", age = 14, allTimeDays = 472)) shouldContain
+                facts(liveGuestFixture("teen", age = 14, allTimeDays = 472)) shouldContainFact
                     FunFact("teen", "Teen har vært på hytta ca. 9 % av livet sitt", 45)
                 facts(liveGuestFixture("adult", age = 30, allTimeDays = 360)).none { "av livet" in it.text } shouldBe
                     true
@@ -159,7 +161,7 @@ class GuestFunFactsTest :
             }
 
             should("report days this year with percent of the year so far") {
-                facts(liveGuestFixture("dina", currentYearDays = 55)) shouldContain
+                facts(liveGuestFixture("dina", currentYearDays = 55)) shouldContainFact
                     FunFact("dina", "Dina har vært 55 dager på hytta i år (20 % av året så langt)", 40)
                 facts(liveGuestFixture("dina", currentYearDays = 2)).none { "i år" in it.text } shouldBe true
             }
@@ -175,15 +177,15 @@ class GuestFunFactsTest :
                         ),
                     )
 
-                result shouldContain FunFact("dina", "Dina har tilbrakt 12 dager på hytta siden sept 2020", 30)
-                result shouldContain FunFact("dina", "Dina var sist her i aug 2026", 30)
+                result shouldContainFact FunFact("dina", "Dina har tilbrakt 12 dager på hytta siden sept 2020", 30)
+                result shouldContainFact FunFact("dina", "Dina var sist her i aug 2026", 30)
             }
 
             should("report most experienced non-family guest in a group of at least two") {
                 val experienced = liveGuestFixture("dina", allTimeVisits = 12)
                 val other = liveGuestFixture("anders", allTimeVisits = 3)
 
-                facts(experienced, other) shouldContain
+                facts(experienced, other) shouldContainFact
                     FunFact("dina", "Dina er mest erfaren i gjengen med 12 besøk", 40)
                 facts(experienced).none { "mest erfaren" in it.text } shouldBe true
                 facts(experienced, liveGuestFixture("anders", allTimeVisits = 12)).none {
@@ -197,7 +199,7 @@ class GuestFunFactsTest :
                     liveGuestFixture("dina"),
                     stayStart = today.minus(DatePeriod(days = 2)),
                     remainingNights = 4,
-                ) shouldContain
+                ) shouldContainFact
                     FunFact(null, "Dag 3 av 7 på hytta", 30)
             }
 
@@ -209,11 +211,16 @@ class GuestFunFactsTest :
                     standing("bjorn", isFamily = true, yearVisits = 9),
                 )
 
-                facts(liveGuestFixture("dina"), standings = standings) shouldContain
+                facts(liveGuestFixture("dina"), standings = standings) shouldContainFact
                     FunFact("dina", "Dina deler ledelsen blant gjestene i år med Anders (4 besøk)", 70)
-                facts(liveGuestFixture("cecilie"), standings = standings) shouldContain
+                facts(liveGuestFixture("cecilie"), standings = standings) shouldContainFact
                     FunFact("cecilie", "Cecilie ligger 2 besøk bak Anders blant gjestene i år", 60)
-                facts(liveGuestFixture("dina"), standings = standings.filter { it.guestId != "anders" }) shouldContain
+                facts(
+                    liveGuestFixture("dina"),
+                    standings = standings.filter {
+                        it.guestId != "anders"
+                    },
+                ) shouldContainFact
                     FunFact("dina", "Dina leder blant gjestene i år med 4 besøk", 65)
                 facts(liveGuestFixture("bjorn", isFamily = true), standings = standings).map { it.text } shouldContain
                     "Bjorn leder i familien i år med 9 besøk"
@@ -232,7 +239,7 @@ class GuestFunFactsTest :
                     standing("bjorn", isFamily = true, allTimeVisits = 80),
                 )
 
-                facts(liveGuestFixture("dina"), standings = standings) shouldContain
+                facts(liveGuestFixture("dina"), standings = standings) shouldContainFact
                     FunFact("dina", "Dina er gjesten med flest besøk siden sept 2020 (20)", 70)
                 facts(liveGuestFixture("anders"), standings = standings).none { "flest besøk" in it.text } shouldBe true
                 facts(liveGuestFixture("bjorn", isFamily = true), standings = standings)
@@ -244,9 +251,9 @@ class GuestFunFactsTest :
             should("report a driving record only when faster than enough earlier trips") {
                 val earlier = listOf(95, 100, 110, 120, 130)
 
-                facts(liveGuestFixture("dina"), toCabinDriving = ToCabinDriving(78, earlier)) shouldContain
+                facts(liveGuestFixture("dina"), toCabinDriving = ToCabinDriving(78, earlier)) shouldContainFact
                     FunFact(null, "Ny rekord! Raskeste tur til hytta: 1 t 18 min", 85)
-                facts(liveGuestFixture("dina"), toCabinDriving = ToCabinDriving(50, earlier)) shouldContain
+                facts(liveGuestFixture("dina"), toCabinDriving = ToCabinDriving(50, earlier)) shouldContainFact
                     FunFact(null, "Ny rekord! Raskeste tur til hytta: 50 min", 85)
                 facts(liveGuestFixture("dina"), toCabinDriving = ToCabinDriving(96, earlier)).map {
                     it.priority

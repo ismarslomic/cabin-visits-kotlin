@@ -17,28 +17,35 @@ fun calculateNextVisitFunFacts(next: NextReservationInfo, isOccupied: Boolean): 
     ).sortedByDescending { it.priority }
 
 private fun arrivalSoon(daysUntil: Int): FunFact? {
-    val text = when (daysUntil) {
-        0 -> "Neste besøk starter i dag"
-        1 -> "Neste besøk starter i morgen"
-        else -> "Neste besøk starter i overmorgen"
+    val day = when (daysUntil) {
+        0 -> "i dag"
+        1 -> "i morgen"
+        else -> "i overmorgen"
     }
-    return FunFact(null, text, FunFactPriority.ARRIVAL_SOON).takeIf { daysUntil in 0..ARRIVAL_SOON_MAX_DAYS }
+    return funFact(null, FunFactPriority.ARRIVAL_SOON) {
+        text("Neste besøk starter ")
+        stat(day)
+    }.takeIf { daysUntil in 0..ARRIVAL_SOON_MAX_DAYS }
 }
 
 private fun countdownToNextVisit(daysUntil: Int, isOccupied: Boolean): FunFact? =
-    FunFact(null, "Neste besøk om $daysUntil dager", FunFactPriority.COUNTDOWN_TO_NEXT_VISIT)
-        .takeIf { isOccupied && daysUntil > ARRIVAL_SOON_MAX_DAYS }
+    funFact(null, FunFactPriority.COUNTDOWN_TO_NEXT_VISIT) {
+        text("Neste besøk om ")
+        stat("$daysUntil dager")
+    }.takeIf { isOccupied && daysUntil > ARRIVAL_SOON_MAX_DAYS }
 
-private fun nextFirstTimer(guest: GuestStats): FunFact? =
-    FunFact(guest.guestId, "${guest.firstName} kommer på hytta for første gang! 🎉", FunFactPriority.NEXT_FIRST_TIMER)
-        .takeIf { !guest.isFamily && guest.isFirstVisit }
+private fun nextFirstTimer(guest: GuestStats): FunFact? = funFact(guest.guestId, FunFactPriority.NEXT_FIRST_TIMER) {
+    guestName(guest.firstName)
+    text(" kommer på hytta for første gang! 🎉")
+}.takeIf { !guest.isFamily && guest.isFirstVisit }
 
 /** The visit is already counted for started reservations only, so the next visit is `totalVisits + 1`. */
 private fun nextVisitMilestone(guest: GuestStats): FunFact? {
     val visits = guest.allTime.totalVisits + 1
-    return FunFact(
-        guest.guestId,
-        "Neste besøk blir besøk nr. $visits for ${guest.firstName}",
-        FunFactPriority.NEXT_VISIT_MILESTONE,
-    ).takeIf { isVisitMilestone(guest, visits) }
+    return funFact(guest.guestId, FunFactPriority.NEXT_VISIT_MILESTONE) {
+        text("Neste besøk blir besøk nr. ")
+        stat(visits)
+        text(" for ")
+        guestName(guest.firstName)
+    }.takeIf { isVisitMilestone(guest, visits) }
 }
