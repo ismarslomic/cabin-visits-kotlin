@@ -10,6 +10,7 @@ import kotlinx.datetime.plus
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
+import no.slomic.smarthytte.statistics.shouldContainFact
 
 class NextVisitFunFactsTest :
     ShouldSpec({
@@ -23,27 +24,27 @@ class NextVisitFunFactsTest :
                 )
 
             should("announce arrival today, tomorrow and the day after tomorrow only") {
-                nextFacts(daysUntil = 0) shouldContain FunFact(null, "Neste besøk starter i dag", 70)
-                nextFacts(daysUntil = 1) shouldContain FunFact(null, "Neste besøk starter i morgen", 70)
-                nextFacts(daysUntil = 2) shouldContain FunFact(null, "Neste besøk starter i overmorgen", 70)
+                nextFacts(daysUntil = 0) shouldContainFact FunFact(null, "Neste besøk starter i dag", 70)
+                nextFacts(daysUntil = 1) shouldContainFact FunFact(null, "Neste besøk starter i morgen", 70)
+                nextFacts(daysUntil = 2) shouldContainFact FunFact(null, "Neste besøk starter i overmorgen", 70)
                 nextFacts(daysUntil = 3).map { it.priority } shouldNotContain 70
             }
 
             should("count down to the next visit only while occupied and not arriving soon") {
-                nextFacts(daysUntil = 5) shouldContain FunFact(null, "Neste besøk om 5 dager", 45)
+                nextFacts(daysUntil = 5) shouldContainFact FunFact(null, "Neste besøk om 5 dager", 45)
                 nextFacts(daysUntil = 5, isOccupied = false) shouldBe emptyList()
                 nextFacts(daysUntil = 1).map { it.text }.none { "dager" in it } shouldBe true
             }
 
             should("highlight next first-timers but not family") {
-                nextFacts(liveGuestFixture("dina", isFirstVisit = true, allTimeVisits = 0)) shouldContain
+                nextFacts(liveGuestFixture("dina", isFirstVisit = true, allTimeVisits = 0)) shouldContainFact
                     FunFact("dina", "Dina kommer på hytta for første gang! 🎉", 45)
                 nextFacts(liveGuestFixture("bjorn", isFamily = true, isFirstVisit = true, allTimeVisits = 0))
                     .none { it.guestId == "bjorn" } shouldBe true
             }
 
             should("report next visit milestone as visits plus one") {
-                nextFacts(liveGuestFixture("dina", allTimeVisits = 9)) shouldContain
+                nextFacts(liveGuestFixture("dina", allTimeVisits = 9)) shouldContainFact
                     FunFact("dina", "Neste besøk blir besøk nr. 10 for Dina", 40)
                 nextFacts(liveGuestFixture("dina", allTimeVisits = 10)).map { it.priority } shouldNotContain 40
                 nextFacts(liveGuestFixture("bjorn", isFamily = true, allTimeVisits = 49)).map {

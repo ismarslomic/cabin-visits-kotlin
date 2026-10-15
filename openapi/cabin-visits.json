@@ -540,6 +540,28 @@
           }
         }
       },
+      "FactSegment": {
+        "type": "object",
+        "title": "FactSegment",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Part of the text."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What the part is, so the client can style it. Omitted for plain text.",
+            "enum": [
+              "text",
+              "stat",
+              "guest"
+            ]
+          }
+        }
+      },
       "FunFact": {
         "type": "object",
         "title": "FunFact",
@@ -557,11 +579,18 @@
           },
           "text": {
             "type": "string",
-            "description": "Ready-to-display text in Norwegian."
+            "description": "Ready-to-display text in Norwegian. Always equal to the segments joined together."
           },
           "priority": {
             "type": "integer",
             "description": "Importance from 0 to 100, higher is more important. Lists are sorted by priority, descending."
+          },
+          "segments": {
+            "type": "array",
+            "description": "The text split into parts for highlighting. Joined together they give the text. Clients should treat an unknown kind as plain text.",
+            "items": {
+              "$ref": "#/components/schemas/FactSegment"
+            }
           }
         }
       },

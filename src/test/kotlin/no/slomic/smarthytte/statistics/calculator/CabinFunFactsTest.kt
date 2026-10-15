@@ -9,6 +9,7 @@ import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.MonthlyVisitCount
 import no.slomic.smarthytte.statistics.model.YearEvStats
 import no.slomic.smarthytte.statistics.model.YearStats
+import no.slomic.smarthytte.statistics.shouldContainFact
 
 class CabinFunFactsTest :
     ShouldSpec({
@@ -35,15 +36,15 @@ class CabinFunFactsTest :
             fun textsOf(facts: List<FunFact>) = facts.map { it.text }
 
             should("always include totals and years of ownership") {
-                cabinFacts() shouldBe listOf(
-                    FunFact(null, "Siden sept 2020: 142 besøk, 530 netter og 29 ulike gjester", 25),
-                    FunFact(null, "Hytta har vært i familien i 6 år", 15),
+                cabinFacts().map { it.text to it.priority } shouldBe listOf(
+                    "Siden sept 2020: 142 besøk, 530 netter og 29 ulike gjester" to 25,
+                    "Hytta har vært i familien i 6 år" to 15,
                 )
             }
 
             should("add cabin visit milestone only while occupied") {
-                cabinFacts(isOccupied = true, visits = 100).first() shouldBe
-                    FunFact(null, "Dette er hyttebesøk nr. 100 siden sept 2020", 85)
+                cabinFacts(isOccupied = true, visits = 100).first().let { it.text to it.priority } shouldBe
+                    ("Dette er hyttebesøk nr. 100 siden sept 2020" to 85)
                 cabinFacts(isOccupied = false, visits = 100).map { it.priority } shouldBe listOf(25, 15)
                 cabinFacts(isOccupied = true, visits = 101).map { it.priority } shouldBe listOf(25, 15)
             }
@@ -59,7 +60,7 @@ class CabinFunFactsTest :
 
                 val result = cabinFacts(currentYear = current, previousYear = previous)
 
-                result shouldContain
+                result shouldContainFact
                     FunFact(null, "Turen til hytta er 20 min kortere enn i oktober i fjor", 60)
                 result.none { "Turen fra hytta" in it.text } shouldBe true
             }

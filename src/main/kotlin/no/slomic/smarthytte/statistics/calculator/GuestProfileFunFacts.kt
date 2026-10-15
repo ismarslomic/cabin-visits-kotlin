@@ -100,7 +100,12 @@ private fun visitMilestone(guest: GuestStats, visits: ProfileVisits): FunFact? {
     return if (visits.ongoing != null) {
         milestone
     } else {
-        milestone.copy(text = "${guest.firstName} har besøkt hytta ${guest.allTime.totalVisits} ganger!")
+        funFact(milestone.guestId, milestone.priority) {
+            guestName(guest.firstName)
+            text(" har besøkt hytta ")
+            stat("${guest.allTime.totalVisits} ganger")
+            text("!")
+        }
     }
 }
 
@@ -114,11 +119,14 @@ private fun visitsToNextMilestone(guest: GuestStats, profileVisits: ProfileVisit
     val isNextVisitTheMilestone = visitsLeft == 1 && profileVisits.nextUpcoming != null
     val showFact = !guest.isFamily && isCloseToMilestone && !isNextVisitTheMilestone
 
-    return FunFact(
-        guest.guestId,
-        "${guest.firstName} er $visitsLeft besøk unna å nå $nextMilestone besøk på hytta",
-        FunFactPriority.VISITS_TO_NEXT_MILESTONE,
-    ).takeIf { showFact }
+    return funFact(guest.guestId, FunFactPriority.VISITS_TO_NEXT_MILESTONE) {
+        guestName(guest.firstName)
+        text(" er ")
+        stat("$visitsLeft besøk")
+        text(" unna å nå ")
+        stat("$nextMilestone besøk")
+        text(" på hytta")
+    }.takeIf { showFact }
 }
 
 /** The next visit is `totalVisits + 1`, as only visits that have started are counted in the total. */
@@ -127,15 +135,18 @@ private fun upcomingVisit(guest: GuestStats, visits: ProfileVisits, today: Local
     val daysUntil = today.daysUntil(next.startDate)
     val whenText = if (daysUntil == 1) "i morgen" else "om $daysUntil dager"
     val visitNumber = guest.allTime.totalVisits + 1
-    val text = "Neste besøk for ${guest.firstName} er $whenText"
-    return if (isVisitMilestone(guest, visitNumber)) {
-        FunFact(
-            guest.guestId,
-            "$text, da er det besøk nr. $visitNumber!",
-            FunFactPriority.UPCOMING_VISIT_MILESTONE,
-        )
-    } else {
-        FunFact(guest.guestId, text, FunFactPriority.UPCOMING_VISIT)
+    val isMilestone = isVisitMilestone(guest, visitNumber)
+    val priority = if (isMilestone) FunFactPriority.UPCOMING_VISIT_MILESTONE else FunFactPriority.UPCOMING_VISIT
+    return funFact(guest.guestId, priority) {
+        text("Neste besøk for ")
+        guestName(guest.firstName)
+        text(" er ")
+        stat(whenText)
+        if (isMilestone) {
+            text(", da er det besøk nr. ")
+            stat(visitNumber)
+            text("!")
+        }
     }
 }
 
@@ -147,11 +158,11 @@ private fun loyalGuest(guest: GuestStats, visits: ProfileVisits, today: LocalDat
     val yearsVisited = visits.happened.map { it.startDate.year }.distinct()
     val lastYear = yearsVisited.maxOrNull()?.takeIf { it >= today.year - 1 } ?: return null
     val years = consecutiveYearsUpTo(lastYear, yearsVisited)
-    return FunFact(
-        guest.guestId,
-        "${guest.firstName} er en trofast gjest og har besøkt hytta de siste $years årene",
-        FunFactPriority.VISIT_STREAK,
-    ).takeIf { !guest.isFamily && years >= MIN_YEARS_FOR_STREAK }
+    return funFact(guest.guestId, FunFactPriority.VISIT_STREAK) {
+        guestName(guest.firstName)
+        text(" er en trofast gjest og har besøkt hytta de siste ")
+        stat("$years årene")
+    }.takeIf { !guest.isFamily && years >= MIN_YEARS_FOR_STREAK }
 }
 
 private fun favouriteSeason(guest: GuestStats, visits: ProfileVisits): FunFact? {
@@ -159,11 +170,12 @@ private fun favouriteSeason(guest: GuestStats, visits: ProfileVisits): FunFact? 
     val mostVisits = visitsBySeason.values.maxOrNull() ?: 0
     val favourite = visitsBySeason.filterValues { it == mostVisits }.keys.singleOrNull()
     return favourite?.let {
-        FunFact(
-            guest.guestId,
-            "${guest.firstName} liker hyttelivet mest ${it.inNorwegian} ($mostVisits av ${visits.happened.size} besøk)",
-            FunFactPriority.FAVOURITE_SEASON,
-        )
+        funFact(guest.guestId, FunFactPriority.FAVOURITE_SEASON) {
+            guestName(guest.firstName)
+            text(" liker hyttelivet mest ")
+            stat(it.inNorwegian)
+            text(" ($mostVisits av ${visits.happened.size} besøk)")
+        }
     }.takeIf { visits.happened.size >= MIN_VISITS_FOR_FAVOURITE_SEASON }
 }
 
@@ -188,21 +200,24 @@ private enum class Season(val inNorwegian: String) {
 private fun longestStay(guest: GuestStats, visits: ProfileVisits): FunFact? {
     val longest =
         visits.happened.maxWithOrNull(compareBy<GuestVisit> { it.days }.thenBy { it.startDate }) ?: return null
-    return FunFact(
-        guest.guestId,
-        "Det lengste oppholdet til ${guest.firstName} var ${longest.days} dager " +
-            "(${longest.startDate.norwegianShortMonthYear()})",
-        FunFactPriority.GUEST_LONGEST_STAY,
-    ).takeIf { longest.days >= MIN_DAYS_FOR_LONGEST_STAY }
+    return funFact(guest.guestId, FunFactPriority.GUEST_LONGEST_STAY) {
+        text("Det lengste oppholdet til ")
+        guestName(guest.firstName)
+        text(" var ")
+        stat("${longest.days} dager")
+        text(" (${longest.startDate.norwegianShortMonthYear()})")
+    }.takeIf { longest.days >= MIN_DAYS_FOR_LONGEST_STAY }
 }
 
 private fun totalTimeInWords(guest: GuestStats): FunFact? {
     val days = guest.allTime.totalDays
-    return FunFact(
-        guest.guestId,
-        "${guest.firstName} har tilbrakt $days dager på hytta, det er ca. ${daysInWords(days)}",
-        FunFactPriority.TOTAL_TIME_IN_WORDS,
-    ).takeIf { days >= MIN_DAYS_FOR_TOTAL_TIME }
+    return funFact(guest.guestId, FunFactPriority.TOTAL_TIME_IN_WORDS) {
+        guestName(guest.firstName)
+        text(" har tilbrakt ")
+        stat("$days dager")
+        text(" på hytta, det er ca. ")
+        stat(daysInWords(days))
+    }.takeIf { days >= MIN_DAYS_FOR_TOTAL_TIME }
 }
 
 /** Weeks below two months, months below two years, otherwise years with one decimal. */
@@ -222,11 +237,14 @@ private fun recordYear(guest: GuestStats, visits: ProfileVisits, today: LocalDat
     val showFact = hasEnoughYears && isRecordYearOver
 
     return bestYear?.let {
-        FunFact(
-            guest.guestId,
-            "Rekordåret til ${guest.firstName} var $it med $mostVisits besøk",
-            FunFactPriority.RECORD_YEAR,
-        )
+        funFact(guest.guestId, FunFactPriority.RECORD_YEAR) {
+            text("Rekordåret til ")
+            guestName(guest.firstName)
+            text(" var ")
+            stat(it)
+            text(" med ")
+            stat("$mostVisits besøk")
+        }
     }.takeIf { showFact }
 }
 
@@ -236,18 +254,26 @@ private fun companions(guest: GuestStats, companions: List<Companion>): FunFact?
     val candidates = shared.filter { !it.isFamily }.ifEmpty { shared }
     val mostVisits = candidates.maxOfOrNull { it.sharedVisits } ?: return null
     val top = candidates.filter { it.sharedVisits == mostVisits }.map { it.firstName }.sorted()
-    return FunFact(
-        guest.guestId,
-        "Oftest på hytta sammen med ${top.joinToString(" og ")} ($mostVisits ganger)",
-        FunFactPriority.COMPANIONS,
-    ).takeIf { top.size <= MAX_TOP_COMPANIONS }
+    return funFact(guest.guestId, FunFactPriority.COMPANIONS) {
+        text("Oftest på hytta sammen med ")
+        top.forEachIndexed { index, name ->
+            if (index > 0) text(" og ")
+            guestName(name)
+        }
+        text(" (")
+        stat("$mostVisits ganger")
+        text(")")
+    }.takeIf { top.size <= MAX_TOP_COMPANIONS }
 }
 
-private fun differentCompanions(guest: GuestStats, companions: List<Companion>): FunFact? = FunFact(
+private fun differentCompanions(guest: GuestStats, companions: List<Companion>): FunFact? = funFact(
     guest.guestId,
-    "${guest.firstName} har delt hytta med ${companions.size} ulike gjester",
     FunFactPriority.DIFFERENT_COMPANIONS,
-).takeIf { companions.size >= MIN_DIFFERENT_COMPANIONS }
+) {
+    guestName(guest.firstName)
+    text(" har delt hytta med ")
+    stat("${companions.size} ulike gjester")
+}.takeIf { companions.size >= MIN_DIFFERENT_COMPANIONS }
 
 /** Second and third place among the guests (family excluded) when the leader is close. */
 private fun rankAmongGuests(guest: GuestStats, standings: List<GuestStanding>): FunFact? {
@@ -260,9 +286,16 @@ private fun rankAmongGuests(guest: GuestStats, standings: List<GuestStanding>): 
     val isSecondOrThird = rank in 2..MAX_RANK_AMONG_GUESTS
     val isCloseToLeader = visitsBehind in 1..MAX_VISITS_BEHIND_LEADER
 
-    return FunFact(
-        guest.guestId,
-        "${guest.firstName} er nr. $rank blant gjestene, bare $visitsBehind besøk bak ${leaders.joinToString(" og ")}",
-        FunFactPriority.RANK_AMONG_GUESTS,
-    ).takeIf { isSecondOrThird && isCloseToLeader }
+    return funFact(guest.guestId, FunFactPriority.RANK_AMONG_GUESTS) {
+        guestName(guest.firstName)
+        text(" er nr. ")
+        stat(rank)
+        text(" blant gjestene, bare ")
+        stat("$visitsBehind besøk")
+        text(" bak ")
+        leaders.forEachIndexed { index, name ->
+            if (index > 0) text(" og ")
+            guestName(name)
+        }
+    }.takeIf { isSecondOrThird && isCloseToLeader }
 }
