@@ -23,7 +23,7 @@ COPY README.md README.md
 RUN ./gradlew nativeCompile --no-daemon
 
 # --- Runtime stage: minimal distroless with glibc ---
-FROM gcr.io/distroless/cc-debian12:nonroot
+FROM gcr.io/distroless/cc-debian13:nonroot
 
 WORKDIR /
 # Copy the native binary
