@@ -542,6 +542,12 @@
           ]
         },
         {
+          "name": "setDescription",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
           "name": "setEnd",
           "parameterTypes": [
             "com.google.api.services.calendar.model.EventDateTime"
