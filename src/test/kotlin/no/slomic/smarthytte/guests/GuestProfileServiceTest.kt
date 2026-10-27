@@ -4,10 +4,10 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import no.slomic.smarthytte.auth.AppUser
+import no.slomic.smarthytte.auth.UserPrincipal
 import no.slomic.smarthytte.utils.TestDbSetup
 
-private fun user(id: String, role: AppRole) = AppUser(id, "Name $id", "$id@example.com", role)
+private fun user(id: String, role: AppRole) = UserPrincipal(id, "Name $id", "$id@example.com", role)
 
 class GuestProfileServiceTest :
     StringSpec({

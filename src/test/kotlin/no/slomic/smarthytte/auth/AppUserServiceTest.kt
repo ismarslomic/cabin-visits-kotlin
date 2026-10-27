@@ -47,7 +47,7 @@ class AppUserServiceTest :
                 ),
             )
 
-            repository.userByEmail("kari.nordmann@example.com") shouldBe AppUser(
+            repository.userByEmail("kari.nordmann@example.com") shouldBe UserPrincipal(
                 id = "kari",
                 name = "Kari kari",
                 email = "Kari.Nordmann@Example.com",

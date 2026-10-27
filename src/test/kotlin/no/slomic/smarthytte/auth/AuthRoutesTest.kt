@@ -206,7 +206,6 @@ class AuthRoutesTest :
         "existing endpoints should stay available without authentication" {
             withApp {
                 get("/", token = null).status shouldBe HttpStatusCode.OK
-                get("/api/guests/unknown/avatar", token = null).status shouldBe HttpStatusCode.NotFound
             }
             withApp(cloudflareAccess = null) {
                 get("/", token = null).status shouldBe HttpStatusCode.OK

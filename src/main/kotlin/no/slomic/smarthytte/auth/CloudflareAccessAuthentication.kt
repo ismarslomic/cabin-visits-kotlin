@@ -67,13 +67,19 @@ fun CloudflareAccessProperties.toConfig(): CloudflareAccessConfig? {
  * Authentication (Cloudflare Access): the JWT in [ACCESS_JWT_HEADER] is verified by the Ktor JWT provider against
  * the Cloudflare signing keys: signature, issuer, audience, expiry and not-before.
  * Identity mapping: the email in the token must belong to a guest that has an [AppRole]. The principal is an
- * [AppUser]. What the user may do is decided by [authorized], not here.
+ * [UserPrincipal]. What the user may do is decided by [authorized], not here.
  *
  * Only routes wrapped in `authenticate(CLOUDFLARE_ACCESS_AUTH)` require it, so existing unauthenticated endpoints are
  * unaffected. A null [config] (Cloudflare Access is not configured) makes the protected routes respond 503.
  */
-fun Application.configureAuthentication(config: CloudflareAccessConfig?, appUserService: AppUserService) {
+fun Application.configureAuthentication(
+    config: CloudflareAccessConfig?,
+    appUserService: AppUserService,
+    apiKeys: ApiKeyConfig = ApiKeyConfig(emptyMap()),
+) {
     authentication {
+        apiKeyAuthentication(apiKeys)
+
         if (config == null) {
             this@configureAuthentication.log.warn(
                 "Cloudflare Access is not configured, endpoints that require authentication will respond 503",
@@ -132,7 +138,8 @@ private fun JwkProvider.failClosed(logger: Logger) = JwkProvider { keyId ->
 /** Fails closed: without configuration no token can be verified, so every protected request gets 503. */
 private class NotConfiguredProvider : AuthenticationProvider(object : Config(CLOUDFLARE_ACCESS_AUTH) {}) {
     override suspend fun onAuthenticate(context: AuthenticationContext) {
-        val cause = AuthenticationFailedCause.Error("Cloudflare Access is not configured")
+        // Not an Error cause: Ktor runs challenges of errors after the others, and then the API key would answer 401
+        val cause = AuthenticationFailedCause.NoCredentials
         context.challenge(CLOUDFLARE_ACCESS_AUTH, cause) { challenge, call ->
             call.respond(HttpStatusCode.ServiceUnavailable, "Authentication is not configured")
             challenge.complete()

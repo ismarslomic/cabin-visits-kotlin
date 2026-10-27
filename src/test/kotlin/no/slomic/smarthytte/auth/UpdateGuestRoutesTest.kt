@@ -159,9 +159,16 @@ class UpdateGuestRoutesTest :
             givenUser("kari", AppRole.FAMILY_USER)
 
             withApp {
-                post("/api/guests/kari", accessToken("ola@example.com"), "{}").status shouldBe HttpStatusCode.Forbidden
-                post("/api/guests/kari", accessToken("kari@example.com"), "{}").status shouldBe HttpStatusCode.Forbidden
-                post("/api/guests/kari", token = null, "{}").status shouldBe HttpStatusCode.Unauthorized
+                val body = """{"firstName":"Hacked","appRole":"ADMIN"}"""
+
+                post("/api/guests/kari", accessToken("ola@example.com"), body).status shouldBe HttpStatusCode.Forbidden
+                post("/api/guests/kari", accessToken("kari@example.com"), body).status shouldBe HttpStatusCode.Forbidden
+                post("/api/guests/kari", token = null, body).status shouldBe HttpStatusCode.Unauthorized
+                // A denied request must not reach the handler
+                guestRepository.guestById("kari")!!.let {
+                    it.firstName shouldBe "Test"
+                    it.appRole shouldBe AppRole.FAMILY_USER
+                }
             }
         }
     })

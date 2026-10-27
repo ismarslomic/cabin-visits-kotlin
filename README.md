@@ -29,6 +29,7 @@ with the `-e` option:
 | `GUEST_AVATARS_DIRECTORY_PATH`               | Yes      | N/A                    | Path to the directory with the Guests avatars images (named in format guestId.jpg).                                                                                                                                                        |
 | `STATISTICS_DATA_START_DATE`                 | Yes      | N/A                    | First date visits are registered (format: `YYYY-MM-DD`), used in fun facts about the cabin.                                                                                                                                                |
 | `CLOUDFLARE_ACCESS_TEAM_DOMAIN`              | No       | N/A                    | Team domain of Cloudflare Access (e.g., `myteam.cloudflareaccess.com`). Needed together with `CLOUDFLARE_ACCESS_AUD` for endpoints that require authentication, see [docs/authentication.md](docs/authentication.md).                      |
+| `API_KEYS`                                   | No       | N/A                    | Comma separated `name:sha256` entries, the hex SHA-256 of the API key of each service (MagicMirror). Without it no service can call the API; see [docs/authentication.md](docs/authentication.md#api-key-for-a-service-magicmirror).       |
 | `CLOUDFLARE_ACCESS_AUD`                      | No       | N/A                    | `AUD` tag of the Cloudflare Access application that protects the API. When missing, endpoints that require authentication respond `503`; all other endpoints are unaffected.                                                               |
 | `GOOGLE_CALENDAR_SYNC_FREQ_MINUTES`          | No       | 10                     | Frequency (in minutes) to poll Google Calendar for updates.                                                                                                                                                                                |
 | `INFLUXDB_URL`                               | Yes      | N/A                    | Url to the InfluxDb database (e.g., `http://192.0.0.1:8086`).                                                                                                                                                                              |
@@ -90,17 +91,17 @@ curl http://localhost:8079
 The API contract is committed as [`openapi/cabin-visits.json`](openapi/cabin-visits.json) and served at `/openapi.json`.
 Overview of the endpoints:
 
-| Endpoint                                      | Description                                                                                                                              |
-|-----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `GET /api/stats`                              | Live status: current and next reservation with guest statistics, all-time totals and fun facts about the guests, the cabin and the next visit. |
-| `GET /api/stats/current-year`                 | Quick summary of the current year.                                                                                                       |
-| `GET /api/stats/years`                        | Years with reservations.                                                                                                                 |
-| `GET /api/stats/years/{year}`                 | Full statistics for a year, including a monthly breakdown.                                                                               |
-| `GET /api/stats/years/{year}/months/{month}`  | Statistics for a month.                                                                                                                  |
-| `GET /api/stats/guests`                       | Statistics for all guests: top lists, gender and age groups.                                                                             |
-| `GET /api/stats/guests/{guestId}`             | Profile of one guest: statistics, all visits (completed, ongoing and upcoming) and fun facts. See [Guest profile](#guest-profile).       |
-| `GET /api/guests/{guestId}/avatar`            | The guest's avatar image (JPEG), see `avatarUrl` in the guest statistics.                                                                |
-| `GET /metrics`                                | Application metrics, see [Metrics](#metrics).                                                                                            |
+| Endpoint                                     | Description                                                                                                                                    |
+|----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| `GET /api/stats`                             | Live status: current and next reservation with guest statistics, all-time totals and fun facts about the guests, the cabin and the next visit. |
+| `GET /api/stats/current-year`                | Quick summary of the current year.                                                                                                             |
+| `GET /api/stats/years`                       | Years with reservations.                                                                                                                       |
+| `GET /api/stats/years/{year}`                | Full statistics for a year, including a monthly breakdown.                                                                                     |
+| `GET /api/stats/years/{year}/months/{month}` | Statistics for a month.                                                                                                                        |
+| `GET /api/stats/guests`                      | Statistics for all guests: top lists, gender and age groups.                                                                                   |
+| `GET /api/stats/guests/{guestId}`            | Profile of one guest: statistics, all visits (completed, ongoing and upcoming) and fun facts. See [Guest profile](#guest-profile).             |
+| `GET /api/guests/{guestId}/avatar`           | The guest's avatar image (JPEG), see `avatarUrl` in the guest statistics.                                                                      |
+| `GET /metrics`                               | Application metrics, see [Metrics](#metrics).                                                                                                  |
 
 # Cabin Usage Metrics
 

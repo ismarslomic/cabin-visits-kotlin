@@ -57,3 +57,6 @@ vehicle-trip:
 cloudflare-access:
   team-domain: ${CLOUDFLARE_ACCESS_TEAM_DOMAIN:-}
   audience: ${CLOUDFLARE_ACCESS_AUD:-}
+
+api-key:
+  keys: ${API_KEYS:-}

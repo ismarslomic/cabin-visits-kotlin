@@ -20,17 +20,17 @@ fun Application.configureAuthRoutes(guestProfileService: GuestProfileService) {
     routing {
         authorizedAnyRole {
             get("/api/me") {
-                val user = checkNotNull(call.principal<AppUser>()) { "Authenticated route without a user" }
+                val user = checkNotNull(call.principal<UserPrincipal>()) { "Authenticated route without a user" }
                 call.respond(user)
             }.describeMe()
 
             post("/api/me") {
-                val user = checkNotNull(call.principal<AppUser>()) { "Authenticated route without a user" }
+                val user = checkNotNull(call.principal<UserPrincipal>()) { "Authenticated route without a user" }
                 val update = call.receiveGuestUpdate()
                     ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid request body")
 
                 when (val result = guestProfileService.update(user, user.id, update)) {
-                    is GuestUpdateResult.Updated -> call.respond(checkNotNull(result.guest.toAppUser()))
+                    is GuestUpdateResult.Updated -> call.respond(checkNotNull(result.guest.toUserPrincipal()))
                     else -> call.respondNotUpdated(result)
                 }
             }.describeUpdateMe()

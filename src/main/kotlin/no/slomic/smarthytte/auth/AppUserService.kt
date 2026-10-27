@@ -15,7 +15,7 @@ class AppUserService(private val guestRepository: GuestRepository) {
      *
      * Also null when several guests with a role share the email: the identity is ambiguous, so access is denied.
      */
-    suspend fun userByEmail(email: String?): AppUser? {
+    suspend fun userByEmail(email: String?): UserPrincipal? {
         val guests: List<Guest> = email?.takeIf { it.isNotBlank() }
             ?.let { guestRepository.guestsByEmail(it) }
             .orEmpty()
@@ -25,13 +25,13 @@ class AppUserService(private val guestRepository: GuestRepository) {
             logger.warn("Ambiguous identity: ${guests.size} guests with a role share the email $email")
         }
 
-        return guests.singleOrNull()?.toAppUser()
+        return guests.singleOrNull()?.toUserPrincipal()
     }
 }
 
 /** Null if the guest has no email or no [AppRole], since it is then not a user of the application. */
-fun Guest.toAppUser(): AppUser? = if (email != null && appRole != null) {
-    AppUser(id = id, name = "$firstName $lastName", email = email, role = appRole)
+fun Guest.toUserPrincipal(): UserPrincipal? = if (email != null && appRole != null) {
+    UserPrincipal(id = id, name = "$firstName $lastName", email = email, role = appRole)
 } else {
     null
 }

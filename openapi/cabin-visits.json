@@ -39,7 +39,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AppUser"
+                  "$ref": "#/components/schemas/UserPrincipal"
                 }
               }
             }
@@ -77,6 +77,9 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       },
@@ -93,7 +96,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AppUser"
+                  "$ref": "#/components/schemas/UserPrincipal"
                 }
               }
             }
@@ -111,6 +114,9 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       }
@@ -184,8 +190,25 @@
             "content": {
               "image/jpeg": {}
             }
+          },
+          "401": {
+            "description": "The Cloudflare Access token or the API key is missing or invalid."
+          },
+          "403": {
+            "description": "The caller has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
           }
-        }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
       }
     },
     "/api/guests/{guestId}": {
@@ -270,6 +293,9 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       }
@@ -300,6 +326,70 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/stats/guests/{guestId}": {
+      "get": {
+        "operationId": "getGuestProfileStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Guest profile",
+        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
+        "parameters": [
+          {
+            "name": "guestId",
+            "in": "path",
+            "description": "Internal unique identifier of the guest.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "The guestId path parameter is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "There is no guest with the given id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The profile of the guest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestProfileStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       }
@@ -330,6 +420,9 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       }
@@ -363,6 +456,9 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       }
@@ -411,6 +507,9 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       }
@@ -470,6 +569,9 @@
         "security": [
           {
             "cloudflare-access": []
+          },
+          {
+            "api-key": []
           }
         ]
       }
@@ -500,64 +602,9 @@
         "security": [
           {
             "cloudflare-access": []
-          }
-        ]
-      }
-    },
-    "/api/stats/guests/{guestId}": {
-      "get": {
-        "operationId": "getGuestProfileStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Guest profile",
-        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
-        "parameters": [
-          {
-            "name": "guestId",
-            "in": "path",
-            "description": "Internal unique identifier of the guest.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "The guestId path parameter is missing.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
           },
-          "404": {
-            "description": "There is no guest with the given id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "The profile of the guest.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuestProfileStats"
-                }
-              }
-            }
-          }
-        },
-        "security": [
           {
-            "cloudflare-access": []
+            "api-key": []
           }
         ]
       }
@@ -566,9 +613,9 @@
   "webhooks": {},
   "components": {
     "schemas": {
-      "AppUser": {
+      "UserPrincipal": {
         "type": "object",
-        "title": "AppUser",
+        "title": "UserPrincipal",
         "required": [
           "id",
           "name",
@@ -1020,6 +1067,74 @@
           "nextVisitFunFacts": {
             "type": "array",
             "description": "Fun facts about the next upcoming reservation, sorted by priority. Empty if no future reservation exists.",
+            "items": {
+              "$ref": "#/components/schemas/FunFact"
+            }
+          }
+        }
+      },
+      "GuestVisit": {
+        "type": "object",
+        "title": "GuestVisit",
+        "required": [
+          "startDate",
+          "endDate",
+          "days",
+          "nights",
+          "status"
+        ],
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "description": "First day of the visit (check-in date, inclusive).",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Last day of the visit (check-out date). Same semantics as the end date of a reservation.",
+            "format": "date"
+          },
+          "days": {
+            "type": "integer",
+            "description": "Number of calendar days of the whole visit, including arrival and departure day."
+          },
+          "nights": {
+            "type": "integer",
+            "description": "Number of nights of the whole visit."
+          },
+          "status": {
+            "type": "string",
+            "description": "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the visit has not started yet).",
+            "enum": [
+              "COMPLETED",
+              "ONGOING",
+              "UPCOMING"
+            ]
+          }
+        }
+      },
+      "GuestProfileStats": {
+        "type": "object",
+        "title": "GuestProfileStats",
+        "required": [
+          "guest",
+          "visits",
+          "funFacts"
+        ],
+        "properties": {
+          "guest": {
+            "$ref": "#/components/schemas/GuestStats"
+          },
+          "visits": {
+            "type": "array",
+            "description": "All visits of the guest, historical, ongoing and upcoming, oldest first. Suitable for a timeline.",
+            "items": {
+              "$ref": "#/components/schemas/GuestVisit"
+            }
+          },
+          "funFacts": {
+            "type": "array",
+            "description": "Fun facts about the guest, as ready-to-display Norwegian text that mentions the guest by first name. Sorted by priority, highest first. Not capped, so pick the ones to display.",
             "items": {
               "$ref": "#/components/schemas/FunFact"
             }
@@ -2354,74 +2469,14 @@
             }
           }
         }
-      },
-      "GuestVisit": {
-        "type": "object",
-        "title": "GuestVisit",
-        "required": [
-          "startDate",
-          "endDate",
-          "days",
-          "nights",
-          "status"
-        ],
-        "properties": {
-          "startDate": {
-            "type": "string",
-            "description": "First day of the visit (check-in date, inclusive).",
-            "format": "date"
-          },
-          "endDate": {
-            "type": "string",
-            "description": "Last day of the visit (check-out date). Same semantics as the end date of a reservation.",
-            "format": "date"
-          },
-          "days": {
-            "type": "integer",
-            "description": "Number of calendar days of the whole visit, including arrival and departure day."
-          },
-          "nights": {
-            "type": "integer",
-            "description": "Number of nights of the whole visit."
-          },
-          "status": {
-            "type": "string",
-            "description": "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the visit has not started yet).",
-            "enum": [
-              "COMPLETED",
-              "ONGOING",
-              "UPCOMING"
-            ]
-          }
-        }
-      },
-      "GuestProfileStats": {
-        "type": "object",
-        "title": "GuestProfileStats",
-        "required": [
-          "guest",
-          "visits",
-          "funFacts"
-        ],
-        "properties": {
-          "guest": {
-            "$ref": "#/components/schemas/GuestStats"
-          },
-          "visits": {
-            "type": "array",
-            "description": "All visits of the guest, historical, ongoing and upcoming, oldest first. Suitable for a timeline.",
-            "items": {
-              "$ref": "#/components/schemas/GuestVisit"
-            }
-          },
-          "funFacts": {
-            "type": "array",
-            "description": "Fun facts about the guest, as ready-to-display Norwegian text that mentions the guest by first name. Sorted by priority, highest first. Not capped, so pick the ones to display.",
-            "items": {
-              "$ref": "#/components/schemas/FunFact"
-            }
-          }
-        }
+      }
+    },
+    "securitySchemes": {
+      "api-key": {
+        "name": "X-Api-Key",
+        "in": "header",
+        "description": "API Key Authentication",
+        "type": "apiKey"
       }
     }
   },

@@ -46,15 +46,20 @@ Setup of Cloudflare Access, the status codes and how roles are granted are descr
 Authentication (who is calling) and authorization (what may they do) are separate steps:
 
 1. **Authentication** (`CloudflareAccessAuthentication.kt`): the Ktor `jwt` provider `cloudflare-access` verifies the
-   `Cf-Access-Jwt-Assertion` header against Cloudflare's signing keys (signature, issuer, audience, expiry). The `email`
+   HTTP header `Cf-Access-Jwt-Assertion` against Cloudflare's signing keys (signature, issuer, audience, expiry). The `email`
    claim is then looked up with `AppUserService.userByEmail` which matches the `guest` row that has an `app_role` through `GuestRepository.guestsByEmail`.
-   The result is an `AppUser` principal (id, name, email, role).
-2. **Authorization** (`RoleAuthorization.kt`): the route's allowed roles are compared with `AppUser.role`.
+   The result is a `UserPrincipal` (id, name, email, role).
+   Machines authenticate with the Ktor `apiKey` provider `api-key` (`ApiKeyAuthentication.kt`): the HTTP header `X-Api-Key`
+   is hashed with SHA-256 and compared in constant time with the hashes in `API_KEYS`. The result is a
+   `ServicePrincipal` (name), which has no role.
+2. **Authorization** (`RoleAuthorization.kt`): a `UserPrincipal`'s role is compared with the route's allowed roles. A
+   `ServicePrincipal` is only let through on routes with `allowService = true`.
 
 | Situation                                              | Response |
 |--------------------------------------------------------|----------|
 | Cloudflare Access is not configured (env vars missing) | 503      |
-| Token missing, invalid or expired                      | 401      |
+| Token or API key missing, invalid or expired           | 401      |
+| Valid API key, but the route does not allow services   | 403      |
 | Valid token, but the email has no role in the app      | 403      |
 | Valid user, but the role is not allowed on the route   | 403      |
 | Valid user with an allowed role                        | handler  |
@@ -73,7 +78,7 @@ fun Application.configureReportRoutes() {
         // Only ADMIN and FAMILY_USER, everyone else gets 403
         authorized(AppRole.ADMIN, AppRole.FAMILY_USER) {
             get("/api/reports") {
-                val user = checkNotNull(call.principal<AppUser>())
+                val user = checkNotNull(call.principal<UserPrincipal>())
                 call.respond(reportFor(user))
             }
         }
@@ -83,8 +88,9 @@ fun Application.configureReportRoutes() {
 
 - `authorized` always includes authentication, so a role check can never run without a verified token. Do not use
   `authenticate(CLOUDFLARE_ACCESS_AUTH)` alone for new endpoints, since it lets every user with any role through.
-- Routes outside `authorized { }` stay open, which keeps the existing internal consumers working. Anything that must be
-  protected has to be wrapped explicitly.
+- Routes outside `authorized { }` stay open. Anything that must be protected has to be wrapped explicitly.
+- Services (API key) are denied by default. Only a route that is meant for a machine passes `allowService = true`, for
+  example `authorizedAnyRole(allowService = true) { ... }`. Keep that list as small as possible.
 - Pass every role that may call the endpoint, for example `authorized(AppRole.ADMIN)` for admin-only. There is no role
   hierarchy, `ADMIN` does not imply `FAMILY_USER`.
 - Register the route group in `configureApiRoutes` (`Application.kt`), after `configureAuthentication`.

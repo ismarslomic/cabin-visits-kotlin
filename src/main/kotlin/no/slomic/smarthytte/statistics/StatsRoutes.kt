@@ -46,10 +46,22 @@ fun Application.configureOpenApi() {
 
 fun Application.configureStatsRoutes(statsService: StatsService) {
     routing {
-        authorizedAnyRole {
+        // The routes that MagicMirror (a service with an API key) needs
+        authorizedAnyRole(allowService = true) {
             get("/api/stats") { call.respond(statsService.getLiveStats()) }
                 .describeLiveStats()
 
+            get("/api/stats/guests/{guestId}") {
+                val guestId = call.parameters["guestId"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing guestId")
+                val profile = statsService.getGuestProfileStats(guestId)
+                    ?: return@get call.respond(HttpStatusCode.NotFound, "Guest not found")
+                call.respond(profile)
+            }.describeGuestProfileStats()
+        }
+
+        // Users only
+        authorizedAnyRole {
             get("/api/stats/current-year") { call.respond(statsService.getCurrentYearStats()) }
                 .describeCurrentYearStats()
 
@@ -72,14 +84,6 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
 
             get("/api/stats/guests") { call.respond(statsService.getAllGuestsStats()) }
                 .describeAllGuestsStats()
-
-            get("/api/stats/guests/{guestId}") {
-                val guestId = call.parameters["guestId"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing guestId")
-                val profile = statsService.getGuestProfileStats(guestId)
-                    ?: return@get call.respond(HttpStatusCode.NotFound, "Guest not found")
-                call.respond(profile)
-            }.describeGuestProfileStats()
         }
     }
 }

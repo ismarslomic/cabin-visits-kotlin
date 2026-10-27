@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.toLocalDateTime
+import no.slomic.smarthytte.auth.ApiKeyConfig
 import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.auth.CloudflareAccessConfig
 import no.slomic.smarthytte.auth.configureAuthRoutes
@@ -31,6 +32,7 @@ import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
+import no.slomic.smarthytte.properties.ApiKeyPropertiesHolder
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.CloudflareAccessPropertiesHolder
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
@@ -140,7 +142,8 @@ fun Application.module() {
 
     // Configure Ktor routing (after the initial load is completed)
     val cloudflareAccess = loadProperties<CloudflareAccessPropertiesHolder>().cloudflareAccess.toConfig()
-    configureApiRoutes(guestRepository, guestProfileService, statsService, appUserService, cloudflareAccess)
+    val apiKeys = loadProperties<ApiKeyPropertiesHolder>().apiKey.toConfig()
+    configureApiRoutes(guestRepository, guestProfileService, statsService, appUserService, cloudflareAccess, apiKeys)
 }
 
 /**
@@ -155,9 +158,10 @@ fun Application.configureApiRoutes(
     statsService: StatsService,
     appUserService: AppUserService,
     cloudflareAccess: CloudflareAccessConfig?,
+    apiKeys: ApiKeyConfig = ApiKeyConfig(emptyMap()),
 ) {
     configureRouting()
-    configureAuthentication(cloudflareAccess, appUserService)
+    configureAuthentication(cloudflareAccess, appUserService, apiKeys)
     configureAuthRoutes(guestProfileService)
     configureGuestRoutes(guestRepository, guestProfileService)
     configureStatsRoutes(statsService)

@@ -1,6 +1,6 @@
 package no.slomic.smarthytte.guests
 
-import no.slomic.smarthytte.auth.AppUser
+import no.slomic.smarthytte.auth.UserPrincipal
 import no.slomic.smarthytte.common.toUtcDate
 import kotlin.time.Clock
 
@@ -26,7 +26,7 @@ sealed interface GuestUpdateResult {
  * denies all of them.
  */
 class GuestProfileService(private val guestRepository: GuestRepository) {
-    suspend fun update(actor: AppUser, guestId: String, update: GuestUpdate): GuestUpdateResult {
+    suspend fun update(actor: UserPrincipal, guestId: String, update: GuestUpdate): GuestUpdateResult {
         val rejection: GuestUpdateResult? = forbiddenReason(actor, guestId, update)?.let(GuestUpdateResult::Forbidden)
             ?: invalidReason(update)?.let(GuestUpdateResult::Invalid)
 
@@ -51,7 +51,7 @@ class GuestProfileService(private val guestRepository: GuestRepository) {
         return "The email is already used by another user".takeIf { isUsedByOtherUser }
     }
 
-    private fun forbiddenReason(actor: AppUser, guestId: String, update: GuestUpdate): String? = when {
+    private fun forbiddenReason(actor: UserPrincipal, guestId: String, update: GuestUpdate): String? = when {
         actor.role == AppRole.ADMIN && guestId == actor.id -> when {
             update.appRole != null && update.appRole != AppRole.ADMIN -> "An admin cannot remove their own admin role"
             update.email.changesEmailOf(actor) -> "An admin cannot change their own email"
@@ -79,7 +79,8 @@ class GuestProfileService(private val guestRepository: GuestRepository) {
     private fun GuestUpdate.trimmed() =
         copy(firstName = firstName?.trim(), lastName = lastName?.trim(), email = email?.trim())
 
-    private fun String?.changesEmailOf(actor: AppUser) = this != null && !trim().equals(actor.email, ignoreCase = true)
+    private fun String?.changesEmailOf(actor: UserPrincipal) =
+        this != null && !trim().equals(actor.email, ignoreCase = true)
 
     private fun String?.isInvalidName() = this != null && trim().length !in 1..MAX_NAME_LENGTH
 
