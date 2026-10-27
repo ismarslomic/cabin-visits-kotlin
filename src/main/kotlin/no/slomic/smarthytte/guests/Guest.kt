@@ -1,7 +1,6 @@
 package no.slomic.smarthytte.guests
 
 import kotlinx.serialization.Serializable
-import no.slomic.smarthytte.auth.AppRole
 
 @Serializable
 data class Guest(

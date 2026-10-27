@@ -22,9 +22,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.openapi.describe
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import no.slomic.smarthytte.auth.AppRole
 import no.slomic.smarthytte.auth.AppUser
 import no.slomic.smarthytte.auth.authorized
+import no.slomic.smarthytte.guests.AppRole
 
 // 24 hours
 private const val AVATAR_MAX_AGE_SECONDS = 86_400
@@ -82,6 +82,7 @@ suspend fun ApplicationCall.respondNotUpdated(result: GuestUpdateResult) {
         is GuestUpdateResult.Updated -> error("The guest was updated")
         GuestUpdateResult.NotFound -> respond(HttpStatusCode.NotFound)
         is GuestUpdateResult.Forbidden -> respond(HttpStatusCode.Forbidden, result.message)
+        is GuestUpdateResult.Conflict -> respond(HttpStatusCode.Conflict, result.message)
         is GuestUpdateResult.Invalid -> respond(HttpStatusCode.BadRequest, result.message)
     }
 }
@@ -102,6 +103,7 @@ private fun Route.describeUpdateGuest() = describe {
         HttpStatusCode.Unauthorized { description = "The Cloudflare Access token is missing or invalid." }
         HttpStatusCode.Forbidden { description = "The caller is not an admin, or has no role in the application." }
         HttpStatusCode.NotFound { description = "The guest does not exist." }
+        HttpStatusCode.Conflict { description = "The email is already used by another user." }
         HttpStatusCode.ServiceUnavailable { description = "Cloudflare Access is not configured for the application." }
     }
 }

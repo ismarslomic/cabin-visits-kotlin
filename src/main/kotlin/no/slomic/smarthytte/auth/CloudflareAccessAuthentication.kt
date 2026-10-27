@@ -1,7 +1,11 @@
 package no.slomic.smarthytte.auth
 
+import com.auth0.jwk.JwkException
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
+import com.auth0.jwk.NetworkException
+import com.auth0.jwk.RateLimitReachedException
+import com.auth0.jwk.SigningKeyNotFoundException
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.application.Application
@@ -14,7 +18,9 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.request.header
 import io.ktor.server.response.respond
 import io.ktor.util.AttributeKey
+import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.properties.CloudflareAccessProperties
+import org.slf4j.Logger
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
@@ -78,7 +84,7 @@ fun Application.configureAuthentication(config: CloudflareAccessConfig?, appUser
                 authHeader { call ->
                     call.request.header(ACCESS_JWT_HEADER)?.let { HttpAuthHeader.Single("Bearer", it) }
                 }
-                verifier(config.jwkProvider, config.issuer) {
+                verifier(config.jwkProvider.failClosed(this@configureAuthentication.log), config.issuer) {
                     withAudience(config.audience)
                     acceptLeeway(CLOCK_LEEWAY_SECONDS)
                 }
@@ -103,6 +109,23 @@ fun Application.configureAuthentication(config: CloudflareAccessConfig?, appUser
                 }
             }
         }
+    }
+}
+
+/**
+ * Ktor answers 500 when the key provider itself fails: Cloudflare is unreachable, the refresh rate limit is reached or
+ * the keys cannot be parsed. Those are treated as an unknown key instead, so the token is rejected with 401.
+ */
+private fun JwkProvider.failClosed(logger: Logger) = JwkProvider { keyId ->
+    try {
+        get(keyId)
+    } catch (e: JwkException) {
+        val isProviderFailure =
+            e is NetworkException || e is RateLimitReachedException || e.message?.contains("Failed to parse") == true
+        if (!isProviderFailure) throw e
+
+        logger.error("Could not get the Cloudflare Access signing key $keyId", e)
+        throw SigningKeyNotFoundException("Signing key $keyId is not available", null)
     }
 }
 

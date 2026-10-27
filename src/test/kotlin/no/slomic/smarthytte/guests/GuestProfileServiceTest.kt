@@ -4,7 +4,6 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import no.slomic.smarthytte.auth.AppRole
 import no.slomic.smarthytte.auth.AppUser
 import no.slomic.smarthytte.utils.TestDbSetup
 
@@ -83,17 +82,43 @@ class GuestProfileServiceTest :
                 Guest("ola", "A", "B", 1970, "a@example.com", Gender.FEMALE, null, true, AppRole.FAMILY_USER)
         }
 
-        "admin should change all properties of their own guest, except removing their own admin role" {
+        "admin should change their own properties, except removing their own admin role or changing their own email" {
             givenGuests()
             val admin = user("kari", AppRole.ADMIN)
 
-            service.update(admin, "kari", GuestUpdate(email = "new@example.com", isFamily = true))
+            service.update(admin, "kari", GuestUpdate(email = "kari@example.com", isFamily = true))
                 .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+            service.update(admin, "kari", GuestUpdate(email = "new@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
+            repository.guestById("kari")!!.email shouldBe "kari@example.com"
             service.update(admin, "kari", GuestUpdate(appRole = AppRole.ADMIN))
                 .shouldBeInstanceOf<GuestUpdateResult.Updated>()
             service.update(admin, "kari", GuestUpdate(appRole = AppRole.GUEST_USER))
                 .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
             repository.guestById("kari")!!.appRole shouldBe AppRole.ADMIN
+        }
+
+        "email used by another guest with a role should be a conflict, also when granting a role" {
+            givenGuests()
+            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", appRole = null))
+            val admin = user("kari", AppRole.ADMIN)
+
+            service.update(admin, "ola", GuestUpdate(email = "KARI@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
+            service.update(admin, "external", GuestUpdate(appRole = AppRole.GUEST_USER))
+                .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+            service.update(admin, "external", GuestUpdate(email = "ola@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
+            repository.guestById("ola")!!.email shouldBe "ola@example.com"
+            repository.guestById("external")!!.email shouldBe "external@example.com"
+        }
+
+        "email used by a guest without a role should not be a conflict" {
+            givenGuests()
+            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", appRole = null))
+
+            service.update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "external@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Updated>()
         }
 
         "admin should get not found for an unknown guest" {

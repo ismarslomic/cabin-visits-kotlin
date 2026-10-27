@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.auth
+package no.slomic.smarthytte.guests
 
 import kotlinx.serialization.Serializable
 

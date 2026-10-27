@@ -1,3 +1,5 @@
+
+
 package no.slomic.smarthytte.auth
 
 import io.ktor.http.HttpStatusCode
@@ -10,6 +12,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.RouteSelector
 import io.ktor.server.routing.RouteSelectorEvaluation
 import io.ktor.server.routing.RoutingResolveContext
+import no.slomic.smarthytte.guests.AppRole
 
 private class RoleAuthorizationConfig {
     var allowedRoles: Set<AppRole> = emptySet()
@@ -42,6 +45,9 @@ fun Route.authorized(vararg roles: AppRole, build: Route.() -> Unit): Route = au
     authorizedRoute.install(RoleAuthorization) { allowedRoles = roles.toSet() }
     authorizedRoute.build()
 }
+
+/** Like [authorized], for routes that every user with a role may call. */
+fun Route.authorizedAnyRole(build: Route.() -> Unit): Route = authorized(*AppRole.entries.toTypedArray(), build = build)
 
 private object AuthorizedRouteSelector : RouteSelector() {
     override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int): RouteSelectorEvaluation =

@@ -17,6 +17,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.configureApiRoutes
+import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.statistics.StatsService
@@ -83,17 +84,17 @@ class UpdateGuestRoutesTest :
             }
         }
 
-        "post me should let an admin change all properties of their own guest" {
+        "post me should let an admin change isFamily, but not their own email" {
             givenUser("ola", AppRole.ADMIN)
 
             withApp {
-                val response =
-                    post("/api/me", accessToken("ola@example.com"), """{"email":"new@example.com","isFamily":true}""")
+                val token = accessToken("ola@example.com")
 
-                response.status shouldBe HttpStatusCode.OK
+                post("/api/me", token, """{"isFamily":false}""").status shouldBe HttpStatusCode.OK
+                post("/api/me", token, """{"email":"new@example.com"}""").status shouldBe HttpStatusCode.Forbidden
                 guestRepository.guestById("ola")!!.let {
-                    it.email shouldBe "new@example.com"
-                    it.isFamily shouldBe true
+                    it.email shouldBe "ola@example.com"
+                    it.isFamily shouldBe false
                 }
             }
         }
@@ -128,6 +129,19 @@ class UpdateGuestRoutesTest :
                     it.isFamily shouldBe true
                     it.appRole shouldBe AppRole.FAMILY_USER
                 }
+            }
+        }
+
+        "post guest should respond 409 when the email is used by another user" {
+            givenUser("kari", AppRole.ADMIN)
+            givenUser("ola", AppRole.GUEST_USER)
+
+            withApp {
+                val response =
+                    post("/api/guests/ola", accessToken("kari@example.com"), """{"email":"kari@example.com"}""")
+
+                response.status shouldBe HttpStatusCode.Conflict
+                guestRepository.guestById("ola")!!.email shouldBe "ola@example.com"
             }
         }
 

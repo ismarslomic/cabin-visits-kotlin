@@ -18,7 +18,7 @@ import no.slomic.smarthytte.guests.respondNotUpdated
 
 fun Application.configureAuthRoutes(guestProfileService: GuestProfileService) {
     routing {
-        authorized(AppRole.ADMIN, AppRole.FAMILY_USER, AppRole.GUEST_USER) {
+        authorizedAnyRole {
             get("/api/me") {
                 val user = checkNotNull(call.principal<AppUser>()) { "Authenticated route without a user" }
                 call.respond(user)
@@ -66,6 +66,7 @@ private fun Route.describeUpdateMe() = describe {
         HttpStatusCode.BadRequest { description = "The body is not valid JSON or a property has an invalid value." }
         HttpStatusCode.Unauthorized { description = "The Cloudflare Access token is missing or invalid." }
         HttpStatusCode.Forbidden { description = "The body changes a property the role may not change." }
+        HttpStatusCode.Conflict { description = "The email is already used by another user." }
         HttpStatusCode.ServiceUnavailable { description = "Cloudflare Access is not configured for the application." }
     }
 }

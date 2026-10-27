@@ -43,6 +43,7 @@ secrets
 
 ### Environment variables
 .env
+backup-env.txt
 
 ### Local data folder
 data

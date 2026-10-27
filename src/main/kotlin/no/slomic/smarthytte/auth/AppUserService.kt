@@ -2,6 +2,7 @@ package no.slomic.smarthytte.auth
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
+import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestRepository
 

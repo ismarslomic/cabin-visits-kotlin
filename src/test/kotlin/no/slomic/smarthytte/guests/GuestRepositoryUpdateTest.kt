@@ -3,7 +3,6 @@ package no.slomic.smarthytte.guests
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
-import no.slomic.smarthytte.auth.AppRole
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.utils.TestDbSetup
 

@@ -1,6 +1,5 @@
 package no.slomic.smarthytte.guests
 
-import no.slomic.smarthytte.auth.AppRole
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
 import org.jetbrains.exposed.v1.core.Column

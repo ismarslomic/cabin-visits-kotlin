@@ -57,6 +57,16 @@
               }
             }
           },
+          "409": {
+            "description": "The email is already used by another user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "401": {
             "description": "The Cloudflare Access token is missing or invalid."
           },
@@ -178,259 +188,6 @@
         }
       }
     },
-    "/api/stats": {
-      "get": {
-        "operationId": "getLiveStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Live occupancy status",
-        "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. Suitable for a smart mirror or real-time dashboard.",
-        "responses": {
-          "default": {
-            "description": "Unexpected server error."
-          },
-          "200": {
-            "description": "Live occupancy status.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LiveStats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stats/current-year": {
-      "get": {
-        "operationId": "getCurrentYearStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Current year summary",
-        "description": "Returns a quick summary for the current calendar year: number of visits, total nights, and total driving distance to/from the cabin. Suitable for a summary card or widget.",
-        "responses": {
-          "default": {
-            "description": "Unexpected server error."
-          },
-          "200": {
-            "description": "Current year summary.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentYearStats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stats/years": {
-      "get": {
-        "operationId": "getAvailableYears",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Available years",
-        "description": "Returns a sorted list of years for which reservations exist. Use this to populate a year picker in a dashboard.",
-        "responses": {
-          "default": {
-            "description": "Unexpected server error."
-          },
-          "200": {
-            "description": "Sorted list of available years.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stats/years/{year}": {
-      "get": {
-        "operationId": "getYearStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Full year statistics",
-        "description": "Returns full statistics for a given year, including visit counts, nights, occupancy percentages (days/weeks/months), guest overview, EV statistics (distance, energy consumption, regeneration), driving time stats (avg/min/max to and from cabin), typical departure and arrival times, and a monthly breakdown for all 12 months.\n\nA guest is counted as **new** in a given year if that year is the first year in which they appear in any reservation.",
-        "parameters": [
-          {
-            "name": "year",
-            "in": "path",
-            "description": "The calendar year, for example 2025.",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Invalid year parameter.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Full statistics for the requested year.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/YearStats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stats/years/{year}/months/{month}": {
-      "get": {
-        "operationId": "getMonthStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Monthly statistics",
-        "description": "Returns statistics for a specific month: visit count with comparisons against the previous 30 days, the same month last year, and the year-to-date monthly average; nights min/avg/max; occupancy percentages; guest list; and driving time and moment stats including diff vs. the previous month.",
-        "parameters": [
-          {
-            "name": "year",
-            "in": "path",
-            "description": "The calendar year, for example 2025.",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "month",
-            "in": "path",
-            "description": "The month number, 1 (January) to 12 (December).",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 12.0,
-              "minimum": 1.0
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Invalid year or month parameter (month must be 1–12).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Statistics for the requested month.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MonthStats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stats/guests": {
-      "get": {
-        "operationId": "getAllGuestsStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Statistics for all guests",
-        "description": "Returns statistics for all guests across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Suitable for a hall-of-fame view or demographic overview.",
-        "responses": {
-          "default": {
-            "description": "Unexpected server error."
-          },
-          "200": {
-            "description": "Guest statistics across all years.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AllGuestsStats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stats/guests/{guestId}": {
-      "get": {
-        "operationId": "getGuestProfileStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Guest profile",
-        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
-        "parameters": [
-          {
-            "name": "guestId",
-            "in": "path",
-            "description": "Internal unique identifier of the guest.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "The guestId path parameter is missing.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "There is no guest with the given id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "The profile of the guest.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuestProfileStats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/guests/{guestId}": {
       "post": {
         "operationId": "updateGuest",
@@ -493,11 +250,309 @@
               }
             }
           },
+          "409": {
+            "description": "The email is already used by another user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "401": {
             "description": "The Cloudflare Access token is missing or invalid."
           },
           "503": {
             "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "operationId": "getLiveStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Live occupancy status",
+        "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. Suitable for a smart mirror or real-time dashboard.",
+        "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
+          "200": {
+            "description": "Live occupancy status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
+    "/api/stats/current-year": {
+      "get": {
+        "operationId": "getCurrentYearStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Current year summary",
+        "description": "Returns a quick summary for the current calendar year: number of visits, total nights, and total driving distance to/from the cabin. Suitable for a summary card or widget.",
+        "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
+          "200": {
+            "description": "Current year summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentYearStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
+    "/api/stats/years": {
+      "get": {
+        "operationId": "getAvailableYears",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Available years",
+        "description": "Returns a sorted list of years for which reservations exist. Use this to populate a year picker in a dashboard.",
+        "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
+          "200": {
+            "description": "Sorted list of available years.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
+    "/api/stats/years/{year}": {
+      "get": {
+        "operationId": "getYearStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Full year statistics",
+        "description": "Returns full statistics for a given year, including visit counts, nights, occupancy percentages (days/weeks/months), guest overview, EV statistics (distance, energy consumption, regeneration), driving time stats (avg/min/max to and from cabin), typical departure and arrival times, and a monthly breakdown for all 12 months.\n\nA guest is counted as **new** in a given year if that year is the first year in which they appear in any reservation.",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The calendar year, for example 2025.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid year parameter.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Full statistics for the requested year.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YearStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
+    "/api/stats/years/{year}/months/{month}": {
+      "get": {
+        "operationId": "getMonthStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Monthly statistics",
+        "description": "Returns statistics for a specific month: visit count with comparisons against the previous 30 days, the same month last year, and the year-to-date monthly average; nights min/avg/max; occupancy percentages; guest list; and driving time and moment stats including diff vs. the previous month.",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "description": "The calendar year, for example 2025.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "description": "The month number, 1 (January) to 12 (December).",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 12.0,
+              "minimum": 1.0
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid year or month parameter (month must be 1–12).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Statistics for the requested month.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
+    "/api/stats/guests": {
+      "get": {
+        "operationId": "getAllGuestsStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Statistics for all guests",
+        "description": "Returns statistics for all guests across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Suitable for a hall-of-fame view or demographic overview.",
+        "responses": {
+          "default": {
+            "description": "Unexpected server error."
+          },
+          "200": {
+            "description": "Guest statistics across all years.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllGuestsStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
+    "/api/stats/guests/{guestId}": {
+      "get": {
+        "operationId": "getGuestProfileStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Guest profile",
+        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
+        "parameters": [
+          {
+            "name": "guestId",
+            "in": "path",
+            "description": "Internal unique identifier of the guest.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "The guestId path parameter is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "There is no guest with the given id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The profile of the guest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestProfileStats"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -583,6 +638,64 @@
               "boolean",
               "null"
             ]
+          },
+          "appRole": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
+      },
+      "Guest": {
+        "type": "object",
+        "title": "Guest",
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "birthYear",
+          "gender"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthYear": {
+            "type": "integer"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
+          "notionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isFamily": {
+            "type": "boolean"
           },
           "appRole": {
             "type": [
@@ -2307,64 +2420,6 @@
             "items": {
               "$ref": "#/components/schemas/FunFact"
             }
-          }
-        }
-      },
-      "Guest": {
-        "type": "object",
-        "title": "Guest",
-        "required": [
-          "id",
-          "firstName",
-          "lastName",
-          "birthYear",
-          "gender"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "birthYear": {
-            "type": "integer"
-          },
-          "email": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "gender": {
-            "type": "string",
-            "enum": [
-              "MALE",
-              "FEMALE"
-            ]
-          },
-          "notionId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "isFamily": {
-            "type": "boolean"
-          },
-          "appRole": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "ADMIN",
-              "FAMILY_USER",
-              "GUEST_USER"
-            ]
           }
         }
       }
