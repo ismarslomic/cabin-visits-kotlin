@@ -32,6 +32,7 @@ fun Application.configureOpenApi() {
             "Cabin visit statistics: live status, yearly and monthly summaries, guest rankings and guest profiles.",
         )
         tag("Guests", "Guest resources, such as avatar images.")
+        tag("Auth", "The authenticated user, as identified by Cloudflare Access.")
     }.build()
 
     routing {

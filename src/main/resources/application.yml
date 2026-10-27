@@ -53,3 +53,7 @@ vehicle-trip:
   referrer: ${VEHICLE_TRIP_REFERRER}
   locale: ${VEHICLE_TRIP_LOCALE}
   page-size: ${VEHICLE_TRIP_PAGE_SIZE:-200}
+
+cloudflare-access:
+  team-domain: ${CLOUDFLARE_ACCESS_TEAM_DOMAIN:-}
+  audience: ${CLOUDFLARE_ACCESS_AUD:-}

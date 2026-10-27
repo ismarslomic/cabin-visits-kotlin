@@ -12,9 +12,11 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
+import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.ReservationRepository
@@ -36,7 +38,15 @@ class StatsRoutesTest :
             guestRepository.addOrUpdate(Guest("anna", "Anna", "Test", 1990, gender = Gender.FEMALE))
 
             testApplication {
-                application { configureApiRoutes(guestRepository, service) }
+                application {
+                    configureApiRoutes(
+                        guestRepository,
+                        GuestProfileService(guestRepository),
+                        service,
+                        AppUserService(guestRepository),
+                        null,
+                    )
+                }
 
                 val response = client.get("/api/stats/guests/anna")
 
@@ -50,7 +60,15 @@ class StatsRoutesTest :
 
         "get guest profile for an unknown guest should respond not found" {
             testApplication {
-                application { configureApiRoutes(guestRepository, service) }
+                application {
+                    configureApiRoutes(
+                        guestRepository,
+                        GuestProfileService(guestRepository),
+                        service,
+                        AppUserService(guestRepository),
+                        null,
+                    )
+                }
 
                 val response = client.get("/api/stats/guests/unknown")
 
@@ -61,7 +79,15 @@ class StatsRoutesTest :
 
         "get all guests statistics should still be served next to the guest profile" {
             testApplication {
-                application { configureApiRoutes(guestRepository, service) }
+                application {
+                    configureApiRoutes(
+                        guestRepository,
+                        GuestProfileService(guestRepository),
+                        service,
+                        AppUserService(guestRepository),
+                        null,
+                    )
+                }
 
                 client.get("/api/stats/guests").status shouldBe HttpStatusCode.OK
             }

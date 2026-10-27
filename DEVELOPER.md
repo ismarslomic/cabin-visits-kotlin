@@ -36,6 +36,76 @@ MMM-CabinStats MagicMirror module) to generate their types. `OpenApiSpecTest` fa
 UPDATE_OPENAPI=true ./gradlew test --tests '*OpenApiSpecTest' --rerun
 ```
 
+### Authorization and restricting endpoints by role
+
+Setup of Cloudflare Access, the status codes and how roles are granted are described in
+[docs/authentication.md](docs/authentication.md). This section is about the code.
+
+#### How a request is authorized
+
+Authentication (who is calling) and authorization (what may they do) are separate steps:
+
+1. **Authentication** (`CloudflareAccessAuthentication.kt`): the Ktor `jwt` provider `cloudflare-access` verifies the
+   `Cf-Access-Jwt-Assertion` header against Cloudflare's signing keys (signature, issuer, audience, expiry). The `email`
+   claim is then looked up with `AppUserService.userByEmail` which matches the `guest` row that has an `app_role` through `GuestRepository.guestsByEmail`.
+   The result is an `AppUser` principal (id, name, email, role).
+2. **Authorization** (`RoleAuthorization.kt`): the route's allowed roles are compared with `AppUser.role`.
+
+| Situation                                              | Response |
+|--------------------------------------------------------|----------|
+| Cloudflare Access is not configured (env vars missing) | 503      |
+| Token missing, invalid or expired                      | 401      |
+| Valid token, but the email has no role in the app      | 403      |
+| Valid user, but the role is not allowed on the route   | 403      |
+| Valid user with an allowed role                        | handler  |
+
+The roles (`AppRole`) are `ADMIN`, `FAMILY_USER` and `GUEST_USER`. They are stored in `guest.app_role` and set from the
+`appRole` property in `data/guests.json` at startup, so the file is the source of truth. The role is read from the
+database on every request, so a changed role applies without the user logging in again.
+
+#### Restricting an endpoint
+
+Wrap the routes in `authorized(...)` and list the roles that are allowed:
+
+```kotlin
+fun Application.configureReportRoutes() {
+    routing {
+        // Only ADMIN and FAMILY_USER, everyone else gets 403
+        authorized(AppRole.ADMIN, AppRole.FAMILY_USER) {
+            get("/api/reports") {
+                val user = checkNotNull(call.principal<AppUser>())
+                call.respond(reportFor(user))
+            }
+        }
+    }
+}
+```
+
+- `authorized` always includes authentication, so a role check can never run without a verified token. Do not use
+  `authenticate(CLOUDFLARE_ACCESS_AUTH)` alone for new endpoints, since it lets every user with any role through.
+- Routes outside `authorized { }` stay open, which keeps the existing internal consumers working. Anything that must be
+  protected has to be wrapped explicitly.
+- Pass every role that may call the endpoint, for example `authorized(AppRole.ADMIN)` for admin-only. There is no role
+  hierarchy, `ADMIN` does not imply `FAMILY_USER`.
+- Register the route group in `configureApiRoutes` (`Application.kt`), after `configureAuthentication`.
+- Describe 401/403/503 in the OpenAPI `describe { responses { ... } }` block, as `describeMe()` in `AuthRoutes.kt` does,
+  and regenerate the spec (see above).
+
+#### Changing guest data
+
+`POST /api/me` (every role, own guest) and `POST /api/guests/{guestId}` (`authorized(AppRole.ADMIN)`) both call
+`GuestProfileService.update(actor, guestId, update)`, which decides what the actor may change and validates the values.
+The route only maps the result to a status. Do not add such rules to the routes. Properties changed this way are stored
+in `guest.api_edited_fields` and skipped by the `guests.json` sync, see
+[docs/authentication.md](docs/authentication.md#changing-guest-data).
+
+#### Testing a restricted endpoint
+
+`AuthRoutesTest` shows the pattern: install the routes with `testCloudflareAccess` and create tokens with
+`accessToken(email = ...)` from `AccessTokenFixtures.kt`. These sign with a local test key, so no call to Cloudflare is
+made. Store the guest with the wanted role through `SqliteGuestRepository`, then cover at least 401 (no or invalid
+token), 403 (unknown user and a role that is not allowed) and the success case.
+
 ### Collect metadata with the Tracing Agent
 
 GraalVM provides a Tracing Agent to easily gather metadata and prepare configuration files. The agent tracks all usages

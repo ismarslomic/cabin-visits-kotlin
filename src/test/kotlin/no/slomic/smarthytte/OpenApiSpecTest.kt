@@ -10,6 +10,8 @@ import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
+import no.slomic.smarthytte.auth.AppUserService
+import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.statistics.StatsService
@@ -64,7 +66,13 @@ private fun servedSpec(): JsonElement {
         application {
             // Same route groups as Application.module(); repositories and services are never called.
             configureMonitoring()
-            configureApiRoutes(mockk<GuestRepository>(), mockk<StatsService>())
+            configureApiRoutes(
+                mockk<GuestRepository>(),
+                mockk<GuestProfileService>(),
+                mockk<StatsService>(),
+                mockk<AppUserService>(),
+                null,
+            )
         }
         // Decode as UTF-8 explicitly: the route sends application/json without charset, and the client would
         // otherwise fall back to ISO-8859-1.

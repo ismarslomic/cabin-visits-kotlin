@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.guests
 
+import no.slomic.smarthytte.auth.AppRole
 import no.slomic.smarthytte.common.BaseEntity
 import no.slomic.smarthytte.common.BaseIdTable
 import org.jetbrains.exposed.v1.core.Column
@@ -15,6 +16,8 @@ object GuestTable : BaseIdTable<String>(name = "guest") {
     val gender: Column<Gender> = enumerationByName("gender", length = 10, Gender::class)
     val notionId: Column<String?> = varchar(name = "notion_id", length = 50).nullable()
     val isFamily: Column<Boolean> = bool("is_family").default(false)
+    val appRole: Column<AppRole?> = enumerationByName("app_role", length = 20, AppRole::class).nullable()
+    val apiEditedFields: Column<String?> = varchar(name = "api_edited_fields", length = 255).nullable()
 
     override val primaryKey = PrimaryKey(id, name = "pk_guest_id")
 }
@@ -29,6 +32,8 @@ class GuestEntity(id: EntityID<String>) : BaseEntity<String>(id, GuestTable) {
     var gender: Gender by GuestTable.gender
     var notionId: String? by GuestTable.notionId
     var isFamily: Boolean by GuestTable.isFamily
+    var appRole: AppRole? by GuestTable.appRole
+    var apiEditedFields: String? by GuestTable.apiEditedFields
 }
 
 fun daoToModel(dao: GuestEntity) = Guest(
@@ -40,4 +45,5 @@ fun daoToModel(dao: GuestEntity) = Guest(
     gender = dao.gender,
     notionId = dao.notionId,
     isFamily = dao.isFamily,
+    appRole = dao.appRole,
 )

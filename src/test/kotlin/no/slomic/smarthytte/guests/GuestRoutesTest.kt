@@ -8,8 +8,16 @@ import io.ktor.client.statement.bodyAsBytes
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
 import io.ktor.server.testing.testApplication
+import no.slomic.smarthytte.auth.AppUserService
+import no.slomic.smarthytte.auth.configureAuthentication
 import no.slomic.smarthytte.utils.TestDbSetup
+
+private fun Application.configureGuestApp(repository: GuestRepository) {
+    configureAuthentication(config = null, appUserService = AppUserService(repository))
+    configureGuestRoutes(repository, GuestProfileService(repository))
+}
 
 class GuestRoutesTest :
     StringSpec({
@@ -31,7 +39,7 @@ class GuestRoutesTest :
             val updatedTime = repository.avatarById(guest.id)!!.updatedTime
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
                 val response = client.get("/api/guests/${guest.id}/avatar")
 
@@ -48,7 +56,7 @@ class GuestRoutesTest :
             val updatedTime = repository.avatarById(guest.id)!!.updatedTime
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
                 val response = client.get("/api/guests/${guest.id}/avatar") {
                     header(HttpHeaders.IfNoneMatch, "\"${updatedTime.toEpochMilliseconds()}\"")
@@ -63,7 +71,7 @@ class GuestRoutesTest :
             repository.addOrUpdate(guest, image)
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
                 val response = client.get("/api/guests/${guest.id}/avatar") {
                     header(HttpHeaders.IfNoneMatch, "\"1\"")
@@ -78,7 +86,7 @@ class GuestRoutesTest :
             repository.addOrUpdate(guest)
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
                 client.get("/api/guests/${guest.id}/avatar").status shouldBe HttpStatusCode.NotFound
             }
@@ -86,7 +94,7 @@ class GuestRoutesTest :
 
         "get avatar for unknown guest should respond not found" {
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
                 client.get("/api/guests/unknown/avatar").status shouldBe HttpStatusCode.NotFound
             }

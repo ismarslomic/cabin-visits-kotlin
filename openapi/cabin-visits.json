@@ -6,6 +6,105 @@
     "description": "REST API for cabin visit statistics: occupancy, driving, guests and EV metrics."
   },
   "paths": {
+    "/api/me": {
+      "post": {
+        "operationId": "updateMe",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update the authenticated user",
+        "description": "Changes the properties of the authenticated user's own guest that are set in the body, and leaves the others unchanged. Every role may change firstName, lastName, birthYear and gender. An admin may also change email, isFamily and appRole (but not remove their own admin role). Changed properties are not overwritten by the guests.json sync at startup.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "The body is not valid JSON or a property has an invalid value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The updated user, with id, name, email and role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppUser"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "403": {
+            "description": "The body changes a property the role may not change.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getMe",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticated user",
+        "description": "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified against Cloudflare's signing keys) together with the application role stored for that person.",
+        "responses": {
+          "200": {
+            "description": "The user, with id, name, email and role (ADMIN, FAMILY_USER, GUEST_USER).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The authenticated person has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
+    },
     "/api/guests/{guestId}/avatar": {
       "get": {
         "operationId": "getGuestAvatar",
@@ -331,11 +430,173 @@
           }
         }
       }
+    },
+    "/api/guests/{guestId}": {
+      "post": {
+        "operationId": "updateGuest",
+        "tags": [
+          "Guests"
+        ],
+        "summary": "Update a guest",
+        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, appRole) and leaves the others unchanged. Changed properties are not overwritten by the guests.json sync at startup. An admin cannot remove their own admin role.",
+        "parameters": [
+          {
+            "name": "guestId",
+            "in": "path",
+            "description": "Internal unique identifier of the guest.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "The body is not valid JSON or a property has an invalid value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The updated guest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guest"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The guest does not exist."
+          },
+          "403": {
+            "description": "The caller is not an admin, or has no role in the application.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          }
+        ]
+      }
     }
   },
   "webhooks": {},
   "components": {
     "schemas": {
+      "AppUser": {
+        "type": "object",
+        "title": "AppUser",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
+      },
+      "GuestUpdate": {
+        "type": "object",
+        "title": "GuestUpdate",
+        "properties": {
+          "firstName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "birthYear": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "gender": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isFamily": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "appRole": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
+      },
       "GuestPeriodStats": {
         "type": "object",
         "title": "GuestPeriodStats",
@@ -2048,6 +2309,64 @@
             }
           }
         }
+      },
+      "Guest": {
+        "type": "object",
+        "title": "Guest",
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "birthYear",
+          "gender"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthYear": {
+            "type": "integer"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
+          "notionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isFamily": {
+            "type": "boolean"
+          },
+          "appRole": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
       }
     }
   },
@@ -2059,6 +2378,10 @@
     {
       "name": "Guests",
       "description": "Guest resources, such as avatar images."
+    },
+    {
+      "name": "Auth",
+      "description": "The authenticated user, as identified by Cloudflare Access."
     }
   ]
 }
