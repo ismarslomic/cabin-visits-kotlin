@@ -89,6 +89,18 @@
       "type": "ch.qos.logback.core.spi.ContextAware"
     },
     {
+      "type": "com.fasterxml.jackson.databind.deser.Deserializers[]"
+    },
+    {
+      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "com.google.api.client.googleapis.services.AbstractGoogleClientRequest"
     },
     {
@@ -1339,7 +1351,13 @@
       "type": "io.ktor.server.application.PluginInstance"
     },
     {
+      "type": "io.ktor.server.auth.AuthenticateProvidersRegistration"
+    },
+    {
       "type": "io.ktor.server.auth.Authentication"
+    },
+    {
+      "type": "io.ktor.server.auth.AuthenticationContext"
     },
     {
       "type": "io.ktor.server.engine.BaseApplicationResponse"
@@ -1607,6 +1625,9 @@
       "type": "kotlin.Boolean"
     },
     {
+      "type": "kotlin.ByteArray"
+    },
+    {
       "type": "kotlin.CharSequence"
     },
     {
@@ -1856,10 +1877,30 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.auth.UserPrincipal",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.auth.UserPrincipal$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.checkinouts.CheckInOutSource"
     },
     {
       "type": "no.slomic.smarthytte.common.BaseEntity"
+    },
+    {
+      "type": "no.slomic.smarthytte.guests.AppRole[]"
     },
     {
       "type": "no.slomic.smarthytte.guests.GuestEntity",
@@ -1868,6 +1909,28 @@
           "name": "<init>",
           "parameterTypes": [
             "org.jetbrains.exposed.v1.core.dao.id.EntityID"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.ApiKeyProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.ApiKeyPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.ApiKeyProperties"
           ]
         }
       ]
@@ -1883,6 +1946,29 @@
             "java.lang.String",
             "java.lang.String",
             "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.CloudflareAccessProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.CloudflareAccessPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.CloudflareAccessProperties"
           ]
         }
       ]
@@ -1944,29 +2030,6 @@
           "name": "<init>",
           "parameterTypes": [
             "no.slomic.smarthytte.properties.GoogleCalendarProperties"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.properties.CloudflareAccessProperties",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "java.lang.String",
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.properties.CloudflareAccessPropertiesHolder",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "no.slomic.smarthytte.properties.CloudflareAccessProperties"
           ]
         }
       ]
@@ -2501,6 +2564,9 @@
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.GenerateCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.InitCommandExtensionStub"
     },
     {
       "type": "org.flywaydb.core.internal.proprietaryStubs.LicenseSupportStub"
@@ -3342,6 +3408,9 @@
     },
     {
       "glob": "db/migration/V1.2__guest_family_and_avatar.sql"
+    },
+    {
+      "glob": "db/migration/V1.3__guest_app_role.sql"
     },
     {
       "glob": "kotlin/collections/collections.kotlin_builtins"
