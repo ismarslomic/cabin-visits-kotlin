@@ -104,6 +104,10 @@ class AuthRoutesTest :
             givenUser("ola", AppRole.ADMIN)
             val tokens = mapOf(
                 "not a jwt" to "not-a-jwt",
+                "cookie name copied with the value" to "CF_Authorization=${accessToken("ola@example.com")}",
+                "bearer prefix" to "Bearer ${accessToken("ola@example.com")}",
+                "with whitespace" to "not a jwt",
+                "empty" to "",
                 "signed by another key" to tokenSignedByOtherKey(),
                 "expired" to accessToken(expiresIn = (-1).hours),
                 "not yet valid" to accessToken(notBeforeIn = 1.hours),

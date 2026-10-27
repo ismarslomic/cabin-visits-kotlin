@@ -88,7 +88,10 @@ fun Application.configureAuthentication(
         } else {
             jwt(CLOUDFLARE_ACCESS_AUTH) {
                 authHeader { call ->
-                    call.request.header(ACCESS_JWT_HEADER)?.let { HttpAuthHeader.Single("Bearer", it) }
+                    // A value that is not a token (for example "CF_Authorization=<jwt>" or with spaces) cannot be
+                    // wrapped in an auth header: it is treated as no credentials, so the response is 401, not 500
+                    call.request.header(ACCESS_JWT_HEADER)
+                        ?.let { runCatching { HttpAuthHeader.Single("Bearer", it) }.getOrNull() }
                 }
                 verifier(config.jwkProvider.failClosed(this@configureAuthentication.log), config.issuer) {
                     withAudience(config.audience)
