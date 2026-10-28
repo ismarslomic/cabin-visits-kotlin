@@ -12,6 +12,7 @@ data class Guest(
     val gender: Gender,
     val notionId: String? = null,
     val isFamily: Boolean = false,
+    val appRole: AppRole? = null,
 )
 
 @Suppress("unused")

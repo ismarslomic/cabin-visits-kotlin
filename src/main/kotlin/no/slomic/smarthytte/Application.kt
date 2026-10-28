@@ -15,8 +15,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.toLocalDateTime
+import no.slomic.smarthytte.auth.ApiKeyConfig
+import no.slomic.smarthytte.auth.AppUserService
+import no.slomic.smarthytte.auth.CloudflareAccessConfig
+import no.slomic.smarthytte.auth.configureAuthRoutes
+import no.slomic.smarthytte.auth.configureAuthentication
+import no.slomic.smarthytte.auth.toConfig
 import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.checkinouts.CheckInOutService
+import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.GuestService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
@@ -25,7 +32,9 @@ import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
+import no.slomic.smarthytte.properties.ApiKeyPropertiesHolder
 import no.slomic.smarthytte.properties.CheckInProperties
+import no.slomic.smarthytte.properties.CloudflareAccessPropertiesHolder
 import no.slomic.smarthytte.properties.GoogleCalendarProperties
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.InfluxDbProperties
@@ -104,6 +113,8 @@ fun Application.module() {
         vehicleTripRepository = vehicleTripRepository,
     )
     val statsService = StatsService(reservationRepository, guestRepository)
+    val appUserService = AppUserService(guestRepository)
+    val guestProfileService = GuestProfileService(guestRepository)
 
     // Run initial load BEFORE starting to handle requests and running synchronization processes in the background
     runBlocking {
@@ -130,7 +141,9 @@ fun Application.module() {
     // checkInOutService.updateCheckInOutStatusForAllReservations()
 
     // Configure Ktor routing (after the initial load is completed)
-    configureApiRoutes(guestRepository, statsService)
+    val cloudflareAccess = loadProperties<CloudflareAccessPropertiesHolder>().cloudflareAccess.toConfig()
+    val apiKeys = loadProperties<ApiKeyPropertiesHolder>().apiKey.toConfig()
+    configureApiRoutes(guestRepository, guestProfileService, statsService, appUserService, cloudflareAccess, apiKeys)
 }
 
 /**
@@ -139,9 +152,18 @@ fun Application.module() {
  * Shared with `OpenApiSpecTest`, so the committed OpenAPI spec is generated from the same routes that production
  * serves. Add new route groups here, not directly in [module].
  */
-fun Application.configureApiRoutes(guestRepository: GuestRepository, statsService: StatsService) {
+fun Application.configureApiRoutes(
+    guestRepository: GuestRepository,
+    guestProfileService: GuestProfileService,
+    statsService: StatsService,
+    appUserService: AppUserService,
+    cloudflareAccess: CloudflareAccessConfig?,
+    apiKeys: ApiKeyConfig = ApiKeyConfig(emptyMap()),
+) {
     configureRouting()
-    configureGuestRoutes(guestRepository)
+    configureAuthentication(cloudflareAccess, appUserService, apiKeys)
+    configureAuthRoutes(guestProfileService)
+    configureGuestRoutes(guestRepository, guestProfileService)
     configureStatsRoutes(statsService)
     configureOpenApi()
 }

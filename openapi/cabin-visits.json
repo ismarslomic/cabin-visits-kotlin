@@ -6,6 +6,121 @@
     "description": "REST API for cabin visit statistics: occupancy, driving, guests and EV metrics."
   },
   "paths": {
+    "/api/me": {
+      "post": {
+        "operationId": "updateMe",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update the authenticated user",
+        "description": "Changes the properties of the authenticated user's own guest that are set in the body, and leaves the others unchanged. Every role may change firstName, lastName, birthYear and gender. An admin may also change email, isFamily and appRole (but not remove their own admin role). Changed properties are not overwritten by the guests.json sync at startup.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "The body is not valid JSON or a property has an invalid value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The updated user, with id, name, email and role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPrincipal"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "403": {
+            "description": "The body changes a property the role may not change.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The email is already used by another user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getMe",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticated user",
+        "description": "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified against Cloudflare's signing keys) together with the application role stored for that person.",
+        "responses": {
+          "200": {
+            "description": "The user, with id, name, email and role (ADMIN, FAMILY_USER, GUEST_USER).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPrincipal"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The authenticated person has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
     "/api/guests/{guestId}/avatar": {
       "get": {
         "operationId": "getGuestAvatar",
@@ -75,8 +190,114 @@
             "content": {
               "image/jpeg": {}
             }
+          },
+          "401": {
+            "description": "The Cloudflare Access token or the API key is missing or invalid."
+          },
+          "403": {
+            "description": "The caller has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
           }
-        }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/guests/{guestId}": {
+      "post": {
+        "operationId": "updateGuest",
+        "tags": [
+          "Guests"
+        ],
+        "summary": "Update a guest",
+        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, appRole) and leaves the others unchanged. Changed properties are not overwritten by the guests.json sync at startup. An admin cannot remove their own admin role.",
+        "parameters": [
+          {
+            "name": "guestId",
+            "in": "path",
+            "description": "Internal unique identifier of the guest.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "The body is not valid JSON or a property has an invalid value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The updated guest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guest"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The guest does not exist."
+          },
+          "403": {
+            "description": "The caller is not an admin, or has no role in the application.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The email is already used by another user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
       }
     },
     "/api/stats": {
@@ -101,7 +322,76 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/stats/guests/{guestId}": {
+      "get": {
+        "operationId": "getGuestProfileStats",
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Guest profile",
+        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
+        "parameters": [
+          {
+            "name": "guestId",
+            "in": "path",
+            "description": "Internal unique identifier of the guest.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "The guestId path parameter is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "There is no guest with the given id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The profile of the guest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestProfileStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
       }
     },
     "/api/stats/current-year": {
@@ -126,7 +416,15 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
       }
     },
     "/api/stats/years": {
@@ -154,7 +452,15 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
       }
     },
     "/api/stats/years/{year}": {
@@ -197,7 +503,15 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
       }
     },
     "/api/stats/years/{year}/months/{month}": {
@@ -251,7 +565,15 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
       }
     },
     "/api/stats/guests": {
@@ -276,66 +598,165 @@
               }
             }
           }
-        }
-      }
-    },
-    "/api/stats/guests/{guestId}": {
-      "get": {
-        "operationId": "getGuestProfileStats",
-        "tags": [
-          "Stats"
-        ],
-        "summary": "Guest profile",
-        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
-        "parameters": [
+        },
+        "security": [
           {
-            "name": "guestId",
-            "in": "path",
-            "description": "Internal unique identifier of the guest.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "The guestId path parameter is missing.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "cloudflare-access": []
           },
-          "404": {
-            "description": "There is no guest with the given id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "The profile of the guest.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuestProfileStats"
-                }
-              }
-            }
+          {
+            "api-key": []
           }
-        }
+        ]
       }
     }
   },
   "webhooks": {},
   "components": {
     "schemas": {
+      "UserPrincipal": {
+        "type": "object",
+        "title": "UserPrincipal",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
+      },
+      "GuestUpdate": {
+        "type": "object",
+        "title": "GuestUpdate",
+        "properties": {
+          "firstName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "birthYear": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "gender": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isFamily": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "appRole": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
+      },
+      "Guest": {
+        "type": "object",
+        "title": "Guest",
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "birthYear",
+          "gender"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthYear": {
+            "type": "integer"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
+          "notionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isFamily": {
+            "type": "boolean"
+          },
+          "appRole": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
+      },
       "GuestPeriodStats": {
         "type": "object",
         "title": "GuestPeriodStats",
@@ -646,6 +1067,74 @@
           "nextVisitFunFacts": {
             "type": "array",
             "description": "Fun facts about the next upcoming reservation, sorted by priority. Empty if no future reservation exists.",
+            "items": {
+              "$ref": "#/components/schemas/FunFact"
+            }
+          }
+        }
+      },
+      "GuestVisit": {
+        "type": "object",
+        "title": "GuestVisit",
+        "required": [
+          "startDate",
+          "endDate",
+          "days",
+          "nights",
+          "status"
+        ],
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "description": "First day of the visit (check-in date, inclusive).",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Last day of the visit (check-out date). Same semantics as the end date of a reservation.",
+            "format": "date"
+          },
+          "days": {
+            "type": "integer",
+            "description": "Number of calendar days of the whole visit, including arrival and departure day."
+          },
+          "nights": {
+            "type": "integer",
+            "description": "Number of nights of the whole visit."
+          },
+          "status": {
+            "type": "string",
+            "description": "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the visit has not started yet).",
+            "enum": [
+              "COMPLETED",
+              "ONGOING",
+              "UPCOMING"
+            ]
+          }
+        }
+      },
+      "GuestProfileStats": {
+        "type": "object",
+        "title": "GuestProfileStats",
+        "required": [
+          "guest",
+          "visits",
+          "funFacts"
+        ],
+        "properties": {
+          "guest": {
+            "$ref": "#/components/schemas/GuestStats"
+          },
+          "visits": {
+            "type": "array",
+            "description": "All visits of the guest, historical, ongoing and upcoming, oldest first. Suitable for a timeline.",
+            "items": {
+              "$ref": "#/components/schemas/GuestVisit"
+            }
+          },
+          "funFacts": {
+            "type": "array",
+            "description": "Fun facts about the guest, as ready-to-display Norwegian text that mentions the guest by first name. Sorted by priority, highest first. Not capped, so pick the ones to display.",
             "items": {
               "$ref": "#/components/schemas/FunFact"
             }
@@ -1980,74 +2469,14 @@
             }
           }
         }
-      },
-      "GuestVisit": {
-        "type": "object",
-        "title": "GuestVisit",
-        "required": [
-          "startDate",
-          "endDate",
-          "days",
-          "nights",
-          "status"
-        ],
-        "properties": {
-          "startDate": {
-            "type": "string",
-            "description": "First day of the visit (check-in date, inclusive).",
-            "format": "date"
-          },
-          "endDate": {
-            "type": "string",
-            "description": "Last day of the visit (check-out date). Same semantics as the end date of a reservation.",
-            "format": "date"
-          },
-          "days": {
-            "type": "integer",
-            "description": "Number of calendar days of the whole visit, including arrival and departure day."
-          },
-          "nights": {
-            "type": "integer",
-            "description": "Number of nights of the whole visit."
-          },
-          "status": {
-            "type": "string",
-            "description": "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the visit has not started yet).",
-            "enum": [
-              "COMPLETED",
-              "ONGOING",
-              "UPCOMING"
-            ]
-          }
-        }
-      },
-      "GuestProfileStats": {
-        "type": "object",
-        "title": "GuestProfileStats",
-        "required": [
-          "guest",
-          "visits",
-          "funFacts"
-        ],
-        "properties": {
-          "guest": {
-            "$ref": "#/components/schemas/GuestStats"
-          },
-          "visits": {
-            "type": "array",
-            "description": "All visits of the guest, historical, ongoing and upcoming, oldest first. Suitable for a timeline.",
-            "items": {
-              "$ref": "#/components/schemas/GuestVisit"
-            }
-          },
-          "funFacts": {
-            "type": "array",
-            "description": "Fun facts about the guest, as ready-to-display Norwegian text that mentions the guest by first name. Sorted by priority, highest first. Not capped, so pick the ones to display.",
-            "items": {
-              "$ref": "#/components/schemas/FunFact"
-            }
-          }
-        }
+      }
+    },
+    "securitySchemes": {
+      "api-key": {
+        "name": "X-Api-Key",
+        "in": "header",
+        "description": "API Key Authentication",
+        "type": "apiKey"
       }
     }
   },
@@ -2059,6 +2488,10 @@
     {
       "name": "Guests",
       "description": "Guest resources, such as avatar images."
+    },
+    {
+      "name": "Auth",
+      "description": "The authenticated user, as identified by Cloudflare Access."
     }
   ]
 }

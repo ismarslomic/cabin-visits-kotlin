@@ -9,6 +9,7 @@ import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.lowerCase
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -27,6 +28,31 @@ class SqliteGuestRepository : GuestRepository {
 
     override suspend fun guestById(id: String): Guest? = suspendTransaction {
         GuestEntity.findById(id)?.let(::daoToModel)
+    }
+
+    override suspend fun guestsByEmail(email: String): List<Guest> = suspendTransaction {
+        GuestEntity.find { GuestTable.email.lowerCase() eq email.trim().lowercase() }.map(::daoToModel)
+    }
+
+    override suspend fun update(guestId: String, update: GuestUpdate): PersistenceResult = suspendTransaction {
+        logger.trace("Updating guest with id: $guestId from the API")
+
+        val storedGuest: GuestEntity =
+            GuestEntity.findById(guestId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
+
+        val changedFields: Set<GuestField> = storedGuest.applyUpdate(update)
+
+        if (changedFields.isEmpty()) {
+            logger.trace("No changes detected for guest with id: $guestId")
+            PersistenceResult.NO_ACTION
+        } else {
+            storedGuest.apiEditedFields = (storedGuest.editedFields() + changedFields).joinToString(",") { it.name }
+            storedGuest.version = storedGuest.version.inc()
+            storedGuest.updatedTime = Clock.System.now().truncatedToMillis()
+
+            logger.trace("Updated guest with id: $guestId, changed fields: $changedFields")
+            PersistenceResult.UPDATED
+        }
     }
 
     override suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray?): PersistenceResult =
@@ -140,6 +166,7 @@ class SqliteGuestRepository : GuestRepository {
             email = guest.email
             gender = guest.gender
             isFamily = guest.isFamily
+            appRole = guest.appRole
             createdTime = Clock.System.now().truncatedToMillis()
         }
 
@@ -148,6 +175,8 @@ class SqliteGuestRepository : GuestRepository {
     }
 
     /**
+     * Fields that have been changed through the API are not overwritten by the file.
+     *
      * Note that actual database update is only performed if at least one column has changed the value, so
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * guest.
@@ -157,14 +186,7 @@ class SqliteGuestRepository : GuestRepository {
 
         val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return PersistenceResult.NO_ACTION
 
-        with(updatedGuest) {
-            firstName = guest.firstName
-            lastName = guest.lastName
-            birthYear = guest.birthYear
-            email = guest.email
-            gender = guest.gender
-            isFamily = guest.isFamily
-        }
+        updatedGuest.applyFromFile(guest)
 
         val isDirty: Boolean = updatedGuest.writeValues.isNotEmpty()
 
@@ -178,5 +200,41 @@ class SqliteGuestRepository : GuestRepository {
             logger.trace("No changes detected for guest with id: ${guest.id}")
             PersistenceResult.NO_ACTION
         }
+    }
+
+    private fun GuestEntity.editedFields(): Set<GuestField> = apiEditedFields
+        ?.split(',')
+        ?.mapNotNull { name -> GuestField.entries.find { it.name == name } }
+        ?.toSet()
+        .orEmpty()
+
+    private fun GuestEntity.applyFromFile(guest: Guest) {
+        val edited: Set<GuestField> = editedFields()
+
+        if (GuestField.FIRST_NAME !in edited) firstName = guest.firstName
+        if (GuestField.LAST_NAME !in edited) lastName = guest.lastName
+        if (GuestField.BIRTH_YEAR !in edited) birthYear = guest.birthYear
+        if (GuestField.GENDER !in edited) gender = guest.gender
+        if (GuestField.EMAIL !in edited) email = guest.email
+        if (GuestField.IS_FAMILY !in edited) isFamily = guest.isFamily
+        if (GuestField.APP_ROLE !in edited) appRole = guest.appRole
+    }
+
+    /** Sets the properties of [update] that differ from the stored ones, and returns the fields that changed. */
+    private fun GuestEntity.applyUpdate(update: GuestUpdate): Set<GuestField> = buildSet {
+        fun <T : Any> change(field: GuestField, new: T?, current: T?, assign: (T) -> Unit) {
+            if (new != null && new != current) {
+                assign(new)
+                add(field)
+            }
+        }
+
+        change(GuestField.FIRST_NAME, update.firstName, firstName) { firstName = it }
+        change(GuestField.LAST_NAME, update.lastName, lastName) { lastName = it }
+        change(GuestField.BIRTH_YEAR, update.birthYear, birthYear) { birthYear = it }
+        change(GuestField.GENDER, update.gender, gender) { gender = it }
+        change(GuestField.EMAIL, update.email, email) { email = it }
+        change(GuestField.IS_FAMILY, update.isFamily, isFamily) { isFamily = it }
+        change(GuestField.APP_ROLE, update.appRole, appRole) { appRole = it }
     }
 }

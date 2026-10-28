@@ -8,22 +8,37 @@ import io.ktor.client.statement.bodyAsBytes
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
 import io.ktor.server.testing.testApplication
+import no.slomic.smarthytte.auth.ACCESS_JWT_HEADER
+import no.slomic.smarthytte.auth.AppUserService
+import no.slomic.smarthytte.auth.accessToken
+import no.slomic.smarthytte.auth.configureAuthentication
+import no.slomic.smarthytte.auth.testCloudflareAccess
+import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.utils.TestDbSetup
+
+private fun Application.configureGuestApp(repository: GuestRepository) {
+    configureAuthentication(config = testCloudflareAccess, appUserService = AppUserService(repository))
+    configureGuestRoutes(repository, GuestProfileService(repository))
+}
 
 class GuestRoutesTest :
     StringSpec({
         val testDbSetup = TestDbSetup()
 
+        val repository: GuestRepository = SqliteGuestRepository()
+        val userToken = accessToken("viewer@example.com")
+
         beforeTest {
             testDbSetup.setupDb()
+            repository.addOrUpdate(testGuest("viewer", appRole = AppRole.GUEST_USER))
         }
 
         afterTest {
             testDbSetup.teardownDb()
         }
 
-        val repository: GuestRepository = SqliteGuestRepository()
         val image = byteArrayOf(1, 2, 3)
 
         "get avatar should respond with the jpeg image, etag and cache control" {
@@ -31,9 +46,9 @@ class GuestRoutesTest :
             val updatedTime = repository.avatarById(guest.id)!!.updatedTime
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
-                val response = client.get("/api/guests/${guest.id}/avatar")
+                val response = client.get("/api/guests/${guest.id}/avatar") { header(ACCESS_JWT_HEADER, userToken) }
 
                 response.status shouldBe HttpStatusCode.OK
                 response.headers[HttpHeaders.ContentType] shouldBe ContentType.Image.JPEG.toString()
@@ -48,9 +63,10 @@ class GuestRoutesTest :
             val updatedTime = repository.avatarById(guest.id)!!.updatedTime
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
                 val response = client.get("/api/guests/${guest.id}/avatar") {
+                    header(ACCESS_JWT_HEADER, userToken)
                     header(HttpHeaders.IfNoneMatch, "\"${updatedTime.toEpochMilliseconds()}\"")
                 }
 
@@ -63,9 +79,10 @@ class GuestRoutesTest :
             repository.addOrUpdate(guest, image)
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
                 val response = client.get("/api/guests/${guest.id}/avatar") {
+                    header(ACCESS_JWT_HEADER, userToken)
                     header(HttpHeaders.IfNoneMatch, "\"1\"")
                 }
 
@@ -78,17 +95,19 @@ class GuestRoutesTest :
             repository.addOrUpdate(guest)
 
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
-                client.get("/api/guests/${guest.id}/avatar").status shouldBe HttpStatusCode.NotFound
+                client.get("/api/guests/${guest.id}/avatar") { header(ACCESS_JWT_HEADER, userToken) }.status shouldBe
+                    HttpStatusCode.NotFound
             }
         }
 
         "get avatar for unknown guest should respond not found" {
             testApplication {
-                application { configureGuestRoutes(repository) }
+                application { configureGuestApp(repository) }
 
-                client.get("/api/guests/unknown/avatar").status shouldBe HttpStatusCode.NotFound
+                client.get("/api/guests/unknown/avatar") { header(ACCESS_JWT_HEADER, userToken) }.status shouldBe
+                    HttpStatusCode.NotFound
             }
         }
     })

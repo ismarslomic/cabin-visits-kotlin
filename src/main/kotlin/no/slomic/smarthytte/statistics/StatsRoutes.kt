@@ -18,6 +18,7 @@ import io.ktor.server.routing.openapi.OpenApiDocSource
 import io.ktor.server.routing.openapi.describe
 import io.ktor.server.routing.openapi.hide
 import io.ktor.server.routing.routing
+import no.slomic.smarthytte.auth.authorizedAnyRole
 import no.slomic.smarthytte.common.MONTHS_PER_YEAR
 
 fun Application.configureOpenApi() {
@@ -32,6 +33,7 @@ fun Application.configureOpenApi() {
             "Cabin visit statistics: live status, yearly and monthly summaries, guest rankings and guest profiles.",
         )
         tag("Guests", "Guest resources, such as avatar images.")
+        tag("Auth", "The authenticated user, as identified by Cloudflare Access.")
     }.build()
 
     routing {
@@ -44,39 +46,45 @@ fun Application.configureOpenApi() {
 
 fun Application.configureStatsRoutes(statsService: StatsService) {
     routing {
-        get("/api/stats") { call.respond(statsService.getLiveStats()) }
-            .describeLiveStats()
+        // The routes that MagicMirror (a service with an API key) needs
+        authorizedAnyRole(allowService = true) {
+            get("/api/stats") { call.respond(statsService.getLiveStats()) }
+                .describeLiveStats()
 
-        get("/api/stats/current-year") { call.respond(statsService.getCurrentYearStats()) }
-            .describeCurrentYearStats()
+            get("/api/stats/guests/{guestId}") {
+                val guestId = call.parameters["guestId"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing guestId")
+                val profile = statsService.getGuestProfileStats(guestId)
+                    ?: return@get call.respond(HttpStatusCode.NotFound, "Guest not found")
+                call.respond(profile)
+            }.describeGuestProfileStats()
+        }
 
-        get("/api/stats/years") { call.respond(statsService.getAvailableYears()) }
-            .describeAvailableYears()
+        // Users only
+        authorizedAnyRole {
+            get("/api/stats/current-year") { call.respond(statsService.getCurrentYearStats()) }
+                .describeCurrentYearStats()
 
-        get("/api/stats/years/{year}") {
-            val year = call.parameters["year"]?.toIntOrNull()
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid year")
-            call.respond(statsService.getYearStats(year))
-        }.describeYearStats()
+            get("/api/stats/years") { call.respond(statsService.getAvailableYears()) }
+                .describeAvailableYears()
 
-        get("/api/stats/years/{year}/months/{month}") {
-            val year = call.parameters["year"]?.toIntOrNull()
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid year")
-            val month = call.parameters["month"]?.toIntOrNull()?.takeIf { it in 1..MONTHS_PER_YEAR }
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid month, must be 1-12")
-            call.respond(statsService.getMonthStats(year, month))
-        }.describeMonthStats()
+            get("/api/stats/years/{year}") {
+                val year = call.parameters["year"]?.toIntOrNull()
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid year")
+                call.respond(statsService.getYearStats(year))
+            }.describeYearStats()
 
-        get("/api/stats/guests") { call.respond(statsService.getAllGuestsStats()) }
-            .describeAllGuestsStats()
+            get("/api/stats/years/{year}/months/{month}") {
+                val year = call.parameters["year"]?.toIntOrNull()
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid year")
+                val month = call.parameters["month"]?.toIntOrNull()?.takeIf { it in 1..MONTHS_PER_YEAR }
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid month, must be 1-12")
+                call.respond(statsService.getMonthStats(year, month))
+            }.describeMonthStats()
 
-        get("/api/stats/guests/{guestId}") {
-            val guestId = call.parameters["guestId"]
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing guestId")
-            val profile = statsService.getGuestProfileStats(guestId)
-                ?: return@get call.respond(HttpStatusCode.NotFound, "Guest not found")
-            call.respond(profile)
-        }.describeGuestProfileStats()
+            get("/api/stats/guests") { call.respond(statsService.getAllGuestsStats()) }
+                .describeAllGuestsStats()
+        }
     }
 }
 

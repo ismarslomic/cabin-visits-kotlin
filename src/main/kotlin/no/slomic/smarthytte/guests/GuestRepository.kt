@@ -11,6 +11,16 @@ interface GuestRepository {
      * Adds or updates the [guest] with its [guestAvatarImage]. A null [guestAvatarImage] means the guest has no avatar.
      */
     suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray? = null): PersistenceResult
+
+    /** Returns the guests with the [email], ignoring case and surrounding whitespace. */
+    suspend fun guestsByEmail(email: String): List<Guest>
+
+    /**
+     * Changes the properties of the guest that are set in [update], and remembers them as edited through the API so the
+     * guests.json sync does not overwrite them. Returns [PersistenceResult.NO_ACTION] if the guest is unknown or
+     * nothing changed.
+     */
+    suspend fun update(guestId: String, update: GuestUpdate): PersistenceResult
     suspend fun setNotionId(notionId: String, guestId: String): PersistenceResult
     suspend fun avatarById(guestId: String): GuestAvatar?
 
