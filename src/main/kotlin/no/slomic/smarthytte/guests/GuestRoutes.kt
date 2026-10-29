@@ -8,10 +8,13 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.log
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.ContentTransformationException
 import io.ktor.server.request.header
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
 import io.ktor.server.request.receive
 import io.ktor.server.response.cacheControl
 import io.ktor.server.response.header
@@ -69,13 +72,18 @@ fun Application.configureGuestRoutes(guestRepository: GuestRepository, guestProf
     }
 }
 
-/** The request body, or null if it is not a valid JSON [GuestUpdate]. */
+/** The request body, or null (and a warning in the log) if it is not a valid JSON [GuestUpdate]. */
 suspend fun ApplicationCall.receiveGuestUpdate(): GuestUpdate? = try {
     receive<GuestUpdate>()
-} catch (_: BadRequestException) {
-    null
-} catch (_: ContentTransformationException) {
-    null
+} catch (e: BadRequestException) {
+    logUnreadableBody(e)
+} catch (e: ContentTransformationException) {
+    logUnreadableBody(e)
+}
+
+private fun ApplicationCall.logUnreadableBody(cause: Exception): GuestUpdate? {
+    application.log.warn("Could not read the request body of ${request.httpMethod.value} ${request.path()}", cause)
+    return null
 }
 
 /** Responds the HTTP status that belongs to a [GuestUpdateResult] that did not update the guest. */

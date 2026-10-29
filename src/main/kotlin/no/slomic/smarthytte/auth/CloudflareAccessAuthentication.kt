@@ -16,6 +16,7 @@ import io.ktor.server.auth.AuthenticationProvider
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.request.header
+import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import io.ktor.util.AttributeKey
 import no.slomic.smarthytte.guests.AppRole
@@ -113,6 +114,12 @@ fun Application.configureAuthentication(
                     if (call.attributes.contains(UnknownUser)) {
                         call.respond(HttpStatusCode.Forbidden, "No access to this application")
                     } else {
+                        val failures = call.authentication.allFailures
+                        if (failures.any { it != AuthenticationFailedCause.NoCredentials }) {
+                            call.application.log.warn(
+                                "Rejected Cloudflare Access token for ${call.request.path()}: $failures",
+                            )
+                        }
                         call.respond(HttpStatusCode.Unauthorized, "Invalid or missing authentication")
                     }
                 }
