@@ -1,7 +1,7 @@
 package no.slomic.smarthytte.calendarevents
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
+import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
@@ -189,7 +189,7 @@ private fun createCalendarApiClient(googleCalendarPropertiesHolder: GoogleCalend
     // Build the Calendar API client
     return Calendar.Builder(
         /* transport = */
-        GoogleNetHttpTransport.newTrustedTransport(),
+        NetHttpTransport(),
         /* jsonFactory = */
         GsonFactory.getDefaultInstance(),
         /* httpRequestInitializer = */

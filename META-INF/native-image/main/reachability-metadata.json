@@ -3373,6 +3373,9 @@
       "glob": "META-INF/services/kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper"
     },
     {
+      "glob": "META-INF/services/kotlinx.coroutines.CoroutineExceptionHandler"
+    },
+    {
       "glob": "META-INF/services/org.flywaydb.core.extensibility.Plugin"
     },
     {
