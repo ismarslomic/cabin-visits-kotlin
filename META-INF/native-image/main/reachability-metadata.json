@@ -1914,6 +1914,26 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.guests.GuestUpdate",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.guests.GuestUpdate$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.guests.GuestUpdate$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.ApiKeyProperties",
       "methods": [
         {
