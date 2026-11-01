@@ -4,3 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  # Base images in Dockerfile (FROM ...)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Actions used in .github/workflows/*.yml
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

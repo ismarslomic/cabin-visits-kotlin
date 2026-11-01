@@ -3,17 +3,24 @@ name: Build and publish
 on:
   push:
     branches: [ 'main' ]
-    # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
-    # Don't trigger if changes done to .md or .txt files
+    # Don't trigger if changes done to .md files
     paths-ignore:
       - '**/*.md'
 
   pull_request:
     branches: [ 'main' ]
-    # Don't trigger if changes done to .md or .txt files
+    # Don't trigger if changes done to .md files
     paths-ignore:
       - '**/*.md'
+
+# Least privilege by default, jobs request more only when needed
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same PR, never cancel runs on main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # github.repository as <account>/<repo>
@@ -26,66 +33,72 @@ jobs:
     # Pin runner to a specific Ubuntu image for reproducibility and to avoid unexpected breakages from ubuntu-latest changes
     # Update intentionally after verifying builds on the new image (see https://github.com/actions/runner-images/releases)
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      # Required by github/codeql-action/upload-sarif
+      security-events: write
 
     steps:
       # Checkout the code
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Set up GraalVM (see https://github.com/graalvm/setup-graalvm)
       - name: Set up GraalVM
-        uses: graalvm/setup-graalvm@v1
+        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
         with:
           native-image-musl: true # sets up musl to build static binaries with GraalVM Native Image
-          version: "25" # Adjusted to GraalVM v24
+          version: "25" # GraalVM v25
           distribution: "graalvm" # GraalVM distribution
-          java-version: "25" # Use Java 24 to match GraalVM v24
+          java-version: "25" # Use Java 25 to match GraalVM v25
 
       # Set up Gradle
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       # Run Kotlin linter checks
       - name: Run Ktlint
-        run: ./gradlew lintKotlin --no-daemon
+        run: ./gradlew lintKotlin
+
+      # Run Detekt
+      - name: Run Detekt analysis
+        run: ./gradlew detekt
+
+      # Uploads Detekt results to GitHub repository using the upload-sarif action
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        # workflows triggered by Dependabot on push events run with read-only access, meaning they can't upload
+        # SARIF reports for code scanning
+        if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.actor != 'dependabot[bot]') }}
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: ${{ github.workspace }}/build/reports/detekt/detekt.sarif
+          checkout_path: ${{ github.workspace }}
 
       # Run Tests
       - name: Run Tests
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test
 
       # Validate the committed OpenAPI spec
       - name: Validate OpenAPI spec
-        run: ./gradlew openApiValidate --no-daemon
+        run: ./gradlew openApiValidate
 
       # Upload code coverage to codecov.io
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       # Upload test results for codecov.io Test Analytics
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
           directory: build/test-results/test
-
-      # Run Detekt
-      - name: Run Detekt analysis
-        run: ./gradlew detekt --no-daemon
-
-      # Uploads Detekt results to GitHub repository using the upload-sarif action
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        # workflows triggered by Dependabot on push events run with read-only access, meaning they can't upload
-        # SARIF reports for code scanning
-        if: github.event_name == 'pull_request' || github.actor != 'dependabot[bot]'
-        with:
-          # Path to SARIF file relative to the root of the repository
-          sarif_file: ${{ github.workspace }}/build/reports/detekt/detekt.sarif
-          checkout_path: ${{ github.workspace }}
 
 
   containerize:
@@ -99,24 +112,27 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Extract metadata (tags, labels, image name) from GIT to use in Docker Build Push step
       # https://github.com/docker/metadata-action
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE_NAME }}
           # tag = 'main' when push event to 'main' branch
           # tag = 'pr-X' when push event to pull request
-          # tag = 'major.minor.patch' when push event of new tag
+          # tag = 'sha-<short commit>' on every build, used by release-retag.yml to find the image of a release
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
+            type=sha
           labels: |
             maintainer=Ismar Slomic
             org.opencontainers.image.documentation=https://github.com/ismarslomic/cabin-visits-kotlin
@@ -127,25 +143,26 @@ jobs:
       # Setup Buildx before building container
       # https://github.com/docker/setup-buildx-action
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
-      # Login to DockerHub
+      # Login to DockerHub (not on PRs: nothing is pushed, and fork/Dependabot PRs have no secrets)
       # https://github.com/docker/login-action
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # Build and Push image if release tag (in format v1.0.0),
-      # tag the image with 'git tag' and along with 'latest'
+      # Build the image on every run, push only from main (release tags are created by release-retag.yml)
       # https://github.com/docker/build-push-action
       - name: Build & Push Docker image
-        uses: docker/build-push-action@v6
+        id: docker_build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/arm64/v8
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -154,12 +171,15 @@ jobs:
 
       # Show image digest from docker build
       - name: Image Digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo "$DIGEST"
+        env:
+          DIGEST: ${{ steps.docker_build.outputs.digest }}
 
       # Update Docker Hub repo with description from README.md
       # https://github.com/peter-evans/dockerhub-description
       - name: Update image description in Docker Hub
-        uses: peter-evans/dockerhub-description@v4
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
         with:
           readme-filepath: README.md # Path to the repository readme.
           username: ${{ secrets.DOCKER_HUB_USERNAME }} # Docker Hub username
