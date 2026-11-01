@@ -212,7 +212,12 @@ class GuestRepositoryTest :
         }
 
         "all avatar updated times should only include guests with avatar image" {
-            val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
+            val guest2 = guest.copy(
+                id = "john2",
+                firstName = "John2",
+                lastName = "Doe2",
+                email = "john2.doe@example.no",
+            )
             repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
             repository.addOrUpdate(guest2)
             setOldAvatarUpdatedTime(guest.id)
@@ -233,7 +238,12 @@ class GuestRepositoryTest :
         "delete should remove reservation guests from the intermediate table (cascade)" {
             val reservationRepository: ReservationRepository = SqliteReservationRepository()
             repository.addOrUpdate(guest)
-            val guest2 = guest.copy(id = "john2", firstName = "John2", lastName = "Doe2")
+            val guest2 = guest.copy(
+                id = "john2",
+                firstName = "John2",
+                lastName = "Doe2",
+                email = "john2.doe@example.no",
+            )
             repository.addOrUpdate(guest2)
 
             val reservationWithGuest = reservation.copy(

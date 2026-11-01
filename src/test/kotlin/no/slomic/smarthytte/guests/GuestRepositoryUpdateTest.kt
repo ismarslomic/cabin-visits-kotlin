@@ -1,10 +1,13 @@
 package no.slomic.smarthytte.guests
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.utils.TestDbSetup
+import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 
 class GuestRepositoryUpdateTest :
     StringSpec({
@@ -15,13 +18,31 @@ class GuestRepositoryUpdateTest :
 
         val repository: GuestRepository = SqliteGuestRepository()
 
-        "guests by email should ignore case and whitespace, and find all guests sharing the email" {
+        "guests by email should ignore case and whitespace" {
             repository.addOrUpdate(guest.copy(id = "a", email = "Shared@Example.no"))
-            repository.addOrUpdate(guest.copy(id = "b", email = "shared@example.no"))
             repository.addOrUpdate(guest.copy(id = "c", email = "other@example.no"))
 
-            repository.guestsByEmail(" SHARED@example.NO ").map { it.id }.sorted() shouldBe listOf("a", "b")
+            repository.guestsByEmail(" SHARED@example.NO ").map { it.id } shouldBe listOf("a")
             repository.guestsByEmail("unknown@example.no").shouldBeEmpty()
+        }
+
+        "database should reject a second guest with the same email, ignoring case" {
+            repository.addOrUpdate(guest.copy(id = "a", email = "Shared@Example.no"))
+
+            shouldThrow<ExposedSQLException> {
+                repository.addOrUpdate(guest.copy(id = "b", email = "shared@example.no"))
+            }
+            shouldThrow<ExposedSQLException> {
+                repository.addOrUpdate(guest.copy(id = "c", email = "other@example.no"))
+                repository.update("c", GuestUpdate(email = "SHARED@example.no"))
+            }
+        }
+
+        "database should accept many guests without an email" {
+            repository.addOrUpdate(guest.copy(id = "a", email = null))
+            repository.addOrUpdate(guest.copy(id = "b", email = null))
+
+            repository.allGuests().map { it.id } shouldContainExactlyInAnyOrder listOf("a", "b")
         }
 
         "update should change only the properties that are set and bump the version" {
@@ -44,14 +65,14 @@ class GuestRepositoryUpdateTest :
 
         "sync from file should not overwrite properties changed through the API" {
             repository.addOrUpdate(guest)
-            repository.update(guest.id, GuestUpdate(firstName = "Johnny", appRole = AppRole.ADMIN))
+            repository.update(guest.id, GuestUpdate(firstName = "Johnny", role = AppRole.ADMIN))
 
-            val fromFile = guest.copy(firstName = "FromFile", lastName = "Changed", appRole = AppRole.GUEST_USER)
+            val fromFile = guest.copy(firstName = "FromFile", lastName = "Changed", role = AppRole.GUEST_USER)
             repository.addOrUpdate(fromFile) shouldBe PersistenceResult.UPDATED
 
             val stored = repository.guestById(guest.id)!!
             stored.firstName shouldBe "Johnny"
-            stored.appRole shouldBe AppRole.ADMIN
+            stored.role shouldBe AppRole.ADMIN
             stored.lastName shouldBe "Changed"
         }
 

@@ -33,7 +33,7 @@ class UpdateGuestRoutesTest :
         val guestRepository = SqliteGuestRepository()
 
         suspend fun givenUser(id: String, role: AppRole?) {
-            guestRepository.addOrUpdate(testGuest(id, firstName = "Test", appRole = role))
+            guestRepository.addOrUpdate(testGuest(id, firstName = "Test", role = role))
         }
 
         fun withApp(block: suspend ApplicationTestBuilder.() -> Unit) = testApplication {
@@ -71,16 +71,16 @@ class UpdateGuestRoutesTest :
             }
         }
 
-        "post me should respond 403 when a non admin changes email, isFamily or appRole" {
+        "post me should respond 403 when a non admin changes email, isFamily or role" {
             givenUser("ola", AppRole.FAMILY_USER)
 
             withApp {
                 val token = accessToken("ola@example.com")
 
-                post("/api/me", token, """{"appRole":"ADMIN"}""").status shouldBe HttpStatusCode.Forbidden
+                post("/api/me", token, """{"role":"ADMIN"}""").status shouldBe HttpStatusCode.Forbidden
                 post("/api/me", token, """{"email":"new@example.com"}""").status shouldBe HttpStatusCode.Forbidden
                 post("/api/me", token, """{"isFamily":false}""").status shouldBe HttpStatusCode.Forbidden
-                guestRepository.guestById("ola")!!.appRole shouldBe AppRole.FAMILY_USER
+                guestRepository.guestById("ola")!!.role shouldBe AppRole.FAMILY_USER
             }
         }
 
@@ -118,7 +118,7 @@ class UpdateGuestRoutesTest :
             givenUser("ola", AppRole.GUEST_USER)
 
             withApp {
-                val body = """{"lastName":"Hansen","email":"new@example.com","isFamily":true,"appRole":"FAMILY_USER"}"""
+                val body = """{"lastName":"Hansen","email":"new@example.com","isFamily":true,"role":"FAMILY_USER"}"""
 
                 val response = post("/api/guests/ola", accessToken("kari@example.com"), body)
 
@@ -127,7 +127,7 @@ class UpdateGuestRoutesTest :
                     it.lastName shouldBe "Hansen"
                     it.email shouldBe "new@example.com"
                     it.isFamily shouldBe true
-                    it.appRole shouldBe AppRole.FAMILY_USER
+                    it.role shouldBe AppRole.FAMILY_USER
                 }
             }
         }
@@ -159,7 +159,7 @@ class UpdateGuestRoutesTest :
             givenUser("kari", AppRole.FAMILY_USER)
 
             withApp {
-                val body = """{"firstName":"Hacked","appRole":"ADMIN"}"""
+                val body = """{"firstName":"Hacked","role":"ADMIN"}"""
 
                 post("/api/guests/kari", accessToken("ola@example.com"), body).status shouldBe HttpStatusCode.Forbidden
                 post("/api/guests/kari", accessToken("kari@example.com"), body).status shouldBe HttpStatusCode.Forbidden
@@ -167,7 +167,7 @@ class UpdateGuestRoutesTest :
                 // A denied request must not reach the handler
                 guestRepository.guestById("kari")!!.let {
                     it.firstName shouldBe "Test"
-                    it.appRole shouldBe AppRole.FAMILY_USER
+                    it.role shouldBe AppRole.FAMILY_USER
                 }
             }
         }

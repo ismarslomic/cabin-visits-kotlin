@@ -59,7 +59,7 @@ private fun Route.describeUpdateMe() = describe {
     summary = "Update the authenticated user"
     description = "Changes the properties of the authenticated user's own guest that are set in the body, and leaves " +
         "the others unchanged. Every role may change firstName, lastName, birthYear and gender. An admin may also " +
-        "change email, isFamily and appRole (but not remove their own admin role). Changed properties are not " +
+        "change email, isFamily and role (but not remove their own admin role). Changed properties are not " +
         "overwritten by the guests.json sync at startup."
     responses {
         HttpStatusCode.OK { description = "The updated user, with id, name, email and role." }

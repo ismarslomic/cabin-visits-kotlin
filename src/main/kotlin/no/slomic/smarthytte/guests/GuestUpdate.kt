@@ -11,10 +11,10 @@ data class GuestUpdate(
     val gender: Gender? = null,
     val email: String? = null,
     val isFamily: Boolean? = null,
-    val appRole: AppRole? = null,
+    val role: AppRole? = null,
 ) {
-    /** Only an admin may change email, isFamily and appRole. */
-    fun requiresAdmin(): Boolean = email != null || isFamily != null || appRole != null
+    /** Only an admin may change email, isFamily and role. */
+    fun requiresAdmin(): Boolean = email != null || isFamily != null || role != null
 }
 
 /** The guest properties that can be changed through the API, and that the guests.json sync then leaves alone. */
@@ -25,5 +25,5 @@ enum class GuestField {
     GENDER,
     EMAIL,
     IS_FAMILY,
-    APP_ROLE,
+    ROLE,
 }

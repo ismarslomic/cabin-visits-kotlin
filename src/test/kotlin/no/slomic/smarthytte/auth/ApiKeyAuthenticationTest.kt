@@ -50,7 +50,7 @@ class ApiKeyAuthenticationTest :
         val statsService = StatsService(SqliteReservationRepository(), guestRepository, LocalDate(2020, 9, 1))
 
         suspend fun givenUser(id: String, role: AppRole?) {
-            guestRepository.addOrUpdate(testGuest(id, firstName = "Test", appRole = role))
+            guestRepository.addOrUpdate(testGuest(id, firstName = "Test", role = role))
         }
 
         fun withApp(

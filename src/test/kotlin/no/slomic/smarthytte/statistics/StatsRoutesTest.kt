@@ -43,7 +43,7 @@ class StatsRoutesTest :
         val userToken = accessToken("viewer@example.com")
 
         beforeTest {
-            guestRepository.addOrUpdate(testGuest("viewer", appRole = AppRole.GUEST_USER))
+            guestRepository.addOrUpdate(testGuest("viewer", role = AppRole.GUEST_USER))
         }
 
         "get guest profile should respond with the guest, visits and fun facts" {

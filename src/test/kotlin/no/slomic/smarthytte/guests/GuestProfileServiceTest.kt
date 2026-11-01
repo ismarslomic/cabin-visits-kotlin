@@ -20,8 +20,8 @@ class GuestProfileServiceTest :
         val service = GuestProfileService(repository)
 
         suspend fun givenGuests() {
-            repository.addOrUpdate(guest.copy(id = "ola", email = "ola@example.com", appRole = AppRole.GUEST_USER))
-            repository.addOrUpdate(guest.copy(id = "kari", email = "kari@example.com", appRole = AppRole.ADMIN))
+            repository.addOrUpdate(guest.copy(id = "ola", email = "ola@example.com", role = AppRole.GUEST_USER))
+            repository.addOrUpdate(guest.copy(id = "kari", email = "kari@example.com", role = AppRole.ADMIN))
         }
 
         "every role should change firstName, lastName, birthYear and gender of their own guest" {
@@ -29,7 +29,7 @@ class GuestProfileServiceTest :
 
             AppRole.entries.forEach { role ->
                 withClue(role) {
-                    repository.addOrUpdate(guest.copy(id = "me", appRole = role))
+                    repository.addOrUpdate(guest.copy(id = "me", role = role))
                     val update =
                         GuestUpdate(firstName = " New ", lastName = "Name", birthYear = 1999, gender = Gender.FEMALE)
 
@@ -45,12 +45,12 @@ class GuestProfileServiceTest :
             }
         }
 
-        "non admin should not change email, isFamily or appRole of their own guest" {
+        "non admin should not change email, isFamily or role of their own guest" {
             givenGuests()
             val updates = listOf(
                 GuestUpdate(email = "new@example.com"),
                 GuestUpdate(isFamily = true),
-                GuestUpdate(appRole = AppRole.ADMIN),
+                GuestUpdate(role = AppRole.ADMIN),
             )
 
             updates.forEach { update ->
@@ -59,7 +59,7 @@ class GuestProfileServiceTest :
                         .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
                 }
             }
-            repository.guestById("ola")!!.appRole shouldBe AppRole.GUEST_USER
+            repository.guestById("ola")!!.role shouldBe AppRole.GUEST_USER
         }
 
         "non admin should not change another guest, whether it exists or not" {
@@ -91,33 +91,32 @@ class GuestProfileServiceTest :
             service.update(admin, "kari", GuestUpdate(email = "new@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
             repository.guestById("kari")!!.email shouldBe "kari@example.com"
-            service.update(admin, "kari", GuestUpdate(appRole = AppRole.ADMIN))
+            service.update(admin, "kari", GuestUpdate(role = AppRole.ADMIN))
                 .shouldBeInstanceOf<GuestUpdateResult.Updated>()
-            service.update(admin, "kari", GuestUpdate(appRole = AppRole.GUEST_USER))
+            service.update(admin, "kari", GuestUpdate(role = AppRole.GUEST_USER))
                 .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
-            repository.guestById("kari")!!.appRole shouldBe AppRole.ADMIN
+            repository.guestById("kari")!!.role shouldBe AppRole.ADMIN
         }
 
-        "email used by another guest with a role should be a conflict, also when granting a role" {
+        "email used by another guest, with or without a role, should be a conflict" {
             givenGuests()
-            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", appRole = null))
+            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", role = null))
             val admin = user("kari", AppRole.ADMIN)
 
             service.update(admin, "ola", GuestUpdate(email = "KARI@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
-            service.update(admin, "external", GuestUpdate(appRole = AppRole.GUEST_USER))
-                .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+            service.update(admin, "ola", GuestUpdate(email = "external@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
             service.update(admin, "external", GuestUpdate(email = "ola@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
             repository.guestById("ola")!!.email shouldBe "ola@example.com"
             repository.guestById("external")!!.email shouldBe "external@example.com"
         }
 
-        "email used by a guest without a role should not be a conflict" {
+        "the same email in another case should not be a conflict for the guest itself" {
             givenGuests()
-            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", appRole = null))
 
-            service.update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "external@example.com"))
+            service.update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "OLA@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Updated>()
         }
 
@@ -144,6 +143,6 @@ class GuestProfileServiceTest :
                 }
             }
             repository.guestById("ola") shouldBe
-                guest.copy(id = "ola", email = "ola@example.com", appRole = AppRole.GUEST_USER)
+                guest.copy(id = "ola", email = "ola@example.com", role = AppRole.GUEST_USER)
         }
     })

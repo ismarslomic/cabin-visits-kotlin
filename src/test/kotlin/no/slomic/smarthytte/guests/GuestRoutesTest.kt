@@ -32,7 +32,7 @@ class GuestRoutesTest :
 
         beforeTest {
             testDbSetup.setupDb()
-            repository.addOrUpdate(testGuest("viewer", appRole = AppRole.GUEST_USER))
+            repository.addOrUpdate(testGuest("viewer", role = AppRole.GUEST_USER))
         }
 
         afterTest {

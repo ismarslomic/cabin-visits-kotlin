@@ -13,7 +13,7 @@
           "Auth"
         ],
         "summary": "Update the authenticated user",
-        "description": "Changes the properties of the authenticated user's own guest that are set in the body, and leaves the others unchanged. Every role may change firstName, lastName, birthYear and gender. An admin may also change email, isFamily and appRole (but not remove their own admin role). Changed properties are not overwritten by the guests.json sync at startup.",
+        "description": "Changes the properties of the authenticated user's own guest that are set in the body, and leaves the others unchanged. Every role may change firstName, lastName, birthYear and gender. An admin may also change email, isFamily and role (but not remove their own admin role). Changed properties are not overwritten by the guests.json sync at startup.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -218,7 +218,7 @@
           "Guests"
         ],
         "summary": "Update a guest",
-        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, appRole) and leaves the others unchanged. Changed properties are not overwritten by the guests.json sync at startup. An admin cannot remove their own admin role.",
+        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, role) and leaves the others unchanged. Changed properties are not overwritten by the guests.json sync at startup. An admin cannot remove their own admin role.",
         "parameters": [
           {
             "name": "guestId",
@@ -686,7 +686,7 @@
               "null"
             ]
           },
-          "appRole": {
+          "role": {
             "type": [
               "string",
               "null"
@@ -744,7 +744,7 @@
           "isFamily": {
             "type": "boolean"
           },
-          "appRole": {
+          "role": {
             "type": [
               "string",
               "null"

@@ -44,7 +44,7 @@ class AuthRoutesTest :
         val guestRepository = SqliteGuestRepository()
 
         suspend fun givenUser(id: String, role: AppRole?) {
-            guestRepository.addOrUpdate(testGuest(id, firstName = "Test", appRole = role))
+            guestRepository.addOrUpdate(testGuest(id, firstName = "Test", role = role))
         }
 
         fun withApp(
@@ -191,7 +191,7 @@ class AuthRoutesTest :
 
             withApp {
                 get(ADMIN_ONLY_PATH, accessToken("ola@example.com")).status shouldBe HttpStatusCode.Forbidden
-                guestRepository.addOrUpdate(testGuest("ola", firstName = "Test", appRole = AppRole.ADMIN))
+                guestRepository.addOrUpdate(testGuest("ola", firstName = "Test", role = AppRole.ADMIN))
                 get(ADMIN_ONLY_PATH, accessToken("ola@example.com")).status shouldBe HttpStatusCode.OK
                 guestRepository.addOrUpdate(testGuest("ola", firstName = "Test"))
                 get(ADMIN_ONLY_PATH, accessToken("ola@example.com")).status shouldBe HttpStatusCode.Forbidden
