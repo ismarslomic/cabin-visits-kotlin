@@ -27,7 +27,7 @@ erDiagram
         string email
         string gender
         string notion_id
-        string app_role
+        string role
         string api_edited_fields
         string created_time
         string updated_time
