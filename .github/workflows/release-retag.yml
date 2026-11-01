@@ -4,6 +4,8 @@ on:
   release:
     types: [published]
 
+permissions: {}
+
 env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
@@ -12,34 +14,31 @@ jobs:
   retag-image:
     name: Retag Docker image with release version
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Ensure Docker Buildx is available
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Compute release tag
-        id: rel
-        run: |
-          # Use the GitHub release tag name as-is (e.g., v1.2.3)
-          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-
-      - name: Retag remote image without rebuild (manifest-level retag)
+      # Manifest-level retag, no pull or rebuild. The source is the image built from the release commit
+      # (tag sha-<7 chars>, see build.yml), not :main, which may already point to a newer commit.
+      - name: Retag remote image without rebuild
+        env:
+          # Release tag name as-is (e.g., 1.2.3), user-controlled so passed via env
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euxo pipefail
-          SRC_REF="${IMAGE_NAME}:main"
-          DST_REF="${IMAGE_NAME}:${{ steps.rel.outputs.tag }}"
-          # Create a new tag pointing to the same manifest as :main without pulling or rebuilding
+          SRC_REF="${IMAGE_NAME}:sha-${GITHUB_SHA::7}"
+          DST_REF="${IMAGE_NAME}:${RELEASE_TAG}"
           docker buildx imagetools create --tag "$DST_REF" "$SRC_REF"
 
       - name: Show resulting image information
-        run: |
-          docker buildx imagetools inspect "${IMAGE_NAME}:${{ steps.rel.outputs.tag }}"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: docker buildx imagetools inspect "${IMAGE_NAME}:${RELEASE_TAG}"
