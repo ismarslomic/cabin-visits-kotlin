@@ -8,9 +8,12 @@ import no.slomic.smarthytte.properties.GuestPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import java.io.File
 
-class GuestService(private val guestRepository: GuestRepository) {
+class GuestService(
+    private val guestRepository: GuestRepository,
+    guestPropertiesHolder: GuestPropertiesHolder = loadProperties<GuestPropertiesHolder>(),
+) {
     private val logger: Logger = KtorSimpleLogger(GuestService::class.java.name)
-    private val guestProperties = loadProperties<GuestPropertiesHolder>().guest
+    private val guestProperties = guestPropertiesHolder.guest
     private val filePath = guestProperties.filePath
     private val avatarsDirectory = guestProperties.avatarsDirectory
 

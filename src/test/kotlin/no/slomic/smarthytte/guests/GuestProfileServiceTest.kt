@@ -4,6 +4,8 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.coEvery
+import io.mockk.spyk
 import no.slomic.smarthytte.auth.UserPrincipal
 import no.slomic.smarthytte.utils.TestDbSetup
 
@@ -204,6 +206,7 @@ class GuestProfileServiceTest :
                 "birthYear in the future" to GuestUpdate(birthYear = 3000),
                 "email without @" to GuestUpdate(email = "nope"),
                 "email with spaces" to GuestUpdate(email = "a b@example.com"),
+                "too long email" to GuestUpdate(email = "x".repeat(250) + "@example.com"),
             )
 
             updates.forEach { (reason, update) ->
@@ -213,5 +216,24 @@ class GuestProfileServiceTest :
             }
             repository.guestById("ola") shouldBe
                 guest.copy(id = "ola", email = "ola@example.com", role = AppRole.GUEST_USER)
+        }
+
+        "admin should be allowed to keep their own email written in another case" {
+            givenGuests()
+
+            service.update(user("kari", AppRole.ADMIN), "kari", GuestUpdate(email = " KARI@Example.com "))
+                .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+        }
+
+        "database should have the last word when another guest gets the email after the conflict check" {
+            givenGuests()
+            val racing = spyk(repository)
+            coEvery { racing.guestsByEmail(any()) } returns emptyList()
+
+            GuestProfileService(
+                racing,
+            ).update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "kari@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
+            repository.guestById("ola")!!.email shouldBe "ola@example.com"
         }
     })
