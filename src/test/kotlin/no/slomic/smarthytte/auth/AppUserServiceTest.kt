@@ -50,7 +50,12 @@ class AppUserServiceTest :
             repository.userByEmail("kari.nordmann@example.com") shouldBe UserPrincipal(
                 id = "kari",
                 name = "Kari kari",
+                firstName = "Kari",
+                lastName = "kari",
+                birthYear = 1980,
+                gender = Gender.MALE,
                 email = "Kari.Nordmann@Example.com",
+                isFamily = true,
                 role = AppRole.FAMILY_USER,
             )
             repository.userByEmail(" KARI.NORDMANN@EXAMPLE.COM ")?.id shouldBe "kari"

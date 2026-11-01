@@ -73,15 +73,19 @@ fun Application.configureGuestRoutes(guestRepository: GuestRepository, guestProf
 }
 
 /** The request body, or null (and a warning in the log) if it is not a valid JSON [GuestUpdate]. */
-suspend fun ApplicationCall.receiveGuestUpdate(): GuestUpdate? = try {
-    receive<GuestUpdate>()
+suspend fun ApplicationCall.receiveGuestUpdate(): GuestUpdate? = receiveOrNull<GuestUpdate>()
+
+/** The request body, or null (and a warning in the log) if it is not valid JSON for [T], such as a missing field. */
+suspend inline fun <reified T : Any> ApplicationCall.receiveOrNull(): T? = try {
+    receive<T>()
 } catch (e: BadRequestException) {
     logUnreadableBody(e)
 } catch (e: ContentTransformationException) {
     logUnreadableBody(e)
 }
 
-private fun ApplicationCall.logUnreadableBody(cause: Exception): GuestUpdate? {
+@PublishedApi
+internal fun ApplicationCall.logUnreadableBody(cause: Exception): Nothing? {
     application.log.warn("Could not read the request body of ${request.httpMethod.value} ${request.path()}", cause)
     return null
 }

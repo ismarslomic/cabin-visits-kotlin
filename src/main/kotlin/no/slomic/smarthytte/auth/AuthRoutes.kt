@@ -13,8 +13,8 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestUpdateResult
-import no.slomic.smarthytte.guests.receiveGuestUpdate
-import no.slomic.smarthytte.guests.respondNotUpdated
+import no.slomic.smarthytte.guests.MeUpdate
+import no.slomic.smarthytte.guests.receiveOrNull
 
 fun Application.configureAuthRoutes(guestProfileService: GuestProfileService) {
     routing {
@@ -26,12 +26,19 @@ fun Application.configureAuthRoutes(guestProfileService: GuestProfileService) {
 
             post("/api/me") {
                 val user = checkNotNull(call.principal<UserPrincipal>()) { "Authenticated route without a user" }
-                val update = call.receiveGuestUpdate()
+                val update = call.receiveOrNull<MeUpdate>()
                     ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid request body")
 
-                when (val result = guestProfileService.update(user, user.id, update)) {
+                when (val result = guestProfileService.updateOwnProfile(user, update)) {
                     is GuestUpdateResult.Updated -> call.respond(checkNotNull(result.guest.toUserPrincipal()))
-                    else -> call.respondNotUpdated(result)
+
+                    is GuestUpdateResult.Invalid -> call.respond(HttpStatusCode.BadRequest, result.message)
+
+                    GuestUpdateResult.NotFound -> call.respond(HttpStatusCode.NotFound)
+
+                    // The email, which is what can conflict, cannot be changed here, and the role is not checked
+                    is GuestUpdateResult.Forbidden, is GuestUpdateResult.Conflict ->
+                        error("Updating the own profile cannot give $result")
                 }
             }.describeUpdateMe()
         }
@@ -44,9 +51,13 @@ private fun Route.describeMe() = describe {
     summary = "Authenticated user"
     description =
         "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified " +
-        "against Cloudflare's signing keys) together with the application role stored for that person."
+        "against Cloudflare's signing keys) together with the profile and the application role stored for that " +
+        "person."
     responses {
-        HttpStatusCode.OK { description = "The user, with id, name, email and role (ADMIN, FAMILY_USER, GUEST_USER)." }
+        HttpStatusCode.OK {
+            description = "The user, with id, name (first and last name together), firstName, lastName, birthYear, " +
+                "gender, email, isFamily and role (ADMIN, FAMILY_USER, GUEST_USER)."
+        }
         HttpStatusCode.Unauthorized { description = "The Cloudflare Access token is missing or invalid." }
         HttpStatusCode.Forbidden { description = "The authenticated person has no role in the application." }
         HttpStatusCode.ServiceUnavailable { description = "Cloudflare Access is not configured for the application." }
@@ -57,16 +68,18 @@ private fun Route.describeUpdateMe() = describe {
     operationId = "updateMe"
     tag("Auth")
     summary = "Update the authenticated user"
-    description = "Changes the properties of the authenticated user's own guest that are set in the body, and leaves " +
-        "the others unchanged. Every role may change firstName, lastName, birthYear and gender. An admin may also " +
-        "change email, isFamily and role (but not remove their own admin role). Changed properties are not " +
+    description = "Changes the profile of the authenticated user's own guest. Every role may change firstName, " +
+        "lastName, birthYear and gender, and all of them are required. Properties that are not part of the request, " +
+        "such as email, isFamily and role, cannot be changed here and are ignored. Changed properties are not " +
         "overwritten by the guests.json sync at startup."
     responses {
-        HttpStatusCode.OK { description = "The updated user, with id, name, email and role." }
-        HttpStatusCode.BadRequest { description = "The body is not valid JSON or a property has an invalid value." }
+        HttpStatusCode.OK { description = "The updated user, same as the response of GET /api/me." }
+        HttpStatusCode.BadRequest {
+            description = "The body is not valid JSON, a property is missing or a property has an invalid value."
+        }
         HttpStatusCode.Unauthorized { description = "The Cloudflare Access token is missing or invalid." }
-        HttpStatusCode.Forbidden { description = "The body changes a property the role may not change." }
-        HttpStatusCode.Conflict { description = "The email is already used by another user." }
+        HttpStatusCode.Forbidden { description = "The authenticated person has no role in the application." }
+        HttpStatusCode.NotFound { description = "The guest of the authenticated user does not exist." }
         HttpStatusCode.ServiceUnavailable { description = "Cloudflare Access is not configured for the application." }
     }
 }

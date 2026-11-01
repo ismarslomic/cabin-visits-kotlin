@@ -1934,6 +1934,26 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.guests.MeUpdate",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.guests.MeUpdate$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.guests.MeUpdate$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.ApiKeyProperties",
       "methods": [
         {

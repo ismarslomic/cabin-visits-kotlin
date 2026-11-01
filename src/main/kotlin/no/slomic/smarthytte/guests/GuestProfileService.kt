@@ -23,14 +23,18 @@ sealed interface GuestUpdateResult {
 /**
  * Changes the properties of guests.
  *
- * Every role may change firstName, lastName, birthYear and gender of their own guest. An [AppRole.ADMIN] may change all
- * properties of every guest, but not remove their own admin role or change their own email, since the email is how the
- * user is identified. An email can only belong to one guest, also in the database: sharing it makes the identity
+ * Every user may change their own firstName, lastName, birthYear and gender ([updateOwnProfile]). An
+ * [AppRole.ADMIN] may change all properties of every guest ([update]), but not remove their own admin role or change
+ * their own email there. An email can only belong to one guest, also in the database: sharing it makes the identity
  * ambiguous and denies all of them.
  */
 class GuestProfileService(private val guestRepository: GuestRepository) {
     suspend fun update(actor: UserPrincipal, guestId: String, update: GuestUpdate): GuestUpdateResult =
         forbiddenReason(actor, guestId, update)?.let(GuestUpdateResult::Forbidden) ?: validateAndSave(guestId, update)
+
+    /** Changes the properties of the [user]'s own guest. The email cannot be changed, since it identifies the user. */
+    suspend fun updateOwnProfile(user: UserPrincipal, update: MeUpdate): GuestUpdateResult =
+        validateAndSave(user.id, update.toGuestUpdate())
 
     private suspend fun validateAndSave(guestId: String, update: GuestUpdate): GuestUpdateResult =
         invalidReason(update)?.let(GuestUpdateResult::Invalid)

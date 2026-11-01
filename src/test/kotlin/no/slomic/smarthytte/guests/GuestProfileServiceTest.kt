@@ -7,7 +7,17 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import no.slomic.smarthytte.auth.UserPrincipal
 import no.slomic.smarthytte.utils.TestDbSetup
 
-private fun user(id: String, role: AppRole) = UserPrincipal(id, "Name $id", "$id@example.com", role)
+private fun user(id: String, role: AppRole) = UserPrincipal(
+    id = id,
+    name = "Name $id",
+    firstName = "Name",
+    lastName = id,
+    birthYear = 1980,
+    gender = Gender.MALE,
+    email = "$id@example.com",
+    isFamily = false,
+    role = role,
+)
 
 class GuestProfileServiceTest :
     StringSpec({
@@ -118,6 +128,65 @@ class GuestProfileServiceTest :
 
             service.update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "OLA@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+        }
+
+        "every role should change all their own properties with update own profile" {
+            AppRole.entries.forEach { role ->
+                withClue(role) {
+                    repository.addOrUpdate(guest.copy(id = "me-$role", email = "me-$role@example.com", role = role))
+                    val update = MeUpdate(" New ", "Name", 1999, Gender.FEMALE)
+
+                    val result = service.updateOwnProfile(user("me-$role", role), update)
+
+                    result.shouldBeInstanceOf<GuestUpdateResult.Updated>().guest shouldBe
+                        guest.copy(
+                            id = "me-$role",
+                            firstName = "New",
+                            lastName = "Name",
+                            birthYear = 1999,
+                            gender = Gender.FEMALE,
+                            email = "me-$role@example.com",
+                            role = role,
+                        )
+                }
+            }
+        }
+
+        "update own profile should never change email, isFamily or role" {
+            repository.addOrUpdate(guest.copy(id = "me", isFamily = true, role = AppRole.FAMILY_USER))
+
+            service.updateOwnProfile(user("me", AppRole.FAMILY_USER), MeUpdate("A", "B", 1970, Gender.MALE))
+
+            repository.guestById("me")!!.let {
+                it.email shouldBe guest.email
+                it.isFamily shouldBe true
+                it.role shouldBe AppRole.FAMILY_USER
+            }
+        }
+
+        "update own profile should be invalid for values that are not valid, and nothing should be changed" {
+            givenGuests()
+            val me = user("ola", AppRole.GUEST_USER)
+            val valid = MeUpdate("A", "B", 1970, Gender.MALE)
+            val updates = mapOf(
+                "blank firstName" to valid.copy(firstName = "  "),
+                "too long lastName" to valid.copy(lastName = "x".repeat(21)),
+                "birthYear before 1900" to valid.copy(birthYear = 1899),
+                "birthYear in the future" to valid.copy(birthYear = 3000),
+            )
+
+            updates.forEach { (reason, update) ->
+                withClue(reason) {
+                    service.updateOwnProfile(me, update).shouldBeInstanceOf<GuestUpdateResult.Invalid>()
+                }
+            }
+            repository.guestById("ola") shouldBe
+                guest.copy(id = "ola", email = "ola@example.com", role = AppRole.GUEST_USER)
+        }
+
+        "update own profile should get not found when the guest does not exist" {
+            service.updateOwnProfile(user("unknown", AppRole.GUEST_USER), MeUpdate("A", "B", 1970, Gender.MALE))
+                .shouldBeInstanceOf<GuestUpdateResult.NotFound>()
         }
 
         "admin should get not found for an unknown guest" {

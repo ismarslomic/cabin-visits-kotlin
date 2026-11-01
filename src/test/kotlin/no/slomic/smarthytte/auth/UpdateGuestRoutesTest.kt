@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.auth
 
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.header
@@ -14,10 +15,12 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.AppRole
+import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.statistics.StatsService
@@ -56,46 +59,62 @@ class UpdateGuestRoutesTest :
                 setBody(body)
             }
 
+        val meBody =
+            """{"firstName":"Ola","lastName":"Hansen","birthYear":1990,"gender":"FEMALE"}"""
+
         "post me should change the own profile and respond with the updated user" {
             givenUser("ola", AppRole.GUEST_USER)
 
             withApp {
-                val response =
-                    post("/api/me", accessToken("ola@example.com"), """{"firstName":"Ola","birthYear":1990}""")
+                val response = post("/api/me", accessToken("ola@example.com"), meBody)
 
                 response.status shouldBe HttpStatusCode.OK
                 val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-                body["name"]?.jsonPrimitive?.content shouldBe "Ola ola"
+                body["name"]?.jsonPrimitive?.content shouldBe "Ola Hansen"
+                body["firstName"]?.jsonPrimitive?.content shouldBe "Ola"
+                body["lastName"]?.jsonPrimitive?.content shouldBe "Hansen"
+                body["birthYear"]?.jsonPrimitive?.content shouldBe "1990"
+                body["gender"]?.jsonPrimitive?.content shouldBe "FEMALE"
                 body["role"]?.jsonPrimitive?.content shouldBe "GUEST_USER"
-                guestRepository.guestById("ola")!!.birthYear shouldBe 1990
+                guestRepository.guestById("ola")!!.let {
+                    it.firstName shouldBe "Ola"
+                    it.birthYear shouldBe 1990
+                    it.gender shouldBe Gender.FEMALE
+                }
             }
         }
 
-        "post me should respond 403 when a non admin changes email, isFamily or role" {
+        "post me should ignore properties that cannot be changed through me, such as email, isFamily and role" {
             givenUser("ola", AppRole.FAMILY_USER)
 
             withApp {
-                val token = accessToken("ola@example.com")
+                val body = meBody.replace(
+                    "}",
+                    ""","email":"new@example.com","isFamily":false,"role":"ADMIN","appRole":"ADMIN","unknown":1}""",
+                )
 
-                post("/api/me", token, """{"role":"ADMIN"}""").status shouldBe HttpStatusCode.Forbidden
-                post("/api/me", token, """{"email":"new@example.com"}""").status shouldBe HttpStatusCode.Forbidden
-                post("/api/me", token, """{"isFamily":false}""").status shouldBe HttpStatusCode.Forbidden
-                guestRepository.guestById("ola")!!.role shouldBe AppRole.FAMILY_USER
+                post("/api/me", accessToken("ola@example.com"), body).status shouldBe HttpStatusCode.OK
+                guestRepository.guestById("ola")!!.let {
+                    it.role shouldBe AppRole.FAMILY_USER
+                    it.isFamily shouldBe true
+                    it.email shouldBe "ola@example.com"
+                }
             }
         }
 
-        "post me should let an admin change isFamily, but not their own email" {
+        "post me should respond 400 when a required property is missing" {
             givenUser("ola", AppRole.ADMIN)
 
             withApp {
                 val token = accessToken("ola@example.com")
 
-                post("/api/me", token, """{"isFamily":false}""").status shouldBe HttpStatusCode.OK
-                post("/api/me", token, """{"email":"new@example.com"}""").status shouldBe HttpStatusCode.Forbidden
-                guestRepository.guestById("ola")!!.let {
-                    it.email shouldBe "ola@example.com"
-                    it.isFamily shouldBe false
+                listOf("firstName", "lastName", "birthYear", "gender").forEach { property ->
+                    val body = Json.parseToJsonElement(meBody).jsonObject.filterKeys { it != property }
+                    withClue(property) {
+                        post("/api/me", token, JsonObject(body).toString()).status shouldBe HttpStatusCode.BadRequest
+                    }
                 }
+                post("/api/me", token, "{}").status shouldBe HttpStatusCode.BadRequest
             }
         }
 
@@ -106,10 +125,10 @@ class UpdateGuestRoutesTest :
                 val token = accessToken("ola@example.com")
 
                 post("/api/me", token, "not json").status shouldBe HttpStatusCode.BadRequest
-                post("/api/me", token, """{"birthYear":"abc"}""").status shouldBe HttpStatusCode.BadRequest
-                post("/api/me", token, """{"gender":"OTHER"}""").status shouldBe HttpStatusCode.BadRequest
-                post("/api/me", token, """{"firstName":""}""").status shouldBe HttpStatusCode.BadRequest
-                post("/api/me", token = null, "{}").status shouldBe HttpStatusCode.Unauthorized
+                post("/api/me", token, meBody.replace("1990", "\"abc\"")).status shouldBe HttpStatusCode.BadRequest
+                post("/api/me", token, meBody.replace("FEMALE", "OTHER")).status shouldBe HttpStatusCode.BadRequest
+                post("/api/me", token, meBody.replace("Ola", "")).status shouldBe HttpStatusCode.BadRequest
+                post("/api/me", token = null, meBody).status shouldBe HttpStatusCode.Unauthorized
             }
         }
 

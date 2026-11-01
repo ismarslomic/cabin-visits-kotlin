@@ -31,7 +31,17 @@ class AppUserService(private val guestRepository: GuestRepository) {
 
 /** Null if the guest has no email or no [AppRole], since it is then not a user of the application. */
 fun Guest.toUserPrincipal(): UserPrincipal? = if (email != null && role != null) {
-    UserPrincipal(id = id, name = "$firstName $lastName", email = email, role = role)
+    UserPrincipal(
+        id = id,
+        name = "$firstName $lastName",
+        firstName = firstName,
+        lastName = lastName,
+        birthYear = birthYear,
+        gender = gender,
+        email = email,
+        isFamily = isFamily,
+        role = role,
+    )
 } else {
     null
 }

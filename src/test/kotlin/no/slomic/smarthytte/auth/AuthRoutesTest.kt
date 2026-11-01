@@ -81,8 +81,15 @@ class AuthRoutesTest :
                 val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
                 body["id"]?.jsonPrimitive?.content shouldBe "ola"
                 body["name"]?.jsonPrimitive?.content shouldBe "Test ola"
+                body["firstName"]?.jsonPrimitive?.content shouldBe "Test"
+                body["lastName"]?.jsonPrimitive?.content shouldBe "ola"
+                body["birthYear"]?.jsonPrimitive?.content shouldBe "1980"
+                body["gender"]?.jsonPrimitive?.content shouldBe "MALE"
                 body["email"]?.jsonPrimitive?.content shouldBe "ola@example.com"
+                body["isFamily"]?.jsonPrimitive?.content shouldBe "true"
                 body["role"]?.jsonPrimitive?.content shouldBe "ADMIN"
+                body.keys shouldBe
+                    setOf("id", "name", "firstName", "lastName", "birthYear", "gender", "email", "isFamily", "role")
             }
         }
 
