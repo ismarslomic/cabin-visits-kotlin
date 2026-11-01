@@ -1,0 +1,16 @@
+coverage:
+  status:
+    project:
+      default:
+        # Must not drop below main, but 1% is allowed so one untested file does not fail a PR
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        # The lines changed in a PR. 100% would force tests of defensive branches that cannot be reached
+        target: 80%
+        threshold: 5%
+
+ignore:
+  # Startup wiring, covered by running the app rather than by unit tests
+  - "src/main/kotlin/no/slomic/smarthytte/Application.kt"
