@@ -166,7 +166,7 @@ class SqliteGuestRepository : GuestRepository {
             email = guest.email
             gender = guest.gender
             isFamily = guest.isFamily
-            appRole = guest.appRole
+            role = guest.role
             createdTime = Clock.System.now().truncatedToMillis()
         }
 
@@ -217,7 +217,7 @@ class SqliteGuestRepository : GuestRepository {
         if (GuestField.GENDER !in edited) gender = guest.gender
         if (GuestField.EMAIL !in edited) email = guest.email
         if (GuestField.IS_FAMILY !in edited) isFamily = guest.isFamily
-        if (GuestField.APP_ROLE !in edited) appRole = guest.appRole
+        if (GuestField.ROLE !in edited) role = guest.role
     }
 
     /** Sets the properties of [update] that differ from the stored ones, and returns the fields that changed. */
@@ -235,6 +235,6 @@ class SqliteGuestRepository : GuestRepository {
         change(GuestField.GENDER, update.gender, gender) { gender = it }
         change(GuestField.EMAIL, update.email, email) { email = it }
         change(GuestField.IS_FAMILY, update.isFamily, isFamily) { isFamily = it }
-        change(GuestField.APP_ROLE, update.appRole, appRole) { appRole = it }
+        change(GuestField.ROLE, update.role, role) { role = it }
     }
 }

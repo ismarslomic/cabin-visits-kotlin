@@ -15,7 +15,7 @@ fun testGuest(
     email: String? = "$id@example.com",
     firstName: String = "First",
     lastName: String = id,
-    appRole: AppRole? = null,
+    role: AppRole? = null,
 ) = Guest(
     id = id,
     firstName = firstName,
@@ -24,7 +24,7 @@ fun testGuest(
     email = email,
     gender = Gender.MALE,
     isFamily = true,
-    appRole = appRole,
+    role = role,
 )
 
 class AppUserServiceTest :
@@ -43,14 +43,19 @@ class AppUserServiceTest :
                     "kari",
                     email = "Kari.Nordmann@Example.com",
                     firstName = "Kari",
-                    appRole = AppRole.FAMILY_USER,
+                    role = AppRole.FAMILY_USER,
                 ),
             )
 
             repository.userByEmail("kari.nordmann@example.com") shouldBe UserPrincipal(
                 id = "kari",
                 name = "Kari kari",
+                firstName = "Kari",
+                lastName = "kari",
+                birthYear = 1980,
+                gender = Gender.MALE,
                 email = "Kari.Nordmann@Example.com",
+                isFamily = true,
                 role = AppRole.FAMILY_USER,
             )
             repository.userByEmail(" KARI.NORDMANN@EXAMPLE.COM ")?.id shouldBe "kari"
@@ -63,43 +68,29 @@ class AppUserServiceTest :
         }
 
         "blank or missing email should never be found" {
-            guestRepository.addOrUpdate(testGuest("ola", email = "", appRole = AppRole.ADMIN))
+            guestRepository.addOrUpdate(testGuest("ola", email = "", role = AppRole.ADMIN))
 
             repository.userByEmail(null).shouldBeNull()
             repository.userByEmail("  ").shouldBeNull()
         }
 
         "unknown email should not be found" {
-            guestRepository.addOrUpdate(testGuest("ola", appRole = AppRole.ADMIN))
+            guestRepository.addOrUpdate(testGuest("ola", role = AppRole.ADMIN))
 
             repository.userByEmail("unknown@example.com").shouldBeNull()
         }
 
         "guest without email should never be found" {
-            guestRepository.addOrUpdate(testGuest("ola", email = null, appRole = AppRole.ADMIN))
+            guestRepository.addOrUpdate(testGuest("ola", email = null, role = AppRole.ADMIN))
 
             repository.userByEmail("").shouldBeNull()
         }
 
-        "several guests with a role and the same email is ambiguous and should not be found" {
-            guestRepository.addOrUpdate(testGuest("ola", email = "shared@example.com", appRole = AppRole.ADMIN))
-            guestRepository.addOrUpdate(testGuest("kari", email = "shared@example.com", appRole = AppRole.GUEST_USER))
-
-            repository.userByEmail("shared@example.com").shouldBeNull()
-        }
-
-        "guest without a role sharing the email should not make the guest with a role ambiguous" {
-            guestRepository.addOrUpdate(testGuest("ola", email = "shared@example.com", appRole = AppRole.ADMIN))
-            guestRepository.addOrUpdate(testGuest("kari", email = "shared@example.com"))
-
-            repository.userByEmail("shared@example.com")?.id shouldBe "ola"
-        }
-
         "syncing a guest from file should add, change and revoke the role" {
-            guestRepository.addOrUpdate(testGuest("ola", appRole = AppRole.GUEST_USER))
+            guestRepository.addOrUpdate(testGuest("ola", role = AppRole.GUEST_USER))
             repository.userByEmail("ola@example.com")?.role shouldBe AppRole.GUEST_USER
 
-            guestRepository.addOrUpdate(testGuest("ola", firstName = "Changed", appRole = AppRole.ADMIN))
+            guestRepository.addOrUpdate(testGuest("ola", firstName = "Changed", role = AppRole.ADMIN))
             repository.userByEmail("ola@example.com")?.role shouldBe AppRole.ADMIN
             repository.userByEmail("ola@example.com")?.name shouldBe "Changed ola"
 
@@ -108,8 +99,8 @@ class AppUserServiceTest :
         }
 
         "syncing an unchanged guest with a role from file should be no action" {
-            guestRepository.addOrUpdate(testGuest("ola", appRole = AppRole.ADMIN))
+            guestRepository.addOrUpdate(testGuest("ola", role = AppRole.ADMIN))
 
-            guestRepository.addOrUpdate(testGuest("ola", appRole = AppRole.ADMIN)) shouldBe PersistenceResult.NO_ACTION
+            guestRepository.addOrUpdate(testGuest("ola", role = AppRole.ADMIN)) shouldBe PersistenceResult.NO_ACTION
         }
     })

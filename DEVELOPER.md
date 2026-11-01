@@ -36,6 +36,10 @@ MMM-CabinStats MagicMirror module) to generate their types. `OpenApiSpecTest` fa
 UPDATE_OPENAPI=true ./gradlew test --tests '*OpenApiSpecTest' --rerun
 ```
 
+The spec is inferred from the code when it is compiled, and an incremental build can leave it stale (for example a
+missing request body after `formatKotlin` changed a file). If `OpenApiSpecTest` fails without an API change, or the
+regenerated spec looks wrong, run `./gradlew clean` first and regenerate again.
+
 ### Authorization and restricting endpoints by role
 
 Setup of Cloudflare Access, the status codes and how roles are granted are described in
@@ -47,8 +51,8 @@ Authentication (who is calling) and authorization (what may they do) are separat
 
 1. **Authentication** (`CloudflareAccessAuthentication.kt`): the Ktor `jwt` provider `cloudflare-access` verifies the
    HTTP header `Cf-Access-Jwt-Assertion` against Cloudflare's signing keys (signature, issuer, audience, expiry). The `email`
-   claim is then looked up with `AppUserService.userByEmail` which matches the `guest` row that has an `app_role` through `GuestRepository.guestsByEmail`.
-   The result is a `UserPrincipal` (id, name, email, role).
+   claim is then looked up with `AppUserService.userByEmail` which matches the `guest` row that has a `role` through `GuestRepository.guestsByEmail`.
+   The result is a `UserPrincipal` (id, name, firstName, lastName, birthYear, gender, email, isFamily, role).
    Machines authenticate with the Ktor `apiKey` provider `api-key` (`ApiKeyAuthentication.kt`): the HTTP header `X-Api-Key`
    is hashed with SHA-256 and compared in constant time with the hashes in `API_KEYS`. The result is a
    `ServicePrincipal` (name), which has no role.
@@ -64,8 +68,8 @@ Authentication (who is calling) and authorization (what may they do) are separat
 | Valid user, but the role is not allowed on the route   | 403      |
 | Valid user with an allowed role                        | handler  |
 
-The roles (`AppRole`) are `ADMIN`, `FAMILY_USER` and `GUEST_USER`. They are stored in `guest.app_role` and set from the
-`appRole` property in `data/guests.json` at startup, so the file is the source of truth. The role is read from the
+The roles (`AppRole`) are `ADMIN`, `FAMILY_USER` and `GUEST_USER`. They are stored in `guest.role` and set from the
+`role` property in `data/guests.json` at startup, so the file is the source of truth. The role is read from the
 database on every request, so a changed role applies without the user logging in again.
 
 #### Restricting an endpoint
@@ -99,9 +103,10 @@ fun Application.configureReportRoutes() {
 
 #### Changing guest data
 
-`POST /api/me` (every role, own guest) and `POST /api/guests/{guestId}` (`authorized(AppRole.ADMIN)`) both call
-`GuestProfileService.update(actor, guestId, update)`, which decides what the actor may change and validates the values.
-The route only maps the result to a status. Do not add such rules to the routes. Properties changed this way are stored
+`POST /api/me` (every role, own guest, only firstName, lastName, birthYear and gender) calls
+`GuestProfileService.updateOwnProfile(user, update)`, and `POST /api/guests/{guestId}` (`authorized(AppRole.ADMIN)`)
+calls `GuestProfileService.update(actor, guestId, update)`. The service decides what may be changed and validates the
+values. The route only maps the result to a status. Do not add such rules to the routes. Properties changed this way are stored
 in `guest.api_edited_fields` and skipped by the `guests.json` sync, see
 [docs/authentication.md](docs/authentication.md#changing-guest-data).
 

@@ -8,9 +8,12 @@ import no.slomic.smarthytte.properties.GuestPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import java.io.File
 
-class GuestService(private val guestRepository: GuestRepository) {
+class GuestService(
+    private val guestRepository: GuestRepository,
+    guestPropertiesHolder: GuestPropertiesHolder = loadProperties<GuestPropertiesHolder>(),
+) {
     private val logger: Logger = KtorSimpleLogger(GuestService::class.java.name)
-    private val guestProperties = loadProperties<GuestPropertiesHolder>().guest
+    private val guestProperties = guestPropertiesHolder.guest
     private val filePath = guestProperties.filePath
     private val avatarsDirectory = guestProperties.avatarsDirectory
 
@@ -20,6 +23,8 @@ class GuestService(private val guestRepository: GuestRepository) {
         val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
         val guestsFromFile: List<Guest> = readGuestsFromJsonFile(filePath)
+        checkNoDuplicateEmails(guestsFromFile)
+
         for (guest in guestsFromFile) {
             val guestAvatarImage: ByteArray? = readAvatarImage(guest.id)
             persistenceResults.add(guestRepository.addOrUpdate(guest, guestAvatarImage))
@@ -34,6 +39,19 @@ class GuestService(private val guestRepository: GuestRepository) {
                 "Total guests in file: ${guestsFromFile.size}, added: $addedCount, " +
                 "updated: $updatedCount, no actions: $noActionCount",
         )
+    }
+
+    /** An email can only belong to one guest, so nothing is written when the file shares an email (ignoring case). */
+    private fun checkNoDuplicateEmails(guests: List<Guest>) {
+        val sharedEmails: List<String> = guests
+            .mapNotNull { it.email?.trim()?.lowercase() }
+            .groupingBy { it }
+            .eachCount()
+            .filterValues { it > 1 }
+            .keys
+            .toList()
+
+        check(sharedEmails.isEmpty()) { "The guests file $filePath has guests that share an email: $sharedEmails" }
     }
 
     /** Avatar is expected at `{avatarsDirectory}/{guestId}.jpg`. Null if the file is missing, i.e. no avatar. */

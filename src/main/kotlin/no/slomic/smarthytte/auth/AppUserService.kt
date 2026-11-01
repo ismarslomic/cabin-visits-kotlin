@@ -19,7 +19,7 @@ class AppUserService(private val guestRepository: GuestRepository) {
         val guests: List<Guest> = email?.takeIf { it.isNotBlank() }
             ?.let { guestRepository.guestsByEmail(it) }
             .orEmpty()
-            .filter { it.appRole != null }
+            .filter { it.role != null }
 
         if (guests.size > 1) {
             logger.warn("Ambiguous identity: ${guests.size} guests with a role share the email $email")
@@ -30,8 +30,18 @@ class AppUserService(private val guestRepository: GuestRepository) {
 }
 
 /** Null if the guest has no email or no [AppRole], since it is then not a user of the application. */
-fun Guest.toUserPrincipal(): UserPrincipal? = if (email != null && appRole != null) {
-    UserPrincipal(id = id, name = "$firstName $lastName", email = email, role = appRole)
+fun Guest.toUserPrincipal(): UserPrincipal? = if (email != null && role != null) {
+    UserPrincipal(
+        id = id,
+        name = "$firstName $lastName",
+        firstName = firstName,
+        lastName = lastName,
+        birthYear = birthYear,
+        gender = gender,
+        email = email,
+        isFamily = isFamily,
+        role = role,
+    )
 } else {
     null
 }

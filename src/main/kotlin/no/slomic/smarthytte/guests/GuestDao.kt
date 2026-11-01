@@ -15,7 +15,7 @@ object GuestTable : BaseIdTable<String>(name = "guest") {
     val gender: Column<Gender> = enumerationByName("gender", length = 10, Gender::class)
     val notionId: Column<String?> = varchar(name = "notion_id", length = 50).nullable()
     val isFamily: Column<Boolean> = bool("is_family").default(false)
-    val appRole: Column<AppRole?> = enumerationByName("app_role", length = 20, AppRole::class).nullable()
+    val role: Column<AppRole?> = enumerationByName("role", length = 20, AppRole::class).nullable()
     val apiEditedFields: Column<String?> = varchar(name = "api_edited_fields", length = 255).nullable()
 
     override val primaryKey = PrimaryKey(id, name = "pk_guest_id")
@@ -31,7 +31,7 @@ class GuestEntity(id: EntityID<String>) : BaseEntity<String>(id, GuestTable) {
     var gender: Gender by GuestTable.gender
     var notionId: String? by GuestTable.notionId
     var isFamily: Boolean by GuestTable.isFamily
-    var appRole: AppRole? by GuestTable.appRole
+    var role: AppRole? by GuestTable.role
     var apiEditedFields: String? by GuestTable.apiEditedFields
 }
 
@@ -44,5 +44,5 @@ fun daoToModel(dao: GuestEntity) = Guest(
     gender = dao.gender,
     notionId = dao.notionId,
     isFamily = dao.isFamily,
-    appRole = dao.appRole,
+    role = dao.role,
 )

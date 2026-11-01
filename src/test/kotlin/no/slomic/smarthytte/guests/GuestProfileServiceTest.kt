@@ -4,10 +4,22 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.coEvery
+import io.mockk.spyk
 import no.slomic.smarthytte.auth.UserPrincipal
 import no.slomic.smarthytte.utils.TestDbSetup
 
-private fun user(id: String, role: AppRole) = UserPrincipal(id, "Name $id", "$id@example.com", role)
+private fun user(id: String, role: AppRole) = UserPrincipal(
+    id = id,
+    name = "Name $id",
+    firstName = "Name",
+    lastName = id,
+    birthYear = 1980,
+    gender = Gender.MALE,
+    email = "$id@example.com",
+    isFamily = false,
+    role = role,
+)
 
 class GuestProfileServiceTest :
     StringSpec({
@@ -20,8 +32,8 @@ class GuestProfileServiceTest :
         val service = GuestProfileService(repository)
 
         suspend fun givenGuests() {
-            repository.addOrUpdate(guest.copy(id = "ola", email = "ola@example.com", appRole = AppRole.GUEST_USER))
-            repository.addOrUpdate(guest.copy(id = "kari", email = "kari@example.com", appRole = AppRole.ADMIN))
+            repository.addOrUpdate(guest.copy(id = "ola", email = "ola@example.com", role = AppRole.GUEST_USER))
+            repository.addOrUpdate(guest.copy(id = "kari", email = "kari@example.com", role = AppRole.ADMIN))
         }
 
         "every role should change firstName, lastName, birthYear and gender of their own guest" {
@@ -29,7 +41,7 @@ class GuestProfileServiceTest :
 
             AppRole.entries.forEach { role ->
                 withClue(role) {
-                    repository.addOrUpdate(guest.copy(id = "me", appRole = role))
+                    repository.addOrUpdate(guest.copy(id = "me", role = role))
                     val update =
                         GuestUpdate(firstName = " New ", lastName = "Name", birthYear = 1999, gender = Gender.FEMALE)
 
@@ -45,12 +57,12 @@ class GuestProfileServiceTest :
             }
         }
 
-        "non admin should not change email, isFamily or appRole of their own guest" {
+        "non admin should not change email, isFamily or role of their own guest" {
             givenGuests()
             val updates = listOf(
                 GuestUpdate(email = "new@example.com"),
                 GuestUpdate(isFamily = true),
-                GuestUpdate(appRole = AppRole.ADMIN),
+                GuestUpdate(role = AppRole.ADMIN),
             )
 
             updates.forEach { update ->
@@ -59,7 +71,7 @@ class GuestProfileServiceTest :
                         .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
                 }
             }
-            repository.guestById("ola")!!.appRole shouldBe AppRole.GUEST_USER
+            repository.guestById("ola")!!.role shouldBe AppRole.GUEST_USER
         }
 
         "non admin should not change another guest, whether it exists or not" {
@@ -91,34 +103,92 @@ class GuestProfileServiceTest :
             service.update(admin, "kari", GuestUpdate(email = "new@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
             repository.guestById("kari")!!.email shouldBe "kari@example.com"
-            service.update(admin, "kari", GuestUpdate(appRole = AppRole.ADMIN))
+            service.update(admin, "kari", GuestUpdate(role = AppRole.ADMIN))
                 .shouldBeInstanceOf<GuestUpdateResult.Updated>()
-            service.update(admin, "kari", GuestUpdate(appRole = AppRole.GUEST_USER))
+            service.update(admin, "kari", GuestUpdate(role = AppRole.GUEST_USER))
                 .shouldBeInstanceOf<GuestUpdateResult.Forbidden>()
-            repository.guestById("kari")!!.appRole shouldBe AppRole.ADMIN
+            repository.guestById("kari")!!.role shouldBe AppRole.ADMIN
         }
 
-        "email used by another guest with a role should be a conflict, also when granting a role" {
+        "email used by another guest, with or without a role, should be a conflict" {
             givenGuests()
-            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", appRole = null))
+            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", role = null))
             val admin = user("kari", AppRole.ADMIN)
 
             service.update(admin, "ola", GuestUpdate(email = "KARI@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
-            service.update(admin, "external", GuestUpdate(appRole = AppRole.GUEST_USER))
-                .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+            service.update(admin, "ola", GuestUpdate(email = "external@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
             service.update(admin, "external", GuestUpdate(email = "ola@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
             repository.guestById("ola")!!.email shouldBe "ola@example.com"
             repository.guestById("external")!!.email shouldBe "external@example.com"
         }
 
-        "email used by a guest without a role should not be a conflict" {
+        "the same email in another case should not be a conflict for the guest itself" {
             givenGuests()
-            repository.addOrUpdate(guest.copy(id = "external", email = "external@example.com", appRole = null))
 
-            service.update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "external@example.com"))
+            service.update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "OLA@example.com"))
                 .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+        }
+
+        "every role should change all their own properties with update own profile" {
+            AppRole.entries.forEach { role ->
+                withClue(role) {
+                    repository.addOrUpdate(guest.copy(id = "me-$role", email = "me-$role@example.com", role = role))
+                    val update = MeUpdate(" New ", "Name", 1999, Gender.FEMALE)
+
+                    val result = service.updateOwnProfile(user("me-$role", role), update)
+
+                    result.shouldBeInstanceOf<GuestUpdateResult.Updated>().guest shouldBe
+                        guest.copy(
+                            id = "me-$role",
+                            firstName = "New",
+                            lastName = "Name",
+                            birthYear = 1999,
+                            gender = Gender.FEMALE,
+                            email = "me-$role@example.com",
+                            role = role,
+                        )
+                }
+            }
+        }
+
+        "update own profile should never change email, isFamily or role" {
+            repository.addOrUpdate(guest.copy(id = "me", isFamily = true, role = AppRole.FAMILY_USER))
+
+            service.updateOwnProfile(user("me", AppRole.FAMILY_USER), MeUpdate("A", "B", 1970, Gender.MALE))
+
+            repository.guestById("me")!!.let {
+                it.email shouldBe guest.email
+                it.isFamily shouldBe true
+                it.role shouldBe AppRole.FAMILY_USER
+            }
+        }
+
+        "update own profile should be invalid for values that are not valid, and nothing should be changed" {
+            givenGuests()
+            val me = user("ola", AppRole.GUEST_USER)
+            val valid = MeUpdate("A", "B", 1970, Gender.MALE)
+            val updates = mapOf(
+                "blank firstName" to valid.copy(firstName = "  "),
+                "too long lastName" to valid.copy(lastName = "x".repeat(21)),
+                "birthYear before 1900" to valid.copy(birthYear = 1899),
+                "birthYear in the future" to valid.copy(birthYear = 3000),
+            )
+
+            updates.forEach { (reason, update) ->
+                withClue(reason) {
+                    service.updateOwnProfile(me, update).shouldBeInstanceOf<GuestUpdateResult.Invalid>()
+                }
+            }
+            repository.guestById("ola") shouldBe
+                guest.copy(id = "ola", email = "ola@example.com", role = AppRole.GUEST_USER)
+        }
+
+        "update own profile should get not found when the guest does not exist" {
+            service.updateOwnProfile(user("unknown", AppRole.GUEST_USER), MeUpdate("A", "B", 1970, Gender.MALE))
+                .shouldBeInstanceOf<GuestUpdateResult.NotFound>()
         }
 
         "admin should get not found for an unknown guest" {
@@ -136,6 +206,7 @@ class GuestProfileServiceTest :
                 "birthYear in the future" to GuestUpdate(birthYear = 3000),
                 "email without @" to GuestUpdate(email = "nope"),
                 "email with spaces" to GuestUpdate(email = "a b@example.com"),
+                "too long email" to GuestUpdate(email = "x".repeat(250) + "@example.com"),
             )
 
             updates.forEach { (reason, update) ->
@@ -144,6 +215,25 @@ class GuestProfileServiceTest :
                 }
             }
             repository.guestById("ola") shouldBe
-                guest.copy(id = "ola", email = "ola@example.com", appRole = AppRole.GUEST_USER)
+                guest.copy(id = "ola", email = "ola@example.com", role = AppRole.GUEST_USER)
+        }
+
+        "admin should be allowed to keep their own email written in another case" {
+            givenGuests()
+
+            service.update(user("kari", AppRole.ADMIN), "kari", GuestUpdate(email = " KARI@Example.com "))
+                .shouldBeInstanceOf<GuestUpdateResult.Updated>()
+        }
+
+        "database should have the last word when another guest gets the email after the conflict check" {
+            givenGuests()
+            val racing = spyk(repository)
+            coEvery { racing.guestsByEmail(any()) } returns emptyList()
+
+            GuestProfileService(
+                racing,
+            ).update(user("kari", AppRole.ADMIN), "ola", GuestUpdate(email = "kari@example.com"))
+                .shouldBeInstanceOf<GuestUpdateResult.Conflict>()
+            repository.guestById("ola")!!.email shouldBe "ola@example.com"
         }
     })

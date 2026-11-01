@@ -13,19 +13,19 @@
           "Auth"
         ],
         "summary": "Update the authenticated user",
-        "description": "Changes the properties of the authenticated user's own guest that are set in the body, and leaves the others unchanged. Every role may change firstName, lastName, birthYear and gender. An admin may also change email, isFamily and appRole (but not remove their own admin role). Changed properties are not overwritten by the guests.json sync at startup.",
+        "description": "Changes the profile of the authenticated user's own guest. Every role may change firstName, lastName, birthYear and gender, and all of them are required. Properties that are not part of the request, such as email, isFamily and role, cannot be changed here and are ignored. Changed properties are not overwritten by the guests.json sync at startup.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GuestUpdate"
+                "$ref": "#/components/schemas/MeUpdate"
               }
             }
           }
         },
         "responses": {
           "400": {
-            "description": "The body is not valid JSON or a property has an invalid value.",
+            "description": "The body is not valid JSON, a property is missing or a property has an invalid value.",
             "content": {
               "application/json": {
                 "schema": {
@@ -35,7 +35,7 @@
             }
           },
           "200": {
-            "description": "The updated user, with id, name, email and role.",
+            "description": "The updated user, same as the response of GET /api/me.",
             "content": {
               "application/json": {
                 "schema": {
@@ -45,30 +45,13 @@
             }
           },
           "404": {
-            "description": ""
-          },
-          "403": {
-            "description": "The body changes a property the role may not change.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The email is already used by another user.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            "description": "The guest of the authenticated user does not exist."
           },
           "401": {
             "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The authenticated person has no role in the application."
           },
           "503": {
             "description": "Cloudflare Access is not configured for the application."
@@ -89,10 +72,10 @@
           "Auth"
         ],
         "summary": "Authenticated user",
-        "description": "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified against Cloudflare's signing keys) together with the application role stored for that person.",
+        "description": "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified against Cloudflare's signing keys) together with the profile and the application role stored for that person.",
         "responses": {
           "200": {
-            "description": "The user, with id, name, email and role (ADMIN, FAMILY_USER, GUEST_USER).",
+            "description": "The user, with id, name (first and last name together), firstName, lastName, birthYear, gender, email, isFamily and role (ADMIN, FAMILY_USER, GUEST_USER).",
             "content": {
               "application/json": {
                 "schema": {
@@ -218,7 +201,7 @@
           "Guests"
         ],
         "summary": "Update a guest",
-        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, appRole) and leaves the others unchanged. Changed properties are not overwritten by the guests.json sync at startup. An admin cannot remove their own admin role.",
+        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, role) and leaves the others unchanged. Changed properties are not overwritten by the guests.json sync at startup. An admin cannot remove their own admin role.",
         "parameters": [
           {
             "name": "guestId",
@@ -619,7 +602,12 @@
         "required": [
           "id",
           "name",
+          "firstName",
+          "lastName",
+          "birthYear",
+          "gender",
           "email",
+          "isFamily",
           "role"
         ],
         "properties": {
@@ -629,8 +617,27 @@
           "name": {
             "type": "string"
           },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthYear": {
+            "type": "integer"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
           "email": {
             "type": "string"
+          },
+          "isFamily": {
+            "type": "boolean"
           },
           "role": {
             "type": "string",
@@ -638,6 +645,34 @@
               "ADMIN",
               "FAMILY_USER",
               "GUEST_USER"
+            ]
+          }
+        }
+      },
+      "MeUpdate": {
+        "type": "object",
+        "title": "MeUpdate",
+        "required": [
+          "firstName",
+          "lastName",
+          "birthYear",
+          "gender"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthYear": {
+            "type": "integer"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
             ]
           }
         }
@@ -686,7 +721,7 @@
               "null"
             ]
           },
-          "appRole": {
+          "role": {
             "type": [
               "string",
               "null"
@@ -744,7 +779,7 @@
           "isFamily": {
             "type": "boolean"
           },
-          "appRole": {
+          "role": {
             "type": [
               "string",
               "null"
