@@ -50,6 +50,15 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - `POST /api/me` endrer kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `POST /api/guests/{guestId}`.
 - Endrer du auth- eller gjesteatferd, oppdater `docs/authentication.md`.
 
+## Testdekning (Codecov)
+
+`codecov.yml` styrer sjekkene på PR. `codecov/patch` (endrede linjer, minst 80 %, 5 % slingringsmonn) skal være grønn. `codecov/project` (ikke lavere enn `main`, 1 % slingringsmonn) viser trenden.
+
+- Ny logikk i `guests/` og `auth/` får test for hver gren, også feil- og konfliktstiene. Rute-tester dekker ikke service-grener alene.
+- En fil du endrer uten tester får en testklasse. Gjør konstruktøren testbar ved å sende inn properties med standardverdi, som `VehicleTripService` gjør.
+- Sjekk lokalt før push: `./gradlew test` skriver `build/reports/jacoco/test/jacocoTestReport.xml`. Linjer med `mi` > 0 eller `mb` > 0 i filene du endret mangler dekning. Dekk de som har logikk. Utilgjengelige forsvarsgrener (`error(...)`) og deklarative `describe{}`-blokker kan stå, men ikke senk dekningen for å slippe unna.
+- Når Codecov feiler: åpne PR-kommentaren, se tabellen «Files with missing lines» og skriv tester for linjene som mangler. Ikke slett eller svekk tester, og ikke senk terskler i `codecov.yml` for å få en PR gjennom. Spør brukeren først.
+
 ## Viktige domenekonvensjoner
 
 ### Tidssoner og datoer
