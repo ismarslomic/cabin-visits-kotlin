@@ -56,6 +56,10 @@ data class CurrentReservationInfo(
         "Order number of the current reservation when all reservations are sorted ascending on start date, starting at 1.",
     )
     val reservationOrder: Int,
+    @JsonSchema.Description(
+        "Order number of the current reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1.",
+    )
+    val reservationOrderInYear: Int,
 )
 
 @Serializable
@@ -72,4 +76,8 @@ data class NextReservationInfo(
         "Order number of the next reservation when all reservations are sorted ascending on start date, starting at 1.",
     )
     val reservationOrder: Int,
+    @JsonSchema.Description(
+        "Order number of the next reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1.",
+    )
+    val reservationOrderInYear: Int,
 )

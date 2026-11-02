@@ -19,7 +19,14 @@ class NextVisitFunFactsTest :
         context("calculateNextVisitFunFacts") {
             fun nextFacts(vararg guests: GuestStats, daysUntil: Int = 5, isOccupied: Boolean = true) =
                 calculateNextVisitFunFacts(
-                    NextReservationInfo(today.plus(DatePeriod(days = daysUntil)), today, guests.toList(), daysUntil, 1),
+                    NextReservationInfo(
+                        today.plus(DatePeriod(days = daysUntil)),
+                        today,
+                        guests.toList(),
+                        daysUntil,
+                        1,
+                        1,
+                    ),
                     isOccupied,
                 )
 

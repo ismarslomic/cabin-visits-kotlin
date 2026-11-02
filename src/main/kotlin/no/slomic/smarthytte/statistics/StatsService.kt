@@ -54,6 +54,7 @@ import no.slomic.smarthytte.statistics.model.CurrentYearStats
 import no.slomic.smarthytte.statistics.model.GenderDistribution
 import no.slomic.smarthytte.statistics.model.GuestProfileStats
 import no.slomic.smarthytte.statistics.model.GuestRanking
+import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
 import no.slomic.smarthytte.statistics.model.LiveStats
 import no.slomic.smarthytte.statistics.model.MonthStats
@@ -105,15 +106,13 @@ class StatsService(
         val currentInfo =
             current?.let { r ->
                 val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
-                val remaining = today.daysUntilSafe(r.endDate)
-                CurrentReservationInfo(r.startDate, r.endDate, guests, remaining, orderById.getValue(r.id))
+                currentReservationInfo(r, guests, today, orderById.getValue(r.id), orderInYear(r, allReservations))
             }
 
         val nextInfo =
             next?.let { r ->
                 val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
-                val daysUntil = today.daysUntilSafe(r.startDate)
-                NextReservationInfo(r.startDate, r.endDate, guests, daysUntil, orderById.getValue(r.id))
+                nextReservationInfo(r, guests, today, orderById.getValue(r.id), orderInYear(r, allReservations))
             }
 
         // All-time totals only count reservations that have started, i.e. future bookings are excluded
@@ -443,6 +442,27 @@ private fun reservationOrderById(reservations: List<Reservation>): Map<String, I
     .sortedWith(BY_START_DATE_THEN_ID)
     .withIndex()
     .associate { (index, r) -> r.id to index + 1 }
+
+private fun currentReservationInfo(
+    r: Reservation,
+    guests: List<GuestStats>,
+    today: LocalDate,
+    order: Int,
+    inYear: Int,
+) = CurrentReservationInfo(r.startDate, r.endDate, guests, today.daysUntilSafe(r.endDate), order, inYear)
+
+private fun nextReservationInfo(r: Reservation, guests: List<GuestStats>, today: LocalDate, order: Int, inYear: Int) =
+    NextReservationInfo(r.startDate, r.endDate, guests, today.daysUntilSafe(r.startDate), order, inYear)
+
+/**
+ * Order number (from 1) of [reservation] among the started reservations with the same start year, sorted ascending on
+ * start date, then id. For a reservation that has not started, this is the number of started ones in its year plus 1.
+ */
+private fun orderInYear(reservation: Reservation, allReservations: List<Reservation>): Int = allReservations.count {
+    it.hasStarted &&
+        it.startDate.year == reservation.startDate.year &&
+        BY_START_DATE_THEN_ID.compare(it, reservation) < 0
+} + 1
 
 private fun guestFunFactContext(
     current: Reservation?,

@@ -15,6 +15,8 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import no.slomic.smarthytte.checkinouts.CABIN_CITY_NAME
 import no.slomic.smarthytte.checkinouts.HOME_CITY_NAME
+import no.slomic.smarthytte.common.firstDayOfYear
+import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
@@ -144,6 +146,22 @@ class StatsServiceTest :
                 stats.nextReservation.shouldNotBeNull().reservationOrder shouldBe 3
             }
 
+            should("number current and next reservation among started reservations in their start year") {
+                addGuests(anna, bjorn)
+                addReservation("r0", daysFromToday(-400), daysFromToday(-398), anna)
+                addReservation("r1", daysFromToday(0), daysFromToday(4), anna, bjorn)
+                addReservation("r2", daysFromToday(10), daysFromToday(12), bjorn)
+                addReservation("r3", daysFromToday(20), daysFromToday(22), bjorn)
+
+                val stats = service.getLiveStats()
+
+                // Only r1 has started this year, so it is the first. The next one is the second this year,
+                // or the first of its own year when it starts after New Year.
+                val nextIsSameYear = daysFromToday(10).year == daysFromToday(0).year
+                stats.currentReservation.shouldNotBeNull().reservationOrderInYear shouldBe 1
+                stats.nextReservation.shouldNotBeNull().reservationOrderInYear shouldBe if (nextIsSameYear) 2 else 1
+            }
+
             should("create guest facts for the current reservation only") {
                 addGuests(anna, bjorn)
                 addReservation("r1", daysFromToday(0), daysFromToday(4), anna, bjorn)
@@ -167,6 +185,30 @@ class StatsServiceTest :
                 texts shouldContain "Årets lengste opphold: 4 netter"
                 texts shouldContain "I snitt 2,0 personer per besøk i år"
             }
+        }
+
+        context("getLiveStats across a year boundary") {
+            val today = utcDateNow()
+            val firstDayOfThisYear = firstDayOfYear(today.year)
+
+            // On 1 January there is no earlier day this year, so the earlier reservation would tie with the current one
+            should("number the current reservation after earlier ones this year and the next one first in its year")
+                .config(enabled = today != firstDayOfThisYear) {
+                    addGuests(anna)
+                    addReservation("r0", firstDayOfThisYear, firstDayOfThisYear.plus(DatePeriod(days = 1)), anna)
+                    addReservation("r1", today, today.plus(DatePeriod(days = 1)), anna)
+                    addReservation(
+                        "r2",
+                        firstDayOfYearAfter(today.year),
+                        firstDayOfYearAfter(today.year).plus(DatePeriod(days = 2)),
+                        anna,
+                    )
+
+                    val stats = service.getLiveStats()
+
+                    stats.currentReservation.shouldNotBeNull().reservationOrderInYear shouldBe 2
+                    stats.nextReservation.shouldNotBeNull().reservationOrderInYear shouldBe 1
+                }
         }
 
         context("getLiveStats on the check-out day") {

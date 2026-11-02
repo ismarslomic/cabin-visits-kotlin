@@ -934,7 +934,8 @@
           "endDate",
           "guests",
           "remainingNights",
-          "reservationOrder"
+          "reservationOrder",
+          "reservationOrderInYear"
         ],
         "properties": {
           "startDate": {
@@ -961,6 +962,10 @@
           "reservationOrder": {
             "type": "integer",
             "description": "Order number of the current reservation when all reservations are sorted ascending on start date, starting at 1."
+          },
+          "reservationOrderInYear": {
+            "type": "integer",
+            "description": "Order number of the current reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1."
           }
         }
       },
@@ -976,7 +981,8 @@
           "endDate",
           "guests",
           "daysUntil",
-          "reservationOrder"
+          "reservationOrder",
+          "reservationOrderInYear"
         ],
         "properties": {
           "startDate": {
@@ -1003,6 +1009,10 @@
           "reservationOrder": {
             "type": "integer",
             "description": "Order number of the next reservation when all reservations are sorted ascending on start date, starting at 1."
+          },
+          "reservationOrderInYear": {
+            "type": "integer",
+            "description": "Order number of the next reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1."
           }
         }
       },
