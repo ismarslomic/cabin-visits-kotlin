@@ -933,7 +933,8 @@
           "startDate",
           "endDate",
           "guests",
-          "remainingNights"
+          "remainingNights",
+          "reservationOrder"
         ],
         "properties": {
           "startDate": {
@@ -956,6 +957,10 @@
           "remainingNights": {
             "type": "integer",
             "description": "Number of nights remaining in the current reservation, from today until check-out. 0 on the check-out day."
+          },
+          "reservationOrder": {
+            "type": "integer",
+            "description": "Order number of the current reservation when all reservations are sorted ascending on start date, starting at 1."
           }
         }
       },
@@ -970,7 +975,8 @@
           "startDate",
           "endDate",
           "guests",
-          "daysUntil"
+          "daysUntil",
+          "reservationOrder"
         ],
         "properties": {
           "startDate": {
@@ -993,6 +999,10 @@
           "daysUntil": {
             "type": "integer",
             "description": "Number of days from today until the next reservation starts."
+          },
+          "reservationOrder": {
+            "type": "integer",
+            "description": "Order number of the next reservation when all reservations are sorted ascending on start date, starting at 1."
           }
         }
       },

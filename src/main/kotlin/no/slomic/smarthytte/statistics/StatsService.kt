@@ -66,6 +66,8 @@ import no.slomic.smarthytte.statistics.model.YearStats
 import no.slomic.smarthytte.statistics.model.YearVisitsStats
 import no.slomic.smarthytte.statistics.model.toTopGuestByDays
 
+private val BY_START_DATE_THEN_ID = compareBy<Reservation> { it.startDate }.thenBy { it.id }
+
 private const val TOP_GUESTS_LIMIT = 10
 private const val KWH_PER_100KM_FACTOR = 100
 private const val AGE_CHILD_MAX = 12
@@ -96,20 +98,22 @@ class StatsService(
         // The stay is still current on its check-out day, until the date has passed, so the mirror can show the last
         // day. If one stay ends and another starts today, the arriving one is current.
         val current = allReservations.filter { it.hasStarted && it.endDate >= today }.maxByOrNull { it.startDate }
-        val next = allReservations.filter { !it.hasStarted }.minByOrNull { it.startDate }
+        val next = allReservations.filter { !it.hasStarted }.minWithOrNull(BY_START_DATE_THEN_ID)
+
+        val orderById = reservationOrderById(allReservations)
 
         val currentInfo =
             current?.let { r ->
                 val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val remaining = today.daysUntilSafe(r.endDate)
-                CurrentReservationInfo(r.startDate, r.endDate, guests, remaining)
+                CurrentReservationInfo(r.startDate, r.endDate, guests, remaining, orderById.getValue(r.id))
             }
 
         val nextInfo =
             next?.let { r ->
                 val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
                 val daysUntil = today.daysUntilSafe(r.startDate)
-                NextReservationInfo(r.startDate, r.endDate, guests, daysUntil)
+                NextReservationInfo(r.startDate, r.endDate, guests, daysUntil, orderById.getValue(r.id))
             }
 
         // All-time totals only count reservations that have started, i.e. future bookings are excluded
@@ -433,6 +437,12 @@ class StatsService(
         )
     }
 }
+
+/** Order number (from 1) of each reservation when sorted ascending on start date, then id. */
+private fun reservationOrderById(reservations: List<Reservation>): Map<String, Int> = reservations
+    .sortedWith(BY_START_DATE_THEN_ID)
+    .withIndex()
+    .associate { (index, r) -> r.id to index + 1 }
 
 private fun guestFunFactContext(
     current: Reservation?,

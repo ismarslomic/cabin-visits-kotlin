@@ -131,6 +131,19 @@ class StatsServiceTest :
                 current.guests.map { it.guestId } shouldBe listOf("anna", "bjorn")
             }
 
+            should("number current and next reservation by start date, breaking ties on id") {
+                addGuests(anna, bjorn)
+                addReservation("r0", daysFromToday(-20), daysFromToday(-18), anna)
+                addReservation("r1", daysFromToday(0), daysFromToday(4), anna, bjorn)
+                addReservation("r3", daysFromToday(10), daysFromToday(12), bjorn)
+                addReservation("r2", daysFromToday(10), daysFromToday(11), anna)
+
+                val stats = service.getLiveStats()
+
+                stats.currentReservation.shouldNotBeNull().reservationOrder shouldBe 2
+                stats.nextReservation.shouldNotBeNull().reservationOrder shouldBe 3
+            }
+
             should("create guest facts for the current reservation only") {
                 addGuests(anna, bjorn)
                 addReservation("r1", daysFromToday(0), daysFromToday(4), anna, bjorn)
