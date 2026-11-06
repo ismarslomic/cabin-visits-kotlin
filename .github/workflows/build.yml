@@ -2,13 +2,13 @@ name: Build and publish
 
 on:
   push:
-    branches: [ 'main' ]
+    branches: [ 'main', 'v2' ]
     # Don't trigger if changes done to .md files
     paths-ignore:
       - '**/*.md'
 
   pull_request:
-    branches: [ 'main' ]
+    branches: [ 'main', 'v2' ]
     # Don't trigger if changes done to .md files
     paths-ignore:
       - '**/*.md'
