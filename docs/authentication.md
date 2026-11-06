@@ -59,7 +59,50 @@ before.
 | `GET /api/stats`, `GET /api/stats/guests/{guestId}`, `GET /api/guests/{id}/avatar` | yes, **also API key (service)** | yes                     | yes                      | yes                      |
 | Other `GET /api/stats/**`                                                          | yes                             | yes                     | yes                      | yes                      |
 | `/`, `/metrics`, `/openapi.json`                                                   | no (unchanged)                  |                         |                          |                          |
-| Future write endpoints                                                             | yes                             | all reservations, users | own reservations         | no                       |
+
+### Planned permissions (reservation and guest API)
+
+Not implemented yet, see `.claude/plans/reservations-rest-api.md`. The plan wins until a row moves into the matrix above.
+Past, current and future reservations are treated the same. `ADMIN` and `FAMILY_USER` may change any reservation (there is
+no owner concept). A guest without a role has no access.
+
+**Reservations**
+
+| Operation                                              | ADMIN | FAMILY_USER | GUEST_USER | Service (API key) |
+|:-------------------------------------------------------|:------|:------------|:-----------|:------------------|
+| Read (`GET /api/reservations`, `GET /api/reservations/{id}`) | yes   | yes         | yes        | yes               |
+| Create                                                 | yes   | yes         | no         | no                |
+| Update (incl. guests and their stays)                  | yes   | yes         | no         | no                |
+| Delete                                                 | yes   | yes         | no         | no                |
+
+**Guests**
+
+| Operation                                                              | ADMIN | FAMILY_USER | GUEST_USER | Service (API key) |
+|:-----------------------------------------------------------------------|:------|:------------|:-----------|:------------------|
+| List guests (`GET /api/guests`)                                        | yes   | yes         | no         | no                |
+| Create a guest                                                         | yes   | no          | no         | no                |
+| Edit any guest (`POST /api/guests/{guestId}`)                          | yes   | no          | no         | no                |
+| Edit own profile (`POST /api/me`: name, birth year, gender)            | yes   | yes         | yes        | no                |
+| Upload or replace avatar of any guest                                  | yes   | no          | no         | no                |
+| Upload or replace own avatar                                           | yes   | yes         | yes        | no                |
+| Read avatar (`GET /api/guests/{id}/avatar`)                            | yes   | yes         | yes        | yes               |
+| Delete a guest                                                         | not supported | not supported | not supported | not supported |
+
+Only `ADMIN` may change `email`, `isFamily` and `role`.
+
+**Planned status codes and versioning** (details in the plan):
+- `POST /api/reservations` answers `201` with a `Location` header; update `200`; delete `204`; unknown id `404`.
+- A stale `version` returns `412` (reservations, and guests on `POST /api/guests/{guestId}` and `POST /api/me`); a missing or non-numeric `version`
+  returns `400`. An overlap with another reservation and a shared guest email return `409`.
+- `DELETE /api/reservations/{id}?version=<n>` carries the version in the query.
+- Avatar upload: `Content-Type: image/jpeg` required (`415` otherwise), at most the size limit (`413`), malformed JPEG `400`; metadata (EXIF) is stripped.
+- Errors on the new routes are JSON `{code, message}` with stable codes (the status codes above are unchanged); the existing guest update routes keep plain-text bodies.
+- A JSON write body above the limit returns `413`; a non-JSON content type on a write route returns `415`; a `version` outside the `Short` range, an invalid `from`/`to`, or `to <= from` returns `400`.
+- When the database stays locked after the retries (`SQLITE_BUSY`) or the Calendar outbox is full, writes return `503`.
+- **State-changing routes** require `application/json` or `image/jpeg`, never change state on `GET`, and have no body-less `POST` (this is what keeps cross-site requests out, because Cloudflare Access authenticates by cookie).
+
+`GET /api/guests` returns the same fields (incl. email and role) to `ADMIN` and `FAMILY_USER`. Avatars are JPEG only,
+sent as raw bytes with a size limit.
 
 New protected routes use `authorized(AppRole.X, ...) { ... }` (`auth/RoleAuthorization.kt`), which always combines
 authentication and the role check. Services are denied unless the route passes `allowService = true`.
