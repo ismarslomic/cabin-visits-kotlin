@@ -68,7 +68,7 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - Kalkulatorer i `statistics/calculator/` mottar alltid `fromDate: LocalDate` og `toDateExclusive: LocalDate` — de gjør **ingen** tidszone-konvertering internt.
 - `Instant.toUtcDate()` og `Instant.toOsloDate()` finnes i `common/InstantUtils.kt`.
 - `VehicleTrip.startDate` bruker `toUtcDate()` fordi `startTime` er konstruert med Oslo-tidssone i `VehicleTripResponse.kt` — resultatet er ekvivalent.
-- `Reservation.startTime` settes normalt fra Google Calendar RFC3339-tidspunkt. For heldagshendelser settes klokkeslett til 18:00 Oslo-tid.
+- `Reservation.startTime` og `endTime` er instants. Eksisterende rader kommer fra den fjernede Google Calendar-synkroniseringen (heldagshendelser har 18:00/15:00 Oslo-tid); nye reservasjoner skal komme via REST API-et (se `.claude/plans/reservations-rest-api.md`).
 
 ### LocalDate-grenser
 

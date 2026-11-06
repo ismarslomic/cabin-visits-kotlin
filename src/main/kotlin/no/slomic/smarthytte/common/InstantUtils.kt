@@ -2,19 +2,16 @@
 
 package no.slomic.smarthytte.common
 
-import com.google.api.client.util.DateTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import java.time.ZoneOffset.UTC
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
 import kotlin.time.toKotlinInstant
@@ -32,29 +29,6 @@ val utcTimeZone: TimeZone = TimeZone.UTC
  * * out: 2024-01-06T16:00:00.123Z
  */
 fun Instant.truncatedToMillis(): Instant = this.toJavaInstant().truncatedTo(ChronoUnit.MILLIS).toKotlinInstant()
-
-/**
- * Creates a date time by using the provided [date] and [hour] with 00 as minutes and 00 as seconds in
- * the provided [timeZone] and returns an [Instant].
- *
- * Reduces the date time by [minusDays].
- *
- * @param date the Google calendar date (year, month, day) without time or timezone
- * @param hour the hour (0-24) to set in the instant
- * @param timeZone the timezone to interpret for [date] and [hour]
- * @param minusDays the number of days to subtract from the [date] (optional, default to 0)
- *
- * Example usage:
- * ```
- * val instant = toInstant(DateTime("2025-07-10"), 15, TimeZone.of("Europe/Oslo"), 1)
- * // instant is the UTC moment corresponding to 2025-07-09 15:00:00 in Oslo timezone
- * ```
- */
-fun toInstant(date: DateTime, hour: Int, timeZone: TimeZone, minusDays: Int = 0): Instant {
-    val localDate = LocalDate.parse(date.toStringRfc3339())
-    val localDateTime = localDate.atTime(hour = hour, minute = 0, second = 0)
-    return localDateTime.toInstant(timeZone).minus(minusDays.days)
-}
 
 /**
  * Combines a [date] and [time] into a [LocalDateTime],

@@ -21,8 +21,8 @@ import no.slomic.smarthytte.auth.CloudflareAccessConfig
 import no.slomic.smarthytte.auth.configureAuthRoutes
 import no.slomic.smarthytte.auth.configureAuthentication
 import no.slomic.smarthytte.auth.toConfig
-import no.slomic.smarthytte.calendarevents.GoogleCalendarService
 import no.slomic.smarthytte.checkinouts.CheckInOutService
+import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.GuestService
@@ -35,8 +35,6 @@ import no.slomic.smarthytte.plugins.configureRouting
 import no.slomic.smarthytte.properties.ApiKeyPropertiesHolder
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.CloudflareAccessPropertiesHolder
-import no.slomic.smarthytte.properties.GoogleCalendarProperties
-import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
@@ -105,7 +103,6 @@ fun Application.module() {
     // Initialize services
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
     val vehicleTripService = VehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
-    val googleCalendarService = GoogleCalendarService(reservationRepository, syncCheckpointService)
     val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
     val checkInOutService = CheckInOutService(
         reservationRepository = reservationRepository,
@@ -121,24 +118,17 @@ fun Application.module() {
         initialLoad(
             vehicleTripService,
             checkInOutSensorService,
-            googleCalendarService,
             checkInOutService,
         )
     }
 
     // 🔁 Start background sync after the initial load
     startBackgroundSync(
-        googleCalendarService,
         reservationRepository,
         vehicleTripService,
         checkInOutSensorService,
         checkInOutService,
     )
-
-    // Fetch reservations, check in/out sensor data and update check in/out status continuously in the background
-    // launchSyncGoogleCalendarTask(googleCalendarService)
-    // NOTE!: the method below reads all reservations and updates their check in/out status.
-    // checkInOutService.updateCheckInOutStatusForAllReservations()
 
     // Configure Ktor routing (after the initial load is completed)
     val cloudflareAccess = loadProperties<CloudflareAccessPropertiesHolder>().cloudflareAccess.toConfig()
@@ -175,14 +165,12 @@ fun Application.configureApiRoutes(
  * * guests from a file
  * * vehicle trips from a file
  * * check in/out sensor data from InfluxDb
- * * reservations from Google Calendar and join these with loaded guests
  * * updates the check in/out status of reservations by using check in/out sensor data and vehicle trips
  *
  */
 suspend fun Application.initialLoad(
     vehicleTripService: VehicleTripService,
     checkInOutSensorService: CheckInOutSensorService,
-    googleCalendarService: GoogleCalendarService,
     checkInOutService: CheckInOutService,
 ) {
     log.info("Starting initial load...")
@@ -195,23 +183,17 @@ suspend fun Application.initialLoad(
     checkInOutSensorService.fetchCheckInOut()
 
     // The following data must be loaded after previous steps since they depend on them.
-    // These steps must also be executed in sequence
-    googleCalendarService.fetchGoogleCalendarEvents()
     checkInOutService.updateCheckInOutStatusForAllReservations()
 
     log.info("Initial load complete!")
 }
 
 fun Application.startBackgroundSync(
-    googleCalendarService: GoogleCalendarService,
     reservationRepository: ReservationRepository,
     vehicleTripService: VehicleTripService,
     checkInOutSensorService: CheckInOutSensorService,
     checkInOutService: CheckInOutService,
 ) {
-    val googleProperties: GoogleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
-    val reservationSyncFrequency: Duration = googleProperties.syncFrequencyMinutes.minutes
-
     val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
     val checkInOutSensorProperties: CheckInProperties = influxdbProperties.checkIn
     val checkInOutSyncFrequency: Duration = checkInOutSensorProperties.syncFrequencyMinutes.minutes
@@ -225,26 +207,20 @@ fun Application.startBackgroundSync(
         schedulerScope.cancel()
     }
 
-    // Start the scheduler to periodically fetch reservations from the Google Calendar during daytime (sync task)
-    schedulerScope.launch {
-        while (isActive) {
-            if (isDaytime()) {
-                googleCalendarService.fetchGoogleCalendarEvents()
-            }
-            delay(duration = reservationSyncFrequency)
-        }
-    }
-
-    // After fetching data from Google Calendar, fetch vehicle trips and check-in/out sensor data and update the
-    // check-in / out status for all reservations (sync task).
+    // Fetch vehicle trips and check-in/out sensor data and update the check-in / out status for all reservations
+    // (sync task).
     // This task is scheduled only within the daytime and during the reservation window (between from and end time),
     // to reduce unnecessary data fetching from the external sources outside the reservation window.
     schedulerScope.launch {
         while (isActive) {
-            if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
-                vehicleTripService.fetchVehicleTrips()
-                checkInOutSensorService.fetchCheckInOut()
-                checkInOutService.updateCheckInOutStatusForAllReservations()
+            runCatchingLogged("Background sync") {
+                if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
+                    runCatchingLogged("Fetch vehicle trips") { vehicleTripService.fetchVehicleTrips() }
+                    runCatchingLogged("Fetch check in/out sensor data") { checkInOutSensorService.fetchCheckInOut() }
+                    runCatchingLogged("Update check in/out status") {
+                        checkInOutService.updateCheckInOutStatusForAllReservations()
+                    }
+                }
             }
             delay(duration = checkInOutSyncFrequency)
         }
