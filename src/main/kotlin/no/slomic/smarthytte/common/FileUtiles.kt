@@ -23,10 +23,3 @@ fun readVehicleTripsFromJsonFile(filePath: String): List<VehicleTripResponse> {
 
     return json.decodeFromString(jsonStringFromFile)
 }
-
-fun readSummaryToGuestFromJsonFile(filePath: String): Map<String, List<String>> {
-    val jsonStringFromFile = readContentFromFile(filePath)
-    val json = Json { prettyPrint = true }
-
-    return json.decodeFromString(jsonStringFromFile)
-}

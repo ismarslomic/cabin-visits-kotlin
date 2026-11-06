@@ -14,10 +14,6 @@ folders:
 google-calendar:
   credentials-file-path: ${GOOGLE_CREDENTIALS_FILE_PATH}
   calendar-id: ${GOOGLE_CALENDAR_ID}
-  sync-enabled: ${GOOGLE_CALENDAR_SYNC_ENABLED:-true}
-  sync-from-date-time: ${GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME:-2024-01-01T00:00:00Z}
-  summary-to-guest-file-path: ${GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH}
-  sync-frequency-minutes: ${GOOGLE_CALENDAR_SYNC_FREQ_MINUTES:-10}
 
 database:
   file-path: ${folders.data}/app.db

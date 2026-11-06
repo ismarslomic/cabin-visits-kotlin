@@ -20,42 +20,12 @@ class SyncCheckpointServiceTest :
 
         lateinit var repository: SyncCheckpointRepository
         lateinit var syncCheckpointService: SyncCheckpointService
-        val googleCalendarEventsCheckpoint = "google-calendar-checkpoint"
         val checkInOutCheckpointString = "2025-05-04T12:15:00.123456Z"
         val checkInOutCheckpointInstant: Instant = Instant.parse(checkInOutCheckpointString)
 
         beforeEach {
             repository = SqliteSyncCheckpointRepository()
             syncCheckpointService = SyncCheckpointService(repository)
-        }
-
-        "should store new checkpoint for google calendar events" {
-            syncCheckpointService.addOrUpdateCheckpointForGoogleCalendarEvents(googleCalendarEventsCheckpoint)
-            syncCheckpointService.checkpointForGoogleCalendarEvents() shouldBe googleCalendarEventsCheckpoint
-        }
-
-        "should update existing checkpoint for google calendar events" {
-            syncCheckpointService.addOrUpdateCheckpointForGoogleCalendarEvents(googleCalendarEventsCheckpoint)
-            syncCheckpointService.checkpointForGoogleCalendarEvents() shouldBe googleCalendarEventsCheckpoint
-
-            val newCheckpoint = "new-checkpoint"
-            syncCheckpointService.addOrUpdateCheckpointForGoogleCalendarEvents(newCheckpoint)
-            syncCheckpointService.checkpointForGoogleCalendarEvents() shouldBe newCheckpoint
-        }
-
-        "should return null if no checkpoint exists for google calendar events" {
-            syncCheckpointService.checkpointForGoogleCalendarEvents().shouldBeNull()
-        }
-
-        "should delete existing checkpoint for google calendar events" {
-            syncCheckpointService.addOrUpdateCheckpointForGoogleCalendarEvents(googleCalendarEventsCheckpoint)
-            syncCheckpointService.checkpointForGoogleCalendarEvents() shouldBe googleCalendarEventsCheckpoint
-            syncCheckpointService.deleteCheckpointForGoogleCalendarEvents()
-            syncCheckpointService.checkpointForGoogleCalendarEvents().shouldBeNull()
-        }
-
-        "should not throw exception if no existing checkpoint exists for google calendar events" {
-            syncCheckpointService.deleteCheckpointForGoogleCalendarEvents()
         }
 
         "should store new checkpoint for check in/out sensor" {

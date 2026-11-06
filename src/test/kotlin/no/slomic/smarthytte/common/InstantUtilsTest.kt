@@ -1,6 +1,5 @@
 package no.slomic.smarthytte.common
 
-import com.google.api.client.util.DateTime
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.MockKAnnotations
@@ -20,29 +19,6 @@ import kotlin.time.toJavaInstant
 
 class InstantUtilsTest :
     StringSpec({
-        "toInstant(DateTime, hour, timeZone, minusDays) should return correct Instant" {
-            val timeZone = TimeZone.of("Europe/Oslo")
-            val dateTime = DateTime("2025-07-10")
-            val hour = 15
-            val minusDays = 1
-
-            val expectedInstant = Instant.parse("2025-07-09T13:00:00Z")
-            val actualInstant = toInstant(dateTime, hour, timeZone, minusDays)
-
-            actualInstant shouldBe expectedInstant
-        }
-
-        "toInstant(DateTime, hour, timeZone) with no minusDays should use given date as-is" {
-            val timeZone = TimeZone.of("Europe/Oslo")
-            val dateTime = DateTime("2025-07-10")
-            val hour = 15
-
-            val expectedInstant = Instant.parse("2025-07-10T13:00:00Z")
-            val actualInstant = toInstant(dateTime, hour, timeZone)
-
-            actualInstant shouldBe expectedInstant
-        }
-
         "toInstant(LocalDate, LocalTime, TimeZone) should convert local date and time and zone to correct instant" {
             // Prepare
             val date = LocalDate(year = 2025, month = 7, day = 10)

@@ -12,7 +12,6 @@ class AppPropertiesTest :
     BehaviorSpec({
         val envVarCredentialsFilePath = "/data/google-service-account-credentials.json"
         val envVarCalendarId = "abcdefghijkl"
-        val envVarSummaryToGuestFilePath = "/data/summaryToGuestIds.json"
         val envVarGuestFilePath = "/data/guests.json"
         val envVarGuestAvatarDirectoryPath = "/data/avatars"
         val envVarInfluxDbUrl = "http://localhost:8086"
@@ -37,7 +36,6 @@ class AppPropertiesTest :
             val requiredEnvVars = mapOf(
                 "GOOGLE_CREDENTIALS_FILE_PATH" to envVarCredentialsFilePath,
                 "GOOGLE_CALENDAR_ID" to envVarCalendarId,
-                "GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH" to envVarSummaryToGuestFilePath,
                 "GUEST_FILE_PATH" to envVarGuestFilePath,
                 "INFLUXDB_URL" to envVarInfluxDbUrl,
                 "INFLUXDB_TOKEN" to envVarInfluxDbToken,
@@ -66,16 +64,6 @@ class AppPropertiesTest :
                     }
                     Then("calendarId should be set to the environment variable value") {
                         googleCalendarProperties.calendarId shouldBe envVarCalendarId
-                    }
-                    Then("syncEnabled should be set to the default value true") {
-                        googleCalendarProperties.syncEnabled shouldBe true
-                    }
-                    Then("syncFromDateTime should be set to the default value") {
-                        val defaultSyntFromDateTime = "2024-01-01T00:00:00Z"
-                        googleCalendarProperties.syncFromDateTime shouldBe defaultSyntFromDateTime
-                    }
-                    Then("summaryToGuestFilePath should be set to the environment variable value") {
-                        googleCalendarProperties.summaryToGuestFilePath shouldBe envVarSummaryToGuestFilePath
                     }
                 }
 
@@ -174,32 +162,16 @@ class AppPropertiesTest :
                 }
             }
             And("optional environment variables are set") {
-                val envVarSyncFromDateTime = "2020-05-07T00:00:00Z"
                 val envVarDataFolder = "/my/data/"
                 val optionalEnvVars = mapOf(
-                    "GOOGLE_CALENDAR_SYNC_FROM_DATE_TIME" to envVarSyncFromDateTime,
                     "DATA_FOLDER" to envVarDataFolder,
                     "INFLUXDB_CHECK_IN_RANGE_STOP" to envVarInfluxDbCheckInRangeStop,
-                    "GOOGLE_CALENDAR_SYNC_ENABLED" to "false",
                     "INFLUXDB_CHECK_IN_SYNC_ENABLED" to "false",
                     "VEHICLE_TRIP_SYNC_ENABLED" to "false",
                 )
                 val requiredAndOptionalEnvVars = requiredEnvVars + optionalEnvVars
 
                 withTestEnvironment(requiredAndOptionalEnvVars) {
-                    When("reading google properties") {
-                        val googleCalendarProperties = loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar
-                        val syncFromDateTime = googleCalendarProperties.syncFromDateTime
-
-                        Then("syncFromDateTime should be set to the environment variable value") {
-                            syncFromDateTime shouldBe envVarSyncFromDateTime
-                        }
-
-                        Then("syncEnabled should be set to the environment variable value") {
-                            googleCalendarProperties.syncEnabled shouldBe false
-                        }
-                    }
-
                     When("reading database properties") {
                         val databaseProperties = loadProperties<DatabasePropertiesHolder>().database
                         val databaseFilePath = databaseProperties.filePath
