@@ -8,7 +8,8 @@ interface GuestRepository {
     suspend fun guestById(id: String): Guest?
 
     /**
-     * Adds or updates the [guest] with its [guestAvatarImage]. A null [guestAvatarImage] means the guest has no avatar.
+     * Adds or updates the [guest] with its [guestAvatarImage]: every property of the stored guest is overwritten.
+     * A null [guestAvatarImage] means the guest has no avatar. Used as a fixture/import upsert, the API uses [update].
      */
     suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray? = null): PersistenceResult
 
@@ -16,9 +17,8 @@ interface GuestRepository {
     suspend fun guestsByEmail(email: String): List<Guest>
 
     /**
-     * Changes the properties of the guest that are set in [update], and remembers them as edited through the API so the
-     * guests.json sync does not overwrite them. Returns [PersistenceResult.NO_ACTION] if the guest is unknown or
-     * nothing changed.
+     * Changes the properties of the guest that are set in [update]. Returns [PersistenceResult.NO_ACTION] if the guest
+     * is unknown or nothing changed.
      */
     suspend fun update(guestId: String, update: GuestUpdate): PersistenceResult
     suspend fun setNotionId(notionId: String, guestId: String): PersistenceResult

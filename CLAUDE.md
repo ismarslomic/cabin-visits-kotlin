@@ -40,12 +40,12 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - Nye `@Serializable` request-/respons-klasser trenger tre oppføringer i `META-INF/native-image/main/reachability-metadata.json` (klassen med `Companion`, `$$serializer`, `$Companion.serializer`), se `GuestUpdate` og `MeUpdate`.
 - Flyway-migrasjoner (`src/main/resources/db/migration`) endres aldri etter at de er laget. Lag en ny `V1.x`. SQLite kan ikke gi nytt navn til en constraint.
 - Test migrasjoner mot en kopi av `data/app.db`, aldri mot selve filen.
-- Navn som lagres i data (f.eks. `GuestField` i `guest.api_edited_fields`) kan ikke gis nytt navn uten datamigrasjon.
+- Navn som lagres i data (f.eks. enum-verdier som `AppRole` og `Gender`) kan ikke gis nytt navn uten datamigrasjon.
 
 ## API- og gjestekonvensjoner
 
 - Rollen heter `role` overalt (JSON, Kotlin, DB). Typen heter fortsatt `AppRole`.
-- En e-post tilhører én gjest (unik indeks `uq_guest_email`, case-insensitiv). `guests.json` med delt e-post stopper oppstart.
+- En e-post tilhører én gjest (unik indeks `uq_guest_email`, case-insensitiv).
 - `ignoreUnknownKeys` er på globalt, så ukjente felt i request body ignoreres.
 - `POST /api/me` endrer kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `POST /api/guests/{guestId}`.
 - Endrer du auth- eller gjesteatferd, oppdater `docs/authentication.md`.

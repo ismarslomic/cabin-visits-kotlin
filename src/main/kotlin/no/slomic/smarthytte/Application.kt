@@ -25,7 +25,6 @@ import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
-import no.slomic.smarthytte.guests.GuestService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.guests.configureGuestRoutes
 import no.slomic.smarthytte.plugins.HttpClientProvider
@@ -162,7 +161,6 @@ fun Application.configureApiRoutes(
  * Initial load of historical data from a file or external storage.
  *
  * Loads historical data for
- * * guests from a file
  * * vehicle trips from a file
  * * check in/out sensor data from InfluxDb
  * * updates the check in/out status of reservations by using check in/out sensor data and vehicle trips
@@ -175,10 +173,7 @@ suspend fun Application.initialLoad(
 ) {
     log.info("Starting initial load...")
 
-    val guestService = GuestService(guestRepository = SqliteGuestRepository())
-
     // The following data are decoupled from each other and could potentially be parallelized
-    guestService.insertGuestsFromFile()
     vehicleTripService.insertVehicleTripsFromFile()
     checkInOutSensorService.fetchCheckInOut()
 

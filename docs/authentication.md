@@ -132,38 +132,13 @@ fetch avatars itself, for example in its node helper).
 
 ## Granting access
 
-Roles are managed in SQLite (`guest.role`), but the source is `guests.json`: the optional `role` property of
-each guest is written to the database at startup together with the other guest properties (see `GuestService`).
-A guest without `role` has no access, so removing the property from the file revokes access at the next startup,
-**unless the role of that guest has been changed through the API**: the API is then the source (see
-[Changing guest data](#changing-guest-data)) and the file no longer decides the role.
+Roles are stored in SQLite (`guest.role`) and changed by an admin with `POST /api/guests/{guestId}`. A guest without a
+`role` has no access. A role cannot be set back to null through the API, so an admin can only lower it (for example to
+`GUEST_USER`); removing access completely takes SQL on `data/app.db`. The guest needs the email that Cloudflare Access
+verifies. Values: `ADMIN`, `FAMILY_USER`, `GUEST_USER`.
 
-```json
-{
-  "id": "ismar",
-  "firstName": "Ismar",
-  "lastName": "Slomic",
-  "birthYear": 1984,
-  "email": "ismar@slomic.no",
-  "gender": "MALE",
-  "isFamily": true,
-  "role": "ADMIN"
-}
-```
-
-The guest needs the email that Cloudflare Access verifies. Values: `ADMIN`, `FAMILY_USER`, `GUEST_USER`.
-
-## Changing guest data
-
-`POST /api/me` changes the authenticated user's own guest, and `POST /api/guests/{guestId}` (admin only) any guest.
-
-`POST /api/me` takes exactly `firstName`, `lastName`, `birthYear` and `gender`, all required (`400` if one is missing or
-invalid), for every role. Other properties in the body, such as `email`, `isFamily` and `role`, are ignored.
-
-The email cannot be changed through `POST /api/me`: it identifies the user, and the new email must also be allowed by
-the Cloudflare Access policy (the list of emails of the policy "Authorized Users") and be one the user can sign in with.
-An admin changes the email with `POST /api/guests/{guestId}` and adds it to the policy in the Cloudflare dashboard; the
-user must then sign in again with the new email.
+There is no import file any more: guests are no longer loaded at startup. Until the guest API can create guests, a new
+guest is added with SQL on `data/app.db` (take a backup first).
 
 `POST /api/guests/{guestId}` takes the properties to change; properties that are left out are unchanged:
 
@@ -173,10 +148,6 @@ user must then sign in again with the new email.
 
 An admin cannot remove their own `ADMIN` role or change their own email there. An email can only belong to one guest
 (`409` otherwise), also guests without a role: sharing it makes the identity ambiguous. This is also enforced by the
-unique index `uq_guest_email` in the database, and `guests.json` with a shared email stops the application at startup.
+unique index `uq_guest_email` in the database.
 `id` and `notionId` cannot be changed. A property cannot be set back to null, so an email can be replaced but not
 removed. Rules are enforced in `GuestProfileService`.
-
-Properties changed through the API are remembered per guest (`guest.api_edited_fields`) and are **not overwritten** by
-the `guests.json` sync at startup. The sync still updates the properties that were never changed through the API, and
-adds new guests. To make the file win again for a property, clear the property name from `api_edited_fields`.

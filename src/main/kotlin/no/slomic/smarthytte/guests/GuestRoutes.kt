@@ -109,8 +109,8 @@ private fun Route.describeUpdateGuest() = describe {
     }
     summary = "Update a guest"
     description = "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, " +
-        "gender, email, isFamily, role) and leaves the others unchanged. Changed properties are not overwritten " +
-        "by the guests.json sync at startup. An admin cannot remove their own admin role."
+        "gender, email, isFamily, role) and leaves the others unchanged. An admin cannot remove their own admin " +
+        "role."
     responses {
         HttpStatusCode.OK { description = "The updated guest." }
         HttpStatusCode.BadRequest { description = "The body is not valid JSON or a property has an invalid value." }

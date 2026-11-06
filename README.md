@@ -22,8 +22,6 @@ with the `-e` option:
 |----------------------------------------------|----------|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `GOOGLE_CREDENTIALS_FILE_PATH`               | Yes      | N/A                    | The path to the Google Service Account credentials, inside the container.                                                                                                                                                                  |
 | `GOOGLE_CALENDAR_ID`                         | Yes      | N/A                    | The id of the Google Calendar. Not read by the app at the moment; kept for the planned write of reservations to the calendar.                                                                                                              |
-| `GUEST_FILE_PATH`                            | Yes      | N/A                    | Path to the JSON file with the Guests for database update/insert.                                                                                                                                                                          |
-| `GUEST_AVATARS_DIRECTORY_PATH`               | Yes      | N/A                    | Path to the directory with the Guests avatars images (named in format guestId.jpg).                                                                                                                                                        |
 | `STATISTICS_DATA_START_DATE`                 | Yes      | N/A                    | First date visits are registered (format: `YYYY-MM-DD`), used in fun facts about the cabin.                                                                                                                                                |
 | `CLOUDFLARE_ACCESS_TEAM_DOMAIN`              | No       | N/A                    | Team domain of Cloudflare Access (e.g., `myteam.cloudflareaccess.com`). Needed together with `CLOUDFLARE_ACCESS_AUD` for endpoints that require authentication, see [docs/authentication.md](docs/authentication.md).                      |
 | `API_KEYS`                                   | No       | N/A                    | Comma separated `name:sha256` entries, the hex SHA-256 of the API key of each service (MagicMirror). Without it no service can call the API; see [docs/authentication.md](docs/authentication.md#api-key-for-a-service-magicmirror).       |
@@ -68,7 +66,7 @@ services:
       - 8079:8079 # port for REST API
     volumes:
       - ./config:/config # the google credentials file
-      - ./data:/data # sqlite db file, guests.json file, `avatars/` folder with guest pictures, vehicle trips and the summary-to-guest mapping file
+      - ./data:/data # sqlite db file and the vehicle trips file
     env_file:
       - .env
     restart: unless-stopped

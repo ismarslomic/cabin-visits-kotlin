@@ -1,19 +1,17 @@
 ## Initial load (at startup)
 
 The initial load is executed on every application startup, regardless of whether it has already run before. This ensures
-the database is always updated with the latest content from static files (such as guests and vehicle trips). With this
-approach, you can change the static files and restart the application to apply updates.
+the database is always updated with the latest content from the vehicle trips file. With this approach, you can
+change the file and restart the application to apply updates.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant InitialLoad as Application: initial load
-    participant GuestService as Guest Service
     participant VehicleTripService as Vehicle Trip Service
     participant CheckInOutSensorService as Check In Out Sensor Service
     participant CheckInOutService as Check In Out Service
 
-    InitialLoad->>GuestService: insert guests from file
     InitialLoad->>VehicleTripService: insert vehicle trips from file
     InitialLoad->>CheckInOutSensorService: fetch check in/out
     InitialLoad->>CheckInOutService: update check in/out status for all reservations
@@ -59,32 +57,6 @@ sequenceDiagram
 #### Is within reservation window?
 
 `reservation.startTime - 1 day <= now <= reservation.endTime + 1 day`
-
-## Guest Service
-
-The `GuestService` is responsible for managing guest information within the application. It reads guest data from a
-designated JSON file, then processes and updates the internal guest database accordingly. As it processes the guests, it
-ensures that new guests are added, existing guests are updated if their details have changed, and unchanged records are
-left as-is.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Application
-    participant GuestService as Guest Service
-    participant guestFile as file:guests.json
-    participant GuestRepository as Guest Repository
-    participant guest as db:guest
-
-    Application->>GuestService: insert guests from file
-    activate GuestService
-    GuestService->>guestFile: read guests from json file
-    guestFile-->>GuestService: guests
-    GuestService->>GuestRepository: add/update guests
-    GuestRepository->>guest: add/update guests
-    GuestRepository-->>GuestService: persistence result
-    deactivate GuestService
-```
 
 ## Vehicle Trip Service
 
