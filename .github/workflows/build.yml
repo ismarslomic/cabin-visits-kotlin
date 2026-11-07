@@ -177,8 +177,10 @@ jobs:
 
       # Update Docker Hub repo with description from README.md
       # https://github.com/peter-evans/dockerhub-description
+      # Only from main: the same Docker Hub repository serves production, so a push to another branch (v2) must not
+      # replace the description with that branch's README.md
       - name: Update image description in Docker Hub
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
         with:
           readme-filepath: README.md # Path to the repository readme.
