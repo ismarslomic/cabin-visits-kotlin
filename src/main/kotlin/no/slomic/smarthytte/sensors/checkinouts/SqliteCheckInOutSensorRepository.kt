@@ -3,10 +3,11 @@ package no.slomic.smarthytte.sensors.checkinouts
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.markCreated
+import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
-import kotlin.time.Clock
 
 class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteCheckInOutSensorRepository::class.java.name)
@@ -15,24 +16,25 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         CheckInOutSensorEntity.all().sortedBy { it.time }.map(::daoToModel)
     }
 
-    override suspend fun addOrUpdate(checkInOutSensor: CheckInOutSensor): PersistenceResult = suspendTransaction {
-        val entityId: EntityID<String> = EntityID(checkInOutSensor.id, CheckInOutSensorTable)
-        val storedCheckInOut: CheckInOutSensorEntity? = CheckInOutSensorEntity.findById(entityId)
+    override suspend fun addOrUpdate(checkInOutSensor: CheckInOutSensor, actor: String): PersistenceResult =
+        suspendTransaction {
+            val entityId: EntityID<String> = EntityID(checkInOutSensor.id, CheckInOutSensorTable)
+            val storedCheckInOut: CheckInOutSensorEntity? = CheckInOutSensorEntity.findById(entityId)
 
-        if (storedCheckInOut == null) {
-            addCheckInOutSensor(checkInOutSensor)
-        } else {
-            updateCheckInOutSensor(checkInOutSensor)
+            if (storedCheckInOut == null) {
+                addCheckInOutSensor(checkInOutSensor, actor)
+            } else {
+                updateCheckInOutSensor(checkInOutSensor, actor)
+            }
         }
-    }
 
-    private fun addCheckInOutSensor(checkInOutSensor: CheckInOutSensor): PersistenceResult {
+    private fun addCheckInOutSensor(checkInOutSensor: CheckInOutSensor, actor: String): PersistenceResult {
         logger.trace("Adding check in/out with id: ${checkInOutSensor.id}")
 
         CheckInOutSensorEntity.new(checkInOutSensor.id) {
+            markCreated(actor)
             time = checkInOutSensor.time.truncatedToMillis()
             status = checkInOutSensor.status
-            createdTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Added check in with id: ${checkInOutSensor.id}")
@@ -44,7 +46,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * check in.
      */
-    private fun updateCheckInOutSensor(checkInOutSensor: CheckInOutSensor): PersistenceResult {
+    private fun updateCheckInOutSensor(checkInOutSensor: CheckInOutSensor, actor: String): PersistenceResult {
         logger.trace("Updating check in/out with id: ${checkInOutSensor.id}")
 
         val updatedCheckInOut: CheckInOutSensorEntity =
@@ -58,8 +60,7 @@ class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
         val isDirty: Boolean = updatedCheckInOut.writeValues.isNotEmpty()
 
         return if (isDirty) {
-            updatedCheckInOut.version = updatedCheckInOut.version.inc()
-            updatedCheckInOut.updatedTime = Clock.System.now().truncatedToMillis()
+            updatedCheckInOut.markUpdated(actor)
 
             logger.trace("Updated check in/out with id: ${checkInOutSensor.id}")
             PersistenceResult.UPDATED

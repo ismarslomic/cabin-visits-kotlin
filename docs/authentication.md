@@ -130,6 +130,12 @@ fetch avatars itself, for example in its node helper).
 - The key is sent in clear text on a plain HTTP network. Keep it on a trusted network or put TLS in front.
 - A wrong or empty key gives `401`. A valid key on a route that does not allow services gives `403`.
 
+## Audit trail
+
+Changes to guests (`POST /api/guests/{guestId}`, `POST /api/me`) record the authenticated user's `guest.id` in
+`guest.updated_by`, together with `updated_time` and a new `version`. Tasks without a user (the vehicle trip import)
+record `system`. See [database_schema.md](database_schema.md#audit-columns).
+
 ## Granting access
 
 Roles are stored in SQLite (`guest.role`) and changed by an admin with `POST /api/guests/{guestId}`. A guest without a

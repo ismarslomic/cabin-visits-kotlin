@@ -1,7 +1,7 @@
 package no.slomic.smarthytte.vehicletrips
 
-import no.slomic.smarthytte.common.BaseEntity
-import no.slomic.smarthytte.common.BaseIdTable
+import no.slomic.smarthytte.common.AuditedEntity
+import no.slomic.smarthytte.common.AuditedIdTable
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.dao.EntityClass
@@ -10,7 +10,7 @@ import org.jetbrains.exposed.v1.datetime.timestamp
 import kotlin.time.Duration
 import kotlin.time.Instant
 
-object VehicleTripTable : BaseIdTable<String>(name = "vehicle_trip") {
+object VehicleTripTable : AuditedIdTable<String>(name = "vehicle_trip") {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).entityId()
     val averageEnergyConsumption: Column<Double> = double(name = "avg_energy_consumption")
     val averageEnergyConsumptionUnit: Column<String> = varchar(name = "avg_energy_consumption_unit", length = 10)
@@ -34,7 +34,7 @@ object VehicleTripTable : BaseIdTable<String>(name = "vehicle_trip") {
     override val primaryKey = PrimaryKey(id, name = "pk_vehicle_trip_id")
 }
 
-class VehicleTripEntity(id: EntityID<String>) : BaseEntity<String>(id, VehicleTripTable) {
+class VehicleTripEntity(id: EntityID<String>) : AuditedEntity<String>(id, VehicleTripTable) {
     companion object : EntityClass<String, VehicleTripEntity>(VehicleTripTable)
 
     var averageEnergyConsumption: Double by VehicleTripTable.averageEnergyConsumption

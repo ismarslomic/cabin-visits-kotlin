@@ -30,23 +30,24 @@ sealed interface GuestUpdateResult {
  */
 class GuestProfileService(private val guestRepository: GuestRepository) {
     suspend fun update(actor: UserPrincipal, guestId: String, update: GuestUpdate): GuestUpdateResult =
-        forbiddenReason(actor, guestId, update)?.let(GuestUpdateResult::Forbidden) ?: validateAndSave(guestId, update)
+        forbiddenReason(actor, guestId, update)?.let(GuestUpdateResult::Forbidden)
+            ?: validateAndSave(actor.id, guestId, update)
 
     /** Changes the properties of the [user]'s own guest. The email cannot be changed, since it identifies the user. */
     suspend fun updateOwnProfile(user: UserPrincipal, update: MeUpdate): GuestUpdateResult =
-        validateAndSave(user.id, update.toGuestUpdate())
+        validateAndSave(user.id, user.id, update.toGuestUpdate())
 
-    private suspend fun validateAndSave(guestId: String, update: GuestUpdate): GuestUpdateResult =
+    private suspend fun validateAndSave(actorId: String, guestId: String, update: GuestUpdate): GuestUpdateResult =
         invalidReason(update)?.let(GuestUpdateResult::Invalid)
-            ?: guestRepository.guestById(guestId)?.let { save(it, update.trimmed()) }
+            ?: guestRepository.guestById(guestId)?.let { save(actorId, it, update.trimmed()) }
             ?: GuestUpdateResult.NotFound
 
-    private suspend fun save(stored: Guest, update: GuestUpdate): GuestUpdateResult =
-        conflictReason(stored, update)?.let(GuestUpdateResult::Conflict) ?: persist(stored.id, update)
+    private suspend fun save(actorId: String, stored: Guest, update: GuestUpdate): GuestUpdateResult =
+        conflictReason(stored, update)?.let(GuestUpdateResult::Conflict) ?: persist(actorId, stored.id, update)
 
     /** The database has the last word on a unique email, so two concurrent updates cannot both succeed. */
-    private suspend fun persist(guestId: String, update: GuestUpdate): GuestUpdateResult = try {
-        guestRepository.update(guestId, update)
+    private suspend fun persist(actorId: String, guestId: String, update: GuestUpdate): GuestUpdateResult = try {
+        guestRepository.update(guestId, update, actorId)
         guestRepository.guestById(guestId)?.let(GuestUpdateResult::Updated) ?: GuestUpdateResult.NotFound
     } catch (e: ExposedSQLException) {
         if (e.isDuplicateEmail()) GuestUpdateResult.Conflict(EMAIL_IN_USE) else throw e

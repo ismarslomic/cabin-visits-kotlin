@@ -93,8 +93,8 @@ class StatsService(
         val allReservations = reservationRepository.allReservations()
         val allGuests = guestRepository.allGuests()
         val guestsById = allGuests.associateBy { it.id }
-        val avatarUrlsByGuestId = guestRepository.allAvatarUpdatedTimes()
-            .mapValues { (guestId, updatedTime) -> guestAvatarUrl(guestId, updatedTime) }
+        val avatarUrlsByGuestId = guestRepository.allAvatarVersionTimes()
+            .mapValues { (guestId, versionTime) -> guestAvatarUrl(guestId, versionTime) }
 
         // The stay is still current on its check-out day, until the date has passed, so the mirror can show the last
         // day. If one stay ends and another starts today, the arriving one is current.
@@ -244,7 +244,7 @@ class StatsService(
     /** The profile of one guest as of today, or null if there is no guest with [guestId]. */
     suspend fun getGuestProfileStats(guestId: String): GuestProfileStats? {
         val guestsById = guestRepository.allGuests().associateBy { it.id }
-        val avatarUrl = guestRepository.allAvatarUpdatedTimes()[guestId]?.let { guestAvatarUrl(guestId, it) }
+        val avatarUrl = guestRepository.allAvatarVersionTimes()[guestId]?.let { guestAvatarUrl(guestId, it) }
         return calculateGuestProfileStats(
             guestId = guestId,
             today = utcDateNow(),

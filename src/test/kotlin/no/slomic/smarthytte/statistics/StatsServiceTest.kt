@@ -15,6 +15,7 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import no.slomic.smarthytte.checkinouts.CABIN_CITY_NAME
 import no.slomic.smarthytte.checkinouts.HOME_CITY_NAME
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.common.utcDateNow
@@ -87,8 +88,15 @@ class StatsServiceTest :
                 distance = distanceKm,
                 energyRegenerated = energyRegeneratedKwh,
             )
-            vehicleTripRepository.addOrUpdate(trip)
-            reservationRepository.addVehicleTripLink(reservationId, trip.id, type)
+            vehicleTripRepository.addOrUpdate(trip, SYSTEM_ACTOR)
+            val reservation = reservationRepository.reservationById(reservationId)!!
+            reservationRepository.addVehicleTripLink(
+                reservationId,
+                trip.id,
+                type,
+                reservation.startTime,
+                reservation.endTime,
+            )
         }
 
         /** One reservation per given duration in June last year, each with a trip to the cabin of that duration. */

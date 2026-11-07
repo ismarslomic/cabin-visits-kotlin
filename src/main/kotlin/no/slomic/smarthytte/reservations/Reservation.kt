@@ -6,6 +6,7 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.plus
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.datesUntil
 import no.slomic.smarthytte.common.daysUntilSafe
 import no.slomic.smarthytte.common.toUtcDate
@@ -30,6 +31,19 @@ data class Reservation(
     var checkIn: CheckIn? = null,
     var checkOut: CheckOut? = null,
 ) {
+    // Set by the repository when a stored reservation is read. Not part of equals/hashCode/copy (decision 34): never
+    // copy a loaded reservation and write it back.
+    var version: Short = 1
+        internal set
+    var createdTime: Instant = Instant.DISTANT_PAST
+        internal set
+    var createdBy: String = SYSTEM_ACTOR
+        internal set
+    var updatedTime: Instant? = null
+        internal set
+    var updatedBy: String? = null
+        internal set
+
     val hasStarted: Boolean
         get() = startDate <= utcDateNow()
 

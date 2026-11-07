@@ -120,7 +120,8 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest, image) shouldBe PersistenceResult.ADDED
 
             repository.avatarById(guest.id)?.image shouldBe image
-            avatarUpdatedTime(guest.id) shouldBeGreaterThanOrEqualTo before
+            avatarUpdatedTime(guest.id).shouldBeNull()
+            repository.avatarById(guest.id)!!.versionTime shouldBeGreaterThanOrEqualTo before
         }
 
         "add or update with new id without avatar image should not add avatar image" {
@@ -145,7 +146,7 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest, byteArrayOf(4, 5)) shouldBe PersistenceResult.UPDATED
 
             repository.avatarById(guest.id)?.image shouldBe byteArrayOf(4, 5)
-            avatarUpdatedTime(guest.id) shouldBeGreaterThan oldTime
+            avatarUpdatedTime(guest.id)!! shouldBeGreaterThan oldTime
             transaction { GuestAvatarTable.selectAll().toList() shouldHaveSize 1 }
         }
 
@@ -208,10 +209,10 @@ class GuestRepositoryTest :
             val avatar = repository.avatarById(guest.id).shouldNotBeNull()
 
             avatar.image shouldBe image
-            avatar.updatedTime shouldBe oldTime
+            avatar.versionTime shouldBe oldTime
         }
 
-        "all avatar updated times should only include guests with avatar image" {
+        "all avatar version times should only include guests with avatar image" {
             val guest2 = guest.copy(
                 id = "john2",
                 firstName = "John2",
@@ -222,7 +223,7 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest2)
             setOldAvatarUpdatedTime(guest.id)
 
-            repository.allAvatarUpdatedTimes() shouldBe mapOf(guest.id to oldTime)
+            repository.allAvatarVersionTimes() shouldBe mapOf(guest.id to oldTime)
         }
 
         "delete guest should delete avatar image (cascade)" {
@@ -264,13 +265,13 @@ class GuestRepositoryTest :
 
 private val oldTime: Instant = Instant.parse("2020-01-01T12:00:00Z")
 
-private fun avatarUpdatedTime(guestId: String): Instant = transaction {
-    GuestAvatarTable.selectAll().where { GuestAvatarTable.guest eq guestId }.single()[GuestAvatarTable.updatedTime]
+private fun avatarUpdatedTime(guestId: String): Instant? = transaction {
+    GuestAvatarTable.selectAll().where { GuestAvatarTable.id eq guestId }.single()[GuestAvatarTable.updatedTime]
 }
 
 private fun setOldAvatarUpdatedTime(guestId: String) {
     transaction {
-        GuestAvatarTable.update({ GuestAvatarTable.guest eq guestId }) { it[updatedTime] = oldTime }
+        GuestAvatarTable.update({ GuestAvatarTable.id eq guestId }) { it[updatedTime] = oldTime }
     }
 }
 

@@ -6,6 +6,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
@@ -25,8 +26,27 @@ class SyncCheckpointRepositoryTest :
         val checkPointId = "foo-bar"
         val checkPointValue = "12345"
 
+        "add or update should record the actor in created_by and, for a change, in updated_by" {
+            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue, "first")
+            transaction {
+                val created = SyncCheckpointEntity.all().single()
+                created.createdBy shouldBe "first"
+                created.updatedBy.shouldBeNull()
+            }
+
+            repository.addOrUpdateCheckpoint(checkPointId, "changed", "second")
+            repository.addOrUpdateCheckpoint(checkPointId, "changed", "third")
+
+            transaction {
+                val updated = SyncCheckpointEntity.all().single()
+                updated.createdBy shouldBe "first"
+                updated.updatedBy shouldBe "second"
+                updated.version shouldBe 2
+            }
+        }
+
         "add or update with new id should add new checkpoint and return persistence result ADDED" {
-            val persistenceResult = repository.addOrUpdateCheckpoint(checkPointId, checkPointValue)
+            val persistenceResult = repository.addOrUpdateCheckpoint(checkPointId, checkPointValue, SYSTEM_ACTOR)
             persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
@@ -45,10 +65,14 @@ class SyncCheckpointRepositoryTest :
         }
 
         "add or update with existing id should update the existing checkpoint and return persistence result UPDATED" {
-            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue)
+            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue, SYSTEM_ACTOR)
 
             val updatedCheckPointValue = "new-value"
-            val updatePersistenceResult = repository.addOrUpdateCheckpoint(checkPointId, updatedCheckPointValue)
+            val updatePersistenceResult = repository.addOrUpdateCheckpoint(
+                checkPointId,
+                updatedCheckPointValue,
+                SYSTEM_ACTOR,
+            )
             updatePersistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
@@ -67,8 +91,8 @@ class SyncCheckpointRepositoryTest :
         }
 
         "update existing checkpoint without property changes should not update and return NO_ACTION" {
-            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue)
-            val updatePersistenceResult = repository.addOrUpdateCheckpoint(checkPointId, checkPointValue)
+            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue, SYSTEM_ACTOR)
+            val updatePersistenceResult = repository.addOrUpdateCheckpoint(checkPointId, checkPointValue, SYSTEM_ACTOR)
             updatePersistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {
@@ -92,7 +116,7 @@ class SyncCheckpointRepositoryTest :
         }
 
         "reading existing sync checkpoint should return the checkpoint value" {
-            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue)
+            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue, SYSTEM_ACTOR)
 
             val storedCheckpoint: String? = repository.checkpointById(checkPointId)
             storedCheckpoint shouldBe checkPointValue
@@ -104,7 +128,7 @@ class SyncCheckpointRepositoryTest :
         }
 
         "deleting existing sync checkpoint should delete existing checkpoint and return persistence result DELETED" {
-            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue)
+            repository.addOrUpdateCheckpoint(checkPointId, checkPointValue, SYSTEM_ACTOR)
             val persistenceResult = repository.deleteCheckpoint(checkPointId)
 
             persistenceResult shouldBe PersistenceResult.DELETED

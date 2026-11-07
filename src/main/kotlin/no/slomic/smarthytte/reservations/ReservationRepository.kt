@@ -3,19 +3,34 @@ package no.slomic.smarthytte.reservations
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
+import kotlin.time.Instant
 
+/**
+ * `version`, `updated_time` and `updated_by` of a reservation change only for user edits (times, guests). Check-in/out
+ * and trip link writes are derived data: they bump and set nothing. They take the [startTime] and [endTime] of the
+ * reservation snapshot the caller computed from, re-read the reservation in their own transaction and do nothing
+ * ([PersistenceResult.NO_ACTION]) if it is gone or its times differ, so a concurrent change or delete is not
+ * overwritten with stale derived data.
+ */
 interface ReservationRepository {
     suspend fun allReservations(): List<Reservation>
     suspend fun addVehicleTripLink(
         reservationId: String,
         vehicleTripId: String,
         type: ReservationVehicleTripType,
+        startTime: Instant,
+        endTime: Instant,
     ): PersistenceResult
 
     suspend fun reservationById(id: String): Reservation?
-    suspend fun addOrUpdate(reservation: Reservation): PersistenceResult
+
+    /**
+     * Fixture/import upsert: overwrites all editable properties. The [actor] goes in `created_by` (or `updated_by`
+     * for a change).
+     */
+    suspend fun addOrUpdate(reservation: Reservation, actor: String = SYSTEM_ACTOR): PersistenceResult
     suspend fun deleteReservation(id: String): PersistenceResult
-    suspend fun setNotionId(notionId: String, id: String): PersistenceResult
-    suspend fun setCheckIn(checkIn: CheckIn, id: String): PersistenceResult
-    suspend fun setCheckOut(checkOut: CheckOut, id: String): PersistenceResult
+    suspend fun setCheckIn(checkIn: CheckIn, id: String, startTime: Instant, endTime: Instant): PersistenceResult
+    suspend fun setCheckOut(checkOut: CheckOut, id: String, startTime: Instant, endTime: Instant): PersistenceResult
 }

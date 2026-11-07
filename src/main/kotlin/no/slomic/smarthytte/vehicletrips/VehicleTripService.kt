@@ -20,6 +20,7 @@ import io.ktor.util.logging.Logger
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.PersistenceResults
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.osloDateNow
 import no.slomic.smarthytte.common.readVehicleTripsFromJsonFile
 import no.slomic.smarthytte.common.toOsloDate
@@ -55,7 +56,7 @@ class VehicleTripService(
 
         val tripsFromFile: List<VehicleTripResponse> = readVehicleTripsFromJsonFile(filePath)
         for (trip in tripsFromFile) {
-            persistenceResults.add(vehicleTripRepository.addOrUpdate(trip.toInternal()))
+            persistenceResults.add(vehicleTripRepository.addOrUpdate(trip.toInternal(), SYSTEM_ACTOR))
         }
 
         val addedCount = persistenceResults.count { it == PersistenceResult.ADDED }
@@ -103,7 +104,7 @@ class VehicleTripService(
         val results = PersistenceResults()
 
         for (trip in trips) {
-            results.add(vehicleTripRepository.addOrUpdate(trip))
+            results.add(vehicleTripRepository.addOrUpdate(trip, SYSTEM_ACTOR))
         }
 
         return results

@@ -1,6 +1,7 @@
 package no.slomic.smarthytte.sync.checkpoint
 
 import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import kotlin.time.Instant
 
 class SyncCheckpointService(val repository: SyncCheckpointRepository) {
@@ -22,10 +23,10 @@ class SyncCheckpointService(val repository: SyncCheckpointRepository) {
 
     // Add or update
     suspend fun addOrUpdateCheckpointForCheckInOutSensor(value: Instant) {
-        repository.addOrUpdateCheckpoint(id = CHECK_IN_OUT_SENSOR_ID, value = value.toString())
+        repository.addOrUpdateCheckpoint(id = CHECK_IN_OUT_SENSOR_ID, value = value.toString(), actor = SYSTEM_ACTOR)
     }
 
     suspend fun addOrUpdateCheckpointForVehicleTrips(value: LocalDate) {
-        repository.addOrUpdateCheckpoint(id = VEHICLE_TRIPS_ID, value = value.toString())
+        repository.addOrUpdateCheckpoint(id = VEHICLE_TRIPS_ID, value = value.toString(), actor = SYSTEM_ACTOR)
     }
 }
