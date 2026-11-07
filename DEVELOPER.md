@@ -198,3 +198,61 @@ Reports are generated in the folder `./build/reports/detekt`.
 ```bash
 ./gradlew detekt
 ```
+
+### Operations
+
+The database `data/app.db` (SQLite, journal mode `delete`) is the only source of reservations and guests: the Google Calendar is no longer read and
+`guests.json` is no longer imported. Treat it as the data you must not lose.
+
+#### Backup and restore
+
+A scheduled job on the host takes a consistent online copy once a day (the app can keep running):
+
+```shell
+sqlite3 data/app.db ".backup '<backup-dir>/app-$(date +%F).db'"
+```
+
+- `<backup-dir>` is off the app volume. Keep about 30 daily copies and monitor that the job succeeds.
+- Backups hold personal data (names, emails, birth years, avatars) for as long as they are kept.
+- Restore (rehearse it into a copy, not into the live file):
+  1. Stop the app.
+  2. Copy the backup to `data/app.db` (keep the old file as `app.db.broken`).
+  3. Start the app, then compare row counts with the backup:
+     `sqlite3 data/app.db "select (select count(*) from reservation), (select count(*) from guest), (select count(*) from guest_avatar)"`.
+  4. Check the Flyway version, see the runbook below.
+- Test migrations against a copy of the database, never the live file.
+
+#### Deploy runbook
+
+Releases are GitHub Releases `2.0.0-rc.N` cut from `v2` and go to the test environment first; production stays on `1.6.x` until `v2` is merged to `main`.
+For every release:
+
+1. A backup is taken and restorable, and the host clock is NTP-synced (the Pi has no RTC; "2 years ahead" checks, `status`, retry times and audit times use the system clock).
+2. The migrations were run on a fresh copy of the production database, and the native image was started against that copy.
+3. After the deploy: `/metrics` answers, one authenticated `GET` works, and the Flyway version is as expected:
+   `sqlite3 data/app.db "select version from flyway_schema_history order by installed_rank desc limit 1"`.
+
+| Release | Owner's manual steps | Check afterwards | Rollback |
+|---|---|---|---|
+| 0a | scheduled backup running; keep the old env vars and files | `/metrics`, stats `GET`, check-in/out job logs without errors | previous image |
+| 0b | offline copy of `guests.json`; keep the files until stable | guest `GET`, one guest edit, Flyway at 1.6 | previous image **and the restored backup** |
+| 1 | none | one guest edit and one check-in/out write leave `updated_*` as designed; Flyway 1.7 | previous image (until 2b) |
+| 2a | Cloudflare path routing for the web app; a Cloudflare Access entry for every new guest that must log in | `GET /api/guests` as ADMIN, a stale-version `POST` answers 412 | previous image |
+| 2b | none | upload an avatar, check the stored bytes have no EXIF | not below PR 1 |
+| 2c | set `BOOTSTRAP_ADMIN_*` only on a fresh database | startup log says nothing was done in production | previous image |
+| 4a | none | `GET /api/reservations` with the API key and as a user | previous image |
+| 4b + 5 | share the calendar with the service account ("Make changes to events"); test-calendar checklist done; calendar title property | create, move and delete a reservation: the event follows, `calendar_outbox` is empty | backup if API-created reservations matter; else previous image |
+
+Rows 0a and 0b are already deployed. The env vars removed in 0a and 0b (`GUEST_FILE_PATH`, `GUEST_AVATARS_DIRECTORY_PATH`, `GOOGLE_CALENDAR_SYNC_*`,
+`GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH`) stay in the deployment config until those releases have proven stable, because the old image fails startup without them.
+
+#### Logging and privacy
+
+- `logback.xml` only has a console appender, so rotation is the container runtime's job. Set a size-limited Docker logging driver on the host, for example
+  `logging: { driver: json-file, options: { max-size: "10m", max-file: "5" } }` in the compose file, so logs cannot fill the SD card.
+- Rule: do not log request bodies, emails or birth years; log guest ids. Ktor `CallLogging` is not installed.
+- Checked 2026-11-07 (grep of log statements in `src/main`): two statements still log an email address and should be changed to log a guest id or nothing:
+  `AppUserService.userByEmail` (ambiguous identity) and the "has no role in the application" warning in `CloudflareAccessAuthentication.kt`.
+  Everything else logs ids, counts or ranges. The `summary` in the trace-level reservation repository logs is old calendar text, not personal data of a guest.
+- `FAMILY_USER` sees email, role and birth year of every guest through `GET /api/guests` (accepted). The API key is read-only and sent in clear text on the home LAN
+  (accepted; rotate it when the Pi moves). `/metrics` is unauthenticated: the Pi is only reachable through Cloudflare.
