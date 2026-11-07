@@ -5,6 +5,7 @@ import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
@@ -180,6 +181,7 @@ class SqliteReservationRepository : ReservationRepository {
         val reservationGuests: List<GuestEntity> = reservation.guestIds.mapNotNull { id -> GuestEntity.findById(id) }
 
         ReservationEntity.new(reservation.id) {
+            markCreated(actor)
             summary = reservation.summary
             description = reservation.description
             startTime = reservation.startTime.truncatedToMillis()
@@ -187,8 +189,6 @@ class SqliteReservationRepository : ReservationRepository {
             guests = SizedCollection(reservationGuests)
             sourceCreatedTime = reservation.sourceCreatedTime?.truncatedToMillis()
             sourceUpdatedTime = reservation.sourceUpdatedTime?.truncatedToMillis()
-            createdTime = Clock.System.now().truncatedToMillis()
-            createdBy = actor
         }
 
         logger.trace("Added reservation with id: ${reservation.id} and summary: ${reservation.summary}")

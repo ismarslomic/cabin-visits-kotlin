@@ -1900,10 +1900,18 @@
       "type": "no.slomic.smarthytte.common.AuditedEntity"
     },
     {
-      "type": "no.slomic.smarthytte.common.BaseEntity"
+      "type": "no.slomic.smarthytte.guests.AppRole[]"
     },
     {
-      "type": "no.slomic.smarthytte.guests.AppRole[]"
+      "type": "no.slomic.smarthytte.guests.GuestAvatarEntity",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.jetbrains.exposed.v1.core.dao.id.EntityID"
+          ]
+        }
+      ]
     },
     {
       "type": "no.slomic.smarthytte.guests.GuestEntity",

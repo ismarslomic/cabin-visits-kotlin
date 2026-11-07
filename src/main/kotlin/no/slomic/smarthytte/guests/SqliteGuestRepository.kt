@@ -5,6 +5,7 @@ package no.slomic.smarthytte.guests
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
@@ -59,13 +60,8 @@ class SqliteGuestRepository : GuestRepository {
             val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
             val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
 
-            val guestResult: PersistenceResult = if (storedGuest ==
-                null
-            ) {
-                addGuest(guest, actor)
-            } else {
-                updateGuest(guest, actor)
-            }
+            val guestResult: PersistenceResult =
+                if (storedGuest == null) addGuest(guest, actor) else updateGuest(guest, actor)
             val avatarResult: PersistenceResult = addOrUpdateAvatarImage(guest.id, guestAvatarImage, actor)
 
             // An avatar change is reported as an update of the guest, even when the guest row itself is unchanged
@@ -86,84 +82,64 @@ class SqliteGuestRepository : GuestRepository {
         }
 
     override suspend fun avatarById(guestId: String): GuestAvatar? = suspendTransaction {
-        GuestAvatarTable
-            .selectAll()
-            .where { GuestAvatarTable.guest eq guestId }
-            .singleOrNull()
-            ?.let { GuestAvatar(it[GuestAvatarTable.image].bytes, it.versionTime()) }
+        GuestAvatarEntity.findById(guestId)?.let { GuestAvatar(it.image.bytes, it.versionTime()) }
     }
 
     override suspend fun allAvatarVersionTimes(): Map<String, Instant> = suspendTransaction {
+        // Only these columns, so the image bytes are not loaded
         GuestAvatarTable
-            .select(GuestAvatarTable.guest, GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)
-            .associate { it[GuestAvatarTable.guest].value to it.versionTime() }
+            .select(GuestAvatarTable.id, GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)
+            .associate {
+                it[GuestAvatarTable.id].value to
+                    (it[GuestAvatarTable.updatedTime] ?: it[GuestAvatarTable.createdTime])
+            }
     }
-
-    private fun storedAvatarImage(guestId: String): ByteArray? = GuestAvatarTable
-        .select(GuestAvatarTable.image)
-        .where { GuestAvatarTable.guest eq guestId }
-        .singleOrNull()
-        ?.get(GuestAvatarTable.image)
-        ?.bytes
 
     /** A null [image] means the guest has no avatar, so any stored avatar is deleted. */
     private fun addOrUpdateAvatarImage(guestId: String, image: ByteArray?, actor: String): PersistenceResult =
-        if (image == null) {
-            if (storedAvatarImage(guestId) == null) PersistenceResult.NO_ACTION else deleteAvatarImage(guestId)
-        } else {
-            saveAvatarImage(guestId, image, actor)
-        }
+        if (image == null) deleteAvatarImage(guestId) else saveAvatarImage(guestId, image, actor)
 
-    /** First image creates the row (`created_*`), a different image replaces it (`updated_*`). */
+    /** First image creates the row (`created_*`), a different image replaces it (`updated_*` and `version`). */
     private fun saveAvatarImage(guestId: String, image: ByteArray, actor: String): PersistenceResult {
-        val storedImage: ByteArray? = storedAvatarImage(guestId)
+        val stored: GuestAvatarEntity? = GuestAvatarEntity.findById(guestId)
 
-        return if (storedImage == null) {
-            addAvatarImage(guestId, image, actor)
-        } else {
-            updateAvatarImage(guestId, storedImage, image, actor)
+        return when {
+            stored == null -> addAvatarImage(guestId, image, actor)
+
+            stored.image.bytes.contentEquals(image) -> {
+                logger.trace("No changes detected for avatar image for guest with id: $guestId")
+                PersistenceResult.NO_ACTION
+            }
+
+            else -> updateAvatarImage(stored, image, actor)
         }
     }
 
     private fun addAvatarImage(guestId: String, image: ByteArray, actor: String): PersistenceResult {
         logger.trace("Adding avatar image for guest with id: $guestId")
 
-        GuestAvatarTable.insert {
-            it[guest] = guestId
-            it[GuestAvatarTable.image] = ExposedBlob(image)
-            it[createdTime] = Clock.System.now().truncatedToMillis()
-            it[createdBy] = actor
+        GuestAvatarEntity.new(guestId) {
+            markCreated(actor)
+            this.image = ExposedBlob(image)
         }
 
         return PersistenceResult.ADDED
     }
 
-    private fun updateAvatarImage(
-        guestId: String,
-        storedImage: ByteArray,
-        image: ByteArray,
-        actor: String,
-    ): PersistenceResult {
-        if (storedImage.contentEquals(image)) {
-            logger.trace("No changes detected for avatar image for guest with id: $guestId")
-            return PersistenceResult.NO_ACTION
-        }
+    private fun updateAvatarImage(stored: GuestAvatarEntity, image: ByteArray, actor: String): PersistenceResult {
+        logger.trace("Updating avatar image for guest with id: ${stored.id.value}")
 
-        logger.trace("Updating avatar image for guest with id: $guestId")
-
-        GuestAvatarTable.update({ GuestAvatarTable.guest eq guestId }) {
-            it[GuestAvatarTable.image] = ExposedBlob(image)
-            it[updatedTime] = Clock.System.now().truncatedToMillis()
-            it[updatedBy] = actor
-        }
+        stored.image = ExposedBlob(image)
+        stored.markUpdated(actor)
 
         return PersistenceResult.UPDATED
     }
 
     private fun deleteAvatarImage(guestId: String): PersistenceResult {
-        logger.trace("Deleting avatar image for guest with id: $guestId")
+        val stored: GuestAvatarEntity = GuestAvatarEntity.findById(guestId) ?: return PersistenceResult.NO_ACTION
 
-        GuestAvatarTable.deleteWhere { guest eq guestId }
+        logger.trace("Deleting avatar image for guest with id: $guestId")
+        stored.delete()
 
         return PersistenceResult.DELETED
     }
@@ -172,6 +148,7 @@ class SqliteGuestRepository : GuestRepository {
         logger.trace("Adding guest with id: ${guest.id}")
 
         GuestEntity.new(guest.id) {
+            markCreated(actor)
             firstName = guest.firstName
             lastName = guest.lastName
             birthYear = guest.birthYear
@@ -179,8 +156,6 @@ class SqliteGuestRepository : GuestRepository {
             gender = guest.gender
             isFamily = guest.isFamily
             role = guest.role
-            createdTime = Clock.System.now().truncatedToMillis()
-            createdBy = actor
         }
 
         logger.trace("Added guest with id: ${guest.id}")
@@ -244,6 +219,3 @@ class SqliteGuestRepository : GuestRepository {
         return changed
     }
 }
-
-/** `updated_time`, or `created_time` for an avatar that was never replaced. */
-private fun ResultRow.versionTime(): Instant = this[GuestAvatarTable.updatedTime] ?: this[GuestAvatarTable.createdTime]

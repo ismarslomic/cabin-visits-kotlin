@@ -266,12 +266,12 @@ class GuestRepositoryTest :
 private val oldTime: Instant = Instant.parse("2020-01-01T12:00:00Z")
 
 private fun avatarUpdatedTime(guestId: String): Instant? = transaction {
-    GuestAvatarTable.selectAll().where { GuestAvatarTable.guest eq guestId }.single()[GuestAvatarTable.updatedTime]
+    GuestAvatarTable.selectAll().where { GuestAvatarTable.id eq guestId }.single()[GuestAvatarTable.updatedTime]
 }
 
 private fun setOldAvatarUpdatedTime(guestId: String) {
     transaction {
-        GuestAvatarTable.update({ GuestAvatarTable.guest eq guestId }) { it[updatedTime] = oldTime }
+        GuestAvatarTable.update({ GuestAvatarTable.id eq guestId }) { it[updatedTime] = oldTime }
     }
 }
 

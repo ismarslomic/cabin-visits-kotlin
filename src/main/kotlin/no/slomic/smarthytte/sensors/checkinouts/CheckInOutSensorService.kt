@@ -7,6 +7,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.coroutines.channels.toList
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.nowIsoUtcString
 import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.properties.CheckInProperties
@@ -116,7 +117,7 @@ class CheckInOutSensorService(
         val persistenceResults: MutableList<PersistenceResult> = mutableListOf()
 
         for (checkInOutSensor in checkInOutSensors) {
-            persistenceResults.add(checkInOutSensorRepository.addOrUpdate(checkInOutSensor))
+            persistenceResults.add(checkInOutSensorRepository.addOrUpdate(checkInOutSensor, SYSTEM_ACTOR))
         }
 
         val latestTimestamp: Instant? = checkInOutSensors.maxByOrNull { it.time }?.time

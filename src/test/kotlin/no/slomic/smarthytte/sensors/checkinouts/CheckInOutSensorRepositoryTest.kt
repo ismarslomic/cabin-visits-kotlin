@@ -6,6 +6,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Instant
@@ -30,8 +31,27 @@ class CheckInOutSensorRepositoryTest :
 
         val repository: CheckInOutSensorRepository = SqliteCheckInOutSensorRepository()
 
+        "add or update should record the actor in created_by and, for a change, in updated_by" {
+            repository.addOrUpdate(checkInSensor, "first")
+            transaction {
+                val created = CheckInOutSensorEntity.all().single()
+                created.createdBy shouldBe "first"
+                created.updatedBy.shouldBeNull()
+            }
+
+            repository.addOrUpdate(checkInSensor.copy(status = CheckInStatus.CHECKED_OUT), "second")
+            repository.addOrUpdate(checkInSensor.copy(status = CheckInStatus.CHECKED_OUT), "third")
+
+            transaction {
+                val updated = CheckInOutSensorEntity.all().single()
+                updated.createdBy shouldBe "first"
+                updated.updatedBy shouldBe "second"
+                updated.version shouldBe 2
+            }
+        }
+
         "add or update with new id should add new check in/out" {
-            val persistenceResult = repository.addOrUpdate(checkInSensor)
+            val persistenceResult = repository.addOrUpdate(checkInSensor, SYSTEM_ACTOR)
             persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
@@ -49,10 +69,10 @@ class CheckInOutSensorRepositoryTest :
         }
 
         "add or update with existing id should update the existing check in/out" {
-            repository.addOrUpdate(checkInSensor)
+            repository.addOrUpdate(checkInSensor, SYSTEM_ACTOR)
 
             val updatedCheckInSensor = checkInSensor.copy(status = CheckInStatus.CHECKED_OUT)
-            val persistenceResult = repository.addOrUpdate(updatedCheckInSensor)
+            val persistenceResult = repository.addOrUpdate(updatedCheckInSensor, SYSTEM_ACTOR)
             persistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
@@ -70,10 +90,10 @@ class CheckInOutSensorRepositoryTest :
         }
 
         "add or update with existing id without property changes should not update the existing check in/out" {
-            repository.addOrUpdate(checkInSensor)
+            repository.addOrUpdate(checkInSensor, SYSTEM_ACTOR)
 
             val updatedCheckInSensor = checkInSensor
-            val persistenceResult = repository.addOrUpdate(updatedCheckInSensor)
+            val persistenceResult = repository.addOrUpdate(updatedCheckInSensor, SYSTEM_ACTOR)
             persistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {

@@ -7,8 +7,9 @@ import io.kotest.matchers.shouldBe
 import java.sql.Connection
 
 /**
- * V1.7 adds `created_by` and `updated_by` to `reservation`, `guest` and `vehicle_trip`, and rebuilds `guest_avatar`
- * (not null `created_time`, nullable `updated_time`, audit columns).
+ * V1.7 adds `created_by` and `updated_by` to `reservation`, `guest`, `vehicle_trip`, `check_in_out_sensor` and
+ * `sync_checkpoint`, and rebuilds `guest_avatar` (not null `created_time`, nullable `updated_time`, audit columns and
+ * `version`).
  */
 class MigrationV17Test :
     StringSpec({
@@ -50,6 +51,20 @@ class MigrationV17Test :
                         """.trimIndent(),
                     )
                     c.execute(
+                        """
+                        insert into check_in_out_sensor (created_time, updated_time, id, time, status)
+                        values ('2025-01-01T00:00:00Z', '2025-02-01T00:00:00Z', 's1', '2025-01-01T00:00:00Z', 'CHECKED_IN'),
+                               ('2025-01-01T00:00:00Z', null, 's2', '2025-01-02T00:00:00Z', 'CHECKED_OUT')
+                        """.trimIndent(),
+                    )
+                    c.execute(
+                        """
+                        insert into sync_checkpoint (created_time, updated_time, id, checkpoint_value)
+                        values ('2025-01-01T00:00:00Z', '2025-02-01T00:00:00Z', 'c1', 'v'),
+                               ('2025-01-01T00:00:00Z', null, 'c2', 'v')
+                        """.trimIndent(),
+                    )
+                    c.execute(
                         "insert into guest_avatar (guest_id, image, updated_time) values ('edited', x'010203', '2025-02-15T00:00:00Z')",
                     )
                 }
@@ -57,7 +72,13 @@ class MigrationV17Test :
                 migration.migrateToLatest()
 
                 migration.withConnection { c ->
-                    for (table in listOf("guest", "reservation", "vehicle_trip")) {
+                    for (table in listOf(
+                        "guest",
+                        "reservation",
+                        "vehicle_trip",
+                        "check_in_out_sensor",
+                        "sync_checkpoint",
+                    )) {
                         c.query(
                             "select created_by, updated_by, updated_time is null from $table order by updated_time is null",
                         ) {
@@ -73,6 +94,7 @@ class MigrationV17Test :
                         listOf("edited", "010203", "2025-02-15T00:00:00Z", "system", "2025-02-15T00:00:00Z", "system"),
                     )
 
+                    c.query("select version from guest_avatar") { it.getInt(1) } shouldBe listOf(1)
                     c.query("select count(*) from reservation_guest") { it.getInt(1) } shouldBe listOf(2)
                     c.query("pragma foreign_key_check") { it.getString(1) } shouldBe emptyList()
                     // The foreign key to guest (cascade) survives the rebuild

@@ -3,6 +3,7 @@ package no.slomic.smarthytte.vehicletrips
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
@@ -32,11 +33,10 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
         logger.trace("Adding vehicle trip with id: ${vehicleTrip.id}")
 
         VehicleTripEntity.new(vehicleTrip.id) {
+            markCreated(actor)
             averageEnergyConsumption = vehicleTrip.averageEnergyConsumption
             averageEnergyConsumptionUnit = vehicleTrip.averageEnergyConsumptionUnit
             averageSpeed = vehicleTrip.averageSpeed
-            createdTime = Clock.System.now().truncatedToMillis()
-            createdBy = actor
             distance = vehicleTrip.distance
             distanceUnit = vehicleTrip.distanceUnit
             duration = vehicleTrip.duration

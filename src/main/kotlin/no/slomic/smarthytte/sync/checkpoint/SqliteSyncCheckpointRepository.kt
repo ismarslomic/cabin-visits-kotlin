@@ -3,10 +3,10 @@ package no.slomic.smarthytte.sync.checkpoint
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.markCreated
+import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
-import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
-import kotlin.time.Clock
 
 class SqliteSyncCheckpointRepository : SyncCheckpointRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteSyncCheckpointRepository::class.java.name)
@@ -14,16 +14,17 @@ class SqliteSyncCheckpointRepository : SyncCheckpointRepository {
     override suspend fun checkpointById(id: String): String? =
         suspendTransaction { SyncCheckpointEntity.findById(id)?.checkpointValue }
 
-    override suspend fun addOrUpdateCheckpoint(id: String, value: String): PersistenceResult = suspendTransaction {
-        val entityId: EntityID<String> = EntityID(id = id, table = SyncCheckpointTable)
-        val storedSyncCheckpoint: SyncCheckpointEntity? = SyncCheckpointEntity.findById(entityId)
+    override suspend fun addOrUpdateCheckpoint(id: String, value: String, actor: String): PersistenceResult =
+        suspendTransaction {
+            val entityId: EntityID<String> = EntityID(id = id, table = SyncCheckpointTable)
+            val storedSyncCheckpoint: SyncCheckpointEntity? = SyncCheckpointEntity.findById(entityId)
 
-        if (storedSyncCheckpoint == null) {
-            addSyncCheckpoint(id, value)
-        } else {
-            updateCheckpoint(id, value)
+            if (storedSyncCheckpoint == null) {
+                addSyncCheckpoint(id, value, actor)
+            } else {
+                updateCheckpoint(id, value, actor)
+            }
         }
-    }
 
     override suspend fun deleteCheckpoint(id: String): PersistenceResult = suspendTransaction {
         logger.trace("Deleting sync checkpoint with id: $id")
@@ -44,12 +45,12 @@ class SqliteSyncCheckpointRepository : SyncCheckpointRepository {
         }
     }
 
-    private fun addSyncCheckpoint(id: String, value: String): PersistenceResult {
+    private fun addSyncCheckpoint(id: String, value: String, actor: String): PersistenceResult {
         logger.trace("Adding sync checkpoint with id: $id")
 
         SyncCheckpointEntity.new(id) {
+            markCreated(actor)
             checkpointValue = value
-            createdTime = Clock.System.now().truncatedToMillis()
         }
 
         logger.trace("Added sync checkpoint with id: $id")
@@ -61,7 +62,7 @@ class SqliteSyncCheckpointRepository : SyncCheckpointRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * sync checkpoint.
      */
-    private fun updateCheckpoint(id: String, value: String): PersistenceResult {
+    private fun updateCheckpoint(id: String, value: String, actor: String): PersistenceResult {
         logger.trace("Updating sync checkpoint with id: $id")
 
         val storedSyncCheckpoint: SyncCheckpointEntity =
@@ -74,8 +75,7 @@ class SqliteSyncCheckpointRepository : SyncCheckpointRepository {
         val isDirty: Boolean = storedSyncCheckpoint.writeValues.isNotEmpty()
 
         return if (isDirty) {
-            storedSyncCheckpoint.version = storedSyncCheckpoint.version.inc()
-            storedSyncCheckpoint.updatedTime = Clock.System.now().truncatedToMillis()
+            storedSyncCheckpoint.markUpdated(actor)
 
             logger.trace("Updated sync checkpoint with id: $id")
             PersistenceResult.UPDATED

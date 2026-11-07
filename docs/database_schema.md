@@ -6,6 +6,8 @@ erDiagram
         string id PK
         string created_time
         string updated_time
+        string created_by
+        string updated_by
         smallint version
         string time
         string status
@@ -15,6 +17,8 @@ erDiagram
         string id PK
         string created_time
         string updated_time
+        string created_by
+        string updated_by
         smallint version
         string checkpoint_value
     }
@@ -58,6 +62,7 @@ erDiagram
         string created_by
         string updated_time
         string updated_by
+        smallint version
     }
 
     reservation_guest {
@@ -101,8 +106,7 @@ erDiagram
 
 ### Audit columns
 
-`reservation`, `guest`, `guest_avatar` and `vehicle_trip` have four audit columns, in addition to `version` (not on
-`guest_avatar`):
+Every table has the same audit columns and `version`:
 
 | Column         | Required | Set when                                          | Value                                                  |
 |:---------------|:---------|:--------------------------------------------------|:-------------------------------------------------------|
@@ -110,14 +114,18 @@ erDiagram
 | `created_by`   | yes      | the row is created, never changed                 | the authenticated user's `guest.id`, or `system`       |
 | `updated_time` | no       | an existing row is changed, otherwise null        | now                                                    |
 | `updated_by`   | no       | an existing row is changed, otherwise null        | the authenticated user's `guest.id`, or `system`       |
+| `version`      | yes      | starts at 1, +1 on every change                   | optimistic version                                     |
 
-- `system` is used by the vehicle trip import and other tasks. It is not a guest, so there is no foreign key from
-  `created_by`/`updated_by` to `guest`; the columns are plain text. Rows that existed when `V1.7` ran have
-  `created_by = 'system'`, and `updated_by = 'system'` where `updated_time` was set.
-- `created_by` has the database default `system` on `reservation`, `guest` and `vehicle_trip` as a safety net: the
-  application always sets the actor explicitly. `guest_avatar` has no default.
+- In code, `markCreated(actor)` and `markUpdated(actor)` (`common/AuditedEntity.kt`) are the only places that set these
+  columns. All tables extend `AuditedIdTable`.
+- `system` is used by tasks that no user triggers: the vehicle trip import, the check-in/out sensor sync and the sync
+  checkpoints (`check_in_out_sensor` and `sync_checkpoint` always have `system`). It is not a guest, so there is no
+  foreign key from `created_by`/`updated_by` to `guest`; the columns are plain text. Rows that existed when `V1.7` ran
+  have `created_by = 'system'`, and `updated_by = 'system'` where `updated_time` was set.
+- `created_by` has the database default `system` (except on `guest_avatar`) as a safety net: the application always sets
+  the actor explicitly.
 - The columns change only when the row is actually changed (an unchanged save does not touch them). `version` and
   `updated_*` of a reservation cover user edits (times, guests) only: check-in/out and vehicle trip links are derived
   data and change neither.
 - An avatar's version time (the `v` in `avatarUrl` and the `ETag`) is `updated_time`, or `created_time` when the avatar
-  was never replaced. Replacing an avatar changes only the avatar row, not the guest's `version`.
+  was never replaced. Replacing an avatar bumps the avatar's own `version`, not the guest's.

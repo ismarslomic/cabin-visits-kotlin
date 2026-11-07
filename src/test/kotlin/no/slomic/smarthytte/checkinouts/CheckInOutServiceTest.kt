@@ -105,11 +105,11 @@ class CheckInOutServiceTest :
                         reservationRepository.addOrUpdate(reservation)
 
                         if (scenario.hasCheckInSensor) {
-                            checkInOutSensorRepository.addOrUpdate(scenario.checkInSensor!!)
+                            checkInOutSensorRepository.addOrUpdate(scenario.checkInSensor!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckOutSensor) {
-                            checkInOutSensorRepository.addOrUpdate(scenario.checkOutSensor!!)
+                            checkInOutSensorRepository.addOrUpdate(scenario.checkOutSensor!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckInTrip) {
@@ -211,11 +211,11 @@ class CheckInOutServiceTest :
                         reservationRepository.addOrUpdate(reservation)
 
                         if (scenario.hasCheckInSensor) {
-                            checkInOutSensorRepository.addOrUpdate(scenario.checkInSensor!!)
+                            checkInOutSensorRepository.addOrUpdate(scenario.checkInSensor!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckOutSensor) {
-                            checkInOutSensorRepository.addOrUpdate(scenario.checkOutSensor!!)
+                            checkInOutSensorRepository.addOrUpdate(scenario.checkOutSensor!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckInTrip) {
@@ -323,11 +323,11 @@ class CheckInOutServiceTest :
                         reservationRepository.addOrUpdate(reservation)
 
                         if (scenario.hasCheckInSensor) {
-                            checkInOutSensorRepository.addOrUpdate(scenario.checkInSensor!!)
+                            checkInOutSensorRepository.addOrUpdate(scenario.checkInSensor!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckOutSensor) {
-                            checkInOutSensorRepository.addOrUpdate(scenario.checkOutSensor!!)
+                            checkInOutSensorRepository.addOrUpdate(scenario.checkOutSensor!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckInTrip) {
