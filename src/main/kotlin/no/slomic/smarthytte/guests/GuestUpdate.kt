@@ -16,14 +16,3 @@ data class GuestUpdate(
     /** Only an admin may change email, isFamily and role. */
     fun requiresAdmin(): Boolean = email != null || isFamily != null || role != null
 }
-
-/** The guest properties that can be changed through the API, and that the guests.json sync then leaves alone. */
-enum class GuestField {
-    FIRST_NAME,
-    LAST_NAME,
-    BIRTH_YEAR,
-    GENDER,
-    EMAIL,
-    IS_FAMILY,
-    ROLE,
-}

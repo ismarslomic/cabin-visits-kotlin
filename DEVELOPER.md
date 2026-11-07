@@ -68,9 +68,9 @@ Authentication (who is calling) and authorization (what may they do) are separat
 | Valid user, but the role is not allowed on the route   | 403      |
 | Valid user with an allowed role                        | handler  |
 
-The roles (`AppRole`) are `ADMIN`, `FAMILY_USER` and `GUEST_USER`. They are stored in `guest.role` and set from the
-`role` property in `data/guests.json` at startup, so the file is the source of truth. The role is read from the
-database on every request, so a changed role applies without the user logging in again.
+The roles (`AppRole`) are `ADMIN`, `FAMILY_USER` and `GUEST_USER`. They are stored in `guest.role` and changed with
+`POST /api/guests/{guestId}`. The role is read from the database on every request, so a changed role applies without
+the user logging in again.
 
 #### Restricting an endpoint
 
@@ -106,8 +106,7 @@ fun Application.configureReportRoutes() {
 `POST /api/me` (every role, own guest, only firstName, lastName, birthYear and gender) calls
 `GuestProfileService.updateOwnProfile(user, update)`, and `POST /api/guests/{guestId}` (`authorized(AppRole.ADMIN)`)
 calls `GuestProfileService.update(actor, guestId, update)`. The service decides what may be changed and validates the
-values. The route only maps the result to a status. Do not add such rules to the routes. Properties changed this way are stored
-in `guest.api_edited_fields` and skipped by the `guests.json` sync, see
+values. The route only maps the result to a status. Do not add such rules to the routes, see
 [docs/authentication.md](docs/authentication.md#changing-guest-data).
 
 #### Testing a restricted endpoint

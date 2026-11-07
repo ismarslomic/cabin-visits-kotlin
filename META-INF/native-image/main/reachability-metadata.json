@@ -2071,29 +2071,6 @@
       ]
     },
     {
-      "type": "no.slomic.smarthytte.properties.GuestProperties",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "java.lang.String",
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "no.slomic.smarthytte.properties.GuestPropertiesHolder",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "no.slomic.smarthytte.properties.GuestProperties"
-          ]
-        }
-      ]
-    },
-    {
       "type": "no.slomic.smarthytte.properties.InfluxDbProperties",
       "methods": [
         {

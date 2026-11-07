@@ -12,8 +12,6 @@ class AppPropertiesTest :
     BehaviorSpec({
         val envVarCredentialsFilePath = "/data/google-service-account-credentials.json"
         val envVarCalendarId = "abcdefghijkl"
-        val envVarGuestFilePath = "/data/guests.json"
-        val envVarGuestAvatarDirectoryPath = "/data/avatars"
         val envVarInfluxDbUrl = "http://localhost:8086"
         val envVarInfluxDbToken = "foobar"
         val envVarInfluxDbOrg = "my.org"
@@ -36,7 +34,6 @@ class AppPropertiesTest :
             val requiredEnvVars = mapOf(
                 "GOOGLE_CREDENTIALS_FILE_PATH" to envVarCredentialsFilePath,
                 "GOOGLE_CALENDAR_ID" to envVarCalendarId,
-                "GUEST_FILE_PATH" to envVarGuestFilePath,
                 "INFLUXDB_URL" to envVarInfluxDbUrl,
                 "INFLUXDB_TOKEN" to envVarInfluxDbToken,
                 "INFLUXDB_ORG" to envVarInfluxDbOrg,
@@ -52,7 +49,6 @@ class AppPropertiesTest :
                 "VEHICLE_TRIP_USER_AGENT" to envVarVehicleTripUserAgent,
                 "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
                 "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
-                "GUEST_AVATARS_DIRECTORY_PATH" to envVarGuestAvatarDirectoryPath,
                 "STATISTICS_DATA_START_DATE" to envVarStatisticsDataStartDate,
             )
             withTestEnvironment(requiredEnvVars) {
@@ -76,20 +72,6 @@ class AppPropertiesTest :
 
                     Then("database.filePath should be set to the default value") {
                         databaseFilePath shouldBe defaultDatabaseFilePath
-                    }
-                }
-
-                When("reading guest properties") {
-                    val guestProperties = loadProperties<GuestPropertiesHolder>().guest
-                    val guestFilePath = guestProperties.filePath
-                    val avatarsDirectory = guestProperties.avatarsDirectory
-
-                    Then("guest.filePath should be set to the environment variable value") {
-                        guestFilePath shouldBe envVarGuestFilePath
-                    }
-
-                    Then("guest.avatarsDirectory should be set to the avatars folder inside the data folder") {
-                        avatarsDirectory shouldBe envVarGuestAvatarDirectoryPath
                     }
                 }
 

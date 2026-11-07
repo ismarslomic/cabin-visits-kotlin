@@ -63,39 +63,26 @@ class GuestRepositoryUpdateTest :
             repository.update("unknown", GuestUpdate(firstName = "X")) shouldBe PersistenceResult.NO_ACTION
         }
 
-        "sync from file should not overwrite properties changed through the API" {
+        "update should only change the properties that are set, and add or update should overwrite all of them" {
             repository.addOrUpdate(guest)
             repository.update(guest.id, GuestUpdate(firstName = "Johnny", role = AppRole.ADMIN))
 
-            val fromFile = guest.copy(firstName = "FromFile", lastName = "Changed", role = AppRole.GUEST_USER)
-            repository.addOrUpdate(fromFile) shouldBe PersistenceResult.UPDATED
+            val overwritten = guest.copy(firstName = "FromFixture", lastName = "Changed", role = AppRole.GUEST_USER)
+            repository.addOrUpdate(overwritten) shouldBe PersistenceResult.UPDATED
 
-            val stored = repository.guestById(guest.id)!!
-            stored.firstName shouldBe "Johnny"
-            stored.role shouldBe AppRole.ADMIN
-            stored.lastName shouldBe "Changed"
+            repository.guestById(guest.id) shouldBe overwritten
         }
 
-        "sync from file should still update properties that were never changed through the API" {
+        "update with several properties should change them all in one version bump" {
             repository.addOrUpdate(guest)
-            repository.update(guest.id, GuestUpdate(firstName = "Johnny"))
 
-            repository.addOrUpdate(guest.copy(firstName = "FromFile")) shouldBe PersistenceResult.NO_ACTION
-            repository.addOrUpdate(guest.copy(firstName = "FromFile", lastName = "Changed")) shouldBe
-                PersistenceResult.UPDATED
-            repository.guestById(guest.id)!!.lastName shouldBe "Changed"
-        }
-
-        "properties changed through the API in several updates should all be kept on sync" {
-            repository.addOrUpdate(guest)
-            repository.update(guest.id, GuestUpdate(firstName = "Johnny"))
-            repository.update(guest.id, GuestUpdate(gender = Gender.FEMALE))
-
-            repository.addOrUpdate(guest.copy(firstName = "FromFile", gender = Gender.MALE))
+            repository.update(guest.id, GuestUpdate(gender = Gender.FEMALE, isFamily = true, email = "new@example.no"))
+                .shouldBe(PersistenceResult.UPDATED)
 
             repository.guestById(guest.id)!!.let {
-                it.firstName shouldBe "Johnny"
                 it.gender shouldBe Gender.FEMALE
+                it.isFamily shouldBe true
+                it.email shouldBe "new@example.no"
             }
         }
     })

@@ -13,7 +13,7 @@
           "Auth"
         ],
         "summary": "Update the authenticated user",
-        "description": "Changes the profile of the authenticated user's own guest. Every role may change firstName, lastName, birthYear and gender, and all of them are required. Properties that are not part of the request, such as email, isFamily and role, cannot be changed here and are ignored. Changed properties are not overwritten by the guests.json sync at startup.",
+        "description": "Changes the profile of the authenticated user's own guest. Every role may change firstName, lastName, birthYear and gender, and all of them are required. Properties that are not part of the request, such as email, isFamily and role, cannot be changed here and are ignored.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -201,7 +201,7 @@
           "Guests"
         ],
         "summary": "Update a guest",
-        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, role) and leaves the others unchanged. Changed properties are not overwritten by the guests.json sync at startup. An admin cannot remove their own admin role.",
+        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, role) and leaves the others unchanged. An admin cannot remove their own admin role.",
         "parameters": [
           {
             "name": "guestId",

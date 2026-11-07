@@ -40,18 +40,15 @@ class SqliteGuestRepository : GuestRepository {
         val storedGuest: GuestEntity =
             GuestEntity.findById(guestId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
-        val changedFields: Set<GuestField> = storedGuest.applyUpdate(update)
-
-        if (changedFields.isEmpty()) {
-            logger.trace("No changes detected for guest with id: $guestId")
-            PersistenceResult.NO_ACTION
-        } else {
-            storedGuest.apiEditedFields = (storedGuest.editedFields() + changedFields).joinToString(",") { it.name }
+        if (storedGuest.applyUpdate(update)) {
             storedGuest.version = storedGuest.version.inc()
             storedGuest.updatedTime = Clock.System.now().truncatedToMillis()
 
-            logger.trace("Updated guest with id: $guestId, changed fields: $changedFields")
+            logger.trace("Updated guest with id: $guestId")
             PersistenceResult.UPDATED
+        } else {
+            logger.trace("No changes detected for guest with id: $guestId")
+            PersistenceResult.NO_ACTION
         }
     }
 
@@ -175,7 +172,7 @@ class SqliteGuestRepository : GuestRepository {
     }
 
     /**
-     * Fields that have been changed through the API are not overwritten by the file.
+     * Overwrites all properties with the values of [guest].
      *
      * Note that actual database update is only performed if at least one column has changed the value, so
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
@@ -186,7 +183,15 @@ class SqliteGuestRepository : GuestRepository {
 
         val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return PersistenceResult.NO_ACTION
 
-        updatedGuest.applyFromFile(guest)
+        with(updatedGuest) {
+            firstName = guest.firstName
+            lastName = guest.lastName
+            birthYear = guest.birthYear
+            gender = guest.gender
+            email = guest.email
+            isFamily = guest.isFamily
+            role = guest.role
+        }
 
         val isDirty: Boolean = updatedGuest.writeValues.isNotEmpty()
 
@@ -202,39 +207,25 @@ class SqliteGuestRepository : GuestRepository {
         }
     }
 
-    private fun GuestEntity.editedFields(): Set<GuestField> = apiEditedFields
-        ?.split(',')
-        ?.mapNotNull { name -> GuestField.entries.find { it.name == name } }
-        ?.toSet()
-        .orEmpty()
+    /** Sets the properties of [update] that differ from the stored ones, and returns whether anything changed. */
+    private fun GuestEntity.applyUpdate(update: GuestUpdate): Boolean {
+        var changed = false
 
-    private fun GuestEntity.applyFromFile(guest: Guest) {
-        val edited: Set<GuestField> = editedFields()
-
-        if (GuestField.FIRST_NAME !in edited) firstName = guest.firstName
-        if (GuestField.LAST_NAME !in edited) lastName = guest.lastName
-        if (GuestField.BIRTH_YEAR !in edited) birthYear = guest.birthYear
-        if (GuestField.GENDER !in edited) gender = guest.gender
-        if (GuestField.EMAIL !in edited) email = guest.email
-        if (GuestField.IS_FAMILY !in edited) isFamily = guest.isFamily
-        if (GuestField.ROLE !in edited) role = guest.role
-    }
-
-    /** Sets the properties of [update] that differ from the stored ones, and returns the fields that changed. */
-    private fun GuestEntity.applyUpdate(update: GuestUpdate): Set<GuestField> = buildSet {
-        fun <T : Any> change(field: GuestField, new: T?, current: T?, assign: (T) -> Unit) {
+        fun <T : Any> change(new: T?, current: T?, assign: (T) -> Unit) {
             if (new != null && new != current) {
                 assign(new)
-                add(field)
+                changed = true
             }
         }
 
-        change(GuestField.FIRST_NAME, update.firstName, firstName) { firstName = it }
-        change(GuestField.LAST_NAME, update.lastName, lastName) { lastName = it }
-        change(GuestField.BIRTH_YEAR, update.birthYear, birthYear) { birthYear = it }
-        change(GuestField.GENDER, update.gender, gender) { gender = it }
-        change(GuestField.EMAIL, update.email, email) { email = it }
-        change(GuestField.IS_FAMILY, update.isFamily, isFamily) { isFamily = it }
-        change(GuestField.ROLE, update.role, role) { role = it }
+        change(update.firstName, firstName) { firstName = it }
+        change(update.lastName, lastName) { lastName = it }
+        change(update.birthYear, birthYear) { birthYear = it }
+        change(update.gender, gender) { gender = it }
+        change(update.email, email) { email = it }
+        change(update.isFamily, isFamily) { isFamily = it }
+        change(update.role, role) { role = it }
+
+        return changed
     }
 }

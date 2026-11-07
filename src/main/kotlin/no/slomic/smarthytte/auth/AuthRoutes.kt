@@ -70,8 +70,7 @@ private fun Route.describeUpdateMe() = describe {
     summary = "Update the authenticated user"
     description = "Changes the profile of the authenticated user's own guest. Every role may change firstName, " +
         "lastName, birthYear and gender, and all of them are required. Properties that are not part of the request, " +
-        "such as email, isFamily and role, cannot be changed here and are ignored. Changed properties are not " +
-        "overwritten by the guests.json sync at startup."
+        "such as email, isFamily and role, cannot be changed here and are ignored."
     responses {
         HttpStatusCode.OK { description = "The updated user, same as the response of GET /api/me." }
         HttpStatusCode.BadRequest {
