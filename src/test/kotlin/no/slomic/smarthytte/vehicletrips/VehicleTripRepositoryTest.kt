@@ -6,6 +6,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
@@ -31,7 +32,7 @@ class VehicleTripRepositoryTest :
         val repository: VehicleTripRepository = SqliteVehicleTripRepository()
 
         "add or update with new id should add new vehicle trip" {
-            val persistenceResult = repository.addOrUpdate(vehicleTrip)
+            val persistenceResult = repository.addOrUpdate(vehicleTrip, SYSTEM_ACTOR)
             persistenceResult shouldBe PersistenceResult.ADDED
 
             transaction {
@@ -48,11 +49,31 @@ class VehicleTripRepositoryTest :
             }
         }
 
+        "add or update should record the actor in created_by and, for a change, in updated_by" {
+            repository.addOrUpdate(vehicleTrip, "importer")
+            transaction {
+                val created = VehicleTripEntity.all().single()
+                created.createdBy shouldBe "importer"
+                created.updatedBy.shouldBeNull()
+            }
+
+            repository.addOrUpdate(vehicleTrip.copy(endCity = "new end city"), "other") shouldBe
+                PersistenceResult.UPDATED
+            repository.addOrUpdate(vehicleTrip.copy(endCity = "new end city"), "third") shouldBe
+                PersistenceResult.NO_ACTION
+
+            transaction {
+                val updated = VehicleTripEntity.all().single()
+                updated.createdBy shouldBe "importer"
+                updated.updatedBy shouldBe "other"
+            }
+        }
+
         "add or update with existing id should update the existing vehicle trip" {
-            repository.addOrUpdate(vehicleTrip)
+            repository.addOrUpdate(vehicleTrip, SYSTEM_ACTOR)
 
             val updatedVehicleTrip = vehicleTrip.copy(endCity = "new end city")
-            val persistenceResult = repository.addOrUpdate(updatedVehicleTrip)
+            val persistenceResult = repository.addOrUpdate(updatedVehicleTrip, SYSTEM_ACTOR)
             persistenceResult shouldBe PersistenceResult.UPDATED
 
             transaction {
@@ -70,10 +91,10 @@ class VehicleTripRepositoryTest :
         }
 
         "add or update with existing id without property changes should not update the existing vehicle trip" {
-            repository.addOrUpdate(vehicleTrip)
+            repository.addOrUpdate(vehicleTrip, SYSTEM_ACTOR)
 
             val updatedVehicleTrip = vehicleTrip
-            val persistenceResult = repository.addOrUpdate(updatedVehicleTrip)
+            val persistenceResult = repository.addOrUpdate(updatedVehicleTrip, SYSTEM_ACTOR)
             persistenceResult shouldBe PersistenceResult.NO_ACTION
 
             transaction {

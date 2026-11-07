@@ -16,7 +16,10 @@ object GuestAvatarTable : Table(name = "guest_avatar") {
     val guest: Column<EntityID<String>> =
         reference("guest_id", GuestTable.id, onDelete = ReferenceOption.CASCADE)
     val image: Column<ExposedBlob> = blob("image")
-    val updatedTime: Column<Instant> = timestamp("updated_time")
+    val createdTime: Column<Instant> = timestamp("created_time")
+    val createdBy: Column<String> = text("created_by")
+    val updatedTime: Column<Instant?> = timestamp("updated_time").nullable()
+    val updatedBy: Column<String?> = text("updated_by").nullable()
 
     override val primaryKey = PrimaryKey(guest, name = "pk_guest_avatar_guest_id")
 }

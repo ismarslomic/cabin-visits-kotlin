@@ -16,20 +16,11 @@ interface VehicleTripRepository {
      * based on its unique identifier.
      *
      * @param vehicleTrip The vehicle trip data to add or update in the repository.
+     * @param actor Goes in `created_by` for a new trip, or `updated_by` for a changed one. No default: the import
+     * passes [no.slomic.smarthytte.common.SYSTEM_ACTOR] explicitly.
      * @return A [PersistenceResult] indicating the result of the operation.
      * Possible values are [PersistenceResult.ADDED], [PersistenceResult.UPDATED],
      * [PersistenceResult.NO_ACTION], or [PersistenceResult.DELETED].
      */
-    suspend fun addOrUpdate(vehicleTrip: VehicleTrip): PersistenceResult
-
-    /**
-     * Updates the `notionId` associated with a specific vehicle trip in the repository.
-     *
-     * @param notionId The new notion identifier to associate with the vehicle trip.
-     * @param vehicleTripId The unique identifier of the vehicle trip to update.
-     * @return A [PersistenceResult] indicating the result of the operation. Possible values are
-     * [PersistenceResult.ADDED], [PersistenceResult.UPDATED], [PersistenceResult.NO_ACTION], or
-     * [PersistenceResult.DELETED].
-     */
-    suspend fun setNotionId(notionId: String, vehicleTripId: String): PersistenceResult
+    suspend fun addOrUpdate(vehicleTrip: VehicleTrip, actor: String): PersistenceResult
 }

@@ -43,7 +43,7 @@ fun Application.configureGuestRoutes(guestRepository: GuestRepository, guestProf
                 val avatar = guestRepository.avatarById(guestId)
                     ?: return@get call.respond(HttpStatusCode.NotFound)
 
-                val eTag = "\"${avatar.updatedTime.toEpochMilliseconds()}\""
+                val eTag = "\"${avatar.versionTime.toEpochMilliseconds()}\""
                 call.response.header(HttpHeaders.ETag, eTag)
                 call.response.cacheControl(CacheControl.MaxAge(maxAgeSeconds = AVATAR_MAX_AGE_SECONDS))
 

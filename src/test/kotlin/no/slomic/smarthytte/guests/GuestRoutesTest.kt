@@ -43,7 +43,7 @@ class GuestRoutesTest :
 
         "get avatar should respond with the jpeg image, etag and cache control" {
             repository.addOrUpdate(guest, image)
-            val updatedTime = repository.avatarById(guest.id)!!.updatedTime
+            val updatedTime = repository.avatarById(guest.id)!!.versionTime
 
             testApplication {
                 application { configureGuestApp(repository) }
@@ -60,7 +60,7 @@ class GuestRoutesTest :
 
         "get avatar with matching if-none-match should respond not modified without body" {
             repository.addOrUpdate(guest, image)
-            val updatedTime = repository.avatarById(guest.id)!!.updatedTime
+            val updatedTime = repository.avatarById(guest.id)!!.versionTime
 
             testApplication {
                 application { configureGuestApp(repository) }

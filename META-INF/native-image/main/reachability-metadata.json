@@ -1897,6 +1897,9 @@
       "type": "no.slomic.smarthytte.checkinouts.CheckInOutSource"
     },
     {
+      "type": "no.slomic.smarthytte.common.AuditedEntity"
+    },
+    {
       "type": "no.slomic.smarthytte.common.BaseEntity"
     },
     {

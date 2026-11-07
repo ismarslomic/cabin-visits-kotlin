@@ -5,8 +5,10 @@ package no.slomic.smarthytte.guests
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.lowerCase
@@ -34,31 +36,37 @@ class SqliteGuestRepository : GuestRepository {
         GuestEntity.find { GuestTable.email.lowerCase() eq email.trim().lowercase() }.map(::daoToModel)
     }
 
-    override suspend fun update(guestId: String, update: GuestUpdate): PersistenceResult = suspendTransaction {
-        logger.trace("Updating guest with id: $guestId from the API")
+    override suspend fun update(guestId: String, update: GuestUpdate, actor: String): PersistenceResult =
+        suspendTransaction {
+            logger.trace("Updating guest with id: $guestId from the API")
 
-        val storedGuest: GuestEntity =
-            GuestEntity.findById(guestId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
+            val storedGuest: GuestEntity =
+                GuestEntity.findById(guestId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
-        if (storedGuest.applyUpdate(update)) {
-            storedGuest.version = storedGuest.version.inc()
-            storedGuest.updatedTime = Clock.System.now().truncatedToMillis()
+            if (storedGuest.applyUpdate(update)) {
+                storedGuest.markUpdated(actor)
 
-            logger.trace("Updated guest with id: $guestId")
-            PersistenceResult.UPDATED
-        } else {
-            logger.trace("No changes detected for guest with id: $guestId")
-            PersistenceResult.NO_ACTION
+                logger.trace("Updated guest with id: $guestId")
+                PersistenceResult.UPDATED
+            } else {
+                logger.trace("No changes detected for guest with id: $guestId")
+                PersistenceResult.NO_ACTION
+            }
         }
-    }
 
-    override suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray?): PersistenceResult =
+    override suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray?, actor: String): PersistenceResult =
         suspendTransaction {
             val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
             val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
 
-            val guestResult: PersistenceResult = if (storedGuest == null) addGuest(guest) else updateGuest(guest)
-            val avatarResult: PersistenceResult = addOrUpdateAvatarImage(guest.id, guestAvatarImage)
+            val guestResult: PersistenceResult = if (storedGuest ==
+                null
+            ) {
+                addGuest(guest, actor)
+            } else {
+                updateGuest(guest, actor)
+            }
+            val avatarResult: PersistenceResult = addOrUpdateAvatarImage(guest.id, guestAvatarImage, actor)
 
             // An avatar change is reported as an update of the guest, even when the guest row itself is unchanged
             if (guestResult == PersistenceResult.NO_ACTION && avatarResult != PersistenceResult.NO_ACTION) {
@@ -68,34 +76,27 @@ class SqliteGuestRepository : GuestRepository {
             }
         }
 
-    override suspend fun setNotionId(notionId: String, guestId: String): PersistenceResult = suspendTransaction {
-        logger.trace("Setting notion Id for guest with id: $guestId")
-
-        val storedGuest: GuestEntity =
-            GuestEntity.findById(guestId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
-
-        with(storedGuest) {
-            this.notionId = notionId
-            version = storedGuest.version.inc()
-            updatedTime = Clock.System.now().truncatedToMillis()
+    override suspend fun saveAvatar(guestId: String, image: ByteArray, actor: String): PersistenceResult =
+        suspendTransaction {
+            if (GuestEntity.findById(guestId) == null) {
+                PersistenceResult.NO_ACTION
+            } else {
+                saveAvatarImage(guestId, image, actor)
+            }
         }
-
-        logger.trace("Notion id set for guest with id: $guestId")
-        PersistenceResult.UPDATED
-    }
 
     override suspend fun avatarById(guestId: String): GuestAvatar? = suspendTransaction {
         GuestAvatarTable
             .selectAll()
             .where { GuestAvatarTable.guest eq guestId }
             .singleOrNull()
-            ?.let { GuestAvatar(it[GuestAvatarTable.image].bytes, it[GuestAvatarTable.updatedTime]) }
+            ?.let { GuestAvatar(it[GuestAvatarTable.image].bytes, it.versionTime()) }
     }
 
-    override suspend fun allAvatarUpdatedTimes(): Map<String, Instant> = suspendTransaction {
+    override suspend fun allAvatarVersionTimes(): Map<String, Instant> = suspendTransaction {
         GuestAvatarTable
-            .select(GuestAvatarTable.guest, GuestAvatarTable.updatedTime)
-            .associate { it[GuestAvatarTable.guest].value to it[GuestAvatarTable.updatedTime] }
+            .select(GuestAvatarTable.guest, GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)
+            .associate { it[GuestAvatarTable.guest].value to it.versionTime() }
     }
 
     private fun storedAvatarImage(guestId: String): ByteArray? = GuestAvatarTable
@@ -106,30 +107,43 @@ class SqliteGuestRepository : GuestRepository {
         ?.bytes
 
     /** A null [image] means the guest has no avatar, so any stored avatar is deleted. */
-    private fun addOrUpdateAvatarImage(guestId: String, image: ByteArray?): PersistenceResult {
+    private fun addOrUpdateAvatarImage(guestId: String, image: ByteArray?, actor: String): PersistenceResult =
+        if (image == null) {
+            if (storedAvatarImage(guestId) == null) PersistenceResult.NO_ACTION else deleteAvatarImage(guestId)
+        } else {
+            saveAvatarImage(guestId, image, actor)
+        }
+
+    /** First image creates the row (`created_*`), a different image replaces it (`updated_*`). */
+    private fun saveAvatarImage(guestId: String, image: ByteArray, actor: String): PersistenceResult {
         val storedImage: ByteArray? = storedAvatarImage(guestId)
 
-        return when {
-            image == null && storedImage == null -> PersistenceResult.NO_ACTION
-            image == null -> deleteAvatarImage(guestId)
-            storedImage == null -> addAvatarImage(guestId, image)
-            else -> updateAvatarImage(guestId, storedImage, image)
+        return if (storedImage == null) {
+            addAvatarImage(guestId, image, actor)
+        } else {
+            updateAvatarImage(guestId, storedImage, image, actor)
         }
     }
 
-    private fun addAvatarImage(guestId: String, image: ByteArray): PersistenceResult {
+    private fun addAvatarImage(guestId: String, image: ByteArray, actor: String): PersistenceResult {
         logger.trace("Adding avatar image for guest with id: $guestId")
 
         GuestAvatarTable.insert {
             it[guest] = guestId
             it[GuestAvatarTable.image] = ExposedBlob(image)
-            it[updatedTime] = Clock.System.now().truncatedToMillis()
+            it[createdTime] = Clock.System.now().truncatedToMillis()
+            it[createdBy] = actor
         }
 
         return PersistenceResult.ADDED
     }
 
-    private fun updateAvatarImage(guestId: String, storedImage: ByteArray, image: ByteArray): PersistenceResult {
+    private fun updateAvatarImage(
+        guestId: String,
+        storedImage: ByteArray,
+        image: ByteArray,
+        actor: String,
+    ): PersistenceResult {
         if (storedImage.contentEquals(image)) {
             logger.trace("No changes detected for avatar image for guest with id: $guestId")
             return PersistenceResult.NO_ACTION
@@ -140,6 +154,7 @@ class SqliteGuestRepository : GuestRepository {
         GuestAvatarTable.update({ GuestAvatarTable.guest eq guestId }) {
             it[GuestAvatarTable.image] = ExposedBlob(image)
             it[updatedTime] = Clock.System.now().truncatedToMillis()
+            it[updatedBy] = actor
         }
 
         return PersistenceResult.UPDATED
@@ -153,7 +168,7 @@ class SqliteGuestRepository : GuestRepository {
         return PersistenceResult.DELETED
     }
 
-    private fun addGuest(guest: Guest): PersistenceResult {
+    private fun addGuest(guest: Guest, actor: String): PersistenceResult {
         logger.trace("Adding guest with id: ${guest.id}")
 
         GuestEntity.new(guest.id) {
@@ -165,6 +180,7 @@ class SqliteGuestRepository : GuestRepository {
             isFamily = guest.isFamily
             role = guest.role
             createdTime = Clock.System.now().truncatedToMillis()
+            createdBy = actor
         }
 
         logger.trace("Added guest with id: ${guest.id}")
@@ -178,7 +194,7 @@ class SqliteGuestRepository : GuestRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * guest.
      */
-    private fun updateGuest(guest: Guest): PersistenceResult {
+    private fun updateGuest(guest: Guest, actor: String): PersistenceResult {
         logger.trace("Updating guest with id: ${guest.id}")
 
         val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return PersistenceResult.NO_ACTION
@@ -196,8 +212,7 @@ class SqliteGuestRepository : GuestRepository {
         val isDirty: Boolean = updatedGuest.writeValues.isNotEmpty()
 
         return if (isDirty) {
-            updatedGuest.version = updatedGuest.version.inc()
-            updatedGuest.updatedTime = Clock.System.now().truncatedToMillis()
+            updatedGuest.markUpdated(actor)
 
             logger.trace("Updated guest with id: ${guest.id}")
             PersistenceResult.UPDATED
@@ -229,3 +244,6 @@ class SqliteGuestRepository : GuestRepository {
         return changed
     }
 }
+
+/** `updated_time`, or `created_time` for an avatar that was never replaced. */
+private fun ResultRow.versionTime(): Instant = this[GuestAvatarTable.updatedTime] ?: this[GuestAvatarTable.createdTime]

@@ -3,8 +3,6 @@ package no.slomic.smarthytte.reservations
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.equality.shouldBeEqualToComparingFields
-import io.kotest.matchers.equality.shouldBeEqualToIgnoringFields
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -14,6 +12,7 @@ import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.checkinouts.HOME_CITY_NAME
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
@@ -176,7 +175,8 @@ class ReservationRepositoryTest :
 
         "reading reservation by existing id should read reservation" {
             repository.addOrUpdate(reservation)
-            repository.reservationById(reservation.id)!!.shouldBeEqualToComparingFields(reservation)
+            // version and audit properties are not part of equals
+            repository.reservationById(reservation.id) shouldBe reservation
         }
 
         "reading reservation by non existing id should return null" {
@@ -184,13 +184,23 @@ class ReservationRepositoryTest :
         }
 
         "setting check in status for non existing reservation should return NO_ACTION as result" {
-            val persistenceResult = repository.setCheckIn(checkIn = checkIn, id = "non-existing-id")
+            val persistenceResult = repository.setCheckIn(
+                checkIn = checkIn,
+                id = "non-existing-id",
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
             persistenceResult shouldBe PersistenceResult.NO_ACTION
         }
 
         "setting new check in status should return UPDATED as result and update reservations check in time" {
             repository.addOrUpdate(reservation)
-            val persistenceResult = repository.setCheckIn(checkIn = checkIn, id = reservation.id)
+            val persistenceResult = repository.setCheckIn(
+                checkIn = checkIn,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
 
             persistenceResult shouldBe PersistenceResult.UPDATED
             transaction {
@@ -198,28 +208,49 @@ class ReservationRepositoryTest :
                 updatedReservation.checkInTime shouldBe checkIn.time.truncatedToMillis()
                 updatedReservation.checkInSourceId shouldBe checkIn.sourceId
                 updatedReservation.checkInSourceName shouldBe checkIn.sourceName
-                updatedReservation.version shouldBe 2
-                updatedReservation.updatedTime.shouldNotBeNull()
+                updatedReservation.version shouldBe 1
+                updatedReservation.updatedTime.shouldBeNull()
+                updatedReservation.updatedBy.shouldBeNull()
             }
         }
 
         "update check in status without change should return NO_ACTION as result without any updates" {
             repository.addOrUpdate(reservation)
-            repository.setCheckIn(checkIn = checkIn, id = reservation.id)
-            val persistenceResult = repository.setCheckIn(checkIn = checkIn, id = reservation.id)
+            repository.setCheckIn(
+                checkIn = checkIn,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
+            val persistenceResult = repository.setCheckIn(
+                checkIn = checkIn,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
 
             persistenceResult shouldBe PersistenceResult.NO_ACTION
             transaction {
                 val updatedReservation = ReservationEntity.all().first()
-                updatedReservation.version shouldBe 2
+                updatedReservation.version shouldBe 1
             }
         }
 
         "update check in status with change should return UPDATED and update reservations check in time" {
             repository.addOrUpdate(reservation)
-            repository.setCheckIn(checkIn = checkIn, id = reservation.id)
+            repository.setCheckIn(
+                checkIn = checkIn,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
             val changedCheckIn = checkIn.copy(time = now.plus(1.hours))
-            val persistenceResult = repository.setCheckIn(checkIn = changedCheckIn, id = reservation.id)
+            val persistenceResult = repository.setCheckIn(
+                checkIn = changedCheckIn,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
 
             persistenceResult shouldBe PersistenceResult.UPDATED
             transaction {
@@ -227,18 +258,28 @@ class ReservationRepositoryTest :
                 updatedReservation.checkInTime shouldBe changedCheckIn.time.truncatedToMillis()
                 updatedReservation.checkInSourceId shouldBe changedCheckIn.sourceId
                 updatedReservation.checkInSourceName shouldBe changedCheckIn.sourceName
-                updatedReservation.version shouldBe 3
+                updatedReservation.version shouldBe 1
             }
         }
 
         "setting check out status for non existing reservation should return NO_ACTION as result" {
-            val persistenceResult = repository.setCheckOut(checkOut = checkOut, id = "non-existing-id")
+            val persistenceResult = repository.setCheckOut(
+                checkOut = checkOut,
+                id = "non-existing-id",
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
             persistenceResult shouldBe PersistenceResult.NO_ACTION
         }
 
         "setting new check out status should return UPDATED as result and update reservations check out time" {
             repository.addOrUpdate(reservation)
-            val persistenceResult = repository.setCheckOut(checkOut = checkOut, id = reservation.id)
+            val persistenceResult = repository.setCheckOut(
+                checkOut = checkOut,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
 
             persistenceResult shouldBe PersistenceResult.UPDATED
             transaction {
@@ -246,28 +287,49 @@ class ReservationRepositoryTest :
                 updatedReservation.checkOutTime shouldBe checkOut.time.truncatedToMillis()
                 updatedReservation.checkOutSourceId shouldBe checkOut.sourceId
                 updatedReservation.checkOutSourceName shouldBe checkOut.sourceName
-                updatedReservation.version shouldBe 2
-                updatedReservation.updatedTime.shouldNotBeNull()
+                updatedReservation.version shouldBe 1
+                updatedReservation.updatedTime.shouldBeNull()
+                updatedReservation.updatedBy.shouldBeNull()
             }
         }
 
         "update check out status without change should return NO_ACTION as result without any updates" {
             repository.addOrUpdate(reservation)
-            repository.setCheckOut(checkOut = checkOut, id = reservation.id)
-            val persistenceResult = repository.setCheckOut(checkOut = checkOut, id = reservation.id)
+            repository.setCheckOut(
+                checkOut = checkOut,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
+            val persistenceResult = repository.setCheckOut(
+                checkOut = checkOut,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
 
             persistenceResult shouldBe PersistenceResult.NO_ACTION
             transaction {
                 val updatedReservation = ReservationEntity.all().first()
-                updatedReservation.version shouldBe 2
+                updatedReservation.version shouldBe 1
             }
         }
 
         "update check out status with change should return UPDATED and update reservations check out time" {
             repository.addOrUpdate(reservation)
-            repository.setCheckOut(checkOut = checkOut, id = reservation.id)
+            repository.setCheckOut(
+                checkOut = checkOut,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
             val changedCheckOut = checkOut.copy(time = now.plus(1.hours))
-            val persistenceResult = repository.setCheckOut(checkOut = changedCheckOut, id = reservation.id)
+            val persistenceResult = repository.setCheckOut(
+                checkOut = changedCheckOut,
+                id = reservation.id,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
+            )
 
             persistenceResult shouldBe PersistenceResult.UPDATED
             transaction {
@@ -275,7 +337,7 @@ class ReservationRepositoryTest :
                 updatedReservation.checkOutTime shouldBe changedCheckOut.time.truncatedToMillis()
                 updatedReservation.checkOutSourceId shouldBe changedCheckOut.sourceId
                 updatedReservation.checkOutSourceName shouldBe changedCheckOut.sourceName
-                updatedReservation.version shouldBe 3
+                updatedReservation.version shouldBe 1
             }
         }
 
@@ -290,8 +352,8 @@ class ReservationRepositoryTest :
             repository.addOrUpdate(reservationWithGuest)
 
             // We are currently not loading the guests when reading from database
-            repository.reservationById(reservation.id)!!
-                .shouldBeEqualToIgnoringFields(reservationWithGuest, Reservation::guestIds)
+            repository.reservationById(reservation.id)!!.copy(guestIds = reservationWithGuest.guestIds) shouldBe
+                reservationWithGuest
 
             transaction {
                 val allReservationGuests: List<ResultRow> = ReservationGuestTable.selectAll().toList()
@@ -388,7 +450,7 @@ class ReservationRepositoryTest :
                 endTime = "2025-01-01T12:00:00Z",
                 id = "trip1",
             )
-            vehicleTripRepository.addOrUpdate(tripToCabin)
+            vehicleTripRepository.addOrUpdate(tripToCabin, SYSTEM_ACTOR)
 
             repository.addOrUpdate(reservation)
 
@@ -396,6 +458,8 @@ class ReservationRepositoryTest :
                 reservationId = reservation.id,
                 vehicleTripId = tripToCabin.id,
                 type = ReservationVehicleTripType.TO_CABIN,
+                startTime = reservation.startTime,
+                endTime = reservation.endTime,
             )
             persistenceResult shouldBe PersistenceResult.ADDED
 
@@ -419,14 +483,32 @@ class ReservationRepositoryTest :
             val tripFromCabin =
                 createTrip(CABIN_CITY_NAME, HOME_CITY_NAME, "2025-01-03T10:00:00Z", "2025-01-03T12:00:00Z", "trip3")
 
-            vehicleTripRepository.addOrUpdate(tripToCabin)
-            vehicleTripRepository.addOrUpdate(tripAtCabin)
-            vehicleTripRepository.addOrUpdate(tripFromCabin)
+            vehicleTripRepository.addOrUpdate(tripToCabin, SYSTEM_ACTOR)
+            vehicleTripRepository.addOrUpdate(tripAtCabin, SYSTEM_ACTOR)
+            vehicleTripRepository.addOrUpdate(tripFromCabin, SYSTEM_ACTOR)
 
             repository.addOrUpdate(reservation)
-            repository.addVehicleTripLink(reservation.id, tripToCabin.id, ReservationVehicleTripType.TO_CABIN)
-            repository.addVehicleTripLink(reservation.id, tripAtCabin.id, ReservationVehicleTripType.AT_CABIN)
-            repository.addVehicleTripLink(reservation.id, tripFromCabin.id, ReservationVehicleTripType.FROM_CABIN)
+            repository.addVehicleTripLink(
+                reservation.id,
+                tripToCabin.id,
+                ReservationVehicleTripType.TO_CABIN,
+                reservation.startTime,
+                reservation.endTime,
+            )
+            repository.addVehicleTripLink(
+                reservation.id,
+                tripAtCabin.id,
+                ReservationVehicleTripType.AT_CABIN,
+                reservation.startTime,
+                reservation.endTime,
+            )
+            repository.addVehicleTripLink(
+                reservation.id,
+                tripFromCabin.id,
+                ReservationVehicleTripType.FROM_CABIN,
+                reservation.startTime,
+                reservation.endTime,
+            )
 
             val readReservation = repository.reservationById(reservation.id)
             readReservation.shouldNotBeNull()
@@ -453,11 +535,23 @@ class ReservationRepositoryTest :
             val firstLeg = createTrip(HOME_CITY_NAME, "stop", "2025-01-01T10:00:00Z", "2025-01-01T12:00:00Z", "trip1")
 
             // Stored and linked in reverse chronological order
-            vehicleTripRepository.addOrUpdate(laterLeg)
-            vehicleTripRepository.addOrUpdate(firstLeg)
+            vehicleTripRepository.addOrUpdate(laterLeg, SYSTEM_ACTOR)
+            vehicleTripRepository.addOrUpdate(firstLeg, SYSTEM_ACTOR)
             repository.addOrUpdate(reservation)
-            repository.addVehicleTripLink(reservation.id, laterLeg.id, ReservationVehicleTripType.TO_CABIN)
-            repository.addVehicleTripLink(reservation.id, firstLeg.id, ReservationVehicleTripType.TO_CABIN)
+            repository.addVehicleTripLink(
+                reservation.id,
+                laterLeg.id,
+                ReservationVehicleTripType.TO_CABIN,
+                reservation.startTime,
+                reservation.endTime,
+            )
+            repository.addVehicleTripLink(
+                reservation.id,
+                firstLeg.id,
+                ReservationVehicleTripType.TO_CABIN,
+                reservation.startTime,
+                reservation.endTime,
+            )
 
             repository.reservationById(reservation.id)!!.toCabinVehicleTrips.map { it.id } shouldBe
                 listOf(firstLeg.id, laterLeg.id)

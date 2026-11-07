@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.common.utcTimeZone
@@ -112,15 +113,15 @@ class CheckInOutServiceTest :
                         }
 
                         if (scenario.hasCheckInTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.checkInTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.checkInTrip!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckOutTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasAtCabinTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!, SYSTEM_ACTOR)
                         }
 
                         // Execute logic
@@ -218,15 +219,15 @@ class CheckInOutServiceTest :
                         }
 
                         if (scenario.hasCheckInTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.checkInTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.checkInTrip!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckOutTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasAtCabinTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!, SYSTEM_ACTOR)
                         }
 
                         // Execute logic
@@ -330,15 +331,15 @@ class CheckInOutServiceTest :
                         }
 
                         if (scenario.hasCheckInTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.checkInTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.checkInTrip!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasCheckOutTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.checkOutTrip!!, SYSTEM_ACTOR)
                         }
 
                         if (scenario.hasAtCabinTrip) {
-                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!)
+                            vehicleTripRepository.addOrUpdate(scenario.atCabinTrip!!, SYSTEM_ACTOR)
                         }
 
                         // Execute logic

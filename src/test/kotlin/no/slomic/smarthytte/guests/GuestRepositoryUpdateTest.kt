@@ -34,7 +34,7 @@ class GuestRepositoryUpdateTest :
             }
             shouldThrow<ExposedSQLException> {
                 repository.addOrUpdate(guest.copy(id = "c", email = "other@example.no"))
-                repository.update("c", GuestUpdate(email = "SHARED@example.no"))
+                repository.update("c", GuestUpdate(email = "SHARED@example.no"), ACTOR)
             }
         }
 
@@ -48,7 +48,7 @@ class GuestRepositoryUpdateTest :
         "update should change only the properties that are set and bump the version" {
             repository.addOrUpdate(guest)
 
-            val result = repository.update(guest.id, GuestUpdate(firstName = "Johnny", birthYear = 1981))
+            val result = repository.update(guest.id, GuestUpdate(firstName = "Johnny", birthYear = 1981), ACTOR)
 
             result shouldBe PersistenceResult.UPDATED
             val stored = repository.guestById(guest.id)!!
@@ -58,14 +58,15 @@ class GuestRepositoryUpdateTest :
         "update with unchanged values, no values or an unknown guest should be no action" {
             repository.addOrUpdate(guest)
 
-            repository.update(guest.id, GuestUpdate(firstName = guest.firstName)) shouldBe PersistenceResult.NO_ACTION
-            repository.update(guest.id, GuestUpdate()) shouldBe PersistenceResult.NO_ACTION
-            repository.update("unknown", GuestUpdate(firstName = "X")) shouldBe PersistenceResult.NO_ACTION
+            repository.update(guest.id, GuestUpdate(firstName = guest.firstName), ACTOR) shouldBe
+                PersistenceResult.NO_ACTION
+            repository.update(guest.id, GuestUpdate(), ACTOR) shouldBe PersistenceResult.NO_ACTION
+            repository.update("unknown", GuestUpdate(firstName = "X"), ACTOR) shouldBe PersistenceResult.NO_ACTION
         }
 
         "update should only change the properties that are set, and add or update should overwrite all of them" {
             repository.addOrUpdate(guest)
-            repository.update(guest.id, GuestUpdate(firstName = "Johnny", role = AppRole.ADMIN))
+            repository.update(guest.id, GuestUpdate(firstName = "Johnny", role = AppRole.ADMIN), ACTOR)
 
             val overwritten = guest.copy(firstName = "FromFixture", lastName = "Changed", role = AppRole.GUEST_USER)
             repository.addOrUpdate(overwritten) shouldBe PersistenceResult.UPDATED
@@ -76,7 +77,11 @@ class GuestRepositoryUpdateTest :
         "update with several properties should change them all in one version bump" {
             repository.addOrUpdate(guest)
 
-            repository.update(guest.id, GuestUpdate(gender = Gender.FEMALE, isFamily = true, email = "new@example.no"))
+            repository.update(
+                guest.id,
+                GuestUpdate(gender = Gender.FEMALE, isFamily = true, email = "new@example.no"),
+                ACTOR,
+            )
                 .shouldBe(PersistenceResult.UPDATED)
 
             repository.guestById(guest.id)!!.let {
@@ -86,3 +91,5 @@ class GuestRepositoryUpdateTest :
             }
         }
     })
+
+private const val ACTOR = "test-actor"

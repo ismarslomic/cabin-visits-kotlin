@@ -3,8 +3,8 @@ package no.slomic.smarthytte.reservations
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
-import no.slomic.smarthytte.common.BaseEntity
-import no.slomic.smarthytte.common.BaseIdTable
+import no.slomic.smarthytte.common.AuditedEntity
+import no.slomic.smarthytte.common.AuditedIdTable
 import no.slomic.smarthytte.guests.GuestEntity
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType.AT_CABIN
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType.FROM_CABIN
@@ -19,7 +19,7 @@ import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.SizedIterable
 import kotlin.time.Instant
 
-object ReservationTable : BaseIdTable<String>(name = "reservation") {
+object ReservationTable : AuditedIdTable<String>(name = "reservation") {
     override val id: Column<EntityID<String>> = varchar("id", length = 1024).entityId()
     val summary: Column<String?> = varchar(name = "summary", length = 1000).nullable()
     val description: Column<String?> = varchar(name = "description", length = 2000).nullable()
@@ -39,7 +39,7 @@ object ReservationTable : BaseIdTable<String>(name = "reservation") {
     override val primaryKey = PrimaryKey(id, name = "pk_reservation_id")
 }
 
-class ReservationEntity(id: EntityID<String>) : BaseEntity<String>(id, ReservationTable) {
+class ReservationEntity(id: EntityID<String>) : AuditedEntity<String>(id, ReservationTable) {
     companion object : EntityClass<String, ReservationEntity>(ReservationTable)
 
     var startTime: Instant by ReservationTable.startTime
@@ -101,7 +101,13 @@ fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap
             sourceId = dao.checkOutSourceId!!,
         )
     },
-)
+).also {
+    it.version = dao.version
+    it.createdTime = dao.createdTime
+    it.createdBy = dao.createdBy
+    it.updatedTime = dao.updatedTime
+    it.updatedBy = dao.updatedBy
+}
 
 /**
  * Converts a collection of `VehicleTripEntity` objects to a list of `VehicleTrip` objects, filtering based on the

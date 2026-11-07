@@ -5,6 +5,7 @@ import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.GuestEntity
@@ -15,6 +16,7 @@ import org.jetbrains.exposed.v1.jdbc.SizedCollection
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Suppress("TooManyFunctions")
 class SqliteReservationRepository : ReservationRepository {
@@ -40,14 +42,14 @@ class SqliteReservationRepository : ReservationRepository {
         }
     }
 
-    override suspend fun addOrUpdate(reservation: Reservation): PersistenceResult = suspendTransaction {
+    override suspend fun addOrUpdate(reservation: Reservation, actor: String): PersistenceResult = suspendTransaction {
         val entityId: EntityID<String> = EntityID(reservation.id, ReservationTable)
         val storedReservation: ReservationEntity? = ReservationEntity.findById(entityId)
 
         if (storedReservation == null) {
-            addReservation(reservation)
+            addReservation(reservation, actor)
         } else {
-            updateReservation(reservation)
+            updateReservation(reservation, actor)
         }
     }
 
@@ -55,7 +57,16 @@ class SqliteReservationRepository : ReservationRepository {
         reservationId: String,
         vehicleTripId: String,
         type: ReservationVehicleTripType,
+        startTime: Instant,
+        endTime: Instant,
     ): PersistenceResult = suspendTransaction {
+        // SQLite's OR IGNORE does not suppress a foreign key violation, so a deleted or changed reservation is
+        // detected here
+        if (!isSnapshotCurrent(reservationId, startTime, endTime)) {
+            logger.trace("Reservation with id: {} is gone or changed, no trip link added", reservationId)
+            return@suspendTransaction PersistenceResult.NO_ACTION
+        }
+
         logger.trace(
             "Adding link between vehicle trip with id: {} (type: {}) and the Reservation with id: {}",
             vehicleTripId,
@@ -101,28 +112,16 @@ class SqliteReservationRepository : ReservationRepository {
         }
     }
 
-    override suspend fun setNotionId(notionId: String, id: String): PersistenceResult = suspendTransaction {
-        logger.trace("Setting notion Id for reservation with id: $id")
-
-        val storedReservation: ReservationEntity =
-            ReservationEntity.findById(id) ?: return@suspendTransaction PersistenceResult.NO_ACTION
-
-        with(storedReservation) {
-            this.notionId = notionId
-            version = storedReservation.version.inc()
-            updatedTime = Clock.System.now().truncatedToMillis()
-        }
-
-        logger.trace("Notion id set for reservation with id: $id")
-        PersistenceResult.UPDATED
-    }
-
-    @Suppress("DuplicatedCode")
-    override suspend fun setCheckIn(checkIn: CheckIn, id: String): PersistenceResult = suspendTransaction {
+    override suspend fun setCheckIn(
+        checkIn: CheckIn,
+        id: String,
+        startTime: Instant,
+        endTime: Instant,
+    ): PersistenceResult = suspendTransaction {
         logger.trace("Setting check in for reservation with id: $id")
 
-        val storedReservation: ReservationEntity =
-            ReservationEntity.findById(id) ?: return@suspendTransaction PersistenceResult.NO_ACTION
+        val storedReservation: ReservationEntity = currentReservation(id, startTime, endTime)
+            ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
         with(storedReservation) {
             this.checkInTime = checkIn.time.truncatedToMillis()
@@ -130,34 +129,19 @@ class SqliteReservationRepository : ReservationRepository {
             this.checkInSourceId = checkIn.sourceId
         }
 
-        val isDirty: Boolean = storedReservation.writeValues.isNotEmpty()
-
-        if (isDirty) {
-            storedReservation.version = storedReservation.version.inc()
-            storedReservation.updatedTime = Clock.System.now().truncatedToMillis()
-
-            logger.trace(
-                "Updated check in status for reservation with id: {} and summary: {}",
-                storedReservation.id,
-                storedReservation.summary,
-            )
-            PersistenceResult.UPDATED
-        } else {
-            logger.trace(
-                "No changes detected for check in status of reservation with id: {} and summary: {}",
-                storedReservation.id,
-                storedReservation.summary,
-            )
-            PersistenceResult.NO_ACTION
-        }
+        persistResultOfDerivedData(storedReservation, "check in")
     }
 
-    @Suppress("DuplicatedCode")
-    override suspend fun setCheckOut(checkOut: CheckOut, id: String): PersistenceResult = suspendTransaction {
+    override suspend fun setCheckOut(
+        checkOut: CheckOut,
+        id: String,
+        startTime: Instant,
+        endTime: Instant,
+    ): PersistenceResult = suspendTransaction {
         logger.trace("Setting check out for reservation with id: $id")
 
-        val storedReservation: ReservationEntity =
-            ReservationEntity.findById(id) ?: return@suspendTransaction PersistenceResult.NO_ACTION
+        val storedReservation: ReservationEntity = currentReservation(id, startTime, endTime)
+            ?: return@suspendTransaction PersistenceResult.NO_ACTION
 
         with(storedReservation) {
             this.checkOutTime = checkOut.time.truncatedToMillis()
@@ -165,29 +149,32 @@ class SqliteReservationRepository : ReservationRepository {
             this.checkOutSourceId = checkOut.sourceId
         }
 
+        persistResultOfDerivedData(storedReservation, "check out")
+    }
+
+    /** The stored reservation, or null if it is gone or its times differ from the snapshot of the caller. */
+    private fun currentReservation(id: String, startTime: Instant, endTime: Instant): ReservationEntity? =
+        ReservationEntity.findById(id)?.takeIf {
+            it.startTime == startTime.truncatedToMillis() && it.endTime == endTime.truncatedToMillis()
+        }
+
+    private fun isSnapshotCurrent(id: String, startTime: Instant, endTime: Instant): Boolean =
+        currentReservation(id, startTime, endTime) != null
+
+    /** Check-in/out is derived data: it does not bump `version` or set `updated_time`/`updated_by`. */
+    private fun persistResultOfDerivedData(storedReservation: ReservationEntity, what: String): PersistenceResult {
         val isDirty: Boolean = storedReservation.writeValues.isNotEmpty()
 
-        if (isDirty) {
-            storedReservation.version = storedReservation.version.inc()
-            storedReservation.updatedTime = Clock.System.now().truncatedToMillis()
-
-            logger.trace(
-                "Updated check out status for reservation with id: {} and summary: {}",
-                storedReservation.id,
-                storedReservation.summary,
-            )
+        return if (isDirty) {
+            logger.trace("Updated {} status for reservation with id: {}", what, storedReservation.id)
             PersistenceResult.UPDATED
         } else {
-            logger.trace(
-                "No changes detected for check out status of reservation with id: {} and summary: {}",
-                storedReservation.id,
-                storedReservation.summary,
-            )
+            logger.trace("No changes detected for {} status of reservation with id: {}", what, storedReservation.id)
             PersistenceResult.NO_ACTION
         }
     }
 
-    private fun addReservation(reservation: Reservation): PersistenceResult {
+    private fun addReservation(reservation: Reservation, actor: String): PersistenceResult {
         logger.trace("Adding reservation with id: ${reservation.id}")
 
         val reservationGuests: List<GuestEntity> = reservation.guestIds.mapNotNull { id -> GuestEntity.findById(id) }
@@ -201,6 +188,7 @@ class SqliteReservationRepository : ReservationRepository {
             sourceCreatedTime = reservation.sourceCreatedTime?.truncatedToMillis()
             sourceUpdatedTime = reservation.sourceUpdatedTime?.truncatedToMillis()
             createdTime = Clock.System.now().truncatedToMillis()
+            createdBy = actor
         }
 
         logger.trace("Added reservation with id: ${reservation.id} and summary: ${reservation.summary}")
@@ -212,7 +200,7 @@ class SqliteReservationRepository : ReservationRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * reservation.
      */
-    private fun updateReservation(reservation: Reservation): PersistenceResult {
+    private fun updateReservation(reservation: Reservation, actor: String): PersistenceResult {
         logger.trace("Updating reservation with id: ${reservation.id}")
 
         val reservationGuests: List<GuestEntity> = reservation.guestIds.mapNotNull { id -> GuestEntity.findById(id) }
@@ -229,11 +217,13 @@ class SqliteReservationRepository : ReservationRepository {
             sourceUpdatedTime = reservation.sourceUpdatedTime?.truncatedToMillis()
         }
 
-        val isDirty: Boolean = storedReservation.writeValues.isNotEmpty()
+        // A guest-only edit is a change too, but is not part of writeValues: compare the id sets explicitly
+        val guestsChanged: Boolean =
+            storedReservation.guests.map { it.id.value }.toSet() != reservationGuests.map { it.id.value }.toSet()
+        val isDirty: Boolean = storedReservation.writeValues.isNotEmpty() || guestsChanged
 
         if (isDirty) {
-            storedReservation.version = storedReservation.version.inc()
-            storedReservation.updatedTime = Clock.System.now().truncatedToMillis()
+            storedReservation.markUpdated(actor)
         }
 
         // This triggers flushing changes and thus empties the writeValues, so we keep it as the last change

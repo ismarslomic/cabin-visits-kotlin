@@ -1,12 +1,12 @@
 package no.slomic.smarthytte.guests
 
-import no.slomic.smarthytte.common.BaseEntity
-import no.slomic.smarthytte.common.BaseIdTable
+import no.slomic.smarthytte.common.AuditedEntity
+import no.slomic.smarthytte.common.AuditedIdTable
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.dao.EntityClass
 
-object GuestTable : BaseIdTable<String>(name = "guest") {
+object GuestTable : AuditedIdTable<String>(name = "guest") {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).entityId()
     val firstName: Column<String> = varchar(name = "first_name", length = 20)
     val lastName: Column<String> = varchar(name = "last_name", length = 20)
@@ -20,7 +20,7 @@ object GuestTable : BaseIdTable<String>(name = "guest") {
     override val primaryKey = PrimaryKey(id, name = "pk_guest_id")
 }
 
-class GuestEntity(id: EntityID<String>) : BaseEntity<String>(id, GuestTable) {
+class GuestEntity(id: EntityID<String>) : AuditedEntity<String>(id, GuestTable) {
     companion object : EntityClass<String, GuestEntity>(GuestTable)
 
     var firstName: String by GuestTable.firstName
@@ -43,4 +43,10 @@ fun daoToModel(dao: GuestEntity) = Guest(
     notionId = dao.notionId,
     isFamily = dao.isFamily,
     role = dao.role,
-)
+).also {
+    it.version = dao.version
+    it.createdTime = dao.createdTime
+    it.createdBy = dao.createdBy
+    it.updatedTime = dao.updatedTime
+    it.updatedBy = dao.updatedBy
+}

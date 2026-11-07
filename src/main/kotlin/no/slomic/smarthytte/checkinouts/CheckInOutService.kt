@@ -52,21 +52,7 @@ class CheckInOutService(
             val cabinVehicleTrip: CabinVehicleTrip? = findCabinTrip(cabinVehicleTripList, reservation)
 
             // Link all trips associated with this cabin visit to the reservation
-            cabinVehicleTrip?.let { cvt ->
-                cvt.toCabinTrips.forEach {
-                    reservationRepository.addVehicleTripLink(reservation.id, it.id, ReservationVehicleTripType.TO_CABIN)
-                }
-                cvt.atCabinTrips.forEach {
-                    reservationRepository.addVehicleTripLink(reservation.id, it.id, ReservationVehicleTripType.AT_CABIN)
-                }
-                cvt.fromCabinTrips.forEach {
-                    reservationRepository.addVehicleTripLink(
-                        reservation.id,
-                        it.id,
-                        ReservationVehicleTripType.FROM_CABIN,
-                    )
-                }
-            }
+            cabinVehicleTrip?.let { linkTrips(reservation, it) }
 
             val checkIn: CheckIn? = if (reservation.hasStarted) {
                 createCheckIn(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
@@ -81,13 +67,27 @@ class CheckInOutService(
             }
 
             if (checkIn != null) {
-                checkInPersistenceResults.add(reservationRepository.setCheckIn(checkIn, reservation.id))
+                checkInPersistenceResults.add(
+                    reservationRepository.setCheckIn(
+                        checkIn,
+                        reservation.id,
+                        reservation.startTime,
+                        reservation.endTime,
+                    ),
+                )
             } else {
                 checkInPersistenceResults.add(PersistenceResult.NO_ACTION)
             }
 
             if (checkOut != null) {
-                checkOutPersistenceResults.add(reservationRepository.setCheckOut(checkOut, reservation.id))
+                checkOutPersistenceResults.add(
+                    reservationRepository.setCheckOut(
+                        checkOut,
+                        reservation.id,
+                        reservation.startTime,
+                        reservation.endTime,
+                    ),
+                )
             } else {
                 checkOutPersistenceResults.add(PersistenceResult.NO_ACTION)
             }
@@ -103,6 +103,27 @@ class CheckInOutService(
                 "check in updated: $checkInUpdatedCount, check in no actions: $checkInNoActionCount, " +
                 "check out updated: $checkOutUpdatedCount, check out no actions: $checkOutNoActionCount",
         )
+    }
+
+    /** The snapshot times make a concurrent time change or delete of the reservation skip the link. */
+    private suspend fun linkTrips(reservation: Reservation, cabinVehicleTrip: CabinVehicleTrip) {
+        val tripsByType: Map<ReservationVehicleTripType, List<VehicleTrip>> = mapOf(
+            ReservationVehicleTripType.TO_CABIN to cabinVehicleTrip.toCabinTrips,
+            ReservationVehicleTripType.AT_CABIN to cabinVehicleTrip.atCabinTrips,
+            ReservationVehicleTripType.FROM_CABIN to cabinVehicleTrip.fromCabinTrips,
+        )
+
+        tripsByType.forEach { (type, trips) ->
+            trips.forEach {
+                reservationRepository.addVehicleTripLink(
+                    reservation.id,
+                    it.id,
+                    type,
+                    reservation.startTime,
+                    reservation.endTime,
+                )
+            }
+        }
     }
 
     private fun createCheckIn(
