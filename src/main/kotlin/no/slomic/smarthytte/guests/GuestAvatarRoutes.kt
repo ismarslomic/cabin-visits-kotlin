@@ -60,6 +60,8 @@ private suspend fun ApplicationCall.receiveAvatar(onImage: suspend (ByteArray) -
             ApiError(ApiError.BODY_TOO_LARGE, "The image is larger than ${MAX_AVATAR_BYTES / BYTES_PER_KB} KB"),
         )
 
+        // Malformed means invalid JSON, and raw bytes are never parsed. The branch only exists because the `when` over
+        // the shared RequestBody type must be exhaustive, and it fails loudly if the binary reader ever returns it
         RequestBody.Malformed -> error("A binary body is never malformed")
     }
 }
