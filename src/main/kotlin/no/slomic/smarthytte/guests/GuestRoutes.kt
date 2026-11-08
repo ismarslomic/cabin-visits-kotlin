@@ -6,6 +6,8 @@ import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.openapi.JsonSchema
+import io.ktor.openapi.JsonType
 import io.ktor.openapi.jsonSchema
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -41,6 +43,7 @@ fun Application.configureGuestRoutes(
     guestRepository: GuestRepository,
     guestProfileService: GuestProfileService,
     guestAdminService: GuestAdminService,
+    guestAvatarService: GuestAvatarService = GuestAvatarService(guestRepository),
 ) {
     routing {
         authorizedAnyRole(allowService = true) {
@@ -52,6 +55,7 @@ fun Application.configureGuestRoutes(
 
                 val eTag = "\"${avatar.versionTime.toEpochMilliseconds()}\""
                 call.response.header(HttpHeaders.ETag, eTag)
+                call.response.header("X-Content-Type-Options", "nosniff")
                 call.response.cacheControl(CacheControl.MaxAge(maxAgeSeconds = AVATAR_MAX_AGE_SECONDS))
 
                 if (call.request.header(HttpHeaders.IfNoneMatch) == eTag) {
@@ -60,6 +64,10 @@ fun Application.configureGuestRoutes(
                     call.respondBytes(avatar.image, ContentType.Image.JPEG)
                 }
             }.describeGuestAvatar()
+        }
+
+        authorizedAnyRole {
+            uploadOwnAvatarRoute(guestAvatarService)
         }
 
         authorized(AppRole.ADMIN, AppRole.FAMILY_USER) {
@@ -81,6 +89,8 @@ fun Application.configureGuestRoutes(
 
                 call.respondCreateResult(guestAdminService.create(create, actor.id))
             }.describeCreateGuest()
+
+            uploadGuestAvatarRoute(guestAvatarService)
 
             put(GUEST_PATH) {
                 val actor = checkNotNull(call.principal<UserPrincipal>()) { "Authenticated route without a user" }
@@ -216,7 +226,16 @@ private fun Route.describeGuestAvatar() = describe {
         "and a conditional request with If-None-Match returns 304. Use the avatarUrl from the live stats response, " +
         "which changes when the image does."
     responses {
-        HttpStatusCode.OK { description = "The avatar image (image/jpeg)." }
+        HttpStatusCode.OK {
+            description = "The avatar image (image/jpeg)."
+            headers {
+                header("X-Content-Type-Options") {
+                    description = "Always nosniff: the browser must treat the bytes as image/jpeg and never guess " +
+                        "another type, so an uploaded file can never be run as a script or page."
+                    schema = JsonSchema(type = JsonType.STRING)
+                }
+            }
+        }
         HttpStatusCode.NotModified { description = "The avatar has not changed since the ETag in If-None-Match." }
         HttpStatusCode.BadRequest { description = "The guestId path parameter is missing." }
         HttpStatusCode.Unauthorized {

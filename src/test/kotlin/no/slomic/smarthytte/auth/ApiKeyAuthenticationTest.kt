@@ -40,6 +40,7 @@ private val userOnlyRoutes = listOf(
     "/api/stats/years/2020",
     "/api/stats/years/2020/months/1",
     "/api/stats/guests",
+    "/api/guests",
 )
 
 class ApiKeyAuthenticationTest :
@@ -109,6 +110,13 @@ class ApiKeyAuthenticationTest :
                     contentType(ContentType.Application.Json)
                     setBody("""{"firstName":"X"}""")
                 }.status shouldBe HttpStatusCode.Forbidden
+                listOf("/api/me/avatar", "/api/guests/ola/avatar").forEach { path ->
+                    client.put(path) {
+                        header(API_KEY_HEADER, TEST_API_KEY)
+                        contentType(ContentType.Image.JPEG)
+                        setBody(byteArrayOf(1))
+                    }.status shouldBe HttpStatusCode.Forbidden
+                }
                 client.post("/api/guests") {
                     header(API_KEY_HEADER, TEST_API_KEY)
                     contentType(ContentType.Application.Json)

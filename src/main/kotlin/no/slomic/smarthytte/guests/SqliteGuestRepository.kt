@@ -8,18 +8,11 @@ import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
-import no.slomic.smarthytte.common.truncatedToMillis
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.lowerCase
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 class SqliteGuestRepository : GuestRepository {
@@ -84,22 +77,12 @@ class SqliteGuestRepository : GuestRepository {
         }.let(::daoToModel)
     }
 
-    override suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray?, actor: String): PersistenceResult =
-        suspendTransaction {
-            val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
-            val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
+    override suspend fun addOrUpdate(guest: Guest, actor: String): PersistenceResult = suspendTransaction {
+        val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
+        val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
 
-            val guestResult: PersistenceResult =
-                if (storedGuest == null) addGuest(guest, actor) else updateGuest(guest, actor)
-            val avatarResult: PersistenceResult = addOrUpdateAvatarImage(guest.id, guestAvatarImage, actor)
-
-            // An avatar change is reported as an update of the guest, even when the guest row itself is unchanged
-            if (guestResult == PersistenceResult.NO_ACTION && avatarResult != PersistenceResult.NO_ACTION) {
-                PersistenceResult.UPDATED
-            } else {
-                guestResult
-            }
-        }
+        if (storedGuest == null) addGuest(guest, actor) else updateGuest(guest, actor)
+    }
 
     override suspend fun saveAvatar(guestId: String, image: ByteArray, actor: String): PersistenceResult =
         suspendTransaction {
@@ -120,13 +103,9 @@ class SqliteGuestRepository : GuestRepository {
             .select(GuestAvatarTable.id, GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)
             .associate {
                 it[GuestAvatarTable.id].value to
-                    (it[GuestAvatarTable.updatedTime] ?: it[GuestAvatarTable.createdTime])
+                        (it[GuestAvatarTable.updatedTime] ?: it[GuestAvatarTable.createdTime])
             }
     }
-
-    /** A null [image] means the guest has no avatar, so any stored avatar is deleted. */
-    private fun addOrUpdateAvatarImage(guestId: String, image: ByteArray?, actor: String): PersistenceResult =
-        if (image == null) deleteAvatarImage(guestId) else saveAvatarImage(guestId, image, actor)
 
     /** First image creates the row (`created_*`), a different image replaces it (`updated_*` and `version`). */
     private fun saveAvatarImage(guestId: String, image: ByteArray, actor: String): PersistenceResult {
@@ -162,15 +141,6 @@ class SqliteGuestRepository : GuestRepository {
         stored.markUpdated(actor)
 
         return PersistenceResult.UPDATED
-    }
-
-    private fun deleteAvatarImage(guestId: String): PersistenceResult {
-        val stored: GuestAvatarEntity = GuestAvatarEntity.findById(guestId) ?: return PersistenceResult.NO_ACTION
-
-        logger.trace("Deleting avatar image for guest with id: $guestId")
-        stored.delete()
-
-        return PersistenceResult.DELETED
     }
 
     private fun addGuest(guest: Guest, actor: String): PersistenceResult {

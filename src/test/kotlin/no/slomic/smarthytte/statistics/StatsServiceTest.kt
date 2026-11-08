@@ -442,7 +442,8 @@ class StatsServiceTest :
 
         context("getLiveStats avatars") {
             should("link to the avatar only for guests with an image") {
-                guestRepository.addOrUpdate(anna, byteArrayOf(1, 2, 3))
+                guestRepository.addOrUpdate(anna)
+                guestRepository.saveAvatar(anna.id, byteArrayOf(1, 2, 3), SYSTEM_ACTOR)
                 addGuests(bjorn)
                 addReservation("r1", daysFromToday(0), daysFromToday(2), anna, bjorn)
 
@@ -565,7 +566,8 @@ class StatsServiceTest :
             }
 
             should("link to the avatar only when the guest has an image") {
-                guestRepository.addOrUpdate(anna, byteArrayOf(1, 2, 3))
+                guestRepository.addOrUpdate(anna)
+                guestRepository.saveAvatar(anna.id, byteArrayOf(1, 2, 3), SYSTEM_ACTOR)
                 addGuests(bjorn)
 
                 service.getGuestProfileStats("anna").shouldNotBeNull().guest.avatarUrl

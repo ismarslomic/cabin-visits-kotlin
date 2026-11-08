@@ -33,15 +33,11 @@ interface GuestRepository {
     suspend fun guestById(id: String): Guest?
 
     /**
-     * Adds or updates the [guest] with its [guestAvatarImage]: every property of the stored guest is overwritten.
-     * A null [guestAvatarImage] means the guest has no avatar. Used as a fixture/import upsert, the API uses [update].
-     * The [actor] goes in `created_by` (or `updated_by` for a change).
+     * Adds or updates the [guest]: every property of the stored guest is overwritten. Used as a fixture/import upsert,
+     * the API uses [create] and [update]. The avatar is not touched, see [saveAvatar]. The [actor] goes in `created_by`
+     * (or `updated_by` for a change).
      */
-    suspend fun addOrUpdate(
-        guest: Guest,
-        guestAvatarImage: ByteArray? = null,
-        actor: String = SYSTEM_ACTOR,
-    ): PersistenceResult
+    suspend fun addOrUpdate(guest: Guest, actor: String = SYSTEM_ACTOR): PersistenceResult
 
     /** Returns the guests with the [email], ignoring case and surrounding whitespace. */
     suspend fun guestsByEmail(email: String): List<Guest>

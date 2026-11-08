@@ -9,6 +9,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.reservations.ReservationGuestTable
 import no.slomic.smarthytte.reservations.ReservationRepository
@@ -113,73 +114,56 @@ class GuestRepositoryTest :
             repository.guestById(guest.id) shouldBe familyGuest
         }
 
-        "add or update with new id and avatar image should add guest and avatar image" {
+        "save avatar for a new guest should add avatar image" {
             val image = byteArrayOf(1, 2, 3)
             val before = Clock.System.now().truncatedToMillis()
+            repository.addOrUpdate(guest)
 
-            repository.addOrUpdate(guest, image) shouldBe PersistenceResult.ADDED
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR) shouldBe PersistenceResult.ADDED
 
             repository.avatarById(guest.id)?.image shouldBe image
             avatarUpdatedTime(guest.id).shouldBeNull()
             repository.avatarById(guest.id)!!.versionTime shouldBeGreaterThanOrEqualTo before
         }
 
-        "add or update with new id without avatar image should not add avatar image" {
-            repository.addOrUpdate(guest, guestAvatarImage = null) shouldBe PersistenceResult.ADDED
-
-            repository.avatarById(guest.id).shouldBeNull()
-            transaction { GuestAvatarTable.selectAll().toList().shouldBeEmpty() }
-        }
-
-        "add or update with existing id and new avatar image should add avatar image" {
+        "add or update should not touch the avatar image" {
             repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, byteArrayOf(1, 2, 3), SYSTEM_ACTOR)
 
-            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3)) shouldBe PersistenceResult.UPDATED
+            repository.addOrUpdate(guest.copy(firstName = "John 2")) shouldBe PersistenceResult.UPDATED
 
             repository.avatarById(guest.id)?.image shouldBe byteArrayOf(1, 2, 3)
         }
 
-        "add or update with existing id and changed avatar image should update avatar image" {
-            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
+        "save avatar with a changed image should update avatar image" {
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, byteArrayOf(1, 2, 3), SYSTEM_ACTOR)
             setOldAvatarUpdatedTime(guest.id)
 
-            repository.addOrUpdate(guest, byteArrayOf(4, 5)) shouldBe PersistenceResult.UPDATED
+            repository.saveAvatar(guest.id, byteArrayOf(4, 5), SYSTEM_ACTOR) shouldBe PersistenceResult.UPDATED
 
             repository.avatarById(guest.id)?.image shouldBe byteArrayOf(4, 5)
             avatarUpdatedTime(guest.id)!! shouldBeGreaterThan oldTime
             transaction { GuestAvatarTable.selectAll().toList() shouldHaveSize 1 }
         }
 
-        "add or update with existing id and same avatar image should not update avatar image" {
+        "save avatar with the same image should not update avatar image" {
             val image = byteArrayOf(1, 2, 3)
-            repository.addOrUpdate(guest, image)
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR)
             setOldAvatarUpdatedTime(guest.id)
 
-            repository.addOrUpdate(guest, image) shouldBe PersistenceResult.NO_ACTION
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR) shouldBe PersistenceResult.NO_ACTION
 
             repository.avatarById(guest.id)?.image shouldBe image
             avatarUpdatedTime(guest.id) shouldBe oldTime
         }
 
-        "add or update with existing id and no avatar image should delete stored avatar image" {
-            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
-
-            repository.addOrUpdate(guest, guestAvatarImage = null) shouldBe PersistenceResult.UPDATED
-
-            repository.avatarById(guest.id).shouldBeNull()
-            transaction { GuestAvatarTable.selectAll().toList().shouldBeEmpty() }
-        }
-
-        "add or update with existing id, no avatar image and no stored avatar image should not update" {
+        "save avatar with a changed image should not change the guest row" {
             repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, byteArrayOf(1, 2, 3), SYSTEM_ACTOR)
 
-            repository.addOrUpdate(guest, guestAvatarImage = null) shouldBe PersistenceResult.NO_ACTION
-        }
-
-        "add or update with changed avatar image should not change the guest row" {
-            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
-
-            repository.addOrUpdate(guest, byteArrayOf(4, 5))
+            repository.saveAvatar(guest.id, byteArrayOf(4, 5), SYSTEM_ACTOR)
 
             transaction {
                 val readGuest: GuestEntity = GuestEntity.findById(guest.id)!!
@@ -188,13 +172,14 @@ class GuestRepositoryTest :
             }
         }
 
-        "add or update with changed guest and same avatar image should update guest but keep avatar image" {
+        "add or update with changed guest should update guest but keep avatar image" {
             val image = byteArrayOf(1, 2, 3)
-            repository.addOrUpdate(guest, image)
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR)
             setOldAvatarUpdatedTime(guest.id)
 
             val updatedGuest = guest.copy(firstName = "John 2")
-            repository.addOrUpdate(updatedGuest, image) shouldBe PersistenceResult.UPDATED
+            repository.addOrUpdate(updatedGuest) shouldBe PersistenceResult.UPDATED
 
             repository.guestById(guest.id) shouldBe updatedGuest
             repository.avatarById(guest.id)?.image shouldBe image
@@ -203,7 +188,8 @@ class GuestRepositoryTest :
 
         "avatar by id should return image and updated time" {
             val image = byteArrayOf(1, 2, 3)
-            repository.addOrUpdate(guest, image)
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR)
             setOldAvatarUpdatedTime(guest.id)
 
             val avatar = repository.avatarById(guest.id).shouldNotBeNull()
@@ -219,7 +205,8 @@ class GuestRepositoryTest :
                 lastName = "Doe2",
                 email = "john2.doe@example.no",
             )
-            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, byteArrayOf(1, 2, 3), SYSTEM_ACTOR)
             repository.addOrUpdate(guest2)
             setOldAvatarUpdatedTime(guest.id)
 
@@ -227,7 +214,8 @@ class GuestRepositoryTest :
         }
 
         "delete guest should delete avatar image (cascade)" {
-            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, byteArrayOf(1, 2, 3), SYSTEM_ACTOR)
 
             transaction {
                 GuestAvatarTable.selectAll().toList() shouldHaveSize 1

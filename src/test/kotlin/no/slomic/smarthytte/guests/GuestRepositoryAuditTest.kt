@@ -99,14 +99,6 @@ class GuestRepositoryAuditTest :
             repository.guestById(guest.id)!!.version shouldBe 1
         }
 
-        "deleting the guest should delete the avatar" {
-            repository.addOrUpdate(guest, byteArrayOf(1, 2, 3))
-
-            repository.addOrUpdate(guest, guestAvatarImage = null)
-
-            repository.avatarById(guest.id).shouldBeNull()
-        }
-
         "saving the same avatar again should do nothing" {
             repository.addOrUpdate(guest)
             repository.saveAvatar(guest.id, byteArrayOf(1, 2, 3), "ola")

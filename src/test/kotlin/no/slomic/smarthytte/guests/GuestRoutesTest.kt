@@ -16,6 +16,7 @@ import no.slomic.smarthytte.auth.accessToken
 import no.slomic.smarthytte.auth.configureAuthentication
 import no.slomic.smarthytte.auth.testCloudflareAccess
 import no.slomic.smarthytte.auth.testGuest
+import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.utils.TestDbSetup
 
 private fun Application.configureGuestApp(repository: GuestRepository) {
@@ -42,7 +43,8 @@ class GuestRoutesTest :
         val image = byteArrayOf(1, 2, 3)
 
         "get avatar should respond with the jpeg image, etag and cache control" {
-            repository.addOrUpdate(guest, image)
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR)
             val updatedTime = repository.avatarById(guest.id)!!.versionTime
 
             testApplication {
@@ -59,7 +61,8 @@ class GuestRoutesTest :
         }
 
         "get avatar with matching if-none-match should respond not modified without body" {
-            repository.addOrUpdate(guest, image)
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR)
             val updatedTime = repository.avatarById(guest.id)!!.versionTime
 
             testApplication {
@@ -76,7 +79,8 @@ class GuestRoutesTest :
         }
 
         "get avatar with outdated if-none-match should respond with the image" {
-            repository.addOrUpdate(guest, image)
+            repository.addOrUpdate(guest)
+            repository.saveAvatar(guest.id, image, SYSTEM_ACTOR)
 
             testApplication {
                 application { configureGuestApp(repository) }

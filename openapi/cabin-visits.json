@@ -137,6 +137,99 @@
       }
     },
     "/api/guests/{guestId}/avatar": {
+      "put": {
+        "operationId": "uploadGuestAvatar",
+        "tags": [
+          "Guests"
+        ],
+        "summary": "Upload the avatar of a guest",
+        "description": "Admin only. Creates or replaces the avatar of any guest. The body is the raw JPEG (Content-Type image/jpeg, at most 4 MB, at most 4000 x 4000 pixels). The server removes all metadata (Exif including GPS and orientation, XMP, comments, thumbnails) without re-encoding, so the client must upload upright pixels: draw the image to a canvas, which applies the orientation. Last write wins: no version is sent, and the same image changes nothing. A changed image gives the guest a new avatarUrl (the v parameter). The guest's own version is not changed. Errors are JSON with a code and a message.",
+        "parameters": [
+          {
+            "name": "guestId",
+            "in": "path",
+            "description": "Internal unique identifier of the guest.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The raw JPEG bytes of the avatar, not JSON and not multipart.",
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The body is not a valid JPEG (INVALID_IMAGE).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The Content-Type is not image/jpeg.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The image is larger than 4 MB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The guest does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "The avatar is stored."
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The caller is not allowed to upload this avatar."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      },
       "get": {
         "operationId": "getGuestAvatar",
         "tags": [
@@ -163,6 +256,11 @@
                 "content": {
                   "text/plain": {}
                 }
+              },
+              "X-Content-Type-Options": {
+                "content": {
+                  "text/plain": {}
+                }
               }
             },
             "content": {
@@ -180,6 +278,11 @@
                 "content": {
                   "text/plain": {}
                 }
+              },
+              "X-Content-Type-Options": {
+                "content": {
+                  "text/plain": {}
+                }
               }
             }
           },
@@ -187,6 +290,11 @@
             "description": "The avatar has not changed since the ETag in If-None-Match.",
             "headers": {
               "ETag": {
+                "content": {
+                  "text/plain": {}
+                }
+              },
+              "X-Content-Type-Options": {
                 "content": {
                   "text/plain": {}
                 }
@@ -200,6 +308,12 @@
                 "content": {
                   "text/plain": {}
                 }
+              },
+              "X-Content-Type-Options": {
+                "description": "Always nosniff: the browser must treat the bytes as image/jpeg and never guess another type, so an uploaded file can never be run as a script or page.",
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "content": {
@@ -211,6 +325,80 @@
           },
           "403": {
             "description": "The caller has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/me/avatar": {
+      "put": {
+        "operationId": "uploadMyAvatar",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Upload the avatar of the authenticated user",
+        "description": "Every role. Creates or replaces the avatar of the authenticated user's own guest. The body is the raw JPEG (Content-Type image/jpeg, at most 4 MB, at most 4000 x 4000 pixels). The server removes all metadata (Exif including GPS and orientation, XMP, comments, thumbnails) without re-encoding, so the client must upload upright pixels: draw the image to a canvas, which applies the orientation. Last write wins: no version is sent, and the same image changes nothing. A changed image gives the guest a new avatarUrl (the v parameter). The guest's own version is not changed. Errors are JSON with a code and a message.",
+        "requestBody": {
+          "description": "The raw JPEG bytes of the avatar, not JSON and not multipart.",
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "415": {
+            "description": "The Content-Type is not image/jpeg.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The image is larger than 4 MB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "The avatar is stored."
+          },
+          "400": {
+            "description": "The body is not a valid JPEG (INVALID_IMAGE).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The caller is not allowed to upload this avatar."
           },
           "503": {
             "description": "Cloudflare Access is not configured for the application."
@@ -878,6 +1066,22 @@
           }
         }
       },
+      "ApiError": {
+        "type": "object",
+        "title": "ApiError",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
       "GuestResponse": {
         "type": "object",
         "title": "GuestResponse",
@@ -1008,22 +1212,6 @@
               "FAMILY_USER",
               "GUEST_USER"
             ]
-          }
-        }
-      },
-      "ApiError": {
-        "type": "object",
-        "title": "ApiError",
-        "required": [
-          "code",
-          "message"
-        ],
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
           }
         }
       },
