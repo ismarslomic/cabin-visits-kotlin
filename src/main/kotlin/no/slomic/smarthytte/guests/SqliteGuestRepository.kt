@@ -103,7 +103,7 @@ class SqliteGuestRepository : GuestRepository {
             .select(GuestAvatarTable.id, GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)
             .associate {
                 it[GuestAvatarTable.id].value to
-                        (it[GuestAvatarTable.updatedTime] ?: it[GuestAvatarTable.createdTime])
+                    (it[GuestAvatarTable.updatedTime] ?: it[GuestAvatarTable.createdTime])
             }
     }
 
