@@ -41,6 +41,7 @@ fun Guest.toUserPrincipal(): UserPrincipal? = if (email != null && role != null)
         email = email,
         isFamily = isFamily,
         role = role,
+        version = version,
     )
 } else {
     null

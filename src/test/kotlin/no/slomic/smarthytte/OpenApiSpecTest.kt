@@ -9,8 +9,11 @@ import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.auth.AppUserService
+import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.plugins.configureMonitoring
@@ -58,6 +61,33 @@ class OpenApiSpecTest :
 
             schemas.keys.filter { it.last().isDigit() } shouldBe emptyList()
         }
+
+        "full update request should require every property, also the nullable email and role" {
+            val schemas = servedSpec().jsonObject.getValue("components").jsonObject.getValue("schemas").jsonObject
+            val update = schemas.getValue("GuestUpdate").jsonObject
+
+            val required = update.getValue("required").jsonArray.map { it.jsonPrimitive.content }
+
+            required.toSet() shouldBe update.getValue("properties").jsonObject.keys
+            required.containsAll(listOf("email", "role", "isFamily", "version")) shouldBe true
+        }
+
+        "write routes should declare their request body in the served spec" {
+            // The plugin infers a body only from call.receive<T>(), not from our receiveJsonBody<T>(), so every
+            // write route declares it in its describe {} block. The drift test above cannot see a missing body.
+            val paths = servedSpec().jsonObject.getValue("paths").jsonObject
+            listOf("put" to "/api/me", "post" to "/api/guests", "put" to "/api/guests/{guestId}").forEach { (m, path) ->
+                withClue("$m $path") {
+                    val schema = paths.getValue(path).jsonObject.getValue(m).jsonObject["requestBody"]
+                        ?.jsonObject?.get("content")?.jsonObject?.get("application/json")?.jsonObject?.get("schema")
+
+                    schema?.jsonObject?.get(
+                        "\$ref",
+                    )?.jsonPrimitive?.content?.startsWith("#/components/schemas/") shouldBe
+                        true
+                }
+            }
+        }
     })
 
 private fun servedSpec(): JsonElement {
@@ -67,11 +97,14 @@ private fun servedSpec(): JsonElement {
             // Same route groups as Application.module(); repositories and services are never called.
             configureMonitoring()
             configureApiRoutes(
-                mockk<GuestRepository>(),
-                mockk<GuestProfileService>(),
-                mockk<StatsService>(),
-                mockk<AppUserService>(),
-                null,
+                ApiDependencies(
+                    guestRepository = mockk<GuestRepository>(),
+                    guestProfileService = mockk<GuestProfileService>(),
+                    guestAdminService = mockk<GuestAdminService>(),
+                    statsService = mockk<StatsService>(),
+                    appUserService = mockk<AppUserService>(),
+                    cloudflareAccess = null,
+                ),
             )
         }
         // Decode as UTF-8 explicitly: the route sends application/json without charset, and the client would

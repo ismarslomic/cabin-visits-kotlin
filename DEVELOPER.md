@@ -69,7 +69,7 @@ Authentication (who is calling) and authorization (what may they do) are separat
 | Valid user with an allowed role                        | handler  |
 
 The roles (`AppRole`) are `ADMIN`, `FAMILY_USER` and `GUEST_USER`. They are stored in `guest.role` and changed with
-`POST /api/guests/{guestId}`. The role is read from the database on every request, so a changed role applies without
+`PUT /api/guests/{guestId}`. The role is read from the database on every request, so a changed role applies without
 the user logging in again.
 
 #### Restricting an endpoint
@@ -103,8 +103,8 @@ fun Application.configureReportRoutes() {
 
 #### Changing guest data
 
-`POST /api/me` (every role, own guest, only firstName, lastName, birthYear and gender) calls
-`GuestProfileService.updateOwnProfile(user, update)`, and `POST /api/guests/{guestId}` (`authorized(AppRole.ADMIN)`)
+`PUT /api/me` (every role, own guest, only firstName, lastName, birthYear and gender) calls
+`GuestProfileService.updateOwnProfile(user, update)`, and `PUT /api/guests/{guestId}` (`authorized(AppRole.ADMIN)`)
 calls `GuestProfileService.update(actor, guestId, update)`. The service decides what may be changed and validates the
 values. The route only maps the result to a status. Do not add such rules to the routes, see
 [docs/authentication.md](docs/authentication.md#changing-guest-data).

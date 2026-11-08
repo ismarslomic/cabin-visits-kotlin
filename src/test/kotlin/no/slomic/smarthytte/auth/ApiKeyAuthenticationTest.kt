@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -14,8 +15,10 @@ import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.AppRole
+import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.ApiKeyProperties
@@ -60,12 +63,15 @@ class ApiKeyAuthenticationTest :
         ) = testApplication {
             application {
                 configureApiRoutes(
-                    guestRepository,
-                    GuestProfileService(guestRepository),
-                    statsService,
-                    AppUserService(guestRepository),
-                    cloudflareAccess,
-                    apiKeys,
+                    ApiDependencies(
+                        guestRepository = guestRepository,
+                        guestProfileService = GuestProfileService(guestRepository),
+                        guestAdminService = GuestAdminService(guestRepository),
+                        statsService = statsService,
+                        appUserService = AppUserService(guestRepository),
+                        cloudflareAccess = cloudflareAccess,
+                        apiKeys = apiKeys,
+                    ),
                 )
             }
             block()
@@ -93,12 +99,17 @@ class ApiKeyAuthenticationTest :
                 userOnlyRoutes.forEach {
                     get(it, TEST_API_KEY).status shouldBe HttpStatusCode.Forbidden
                 }
-                client.post("/api/me") {
+                client.put("/api/me") {
                     header(API_KEY_HEADER, TEST_API_KEY)
                     contentType(ContentType.Application.Json)
                     setBody("""{"firstName":"X"}""")
                 }.status shouldBe HttpStatusCode.Forbidden
-                client.post("/api/guests/ola") {
+                client.put("/api/guests/ola") {
+                    header(API_KEY_HEADER, TEST_API_KEY)
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"firstName":"X"}""")
+                }.status shouldBe HttpStatusCode.Forbidden
+                client.post("/api/guests") {
                     header(API_KEY_HEADER, TEST_API_KEY)
                     contentType(ContentType.Application.Json)
                     setBody("""{"firstName":"X"}""")

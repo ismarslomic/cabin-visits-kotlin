@@ -37,23 +37,52 @@ class SqliteGuestRepository : GuestRepository {
         GuestEntity.find { GuestTable.email.lowerCase() eq email.trim().lowercase() }.map(::daoToModel)
     }
 
-    override suspend fun update(guestId: String, update: GuestUpdate, actor: String): PersistenceResult =
-        suspendTransaction {
-            logger.trace("Updating guest with id: $guestId from the API")
+    override suspend fun update(
+        guestId: String,
+        expectedVersion: Short,
+        update: GuestProperties,
+        actor: String,
+    ): GuestUpdateOutcome = suspendTransaction {
+        logger.trace("Updating guest with id: $guestId from the API")
 
-            val storedGuest: GuestEntity =
-                GuestEntity.findById(guestId) ?: return@suspendTransaction PersistenceResult.NO_ACTION
+        val storedGuest: GuestEntity? = GuestEntity.findById(guestId)
 
-            if (storedGuest.applyUpdate(update)) {
+        when {
+            storedGuest == null -> GuestUpdateOutcome.NotFound
+
+            storedGuest.version != expectedVersion -> GuestUpdateOutcome.VersionMismatch
+
+            storedGuest.applyUpdate(update) -> {
                 storedGuest.markUpdated(actor)
 
                 logger.trace("Updated guest with id: $guestId")
-                PersistenceResult.UPDATED
-            } else {
+                GuestUpdateOutcome.Updated
+            }
+
+            else -> {
                 logger.trace("No changes detected for guest with id: $guestId")
-                PersistenceResult.NO_ACTION
+                GuestUpdateOutcome.Unchanged
             }
         }
+    }
+
+    override suspend fun create(guest: GuestProperties, actor: String): Guest = suspendTransaction {
+        val takenIds: List<String> = GuestTable.select(GuestTable.id).map { it[GuestTable.id].value }
+        val id: String = uniqueGuestId(guestSlug(guest.firstName, guest.lastName), takenIds)
+
+        logger.trace("Creating guest with id: $id from the API")
+
+        GuestEntity.new(id) {
+            markCreated(actor)
+            firstName = guest.firstName
+            lastName = guest.lastName
+            birthYear = guest.birthYear
+            email = guest.email
+            gender = guest.gender
+            isFamily = guest.isFamily
+            role = guest.role
+        }.let(::daoToModel)
+    }
 
     override suspend fun addOrUpdate(guest: Guest, guestAvatarImage: ByteArray?, actor: String): PersistenceResult =
         suspendTransaction {
@@ -198,11 +227,11 @@ class SqliteGuestRepository : GuestRepository {
     }
 
     /** Sets the properties of [update] that differ from the stored ones, and returns whether anything changed. */
-    private fun GuestEntity.applyUpdate(update: GuestUpdate): Boolean {
+    private fun GuestEntity.applyUpdate(update: GuestProperties): Boolean {
         var changed = false
 
-        fun <T : Any> change(new: T?, current: T?, assign: (T) -> Unit) {
-            if (new != null && new != current) {
+        fun <T> change(new: T, current: T, assign: (T) -> Unit) {
+            if (new != current) {
                 assign(new)
                 changed = true
             }

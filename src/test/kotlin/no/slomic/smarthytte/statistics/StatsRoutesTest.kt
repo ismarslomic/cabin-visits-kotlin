@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.auth.ACCESS_JWT_HEADER
 import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.auth.accessToken
@@ -23,6 +24,7 @@ import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
+import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
@@ -52,11 +54,14 @@ class StatsRoutesTest :
             testApplication {
                 application {
                     configureApiRoutes(
-                        guestRepository,
-                        GuestProfileService(guestRepository),
-                        service,
-                        AppUserService(guestRepository),
-                        testCloudflareAccess,
+                        ApiDependencies(
+                            guestRepository = guestRepository,
+                            guestProfileService = GuestProfileService(guestRepository),
+                            guestAdminService = GuestAdminService(guestRepository),
+                            statsService = service,
+                            appUserService = AppUserService(guestRepository),
+                            cloudflareAccess = testCloudflareAccess,
+                        ),
                     )
                 }
 
@@ -74,11 +79,14 @@ class StatsRoutesTest :
             testApplication {
                 application {
                     configureApiRoutes(
-                        guestRepository,
-                        GuestProfileService(guestRepository),
-                        service,
-                        AppUserService(guestRepository),
-                        testCloudflareAccess,
+                        ApiDependencies(
+                            guestRepository = guestRepository,
+                            guestProfileService = GuestProfileService(guestRepository),
+                            guestAdminService = GuestAdminService(guestRepository),
+                            statsService = service,
+                            appUserService = AppUserService(guestRepository),
+                            cloudflareAccess = testCloudflareAccess,
+                        ),
                     )
                 }
 
@@ -95,11 +103,14 @@ class StatsRoutesTest :
             testApplication {
                 application {
                     configureApiRoutes(
-                        guestRepository,
-                        GuestProfileService(guestRepository),
-                        service,
-                        AppUserService(guestRepository),
-                        testCloudflareAccess,
+                        ApiDependencies(
+                            guestRepository = guestRepository,
+                            guestProfileService = GuestProfileService(guestRepository),
+                            guestAdminService = GuestAdminService(guestRepository),
+                            statsService = service,
+                            appUserService = AppUserService(guestRepository),
+                            cloudflareAccess = testCloudflareAccess,
+                        ),
                     )
                 }
 
@@ -118,11 +129,14 @@ class StatsRoutesTest :
             testApplication {
                 application {
                     configureApiRoutes(
-                        guestRepository,
-                        GuestProfileService(guestRepository),
-                        service,
-                        AppUserService(guestRepository),
-                        null,
+                        ApiDependencies(
+                            guestRepository = guestRepository,
+                            guestProfileService = GuestProfileService(guestRepository),
+                            guestAdminService = GuestAdminService(guestRepository),
+                            statsService = service,
+                            appUserService = AppUserService(guestRepository),
+                            cloudflareAccess = null,
+                        ),
                     )
                 }
 
@@ -135,11 +149,14 @@ class StatsRoutesTest :
             testApplication {
                 application {
                     configureApiRoutes(
-                        guestRepository,
-                        GuestProfileService(guestRepository),
-                        service,
-                        AppUserService(guestRepository),
-                        testCloudflareAccess,
+                        ApiDependencies(
+                            guestRepository = guestRepository,
+                            guestProfileService = GuestProfileService(guestRepository),
+                            guestAdminService = GuestAdminService(guestRepository),
+                            statsService = service,
+                            appUserService = AppUserService(guestRepository),
+                            cloudflareAccess = testCloudflareAccess,
+                        ),
                     )
                 }
 

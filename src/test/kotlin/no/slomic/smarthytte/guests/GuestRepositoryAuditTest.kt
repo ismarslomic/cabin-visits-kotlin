@@ -50,11 +50,12 @@ class GuestRepositoryAuditTest :
         "update from the API should record the actor in updated_by and an unchanged update should not" {
             repository.addOrUpdate(guest, actor = "ola")
 
-            repository.update(guest.id, GuestUpdate(firstName = guest.firstName), "kari") shouldBe
-                PersistenceResult.NO_ACTION
+            repository.updateCurrent(guest.id, GuestChange(firstName = guest.firstName), "kari") shouldBe
+                GuestUpdateOutcome.Unchanged
             repository.guestById(guest.id)!!.updatedBy.shouldBeNull()
 
-            repository.update(guest.id, GuestUpdate(firstName = "Changed"), "kari") shouldBe PersistenceResult.UPDATED
+            repository.updateCurrent(guest.id, GuestChange(firstName = "Changed"), "kari") shouldBe
+                GuestUpdateOutcome.Updated
             repository.guestById(guest.id)!!.updatedBy shouldBe "kari"
         }
 

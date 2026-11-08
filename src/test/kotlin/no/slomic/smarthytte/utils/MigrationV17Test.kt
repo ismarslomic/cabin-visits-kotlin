@@ -69,7 +69,7 @@ class MigrationV17Test :
                     )
                 }
 
-                migration.migrateToLatest()
+                migration.migrateTo("1.7")
 
                 migration.withConnection { c ->
                     for (table in listOf(
@@ -109,7 +109,7 @@ class MigrationV17Test :
         "should run on a database without rows and keep the default of created_by" {
             val migration = MigrationTestSupport()
             try {
-                migration.migrateToLatest()
+                migration.migrateTo("1.7")
 
                 migration.withConnection { c ->
                     c.execute(

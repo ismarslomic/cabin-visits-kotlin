@@ -54,15 +54,18 @@ before.
 | Endpoint                                                                           | Auth                            | ADMIN                   | FAMILY_USER              | GUEST_USER               |
 |:-----------------------------------------------------------------------------------|:--------------------------------|:------------------------|:-------------------------|:-------------------------|
 | `GET /api/me`                                                                      | yes                             | yes                     | yes                      | yes                      |
-| `POST /api/me` (own guest)                                                         | yes                             | all properties          | name, birth year, gender | name, birth year, gender |
-| `POST /api/guests/{guestId}` (any guest)                                           | yes                             | all properties          | no                       | no                       |
+| `PUT /api/me` (own guest)                                                          | yes                             | name, birth year, gender | name, birth year, gender | name, birth year, gender |
+| `GET /api/guests` (list)                                                           | yes                             | yes                     | yes                      | no                       |
+| `POST /api/guests` (create)                                                        | yes                             | yes                     | no                       | no                       |
+| `PUT /api/guests/{guestId}` (any guest)                                            | yes                             | all properties          | no                       | no                       |
 | `GET /api/stats`, `GET /api/stats/guests/{guestId}`, `GET /api/guests/{id}/avatar` | yes, **also API key (service)** | yes                     | yes                      | yes                      |
 | Other `GET /api/stats/**`                                                          | yes                             | yes                     | yes                      | yes                      |
 | `/`, `/metrics`, `/openapi.json`                                                   | no (unchanged)                  |                         |                          |                          |
 
 ### Planned permissions (reservation and guest API)
 
-Not implemented yet, see `.claude/plans/reservations-rest-api.md`. The plan wins until a row moves into the matrix above.
+Not implemented yet, see `.claude/plans/reservations-rest-api.md`. The plan wins until a row moves into the matrix above
+(the guest rows for list, create and edit have moved; avatar upload and the reservation rows are still planned).
 Past, current and future reservations are treated the same. `ADMIN` and `FAMILY_USER` may change any reservation (there is
 no owner concept). A guest without a role has no access.
 
@@ -81,8 +84,8 @@ no owner concept). A guest without a role has no access.
 |:-----------------------------------------------------------------------|:------|:------------|:-----------|:------------------|
 | List guests (`GET /api/guests`)                                        | yes   | yes         | no         | no                |
 | Create a guest                                                         | yes   | no          | no         | no                |
-| Edit any guest (`POST /api/guests/{guestId}`)                          | yes   | no          | no         | no                |
-| Edit own profile (`POST /api/me`: name, birth year, gender)            | yes   | yes         | yes        | no                |
+| Edit any guest (`PUT /api/guests/{guestId}`)                           | yes   | no          | no         | no                |
+| Edit own profile (`PUT /api/me`: name, birth year, gender)             | yes   | yes         | yes        | no                |
 | Upload or replace avatar of any guest                                  | yes   | no          | no         | no                |
 | Upload or replace own avatar                                           | yes   | yes         | yes        | no                |
 | Read avatar (`GET /api/guests/{id}/avatar`)                            | yes   | yes         | yes        | yes               |
@@ -90,18 +93,18 @@ no owner concept). A guest without a role has no access.
 
 Only `ADMIN` may change `email`, `isFamily` and `role`.
 
-**Planned status codes and versioning** (details in the plan):
-- `POST /api/reservations` answers `201` with a `Location` header; update `200`; delete `204`; unknown id `404`.
-- A stale `version` returns `412` (reservations, and guests on `POST /api/guests/{guestId}` and `POST /api/me`); a missing or non-numeric `version`
+**Status codes and versioning** (guest routes are implemented, the rest is planned, details in the plan):
+- `POST /api/guests` answers `201` with the created guest. `POST /api/reservations` (planned) answers `201` with a `Location` header; update `200`; delete `204`; unknown id `404`.
+- A stale `version` returns `412` (reservations, and guests on `PUT /api/guests/{guestId}` and `PUT /api/me`); a missing or non-numeric `version`
   returns `400`. An overlap with another reservation and a shared guest email return `409`.
 - `DELETE /api/reservations/{id}?version=<n>` carries the version in the query.
 - Avatar upload: `Content-Type: image/jpeg` required (`415` otherwise), at most the size limit (`413`), malformed JPEG `400`; metadata (EXIF) is stripped.
-- Errors on the new routes are JSON `{code, message}` with stable codes (the status codes above are unchanged); the existing guest update routes keep plain-text bodies.
-- A JSON write body above the limit returns `413`; a non-JSON content type on a write route returns `415`; a `version` outside the `Short` range, an invalid `from`/`to`, or `to <= from` returns `400`.
+- Errors on the new routes (`GET`/`POST /api/guests`) are JSON `{code, message}` with stable codes (the status codes above are unchanged); the existing guest update routes (`PUT /api/guests/{guestId}`, `PUT /api/me`) keep plain-text bodies.
+- A JSON write body above 64 KB returns `413`; a non-JSON content type on a write route returns `415` (also on `PUT /api/guests/{guestId}` and `PUT /api/me`, which answered `400` before); a `version` outside the `Short` range, an invalid `from`/`to`, or `to <= from` returns `400`.
 - When the database stays locked after the retries (`SQLITE_BUSY`) or the Calendar outbox is full, writes return `503`.
-- **State-changing routes** require `application/json` or `image/jpeg`, never change state on `GET`, and have no body-less `POST` (this is what keeps cross-site requests out, because Cloudflare Access authenticates by cookie).
+- **State-changing routes** require `application/json` or `image/jpeg`, never change state on `GET`, and have no body-less `POST` (this is what keeps cross-site requests out, because Cloudflare Access authenticates by cookie). No CORS plugin is installed, so a cross-site request needs a preflight that is never allowed. `UpdateGuestRoutesTest` checks `415` for `text/plain`, `multipart/form-data` and no body, and that a preflight gets no `Access-Control-Allow-*` header.
 
-`GET /api/guests` returns the same fields (incl. email and role) to `ADMIN` and `FAMILY_USER`. Avatars are JPEG only,
+`GET /api/guests` returns the same fields (incl. email, role, `version` and the audit fields) to `ADMIN` and `FAMILY_USER`. Avatars are JPEG only,
 sent as raw bytes with a size limit.
 
 New protected routes use `authorized(AppRole.X, ...) { ... }` (`auth/RoleAuthorization.kt`), which always combines
@@ -132,28 +135,44 @@ fetch avatars itself, for example in its node helper).
 
 ## Audit trail
 
-Changes to guests (`POST /api/guests/{guestId}`, `POST /api/me`) record the authenticated user's `guest.id` in
-`guest.updated_by`, together with `updated_time` and a new `version`. Tasks without a user (the vehicle trip import)
+A guest created with `POST /api/guests` records the authenticated user's `guest.id` in `guest.created_by`. Changes to guests
+(`PUT /api/guests/{guestId}`, `PUT /api/me`) record it in `guest.updated_by`, together with `updated_time` and a new `version`. Tasks without a user (the vehicle trip import)
 record `system`. See [database_schema.md](database_schema.md#audit-columns).
 
 ## Granting access
 
-Roles are stored in SQLite (`guest.role`) and changed by an admin with `POST /api/guests/{guestId}`. A guest without a
-`role` has no access. A role cannot be set back to null through the API, so an admin can only lower it (for example to
-`GUEST_USER`); removing access completely takes SQL on `data/app.db`. The guest needs the email that Cloudflare Access
+Roles are stored in SQLite (`guest.role`) and changed by an admin with `PUT /api/guests/{guestId}`. A guest without a
+`role` has no access, so an admin removes access by sending `role: null`. The guest needs the email that Cloudflare Access
 verifies. Values: `ADMIN`, `FAMILY_USER`, `GUEST_USER`.
 
-There is no import file any more: guests are no longer loaded at startup. Until the guest API can create guests, a new
-guest is added with SQL on `data/app.db` (take a backup first).
+There is no import file any more: guests are no longer loaded at startup. An admin creates guests with `POST /api/guests`.
+The id is generated from the name (`ola.nordmann`, then `ola.nordmann-2` on a collision) and never changes. Migration `V1.8` gave the guests that existed before the same kind of id (`ismar` became `ismar.slomic`). A guest with a
+role but without an email cannot log in, and a guest that has to log in also needs an entry in the Cloudflare Access policy.
+Until the bootstrap admin exists (planned), the first admin on an empty database is added with SQL on `data/app.db`
+(take a backup first).
 
-`POST /api/guests/{guestId}` takes the properties to change; properties that are left out are unchanged:
+**Updates are full replaces (`PUT`).** `PUT /api/guests/{guestId}` takes the `version` the client read and every writable
+property; `PUT /api/me` takes the `version` and the four profile properties. A missing property is `400`, `null` for `email`
+or `role` clears it, and properties that are not writable (`id`, `avatarUrl`, the audit fields, ...) are ignored. See the
+API design principles in the plan.
 
 | Property                                                  | Who   |
 |:----------------------------------------------------------|:------|
-| `firstName`, `lastName`, `birthYear`, `gender`, `email`, `isFamily`, `role` | `ADMIN` |
+| `firstName`, `lastName`, `birthYear`, `gender`, `email`, `isFamily`, `role` | `ADMIN` (`PUT /api/guests/{guestId}`) |
+| `firstName`, `lastName`, `birthYear`, `gender`            | the user (`PUT /api/me`; the other properties stay as they are) |
 
-An admin cannot remove their own `ADMIN` role or change their own email there. An email can only belong to one guest
-(`409` otherwise), also guests without a role: sharing it makes the identity ambiguous. This is also enforced by the
-unique index `uq_guest_email` in the database.
-`id` and `notionId` cannot be changed. A property cannot be set back to null, so an email can be replaced but not
-removed. Rules are enforced in `GuestProfileService`.
+- **Version:** the response of every guest read (`GET /api/me`, `GET /api/guests`, the response of every guest write)
+  carries `version`. A stale `version` returns `412`, a missing one `400`. An update that changes nothing answers `200`
+  with the unchanged `version`. The check order is: role (`401`/`403`), malformed body incl. missing `version` (`400`),
+  forbidden (`403`), invalid values (`400`), unknown guest (`404`), stale version (`412`), last admin (`409`), email in
+  use (`409`). The version is compared inside the database transaction of the write. Avatar uploads do not use it.
+- An admin cannot remove their own `ADMIN` role or change or clear their own email there. The last guest with the `ADMIN` role
+  and an email cannot lose the role or the email (`409`). If it still happens (SQL, or two admins at the same moment), the way back is SQL on
+  `data/app.db`: `update guest set role = 'ADMIN' where id = '<guest id>' and email is not null`.
+- The email is trimmed and stored in lowercase, at most 254 characters, in the form `a@b`. A blank email means no email, on create and on
+  update (it clears the email). `ola+x@example.com` is a different identity than `ola@example.com`.
+- An email can only belong to one guest (`409` otherwise), also guests without a role: sharing it makes the identity
+  ambiguous. This is also enforced by the unique index `uq_guest_email` in the database.
+- `id` and `notionId` cannot be changed. Rules are enforced in `GuestProfileService` (edit) and `GuestAdminService` (create).
+- Authorization is read from the database on every request, so a changed role takes effect on the next request. A
+  `UserPrincipal` is never cached.
