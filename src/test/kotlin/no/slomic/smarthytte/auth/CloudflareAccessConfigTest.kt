@@ -12,7 +12,9 @@ import io.ktor.client.request.header
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
+import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.configureApiRoutes
+import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.CloudflareAccessProperties
@@ -49,11 +51,14 @@ class CloudflareAccessConfigTest :
                 testApplication {
                     application {
                         configureApiRoutes(
-                            SqliteGuestRepository(),
-                            mockk<GuestProfileService>(),
-                            mockk<StatsService>(),
-                            mockk<AppUserService>(),
-                            testCloudflareAccess.copy(jwkProvider = unreachable),
+                            ApiDependencies(
+                                guestRepository = SqliteGuestRepository(),
+                                guestProfileService = mockk<GuestProfileService>(),
+                                guestAdminService = GuestAdminService(SqliteGuestRepository()),
+                                statsService = mockk<StatsService>(),
+                                appUserService = mockk<AppUserService>(),
+                                cloudflareAccess = testCloudflareAccess.copy(jwkProvider = unreachable),
+                            ),
                         )
                     }
 

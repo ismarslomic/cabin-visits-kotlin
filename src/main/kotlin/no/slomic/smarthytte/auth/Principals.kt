@@ -9,7 +9,8 @@ sealed interface AppPrincipal
 
 /**
  * A person authenticated through Cloudflare Access: an existing guest record that has been granted an [AppRole].
- * What the user may do is decided by [role]. [name] is the [firstName] and [lastName] together.
+ * What the user may do is decided by [role]. [name] is the [firstName] and [lastName] together. [version] is the guest
+ * version that `POST /api/me` must send back.
  */
 @Serializable
 data class UserPrincipal(
@@ -22,6 +23,7 @@ data class UserPrincipal(
     val email: String,
     val isFamily: Boolean,
     val role: AppRole,
+    val version: Short = 1,
 ) : AppPrincipal
 
 /**

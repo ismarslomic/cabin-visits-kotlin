@@ -2,15 +2,15 @@ package no.slomic.smarthytte.guests
 
 import kotlinx.serialization.Serializable
 
-/** Application roles, stored in `guest.app_role`. A guest without a role has no access to protected endpoints. */
+/** Application roles, stored in `guest.role`. A guest without a role has no access to protected endpoints. */
 @Serializable
 enum class AppRole {
-    /** Manages users and all reservations. */
+    /** Manages users, guests and all reservations. */
     ADMIN,
 
-    /** Views relevant information and manages own reservations. */
+    /** Manages all reservations and edits own profile. */
     FAMILY_USER,
 
-    /** Limited read-only access. */
+    /** Limited read-only access, edits own profile. */
     GUEST_USER,
 }

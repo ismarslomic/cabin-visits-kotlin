@@ -40,7 +40,7 @@ class MigrationV16Test :
                 }
                 migration.columnsOfGuest() shouldContain "api_edited_fields"
 
-                migration.migrateToLatest()
+                migration.migrateTo("1.6")
 
                 migration.columnsOfGuest() shouldNotContain "api_edited_fields"
                 migration.withConnection { connection ->
@@ -66,7 +66,7 @@ class MigrationV16Test :
             val migration = MigrationTestSupport()
             try {
                 migration.migrateTo("1.5")
-                migration.migrateToLatest()
+                migration.migrateTo("1.6")
 
                 migration.columnsOfGuest() shouldNotContain "api_edited_fields"
             } finally {

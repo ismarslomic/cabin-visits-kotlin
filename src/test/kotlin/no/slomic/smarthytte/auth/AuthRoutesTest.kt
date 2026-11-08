@@ -17,8 +17,10 @@ import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.AppRole
+import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.statistics.StatsService
@@ -53,11 +55,14 @@ class AuthRoutesTest :
         ) = testApplication {
             application {
                 configureApiRoutes(
-                    guestRepository,
-                    GuestProfileService(guestRepository),
-                    mockk<StatsService>(),
-                    AppUserService(guestRepository),
-                    cloudflareAccess,
+                    ApiDependencies(
+                        guestRepository = guestRepository,
+                        guestProfileService = GuestProfileService(guestRepository),
+                        guestAdminService = GuestAdminService(guestRepository),
+                        statsService = mockk<StatsService>(),
+                        appUserService = AppUserService(guestRepository),
+                        cloudflareAccess = cloudflareAccess,
+                    ),
                 )
                 routing {
                     authorized(AppRole.ADMIN) {

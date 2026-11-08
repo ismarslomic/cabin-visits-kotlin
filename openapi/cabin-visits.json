@@ -7,25 +7,47 @@
   },
   "paths": {
     "/api/me": {
-      "post": {
+      "put": {
         "operationId": "updateMe",
         "tags": [
           "Auth"
         ],
         "summary": "Update the authenticated user",
-        "description": "Changes the profile of the authenticated user's own guest. Every role may change firstName, lastName, birthYear and gender, and all of them are required. Properties that are not part of the request, such as email, isFamily and role, cannot be changed here and are ignored.",
+        "description": "A full replace of the profile of the authenticated user's own guest. Every role sends firstName, lastName, birthYear and gender, all required, together with the version the client read (from GET /api/me). Other properties, such as email, isFamily and role, cannot be changed here and are ignored.",
         "requestBody": {
+          "description": "The version the client read and the four profile properties.",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/MeUpdate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
+          "415": {
+            "description": "The Content-Type is not application/json.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
           "400": {
-            "description": "The body is not valid JSON, a property is missing or a property has an invalid value.",
+            "description": "The body is not valid JSON, a property or the version is missing or a property has an invalid value.",
             "content": {
               "application/json": {
                 "schema": {
@@ -40,6 +62,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserPrincipal"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "The guest has changed since the version in the body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -75,7 +107,7 @@
         "description": "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified against Cloudflare's signing keys) together with the profile and the application role stored for that person.",
         "responses": {
           "200": {
-            "description": "The user, with id, name (first and last name together), firstName, lastName, birthYear, gender, email, isFamily and role (ADMIN, FAMILY_USER, GUEST_USER).",
+            "description": "The user, with id, name (first and last name together), firstName, lastName, birthYear, gender, email, isFamily, role (ADMIN, FAMILY_USER, GUEST_USER) and version, which an update must send back.",
             "content": {
               "application/json": {
                 "schema": {
@@ -194,14 +226,144 @@
         ]
       }
     },
-    "/api/guests/{guestId}": {
+    "/api/guests": {
       "post": {
+        "operationId": "createGuest",
+        "tags": [
+          "Guests"
+        ],
+        "summary": "Create a guest",
+        "description": "Admin only. Required: firstName, lastName (1-20 characters), birthYear and gender. Optional: email, role (no role means no access) and isFamily (default false). The id is generated from the name, such as ola.nordmann or ola.nordmann-2. A guest with a role but no email cannot log in, and a guest that has to log in also needs an entry in the Cloudflare Access policy. Errors are JSON with a code and a message.",
+        "requestBody": {
+          "description": "The guest to create.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "415": {
+            "description": "The Content-Type is not application/json.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON or a property is missing or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The created guest, with its generated id and version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The email is already used by another guest (EMAIL_IN_USE).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The caller is not an admin, or has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listGuests",
+        "tags": [
+          "Guests"
+        ],
+        "summary": "List guests",
+        "description": "Admin and family user. All guests with every property, including email, role, version and the audit fields. avatarUrl is null for a guest without an avatar. createdBy and updatedBy are a guest id or the literal system, which is not a guest.",
+        "responses": {
+          "200": {
+            "description": "The guests, sorted by first name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GuestResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The caller is not an admin or a family user."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/guests/{guestId}": {
+      "put": {
         "operationId": "updateGuest",
         "tags": [
           "Guests"
         ],
         "summary": "Update a guest",
-        "description": "Admin only. Changes the properties that are set in the body (firstName, lastName, birthYear, gender, email, isFamily, role) and leaves the others unchanged. An admin cannot remove their own admin role.",
+        "description": "Admin only. A full replace: the body must carry the version the client read and every writable property (firstName, lastName, birthYear, gender, email, isFamily, role). A null email or role clears it, and a guest without a role has no access. Other properties in the body are ignored. An admin cannot remove their own admin role or change their own email, and the last admin with an email cannot lose the role or the email. The email is trimmed and stored in lowercase, and a blank email clears it. Errors are plain text.",
         "parameters": [
           {
             "name": "guestId",
@@ -214,17 +376,39 @@
           }
         ],
         "requestBody": {
+          "description": "The version the client read and every writable property.",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/GuestUpdate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "400": {
-            "description": "The body is not valid JSON or a property has an invalid value.",
+            "description": "The body is not valid JSON, the version or a property is missing, or a value is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The Content-Type is not application/json.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than 64 KB.",
             "content": {
               "application/json": {
                 "schema": {
@@ -234,11 +418,11 @@
             }
           },
           "200": {
-            "description": "The updated guest.",
+            "description": "The updated guest. An update that changes nothing keeps the version.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Guest"
+                  "$ref": "#/components/schemas/GuestResponse"
                 }
               }
             }
@@ -257,7 +441,17 @@
             }
           },
           "409": {
-            "description": "The email is already used by another user.",
+            "description": "The email is already used by another user, or the last admin would be removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "The guest has changed since the version in the body.",
             "content": {
               "application/json": {
                 "schema": {
@@ -646,6 +840,9 @@
               "FAMILY_USER",
               "GUEST_USER"
             ]
+          },
+          "version": {
+            "type": "integer"
           }
         }
       },
@@ -653,12 +850,16 @@
         "type": "object",
         "title": "MeUpdate",
         "required": [
+          "version",
           "firstName",
           "lastName",
           "birthYear",
           "gender"
         ],
         "properties": {
+          "version": {
+            "type": "integer"
+          },
           "firstName": {
             "type": "string"
           },
@@ -677,72 +878,19 @@
           }
         }
       },
-      "GuestUpdate": {
+      "GuestResponse": {
         "type": "object",
-        "title": "GuestUpdate",
-        "properties": {
-          "firstName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "lastName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "birthYear": {
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
-          "gender": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "MALE",
-              "FEMALE"
-            ]
-          },
-          "email": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "isFamily": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "role": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "ADMIN",
-              "FAMILY_USER",
-              "GUEST_USER"
-            ]
-          }
-        }
-      },
-      "Guest": {
-        "type": "object",
-        "title": "Guest",
+        "title": "GuestResponse",
         "required": [
           "id",
           "firstName",
           "lastName",
           "birthYear",
-          "gender"
+          "gender",
+          "isFamily",
+          "version",
+          "createdTime",
+          "createdBy"
         ],
         "properties": {
           "id": {
@@ -757,11 +905,82 @@
           "birthYear": {
             "type": "integer"
           },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
           "email": {
             "type": [
               "string",
               "null"
             ]
+          },
+          "isFamily": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer"
+          },
+          "createdTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "updatedTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "GuestCreate": {
+        "type": "object",
+        "title": "GuestCreate",
+        "required": [
+          "firstName",
+          "lastName",
+          "birthYear",
+          "gender"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthYear": {
+            "type": "integer"
           },
           "gender": {
             "type": "string",
@@ -770,7 +989,78 @@
               "FEMALE"
             ]
           },
-          "notionId": {
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isFamily": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ADMIN",
+              "FAMILY_USER",
+              "GUEST_USER"
+            ]
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "title": "ApiError",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "GuestUpdate": {
+        "type": "object",
+        "title": "GuestUpdate",
+        "required": [
+          "version",
+          "firstName",
+          "lastName",
+          "birthYear",
+          "gender",
+          "email",
+          "isFamily",
+          "role"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthYear": {
+            "type": "integer"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
+          "email": {
             "type": [
               "string",
               "null"

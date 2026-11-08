@@ -20,7 +20,7 @@ import no.slomic.smarthytte.utils.TestDbSetup
 
 private fun Application.configureGuestApp(repository: GuestRepository) {
     configureAuthentication(config = testCloudflareAccess, appUserService = AppUserService(repository))
-    configureGuestRoutes(repository, GuestProfileService(repository))
+    configureGuestRoutes(repository, GuestProfileService(repository), GuestAdminService(repository))
 }
 
 class GuestRoutesTest :

@@ -44,10 +44,14 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 
 ## API- og gjestekonvensjoner
 
+- API-prinsipper (opprett med `POST`, oppdater med `PUT`, `version`, feilformat, OpenAPI) står i «API design principles» i `DEVELOPER.md`. Les dem før du lager eller endrer en rute.
 - Rollen heter `role` overalt (JSON, Kotlin, DB). Typen heter fortsatt `AppRole`.
 - En e-post tilhører én gjest (unik indeks `uq_guest_email`, case-insensitiv).
 - `ignoreUnknownKeys` er på globalt, så ukjente felt i request body ignoreres.
-- `POST /api/me` endrer kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `POST /api/guests/{guestId}`.
+- Oppdateringer er fulle erstatninger med `PUT` (ikke `PATCH`): body har alle skrivbare felt og `version` (manglende felt gir 400, utdatert versjon 412). `null` for `email` og `role` fjerner verdien. Felt som ikke kan skrives ignoreres. Opprett er `POST` på samlingen.
+- `PUT /api/me` erstatter kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `PUT /api/guests/{guestId}`. Skrive-ruter krever `application/json` (415 ellers) og leser høyst 64 KB (413).
+- Nye ruter (`GET`/`POST /api/guests`) svarer feil som JSON `ApiError(code, message)`; de to eldre gjesteskriveruter har ren tekst.
+- `configureApiRoutes` tar en `ApiDependencies`; nye tjenester legges til der.
 - Endrer du auth- eller gjesteatferd, oppdater `docs/authentication.md`.
 
 ## Testdekning (Codecov)
