@@ -68,7 +68,7 @@ jobs:
 
       # Uploads Detekt results to GitHub repository using the upload-sarif action
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         # workflows triggered by Dependabot on push events run with read-only access, meaning they can't upload
         # SARIF reports for code scanning
         if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.actor != 'dependabot[bot]') }}
