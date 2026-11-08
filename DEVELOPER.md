@@ -249,6 +249,17 @@ sqlite3 data/app.db ".backup '<backup-dir>/app-$(date +%F).db'"
   4. Check the Flyway version, see the runbook below.
 - Test migrations against a copy of the database, never the live file.
 
+#### Locked out: no admin can log in
+
+The app refuses to remove the last `ADMIN` that has an email, but SQL or two admins acting at the same moment can still leave none. The way back is
+SQL on a copy-checked, backed-up `data/app.db` (stop the app first, or accept that the change shows on the next request):
+
+```shell
+sqlite3 data/app.db "update guest set role = 'ADMIN' where id = '<guest id>' and email is not null"
+```
+
+The guest also needs an entry in the Cloudflare Access policy to log in.
+
 #### Deploy runbook
 
 Releases are GitHub Releases `2.0.0-rc.N` cut from `v2` and go to the test environment first; production stays on `1.6.x` until `v2` is merged to `main`.

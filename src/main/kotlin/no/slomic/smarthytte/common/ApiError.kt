@@ -11,6 +11,8 @@ data class ApiError(val code: String, val message: String) {
     companion object {
         const val INVALID_REQUEST = "INVALID_REQUEST"
         const val INVALID_GUEST = "INVALID_GUEST"
+        const val INVALID_IMAGE = "INVALID_IMAGE"
+        const val NOT_FOUND = "NOT_FOUND"
         const val EMAIL_IN_USE = "EMAIL_IN_USE"
         const val BODY_TOO_LARGE = "BODY_TOO_LARGE"
         const val UNSUPPORTED_MEDIA_TYPE = "UNSUPPORTED_MEDIA_TYPE"

@@ -62,6 +62,27 @@ suspend inline fun <reified T : Any> ApplicationCall.receiveJsonBody(): RequestB
     }
 }
 
+/**
+ * Reads the request body as raw bytes: the `Content-Type` must be [contentType] (parameters such as `charset` are
+ * ignored, [RequestBody.UnsupportedMediaType] otherwise) and at most [maxBytes] are read, the rest of a larger body is
+ * not buffered ([RequestBody.TooLarge]).
+ */
+suspend fun ApplicationCall.receiveBinaryBody(contentType: ContentType, maxBytes: Long): RequestBody<ByteArray> {
+    val isExpectedType = runCatching { request.contentType().match(contentType) }.getOrDefault(false)
+    val length = request.contentLength()
+
+    return when {
+        !isExpectedType -> RequestBody.UnsupportedMediaType
+
+        length != null && length > maxBytes -> RequestBody.TooLarge
+
+        else -> {
+            val bytes = receiveChannel().readBuffer(maxBytes + 1).readByteArray()
+            if (bytes.size > maxBytes) RequestBody.TooLarge else RequestBody.Ok(bytes)
+        }
+    }
+}
+
 /** A failure result if the body must not be read ([RequestBody.UnsupportedMediaType] or too large), otherwise null. */
 @PublishedApi
 internal fun ApplicationCall.readableJsonBody(): RequestBody<Nothing>? {

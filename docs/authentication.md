@@ -58,6 +58,8 @@ before.
 | `GET /api/guests` (list)                                                           | yes                             | yes                     | yes                      | no                       |
 | `POST /api/guests` (create)                                                        | yes                             | yes                     | no                       | no                       |
 | `PUT /api/guests/{guestId}` (any guest)                                            | yes                             | all properties          | no                       | no                       |
+| `PUT /api/guests/{guestId}/avatar` (any guest)                                     | yes                             | yes                     | no                       | no                       |
+| `PUT /api/me/avatar` (own avatar)                                                  | yes                             | yes                     | yes                      | yes                      |
 | `GET /api/stats`, `GET /api/stats/guests/{guestId}`, `GET /api/guests/{id}/avatar` | yes, **also API key (service)** | yes                     | yes                      | yes                      |
 | Other `GET /api/stats/**`                                                          | yes                             | yes                     | yes                      | yes                      |
 | `/`, `/metrics`, `/openapi.json`                                                   | no (unchanged)                  |                         |                          |                          |
@@ -65,7 +67,7 @@ before.
 ### Planned permissions (reservation and guest API)
 
 Not implemented yet, see `.claude/plans/reservations-rest-api.md`. The plan wins until a row moves into the matrix above
-(the guest rows for list, create and edit have moved; avatar upload and the reservation rows are still planned).
+(the guest rows, including the avatar upload, have moved; the reservation rows are still planned).
 Past, current and future reservations are treated the same. `ADMIN` and `FAMILY_USER` may change any reservation (there is
 no owner concept). A guest without a role has no access.
 
@@ -98,7 +100,7 @@ Only `ADMIN` may change `email`, `isFamily` and `role`.
 - A stale `version` returns `412` (reservations, and guests on `PUT /api/guests/{guestId}` and `PUT /api/me`); a missing or non-numeric `version`
   returns `400`. An overlap with another reservation and a shared guest email return `409`.
 - `DELETE /api/reservations/{id}?version=<n>` carries the version in the query.
-- Avatar upload: `Content-Type: image/jpeg` required (`415` otherwise), at most the size limit (`413`), malformed JPEG `400`; metadata (EXIF) is stripped.
+- Avatar upload (`PUT /api/guests/{guestId}/avatar`, `PUT /api/me/avatar`, implemented): the body is the raw JPEG. `Content-Type: image/jpeg` is required (`415` otherwise, parameters such as `charset` are ignored), at most 4 MB (`413`), not a valid JPEG or larger than 4000 x 4000 pixels `400` (`INVALID_IMAGE`), unknown guest `404`; the answer is `204`. The server removes all metadata without re-encoding (Exif including GPS and orientation, XMP, comments, thumbnails, appended images; `JpegSanitizer.kt`), so clients must upload upright pixels. It is last write wins: no `version`, and the same image changes nothing. Errors are JSON `{code, message}`.
 - Errors on the new routes (`GET`/`POST /api/guests`) are JSON `{code, message}` with stable codes (the status codes above are unchanged); the existing guest update routes (`PUT /api/guests/{guestId}`, `PUT /api/me`) keep plain-text bodies.
 - A JSON write body above 64 KB returns `413`; a non-JSON content type on a write route returns `415` (also on `PUT /api/guests/{guestId}` and `PUT /api/me`, which answered `400` before); a `version` outside the `Short` range, an invalid `from`/`to`, or `to <= from` returns `400`.
 - When the database stays locked after the retries (`SQLITE_BUSY`) or the Calendar outbox is full, writes return `503`.
