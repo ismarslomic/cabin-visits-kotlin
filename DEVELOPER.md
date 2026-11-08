@@ -40,6 +40,33 @@ The spec is inferred from the code when it is compiled, and an incremental build
 missing request body after `formatKotlin` changed a file). If `OpenApiSpecTest` fails without an API change, or the
 regenerated spec looks wrong, run `./gradlew clean` first and regenerate again.
 
+### API design principles
+
+These apply to every new or changed endpoint. Permissions and status codes per endpoint are in
+[docs/authentication.md](docs/authentication.md).
+
+1. **Create is `POST` on the collection.** The server generates the id. The answer is `201` with the created resource.
+2. **Update is `PUT` on the resource, a full replace.** The body has every writable property and the `version` the
+   client read. A missing property is `400`, `null` clears an optional property (`email`, `role`), and read-only or unknown
+   properties are ignored. The answer is `200` with the new representation. We do not use `PATCH`.
+3. **Every update and delete carries the `version`** (in the body, and as `?version=` on `DELETE`). A stale one is `412`, a
+   missing or non-numeric one is `400`. The repository compares it in the same transaction as the write. An update that
+   changes nothing is `200` with the unchanged `version`.
+   *The one exception is the avatar upload*: a blind overwrite that does not depend on the current state, so it has no `version`.
+4. **Roles with different rights get separate endpoints**, not field-level rules on one endpoint: `PUT /api/me` replaces
+   the user's own profile fields, `PUT /api/guests/{guestId}` replaces everything and is admin only.
+5. **Request rules.** Write routes read the body with `receiveJsonBody<T>()` (`common/RequestBody.kt`), not `call.receive`:
+   `application/json` is required (`415`) and at most 64 KB is read (`413`). No state change on `GET`, no body-less `POST`, and no
+   CORS plugin, which together keep cross-site requests out.
+6. **Errors.** New routes answer `ApiError(code, message)` with a stable `code`. A route that still has plain-text errors is
+   converted when it is changed, so one route never mixes the two.
+7. **Rules live in services, not in routes.** A route maps the result of the service to a status code.
+8. **OpenAPI.** The plugin only infers a request body from `call.receive<T>()`, so declare it in `describe {}` with
+   `requestBody { required = true; schema = jsonSchema<T>() }`. For a full update use `.allPropertiesRequired()`
+   (`common/OpenApiSchemas.kt`), because the generator leaves nullable properties out of `required`. Add the route to
+   `OpenApiSpecTest`, and regenerate the spec instead of editing it (see above).
+9. **Native image.** A new `@Serializable` class needs its reachability entries, see `CLAUDE.md`.
+
 ### Authorization and restricting endpoints by role
 
 Setup of Cloudflare Access, the status codes and how roles are granted are described in

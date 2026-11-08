@@ -44,6 +44,7 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 
 ## API- og gjestekonvensjoner
 
+- API-prinsipper (opprett med `POST`, oppdater med `PUT`, `version`, feilformat, OpenAPI) står i «API design principles» i `DEVELOPER.md`. Les dem før du lager eller endrer en rute.
 - Rollen heter `role` overalt (JSON, Kotlin, DB). Typen heter fortsatt `AppRole`.
 - En e-post tilhører én gjest (unik indeks `uq_guest_email`, case-insensitiv).
 - `ignoreUnknownKeys` er på globalt, så ukjente felt i request body ignoreres.
