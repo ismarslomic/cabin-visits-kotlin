@@ -13,12 +13,12 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import no.slomic.smarthytte.ApiDependencies
-import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.CloudflareAccessProperties
 import no.slomic.smarthytte.statistics.StatsService
+import no.slomic.smarthytte.utils.configureTestApiRoutes
 
 class CloudflareAccessConfigTest :
     StringSpec({
@@ -50,7 +50,7 @@ class CloudflareAccessConfigTest :
 
                 testApplication {
                     application {
-                        configureApiRoutes(
+                        configureTestApiRoutes(
                             ApiDependencies(
                                 guestRepository = SqliteGuestRepository(),
                                 guestProfileService = mockk<GuestProfileService>(),

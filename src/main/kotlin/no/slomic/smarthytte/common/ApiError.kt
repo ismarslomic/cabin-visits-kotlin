@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.common
 
+import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
 /**
@@ -7,7 +8,16 @@ import kotlinx.serialization.Serializable
  * machine-readable reason that clients map to their own texts, and [message] is an English description for developers.
  */
 @Serializable
-data class ApiError(val code: String, val message: String) {
+data class ApiError(
+    @JsonSchema.Description(
+        "Stable machine-readable reason, for example INVALID_REQUEST, INVALID_GUEST, INVALID_IMAGE, NOT_FOUND, " +
+            "FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, BODY_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE or " +
+            "TEMPORARILY_UNAVAILABLE. Clients map it to their own texts.",
+    )
+    val code: String,
+    @JsonSchema.Description("English description of the error for developers. Not meant to be shown to users.")
+    val message: String,
+) {
     companion object {
         const val INVALID_REQUEST = "INVALID_REQUEST"
         const val INVALID_GUEST = "INVALID_GUEST"

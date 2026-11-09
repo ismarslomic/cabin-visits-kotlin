@@ -52,6 +52,7 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - `PUT /api/me` erstatter kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `PUT /api/guests/{guestId}`. Skrive-ruter krever `application/json` (415 ellers) og leser høyst 64 KB (413); unntaket er avatar-opplasting (`PUT /api/me/avatar`, `PUT /api/guests/{guestId}/avatar`), som tar rå `image/jpeg` på høyst 4 MB og har ingen `version`.
 - Alle gjesteruter svarer feil som JSON `ApiError(code, message)`. `GET /api/me` og `PUT /api/me` svarer med `MeResponse` (inkl. `avatarUrl`).
 - `configureApiRoutes` tar en `ApiDependencies`; nye tjenester legges til der.
+- **Krav:** hver property i en request- eller respons-klasse (og hver path-/query-parameter) skal ha en beskrivelse i OpenAPI: `@JsonSchema.Description("...")` på propertyen, `description` på parameteren i `describe {}`. Beskriv hva verdien betyr, grenser og format, når den er `null`, og hva den ikke må forveksles med. `OpenApiSpecTest` feiler ellers. Se prinsipp 10 i `DEVELOPER.md`.
 - Endrer du auth- eller gjesteatferd, oppdater `docs/authentication.md`.
 
 ## Testdekning (Codecov)
@@ -61,6 +62,7 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - Ny logikk i `guests/` og `auth/` får test for hver gren, også feil- og konfliktstiene. Rute-tester dekker ikke service-grener alene.
 - En fil du endrer uten tester får en testklasse. Gjør konstruktøren testbar ved å sende inn properties med standardverdi, som `VehicleTripService` gjør.
 - Sjekk lokalt før push: `./gradlew test` skriver `build/reports/jacoco/test/jacocoTestReport.xml`. Linjer med `mi` > 0 eller `mb` > 0 i filene du endret mangler dekning. Dekk de som har logikk. Utilgjengelige forsvarsgrener (`error(...)`) og deklarative `describe{}`-blokker kan stå, men ikke senk dekningen for å slippe unna.
+- Hver statuskode som OpenAPI-spesifikasjonen dokumenterer for en rute skal ha en test: `ResponseCodeAudit` feiler hele `./gradlew test` ellers. Konfigurer test-apper med `configureTestApiRoutes` (eller `recordResponses()`), og fjern en dokumentert kode som ikke kan oppstå i stedet for å la den stå.
 - Når Codecov feiler: åpne PR-kommentaren, se tabellen «Files with missing lines» og skriv tester for linjene som mangler. Ikke slett eller svekk tester, og ikke senk terskler i `codecov.yml` for å få en PR gjennom. Spør brukeren først.
 
 ## Viktige domenekonvensjoner

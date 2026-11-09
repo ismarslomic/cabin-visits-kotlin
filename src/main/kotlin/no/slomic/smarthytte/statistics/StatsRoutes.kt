@@ -52,8 +52,7 @@ fun Application.configureStatsRoutes(statsService: StatsService) {
                 .describeLiveStats()
 
             get("/api/stats/guests/{guestId}") {
-                val guestId = call.parameters["guestId"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing guestId")
+                val guestId = checkNotNull(call.parameters["guestId"]) { "The route has a guestId" }
                 val profile = statsService.getGuestProfileStats(guestId)
                     ?: return@get call.respond(HttpStatusCode.NotFound, "Guest not found")
                 call.respond(profile)
@@ -203,7 +202,6 @@ private fun Route.describeGuestProfileStats() = describe {
         "Driving statistics are not included. Upcoming visits are not counted in totals or facts."
     responses {
         HttpStatusCode.OK { description = "The profile of the guest." }
-        HttpStatusCode.BadRequest { description = "The guestId path parameter is missing." }
         HttpStatusCode.NotFound { description = "There is no guest with the given id." }
     }
 }

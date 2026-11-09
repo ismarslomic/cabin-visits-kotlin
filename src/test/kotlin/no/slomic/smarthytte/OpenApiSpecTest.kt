@@ -111,6 +111,35 @@ class OpenApiSpecTest :
             }
         }
 
+        "every property and parameter in the served spec should have a description" {
+            // The generator emits a second schema (GuestStats2) for a property that refers to a class and has its own
+            // description, so such a property is documented by the description of the class it refers to instead.
+            val spec = servedSpec()
+            val schemas = spec.jsonObject.getValue("components").jsonObject.getValue("schemas").jsonObject
+
+            schemas.forEach { (schemaName, schema) ->
+                schema.jsonObject["properties"]?.jsonObject?.forEach { (property, definition) ->
+                    withClue("$schemaName.$property") {
+                        val description = definition.jsonObject["description"]?.jsonPrimitive?.content
+                        val reference = definition.jsonObject["\$ref"]?.jsonPrimitive?.content
+                        val referenced = reference?.substringAfterLast('/')?.let { schemas[it] }
+
+                        val documented = description?.isNotBlank() == true ||
+                            referenced?.jsonObject?.get("description")?.jsonPrimitive?.content?.isNotBlank() == true
+                        documented shouldBe true
+                    }
+                }
+            }
+
+            spec.operations().forEach { operation ->
+                operation.body["parameters"]?.jsonArray?.forEach { parameter ->
+                    withClue("${operation.name} ${parameter.jsonObject["name"]}") {
+                        parameter.jsonObject["description"]?.jsonPrimitive?.content?.isNotBlank() shouldBe true
+                    }
+                }
+            }
+        }
+
         "every response in the served spec should have a description" {
             servedSpec().operations().forEach { operation ->
                 operation.body.getValue("responses").jsonObject.forEach { (status, response) ->

@@ -27,9 +27,9 @@ import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.auth.accessToken
 import no.slomic.smarthytte.auth.testCloudflareAccess
 import no.slomic.smarthytte.auth.testGuest
-import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.utils.configureTestApiRoutes
 
 private const val CREATE_BODY =
     """{"firstName":"Ola","lastName":"Nordmann","birthYear":1980,"gender":"MALE","email":"Ola@Example.com"}"""
@@ -51,7 +51,7 @@ class GuestListCreateRoutesTest :
 
         fun withApp(block: suspend ApplicationTestBuilder.() -> Unit) = testApplication {
             application {
-                configureApiRoutes(
+                configureTestApiRoutes(
                     ApiDependencies(
                         guestRepository = repository,
                         guestProfileService = GuestProfileService(repository),

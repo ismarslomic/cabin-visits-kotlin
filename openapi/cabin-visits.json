@@ -256,28 +256,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "The guestId path parameter is missing.",
-            "headers": {
-              "ETag": {
-                "content": {
-                  "text/plain": {}
-                }
-              },
-              "X-Content-Type-Options": {
-                "content": {
-                  "text/plain": {}
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
           "404": {
             "description": "The guest does not exist or has no avatar.",
             "headers": {
@@ -732,16 +710,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "The guestId path parameter is missing.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
           "404": {
             "description": "There is no guest with the given id.",
             "content": {
@@ -1078,19 +1046,24 @@
         ],
         "properties": {
           "version": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The version of the guest that the client read, from GET /api/me. An outdated version gives 412."
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "description": "The first name, 1-20 characters. Leading and trailing spaces are removed."
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "description": "The last name, 1-20 characters. Leading and trailing spaces are removed."
           },
           "birthYear": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The year of birth."
           },
           "gender": {
             "type": "string",
+            "description": "The gender: MALE or FEMALE.",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1107,10 +1080,12 @@
         ],
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "description": "Stable machine-readable reason, for example INVALID_REQUEST, INVALID_GUEST, INVALID_IMAGE, NOT_FOUND, FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, BODY_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE or TEMPORARILY_UNAVAILABLE. Clients map it to their own texts."
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "English description of the error for developers. Not meant to be shown to users."
           }
         }
       },
@@ -1130,19 +1105,24 @@
         ],
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Internal unique identifier of the guest, generated from the name, such as ola.nordmann."
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "description": "The first name."
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "description": "The last name."
           },
           "birthYear": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The year of birth."
           },
           "gender": {
             "type": "string",
+            "description": "The gender: MALE or FEMALE.",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1152,16 +1132,19 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "The email address the guest logs in with, or null if the guest has none."
           },
           "isFamily": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True if the guest belongs to the family."
           },
           "role": {
             "type": [
               "string",
               "null"
             ],
+            "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER, or null for no access.",
             "enum": [
               "ADMIN",
               "FAMILY_USER",
@@ -1172,30 +1155,36 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely."
           },
           "version": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The version of the guest. Send it back unchanged in PUT /api/guests/{guestId}, an outdated version gives 412. It is not the version of the avatar."
           },
           "createdTime": {
             "type": "string",
+            "description": "When the guest was created (UTC).",
             "format": "date-time"
           },
           "createdBy": {
-            "type": "string"
+            "type": "string",
+            "description": "Who created the guest: a guest id, or the literal system, which is not a guest."
           },
           "updatedTime": {
             "type": [
               "string",
               "null"
             ],
+            "description": "When the guest was last changed (UTC), or null if never changed.",
             "format": "date-time"
           },
           "updatedBy": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Who last changed the guest: a guest id, or the literal system, which is not a guest. Null if never changed."
           }
         }
       },
@@ -1210,16 +1199,20 @@
         ],
         "properties": {
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "description": "The first name, 1-20 characters."
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "description": "The last name, 1-20 characters."
           },
           "birthYear": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The year of birth."
           },
           "gender": {
             "type": "string",
+            "description": "The gender: MALE or FEMALE.",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1229,16 +1222,19 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "The email address the guest logs in with. Optional: a guest without an email cannot log in. Trimmed and stored in lowercase. One guest per email."
           },
           "isFamily": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True if the guest belongs to the family. Optional, default false."
           },
           "role": {
             "type": [
               "string",
               "null"
             ],
+            "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER. Optional: no role means no access.",
             "enum": [
               "ADMIN",
               "FAMILY_USER",
@@ -1262,19 +1258,24 @@
         ],
         "properties": {
           "version": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The version of the guest that the client read, from GET /api/guests. An outdated version gives 412."
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "description": "The first name, 1-20 characters."
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "description": "The last name, 1-20 characters."
           },
           "birthYear": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The year of birth."
           },
           "gender": {
             "type": "string",
+            "description": "The gender: MALE or FEMALE.",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1284,16 +1285,19 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "The email address the guest logs in with, or null to clear it. Trimmed and stored in lowercase, and a blank email clears it. One guest per email."
           },
           "isFamily": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True if the guest belongs to the family."
           },
           "role": {
             "type": [
               "string",
               "null"
             ],
+            "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER, or null for no access.",
             "enum": [
               "ADMIN",
               "FAMILY_USER",

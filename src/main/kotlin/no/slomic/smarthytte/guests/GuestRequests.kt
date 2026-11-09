@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.guests
 
+import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
 /**
@@ -9,13 +10,28 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class GuestUpdate(
+    @JsonSchema.Description(
+        "The version of the guest that the client read, from GET /api/guests. An outdated version gives 412.",
+    )
     val version: Short,
+    @JsonSchema.Description("The first name, 1-20 characters.")
     val firstName: String,
+    @JsonSchema.Description("The last name, 1-20 characters.")
     val lastName: String,
+    @JsonSchema.Description("The year of birth.")
     val birthYear: Short,
+    @JsonSchema.Description("The gender: MALE or FEMALE.")
     val gender: Gender,
+    @JsonSchema.Description(
+        "The email address the guest logs in with, or null to clear it. Trimmed and stored in lowercase, and a " +
+            "blank email clears it. One guest per email.",
+    )
     val email: String?,
+    @JsonSchema.Description("True if the guest belongs to the family.")
     val isFamily: Boolean,
+    @JsonSchema.Description(
+        "The role in the application: ADMIN, FAMILY_USER or GUEST_USER, or null for no access.",
+    )
     val role: AppRole?,
 ) {
     fun toProperties() = GuestProperties(
@@ -35,12 +51,24 @@ data class GuestUpdate(
  */
 @Serializable
 data class GuestCreate(
+    @JsonSchema.Description("The first name, 1-20 characters.")
     val firstName: String,
+    @JsonSchema.Description("The last name, 1-20 characters.")
     val lastName: String,
+    @JsonSchema.Description("The year of birth.")
     val birthYear: Short,
+    @JsonSchema.Description("The gender: MALE or FEMALE.")
     val gender: Gender,
+    @JsonSchema.Description(
+        "The email address the guest logs in with. Optional: a guest without an email cannot log in. Trimmed and " +
+            "stored in lowercase. One guest per email.",
+    )
     val email: String? = null,
+    @JsonSchema.Description("True if the guest belongs to the family. Optional, default false.")
     val isFamily: Boolean = false,
+    @JsonSchema.Description(
+        "The role in the application: ADMIN, FAMILY_USER or GUEST_USER. Optional: no role means no access.",
+    )
     val role: AppRole? = null,
 ) {
     fun toProperties() = GuestProperties(

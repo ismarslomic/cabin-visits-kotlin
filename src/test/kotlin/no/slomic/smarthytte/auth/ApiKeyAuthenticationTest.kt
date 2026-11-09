@@ -16,7 +16,6 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.ApiDependencies
-import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
@@ -25,6 +24,7 @@ import no.slomic.smarthytte.properties.ApiKeyProperties
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.utils.configureTestApiRoutes
 
 private const val TEST_API_KEY = "test-mirror-key"
 private val testApiKeys = ApiKeyProperties("mirror:${sha256Hex(TEST_API_KEY)}").toConfig()
@@ -63,7 +63,7 @@ class ApiKeyAuthenticationTest :
             block: suspend ApplicationTestBuilder.() -> Unit,
         ) = testApplication {
             application {
-                configureApiRoutes(
+                configureTestApiRoutes(
                     ApiDependencies(
                         guestRepository = guestRepository,
                         guestProfileService = GuestProfileService(guestRepository),

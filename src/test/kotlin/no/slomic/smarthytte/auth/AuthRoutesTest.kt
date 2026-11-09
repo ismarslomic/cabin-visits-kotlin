@@ -22,13 +22,13 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.ApiDependencies
-import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.utils.configureTestApiRoutes
 import kotlin.time.Duration.Companion.hours
 
 private const val ADMIN_ONLY_PATH = "/test/admin-only"
@@ -58,7 +58,7 @@ class AuthRoutesTest :
             block: suspend ApplicationTestBuilder.() -> Unit,
         ) = testApplication {
             application {
-                configureApiRoutes(
+                configureTestApiRoutes(
                     ApiDependencies(
                         guestRepository = guestRepository,
                         guestProfileService = GuestProfileService(guestRepository),

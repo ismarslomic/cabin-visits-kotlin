@@ -47,8 +47,7 @@ fun Application.configureGuestRoutes(
     routing {
         authorizedAnyRole(allowService = true) {
             get(GUEST_AVATAR_PATH) {
-                val guestId = call.parameters["guestId"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing guestId")
+                val guestId = checkNotNull(call.parameters["guestId"]) { "The route has a guestId" }
                 val avatar = guestRepository.avatarById(guestId)
                     ?: return@get call.respond(HttpStatusCode.NotFound)
 
@@ -249,7 +248,6 @@ private fun Route.describeGuestAvatar() = describe {
             }
         }
         HttpStatusCode.NotModified { description = "The avatar has not changed since the ETag in If-None-Match." }
-        HttpStatusCode.BadRequest { description = "The guestId path parameter is missing." }
         HttpStatusCode.Unauthorized {
             description = "The Cloudflare Access token or the API key is missing or invalid."
         }
