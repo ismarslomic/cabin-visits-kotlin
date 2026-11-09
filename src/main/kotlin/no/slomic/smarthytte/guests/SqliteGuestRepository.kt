@@ -26,6 +26,10 @@ class SqliteGuestRepository : GuestRepository {
         GuestEntity.findById(id)?.let(::daoToModel)
     }
 
+    override suspend fun hasAdmin(): Boolean = suspendTransaction {
+        !GuestEntity.find { GuestTable.role eq AppRole.ADMIN }.empty()
+    }
+
     override suspend fun guestsByEmail(email: String): List<Guest> = suspendTransaction {
         GuestEntity.find { GuestTable.email.lowerCase() eq email.trim().lowercase() }.map(::daoToModel)
     }

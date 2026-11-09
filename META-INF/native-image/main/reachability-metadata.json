@@ -2067,6 +2067,32 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.properties.BootstrapAdminProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.BootstrapAdminPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.BootstrapAdminProperties"
+          ]
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.CheckInProperties",
       "methods": [
         {

@@ -272,6 +272,11 @@ sqlite3 data/app.db "update guest set role = 'ADMIN' where id = '<guest id>' and
 
 The guest also needs an entry in the Cloudflare Access policy to log in.
 
+If **no guest has the `ADMIN` role at all** (an empty or restored-empty database), no SQL is needed: set `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_FIRST_NAME`,
+`BOOTSTRAP_ADMIN_LAST_NAME`, `BOOTSTRAP_ADMIN_BIRTH_YEAR` and `BOOTSTRAP_ADMIN_GENDER` and restart (`BootstrapAdmin`, see
+[docs/authentication.md](docs/authentication.md#granting-access)). It creates the admin, or gives the role to the guest with that email, and does nothing once an
+admin exists. Unset the variables afterwards.
+
 #### Deploy runbook
 
 Releases are GitHub Releases `2.0.0-rc.N` cut from `v2` and go to the test environment first; production stays on `1.6.x` until `v2` is merged to `main`.
