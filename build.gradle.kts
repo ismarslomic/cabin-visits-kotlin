@@ -54,6 +54,10 @@ tasks.test {
     // OpenApiSpecTest reads (or, with UPDATE_OPENAPI=true, writes) the committed spec: rerun when it changes.
     inputs.file(openApiSpecFile).optional()
     inputs.property("updateOpenApi", providers.environmentVariable("UPDATE_OPENAPI").orElse(""))
+
+    // The response code audit (ProjectConfig) only makes sense when every test runs, not with --tests
+    val isFiltered = gradle.startParameter.taskRequests.any { "--tests" in it.args } || filter.includePatterns.isNotEmpty()
+    systemProperty("auditResponseCodes", (!isFiltered).toString())
 }
 
 tasks.check {

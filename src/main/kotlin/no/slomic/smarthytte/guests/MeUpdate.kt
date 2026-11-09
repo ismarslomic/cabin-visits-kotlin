@@ -1,5 +1,6 @@
 package no.slomic.smarthytte.guests
 
+import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
 /**
@@ -10,20 +11,24 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class MeUpdate(
+    @JsonSchema.Description(
+        "The version of the guest that the client read, from GET /api/me. An outdated version gives 412.",
+    )
     val version: Short,
+    @JsonSchema.Description("The first name, 1-20 characters. Leading and trailing spaces are removed.")
     val firstName: String,
+    @JsonSchema.Description("The last name, 1-20 characters. Leading and trailing spaces are removed.")
     val lastName: String,
+    @JsonSchema.Description("The year of birth.")
     val birthYear: Short,
+    @JsonSchema.Description("The gender: MALE or FEMALE.")
     val gender: Gender,
 ) {
     /** The values of the guest with the four profile properties replaced and every other property unchanged. */
-    fun applyTo(stored: Guest) = GuestProperties(
+    fun applyTo(stored: Guest) = stored.toProperties().copy(
         firstName = firstName.trim(),
         lastName = lastName.trim(),
         birthYear = birthYear,
         gender = gender,
-        email = stored.email,
-        isFamily = stored.isFamily,
-        role = stored.role,
     )
 }

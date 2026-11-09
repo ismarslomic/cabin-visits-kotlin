@@ -28,9 +28,9 @@ import no.slomic.smarthytte.auth.CloudflareAccessConfig
 import no.slomic.smarthytte.auth.accessToken
 import no.slomic.smarthytte.auth.testCloudflareAccess
 import no.slomic.smarthytte.auth.testGuest
-import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.utils.configureTestApiRoutes
 
 private val jpegType = ContentType.Image.JPEG
 
@@ -54,7 +54,7 @@ class AvatarUploadRoutesTest :
             block: suspend ApplicationTestBuilder.() -> Unit,
         ) = testApplication {
             application {
-                configureApiRoutes(
+                configureTestApiRoutes(
                     ApiDependencies(
                         guestRepository = repository,
                         guestProfileService = GuestProfileService(repository),
@@ -204,15 +204,19 @@ class AvatarUploadRoutesTest :
             }
         }
 
-        "upload of bytes that are not a JPEG should respond 400 INVALID_IMAGE" {
+        "upload of bytes that are not a JPEG should respond 400 INVALID_IMAGE on both routes" {
             givenUsers()
 
             withApp {
                 val body = byteArrayOf(0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0, 0)
-                val response = upload("/api/me/avatar", "visitor@example.com", body)
+                listOf("/api/me/avatar", "/api/guests/visitor/avatar").forEach { path ->
+                    withClue(path) {
+                        val response = upload(path, "admin@example.com", body)
 
-                response.status shouldBe HttpStatusCode.BadRequest
-                response.errorCode() shouldBe "INVALID_IMAGE"
+                        response.status shouldBe HttpStatusCode.BadRequest
+                        response.errorCode() shouldBe "INVALID_IMAGE"
+                    }
+                }
                 repository.avatarById("visitor") shouldBe null
             }
         }
@@ -260,16 +264,20 @@ class AvatarUploadRoutesTest :
             }
         }
 
-        "upload larger than the limit should respond 413, also when the length is not announced" {
+        "upload larger than the limit should respond 413 on both routes, also when the length is not announced" {
             givenUsers()
 
             withApp {
                 val tooLarge = JpegTestFiles.bare() + ByteArray(MAX_AVATAR_BYTES.toInt()) { 1 }
 
-                val response = upload("/api/me/avatar", "visitor@example.com", tooLarge)
+                listOf("/api/me/avatar", "/api/guests/visitor/avatar").forEach { path ->
+                    withClue(path) {
+                        val response = upload(path, "admin@example.com", tooLarge)
 
-                response.status shouldBe HttpStatusCode.PayloadTooLarge
-                response.errorCode() shouldBe "BODY_TOO_LARGE"
+                        response.status shouldBe HttpStatusCode.PayloadTooLarge
+                        response.errorCode() shouldBe "BODY_TOO_LARGE"
+                    }
+                }
                 repository.avatarById("visitor") shouldBe null
             }
         }

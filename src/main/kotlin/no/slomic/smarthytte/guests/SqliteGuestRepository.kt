@@ -67,13 +67,7 @@ class SqliteGuestRepository : GuestRepository {
 
         GuestEntity.new(id) {
             markCreated(actor)
-            firstName = guest.firstName
-            lastName = guest.lastName
-            birthYear = guest.birthYear
-            email = guest.email
-            gender = guest.gender
-            isFamily = guest.isFamily
-            role = guest.role
+            assign(guest)
         }.let(::daoToModel)
     }
 
@@ -81,7 +75,7 @@ class SqliteGuestRepository : GuestRepository {
         val entityId: EntityID<String> = EntityID(guest.id, GuestTable)
         val storedGuest: GuestEntity? = GuestEntity.findById(entityId)
 
-        if (storedGuest == null) addGuest(guest, actor) else updateGuest(guest, actor)
+        if (storedGuest == null) addGuest(guest, actor) else upsertExistingGuest(guest, actor)
     }
 
     override suspend fun saveAvatar(guestId: String, image: ByteArray, actor: String): PersistenceResult =
@@ -157,13 +151,7 @@ class SqliteGuestRepository : GuestRepository {
 
         GuestEntity.new(guest.id) {
             markCreated(actor)
-            firstName = guest.firstName
-            lastName = guest.lastName
-            birthYear = guest.birthYear
-            email = guest.email
-            gender = guest.gender
-            isFamily = guest.isFamily
-            role = guest.role
+            assign(guest.toProperties())
         }
 
         logger.trace("Added guest with id: ${guest.id}")
@@ -171,31 +159,17 @@ class SqliteGuestRepository : GuestRepository {
     }
 
     /**
-     * Overwrites all properties with the values of [guest].
-     *
-     * Note that actual database update is only performed if at least one column has changed the value, so
-     * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
-     * guest.
+     * The upsert path of [addOrUpdate] for a guest that exists: overwrites all properties with the values of [guest],
+     * with the same change detection as [update] ([applyUpdate]), so the guest is only marked updated if at least one
+     * property differs. Unlike [update] there is no version check.
      */
-    private fun updateGuest(guest: Guest, actor: String): PersistenceResult {
+    private fun upsertExistingGuest(guest: Guest, actor: String): PersistenceResult {
         logger.trace("Updating guest with id: ${guest.id}")
 
-        val updatedGuest: GuestEntity = GuestEntity.findById(guest.id) ?: return PersistenceResult.NO_ACTION
+        val stored: GuestEntity = GuestEntity.findById(guest.id) ?: return PersistenceResult.NO_ACTION
 
-        with(updatedGuest) {
-            firstName = guest.firstName
-            lastName = guest.lastName
-            birthYear = guest.birthYear
-            gender = guest.gender
-            email = guest.email
-            isFamily = guest.isFamily
-            role = guest.role
-        }
-
-        val isDirty: Boolean = updatedGuest.writeValues.isNotEmpty()
-
-        return if (isDirty) {
-            updatedGuest.markUpdated(actor)
+        return if (stored.applyUpdate(guest.toProperties())) {
+            stored.markUpdated(actor)
 
             logger.trace("Updated guest with id: ${guest.id}")
             PersistenceResult.UPDATED
@@ -225,5 +199,16 @@ class SqliteGuestRepository : GuestRepository {
         change(update.role, role) { role = it }
 
         return changed
+    }
+
+    /** Sets every writable property of a new guest. */
+    private fun GuestEntity.assign(properties: GuestProperties) {
+        firstName = properties.firstName
+        lastName = properties.lastName
+        birthYear = properties.birthYear
+        gender = properties.gender
+        email = properties.email
+        isFamily = properties.isFamily
+        role = properties.role
     }
 }

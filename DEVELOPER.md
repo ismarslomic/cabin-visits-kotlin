@@ -66,7 +66,18 @@ These apply to every new or changed endpoint. Permissions and status codes per e
    `requestBody { required = true; schema = jsonSchema<T>() }`. For a full update use `.allPropertiesRequired()`
    (`common/OpenApiSchemas.kt`), because the generator leaves nullable properties out of `required`. `OpenApiSpecTest` fails for a
    `put` or `post` without a request body and for a response without a description. Regenerate the spec instead of editing it (see above).
+    `ResponseCodeAudit` (in the test sources, run by `ProjectConfig` after the whole suite) fails when a status code that the
+    spec documents is answered by no test, so a new `describe {}` code needs a test. Test apps must be configured with
+    `configureTestApiRoutes` (or `recordResponses()`) to be counted. It is skipped when the run is limited with `--tests`.
 9. **Native image.** A new `@Serializable` class needs its reachability entries, see `CLAUDE.md`.
+10. **Every property is documented.** Every property of a request or response class (and every path or query parameter)
+    has a description in the OpenAPI spec: `@JsonSchema.Description("...")` on the property of a `@Serializable` class
+    (see `MeResponse`, `GuestUpdate`), `description` on a parameter in `describe {}`. Say what the value means, its limits and
+    format, when it is `null`, and what it must not be confused with (for example `version` is the guest version, not the
+    avatar version). A property without a description is a gap in the contract that clients generate their types from.
+    `OpenApiSpecTest` fails for a property or parameter without a description. A property that refers to another class
+    (`$ref`) is documented by the description of that class, because a description on the property makes the generator
+    emit a duplicate schema.
 
 ### Authorization and restricting endpoints by role
 

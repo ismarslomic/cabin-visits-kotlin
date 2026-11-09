@@ -15,3 +15,14 @@ data class GuestProperties(
     val isFamily: Boolean,
     val role: AppRole?,
 )
+
+/** The writable properties of this guest. */
+fun Guest.toProperties() = GuestProperties(
+    firstName = firstName,
+    lastName = lastName,
+    birthYear = birthYear,
+    gender = gender,
+    email = email,
+    isFamily = isFamily,
+    role = role,
+)

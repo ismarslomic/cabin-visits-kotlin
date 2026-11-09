@@ -20,7 +20,6 @@ import no.slomic.smarthytte.auth.accessToken
 import no.slomic.smarthytte.auth.testCloudflareAccess
 import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.auth.tokenSignedByOtherKey
-import no.slomic.smarthytte.configureApiRoutes
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
@@ -31,6 +30,7 @@ import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.utils.TestDbSetup
+import no.slomic.smarthytte.utils.configureTestApiRoutes
 
 class StatsRoutesTest :
     StringSpec({
@@ -53,7 +53,7 @@ class StatsRoutesTest :
 
             testApplication {
                 application {
-                    configureApiRoutes(
+                    configureTestApiRoutes(
                         ApiDependencies(
                             guestRepository = guestRepository,
                             guestProfileService = GuestProfileService(guestRepository),
@@ -78,7 +78,7 @@ class StatsRoutesTest :
         "get guest profile for an unknown guest should respond not found" {
             testApplication {
                 application {
-                    configureApiRoutes(
+                    configureTestApiRoutes(
                         ApiDependencies(
                             guestRepository = guestRepository,
                             guestProfileService = GuestProfileService(guestRepository),
@@ -102,7 +102,7 @@ class StatsRoutesTest :
 
             testApplication {
                 application {
-                    configureApiRoutes(
+                    configureTestApiRoutes(
                         ApiDependencies(
                             guestRepository = guestRepository,
                             guestProfileService = GuestProfileService(guestRepository),
@@ -128,7 +128,7 @@ class StatsRoutesTest :
         "statistics should respond 503 when Cloudflare Access is not configured" {
             testApplication {
                 application {
-                    configureApiRoutes(
+                    configureTestApiRoutes(
                         ApiDependencies(
                             guestRepository = guestRepository,
                             guestProfileService = GuestProfileService(guestRepository),
@@ -148,7 +148,7 @@ class StatsRoutesTest :
         "get all guests statistics should still be served next to the guest profile" {
             testApplication {
                 application {
-                    configureApiRoutes(
+                    configureTestApiRoutes(
                         ApiDependencies(
                             guestRepository = guestRepository,
                             guestProfileService = GuestProfileService(guestRepository),
