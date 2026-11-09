@@ -101,20 +101,6 @@ internal fun ApplicationCall.logUnreadableBody(cause: Exception) {
     application.log.warn("Could not read the request body of ${request.httpMethod.value} ${request.path()}", cause)
 }
 
-/** Responds the plain-text error of the existing guest routes for a [RequestBody] that is not [RequestBody.Ok]. */
-suspend fun ApplicationCall.respondPlainBodyError(body: RequestBody<*>) {
-    when (body) {
-        is RequestBody.Ok -> error("The body was read")
-
-        RequestBody.UnsupportedMediaType ->
-            respond(HttpStatusCode.UnsupportedMediaType, "Content-Type must be application/json")
-
-        RequestBody.TooLarge -> respond(HttpStatusCode.PayloadTooLarge, "The request body is too large")
-
-        RequestBody.Malformed -> respond(HttpStatusCode.BadRequest, "Invalid request body")
-    }
-}
-
 /** Responds the [ApiError] of the new routes for a [RequestBody] that is not [RequestBody.Ok]. */
 suspend fun ApplicationCall.respondApiBodyError(body: RequestBody<*>) {
     when (body) {

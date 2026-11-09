@@ -49,8 +49,8 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - En e-post tilhører én gjest (unik indeks `uq_guest_email`, case-insensitiv).
 - `ignoreUnknownKeys` er på globalt, så ukjente felt i request body ignoreres.
 - Oppdateringer er fulle erstatninger med `PUT` (ikke `PATCH`): body har alle skrivbare felt og `version` (manglende felt gir 400, utdatert versjon 412). `null` for `email` og `role` fjerner verdien. Felt som ikke kan skrives ignoreres. Opprett er `POST` på samlingen.
-- `PUT /api/me` erstatter kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `PUT /api/guests/{guestId}`. Skrive-ruter krever `application/json` (415 ellers) og leser høyst 64 KB (413).
-- Nye ruter (`GET`/`POST /api/guests`) svarer feil som JSON `ApiError(code, message)`; de to eldre gjesteskriveruter har ren tekst.
+- `PUT /api/me` erstatter kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `PUT /api/guests/{guestId}`. Skrive-ruter krever `application/json` (415 ellers) og leser høyst 64 KB (413); unntaket er avatar-opplasting (`PUT /api/me/avatar`, `PUT /api/guests/{guestId}/avatar`), som tar rå `image/jpeg` på høyst 4 MB og har ingen `version`.
+- Alle gjesteruter svarer feil som JSON `ApiError(code, message)`. `GET /api/me` og `PUT /api/me` svarer med `MeResponse` (inkl. `avatarUrl`).
 - `configureApiRoutes` tar en `ApiDependencies`; nye tjenester legges til der.
 - Endrer du auth- eller gjesteatferd, oppdater `docs/authentication.md`.
 

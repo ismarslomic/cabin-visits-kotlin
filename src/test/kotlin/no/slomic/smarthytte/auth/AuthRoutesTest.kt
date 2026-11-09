@@ -4,6 +4,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
@@ -14,7 +15,10 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.ApiDependencies
@@ -76,6 +80,27 @@ class AuthRoutesTest :
         suspend fun ApplicationTestBuilder.get(path: String, token: String?) =
             client.get(path) { token?.let { header(ACCESS_JWT_HEADER, it) } }
 
+        "me should return the versioned avatarUrl, which changes when the avatar is replaced" {
+            givenUser("ola", AppRole.GUEST_USER)
+
+            withApp {
+                val token = accessToken("ola@example.com")
+
+                suspend fun avatarUrl() = Json.parseToJsonElement(get("/api/me", token).bodyAsText())
+                    .jsonObject["avatarUrl"]?.jsonPrimitive?.contentOrNull
+
+                avatarUrl() shouldBe null
+
+                guestRepository.saveAvatar("ola", byteArrayOf(1), "ola")
+                val first = avatarUrl()
+                first!!.startsWith("/api/guests/ola/avatar?v=") shouldBe true
+
+                delay(5)
+                guestRepository.saveAvatar("ola", byteArrayOf(2), "ola")
+                avatarUrl() shouldNotBe first
+            }
+        }
+
         "me should respond with the user and role for a valid token" {
             givenUser("ola", AppRole.ADMIN)
 
@@ -93,8 +118,13 @@ class AuthRoutesTest :
                 body["email"]?.jsonPrimitive?.content shouldBe "ola@example.com"
                 body["isFamily"]?.jsonPrimitive?.content shouldBe "true"
                 body["role"]?.jsonPrimitive?.content shouldBe "ADMIN"
+                body["version"]?.jsonPrimitive?.content shouldBe "1"
+                body["avatarUrl"] shouldBe JsonNull
                 body.keys shouldBe
-                    setOf("id", "name", "firstName", "lastName", "birthYear", "gender", "email", "isFamily", "role")
+                    setOf(
+                        "id", "name", "firstName", "lastName", "birthYear", "gender", "email", "isFamily", "role",
+                        "avatarUrl", "version",
+                    )
             }
         }
 

@@ -13,7 +13,7 @@
           "Auth"
         ],
         "summary": "Update the authenticated user",
-        "description": "A full replace of the profile of the authenticated user's own guest. Every role sends firstName, lastName, birthYear and gender, all required, together with the version the client read (from GET /api/me). Other properties, such as email, isFamily and role, cannot be changed here and are ignored.",
+        "description": "A full replace of the profile of the authenticated user's own guest. Every role sends firstName, lastName, birthYear and gender, all required, together with the version the client read (from GET /api/me). Other properties, such as email, isFamily and role, cannot be changed here and are ignored. Errors are JSON with a code and a message.",
         "requestBody": {
           "description": "The version the client read and the four profile properties.",
           "content": {
@@ -31,7 +31,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -41,7 +41,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -51,7 +51,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserPrincipal"
+                  "$ref": "#/components/schemas/MeResponse"
                 }
               }
             }
@@ -71,13 +71,20 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
           },
           "404": {
-            "description": "The guest of the authenticated user does not exist."
+            "description": "The guest of the authenticated user does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
             "description": "The Cloudflare Access token is missing or invalid."
@@ -107,11 +114,11 @@
         "description": "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified against Cloudflare's signing keys) together with the profile and the application role stored for that person.",
         "responses": {
           "200": {
-            "description": "The user, with id, name (first and last name together), firstName, lastName, birthYear, gender, email, isFamily, role (ADMIN, FAMILY_USER, GUEST_USER) and version, which an update must send back.",
+            "description": "The user, with id, name (first and last name together), firstName, lastName, birthYear, gender, email, isFamily, role (ADMIN, FAMILY_USER, GUEST_USER), avatarUrl (null without an avatar, otherwise it changes when the image does) and version, which an update must send back.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserPrincipal"
+                  "$ref": "#/components/schemas/MeResponse"
                 }
               }
             }
@@ -551,7 +558,7 @@
           "Guests"
         ],
         "summary": "Update a guest",
-        "description": "Admin only. A full replace: the body must carry the version the client read and every writable property (firstName, lastName, birthYear, gender, email, isFamily, role). A null email or role clears it, and a guest without a role has no access. Other properties in the body are ignored. An admin cannot remove their own admin role or change their own email, and the last admin with an email cannot lose the role or the email. The email is trimmed and stored in lowercase, and a blank email clears it. Errors are plain text.",
+        "description": "Admin only. A full replace: the body must carry the version the client read and every writable property (firstName, lastName, birthYear, gender, email, isFamily, role). A null email or role clears it, and a guest without a role has no access. Other properties in the body are ignored. An admin cannot remove their own admin role or change their own email, and the last admin with an email cannot lose the role or the email. The email is trimmed and stored in lowercase, and a blank email clears it. Errors are JSON with a code and a message.",
         "parameters": [
           {
             "name": "guestId",
@@ -575,22 +582,12 @@
           "required": true
         },
         "responses": {
-          "400": {
-            "description": "The body is not valid JSON, the version or a property is missing, or a value is invalid.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
           "415": {
             "description": "The Content-Type is not application/json.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -600,7 +597,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON, the version or a property is missing, or a value is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -616,14 +623,21 @@
             }
           },
           "404": {
-            "description": "The guest does not exist."
+            "description": "The guest does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "403": {
             "description": "The caller is not an admin, or has no role in the application.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -633,7 +647,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -643,7 +657,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -978,9 +992,9 @@
   "webhooks": {},
   "components": {
     "schemas": {
-      "UserPrincipal": {
+      "MeResponse": {
         "type": "object",
-        "title": "UserPrincipal",
+        "title": "MeResponse",
         "required": [
           "id",
           "name",
@@ -990,47 +1004,65 @@
           "gender",
           "email",
           "isFamily",
-          "role"
+          "role",
+          "version"
         ],
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Internal unique identifier of the guest, generated from the name, such as ola.nordmann."
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "The first and last name together."
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "description": "The first name."
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "description": "The last name."
           },
           "birthYear": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The year of birth."
           },
           "gender": {
             "type": "string",
+            "description": "The gender: MALE or FEMALE.",
             "enum": [
               "MALE",
               "FEMALE"
             ]
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "The email address the user logs in with. Only an admin can change it."
           },
           "isFamily": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True if the guest belongs to the family. Only an admin can change it."
           },
           "role": {
             "type": "string",
+            "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER. Only an admin can change it.",
             "enum": [
               "ADMIN",
               "FAMILY_USER",
               "GUEST_USER"
             ]
           },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely. Fetch /api/me again after uploading an avatar."
+          },
           "version": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The version of the guest. Send it back unchanged in PUT /api/me, an outdated version gives 412. It is not the version of the avatar."
           }
         }
       },

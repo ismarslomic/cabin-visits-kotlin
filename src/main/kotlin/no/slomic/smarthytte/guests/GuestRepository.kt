@@ -77,4 +77,7 @@ interface GuestRepository {
      * columns, so unlike [avatarById] it does not load the image bytes.
      */
     suspend fun allAvatarVersionTimes(): Map<String, Instant>
+
+    /** The avatar's version time of one guest (see [allAvatarVersionTimes]), or null without an avatar. */
+    suspend fun avatarVersionTime(guestId: String): Instant?
 }

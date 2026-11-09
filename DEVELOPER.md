@@ -56,15 +56,16 @@ These apply to every new or changed endpoint. Permissions and status codes per e
 4. **Roles with different rights get separate endpoints**, not field-level rules on one endpoint: `PUT /api/me` replaces
    the user's own profile fields, `PUT /api/guests/{guestId}` replaces everything and is admin only.
 5. **Request rules.** Write routes read the body with `receiveJsonBody<T>()` (`common/RequestBody.kt`), not `call.receive`:
-   `application/json` is required (`415`) and at most 64 KB is read (`413`). No state change on `GET`, no body-less `POST`, and no
-   CORS plugin, which together keep cross-site requests out.
-6. **Errors.** New routes answer `ApiError(code, message)` with a stable `code`. A route that still has plain-text errors is
-   converted when it is changed, so one route never mixes the two.
+   `application/json` is required (`415`) and at most 64 KB is read (`413`). The avatar upload is the one exception: it
+   reads raw bytes with `receiveBinaryBody` and requires `image/jpeg` (`415`) and at most 4 MB (`413`). No state change on `GET`,
+   no body-less `POST`, and no CORS plugin, which together keep cross-site requests out.
+6. **Errors.** Every route answers `ApiError(code, message)` with a stable `code`; one route never mixes JSON and plain-text
+   errors.
 7. **Rules live in services, not in routes.** A route maps the result of the service to a status code.
 8. **OpenAPI.** The plugin only infers a request body from `call.receive<T>()`, so declare it in `describe {}` with
    `requestBody { required = true; schema = jsonSchema<T>() }`. For a full update use `.allPropertiesRequired()`
-   (`common/OpenApiSchemas.kt`), because the generator leaves nullable properties out of `required`. Add the route to
-   `OpenApiSpecTest`, and regenerate the spec instead of editing it (see above).
+   (`common/OpenApiSchemas.kt`), because the generator leaves nullable properties out of `required`. `OpenApiSpecTest` fails for a
+   `put` or `post` without a request body and for a response without a description. Regenerate the spec instead of editing it (see above).
 9. **Native image.** A new `@Serializable` class needs its reachability entries, see `CLAUDE.md`.
 
 ### Authorization and restricting endpoints by role

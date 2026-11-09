@@ -31,7 +31,6 @@ import no.slomic.smarthytte.common.RequestBody
 import no.slomic.smarthytte.common.allPropertiesRequired
 import no.slomic.smarthytte.common.receiveJsonBody
 import no.slomic.smarthytte.common.respondApiBodyError
-import no.slomic.smarthytte.common.respondPlainBodyError
 
 // 24 hours
 private const val AVATAR_MAX_AGE_SECONDS = 86_400
@@ -94,11 +93,10 @@ fun Application.configureGuestRoutes(
 
             put(GUEST_PATH) {
                 val actor = checkNotNull(call.principal<UserPrincipal>()) { "Authenticated route without a user" }
-                val guestId = call.parameters["guestId"]
-                    ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing guestId")
+                val guestId = checkNotNull(call.parameters["guestId"]) { "The route has a guestId" }
                 val update = when (val body = call.receiveJsonBody<GuestUpdate>()) {
                     is RequestBody.Ok -> body.value
-                    else -> return@put call.respondPlainBodyError(body)
+                    else -> return@put call.respondApiBodyError(body)
                 }
 
                 when (val result = guestProfileService.update(actor, guestId, update)) {
@@ -112,7 +110,7 @@ fun Application.configureGuestRoutes(
 
 /** The guest as the API returns it, with the avatar url if it has an avatar. */
 suspend fun Guest.toResponse(guestRepository: GuestRepository): GuestResponse =
-    toResponse(guestRepository.avatarById(id)?.versionTime)
+    toResponse(guestRepository.avatarVersionTime(id))
 
 private suspend fun ApplicationCall.respondCreateResult(result: GuestCreateResult) {
     when (result) {
@@ -127,17 +125,31 @@ private suspend fun ApplicationCall.respondCreateResult(result: GuestCreateResul
     }
 }
 
-/** Responds the HTTP status that belongs to a [GuestUpdateResult] that did not update the guest. */
+/** Responds the [ApiError] that belongs to a [GuestUpdateResult] that did not update the guest. */
 suspend fun ApplicationCall.respondNotUpdated(result: GuestUpdateResult) {
     when (result) {
         is GuestUpdateResult.Updated -> error("The guest was updated")
-        GuestUpdateResult.NotFound -> respond(HttpStatusCode.NotFound)
-        is GuestUpdateResult.Forbidden -> respond(HttpStatusCode.Forbidden, result.message)
-        is GuestUpdateResult.Conflict -> respond(HttpStatusCode.Conflict, result.message)
-        is GuestUpdateResult.Invalid -> respond(HttpStatusCode.BadRequest, result.message)
-        is GuestUpdateResult.VersionMismatch -> respond(HttpStatusCode.PreconditionFailed, result.message)
+
+        GuestUpdateResult.NotFound ->
+            respond(HttpStatusCode.NotFound, ApiError(ApiError.NOT_FOUND, "The guest does not exist"))
+
+        is GuestUpdateResult.Forbidden ->
+            respond(HttpStatusCode.Forbidden, ApiError(ApiError.FORBIDDEN, result.message))
+
+        is GuestUpdateResult.Conflict ->
+            respond(HttpStatusCode.Conflict, ApiError(result.conflictCode(), result.message))
+
+        is GuestUpdateResult.Invalid ->
+            respond(HttpStatusCode.BadRequest, ApiError(ApiError.INVALID_GUEST, result.message))
+
+        is GuestUpdateResult.VersionMismatch ->
+            respond(HttpStatusCode.PreconditionFailed, ApiError(ApiError.VERSION_MISMATCH, result.message))
     }
 }
+
+/** A conflict is either the email that another guest uses, or the last admin that would be removed. */
+private fun GuestUpdateResult.Conflict.conflictCode() =
+    if (message == EMAIL_IN_USE_MESSAGE) ApiError.EMAIL_IN_USE else ApiError.LAST_ADMIN
 
 private fun Route.describeUpdateGuest() = describe {
     operationId = "updateGuest"
@@ -151,7 +163,7 @@ private fun Route.describeUpdateGuest() = describe {
         "clears it, and a guest without a role has no access. Other properties in the body are ignored. An admin " +
         "cannot remove their own admin role or change their own email, and the last admin with an email cannot lose " +
         "the role or the email. The email is trimmed and stored in lowercase, and a blank email clears it. Errors " +
-        "are plain text."
+        "are JSON with a code and a message."
     requestBody {
         description = "The version the client read and every writable property."
         required = true
