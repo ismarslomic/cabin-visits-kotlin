@@ -75,10 +75,15 @@ no owner concept). A guest without a role has no access.
 
 | Operation                                              | ADMIN | FAMILY_USER | GUEST_USER | Service (API key) |
 |:-------------------------------------------------------|:------|:------------|:-----------|:------------------|
-| Read (`GET /api/reservations`, `GET /api/reservations/{id}`) | yes   | yes         | yes        | yes               |
+| Read (`GET /api/reservations`, `GET /api/reservations/{id}`) | all   | all         | only those where the user is a guest | all               |
 | Create                                                 | yes   | yes         | no         | no                |
 | Update (incl. guests and their stays)                  | yes   | yes         | no         | no                |
 | Delete                                                 | yes   | yes         | no         | no                |
+
+**Who can read which reservation.** `ADMIN`, `FAMILY_USER` and the service (API key, the MagicMirror) read every reservation. A `GUEST_USER` reads only the reservations that have them as a guest, **for the whole stay or only part of it** (partial stays, section 9 of the plan: any `reservation_guest` link counts, whatever its `fromDate`/`toDate`). The guest of a `GUEST_USER` is the one found by the email of their Cloudflare Access login (`UserPrincipal.id`).
+- `GET /api/reservations` leaves the other reservations out for a `GUEST_USER`; the optional `from`/`to` window applies on top of that.
+- `GET /api/reservations/{id}` answers `404` for a `GUEST_USER` when the reservation does not exist **or** they are not a guest of it (the same answer, so ids cannot be probed). A `GUEST_USER` gets the whole reservation, including the other guests (`guestId`, name, `avatarUrl`), `version` and the audit fields: the response is the same for every role.
+- The filter is applied in the repository query (by guest id), not after loading every reservation.
 
 **Guests**
 
