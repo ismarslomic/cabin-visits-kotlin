@@ -21,6 +21,7 @@ import no.slomic.smarthytte.auth.configureAuthentication
 import no.slomic.smarthytte.auth.toConfig
 import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.common.runCatchingLogged
+import no.slomic.smarthytte.guests.BootstrapAdmin
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
@@ -31,6 +32,7 @@ import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.plugins.configureRouting
 import no.slomic.smarthytte.properties.ApiKeyPropertiesHolder
+import no.slomic.smarthytte.properties.BootstrapAdminPropertiesHolder
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.CloudflareAccessPropertiesHolder
 import no.slomic.smarthytte.properties.InfluxDbProperties
@@ -111,6 +113,14 @@ fun Application.module() {
     val appUserService = AppUserService(guestRepository)
     val guestProfileService = GuestProfileService(guestRepository)
     val guestAdminService = GuestAdminService(guestRepository)
+
+    // An empty database gets its first admin from BOOTSTRAP_ADMIN_*, before requests are handled
+    runBlocking {
+        BootstrapAdmin(
+            guestRepository,
+            guestAdminService,
+        ).run(loadProperties<BootstrapAdminPropertiesHolder>().bootstrapAdmin)
+    }
 
     // Run initial load BEFORE starting to handle requests and running synchronization processes in the background
     runBlocking {

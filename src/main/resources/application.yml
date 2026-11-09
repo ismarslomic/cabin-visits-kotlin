@@ -52,3 +52,10 @@ cloudflare-access:
 
 api-key:
   keys: ${API_KEYS:-}
+
+bootstrap-admin:
+  email: ${BOOTSTRAP_ADMIN_EMAIL:-}
+  first-name: ${BOOTSTRAP_ADMIN_FIRST_NAME:-}
+  last-name: ${BOOTSTRAP_ADMIN_LAST_NAME:-}
+  birth-year: ${BOOTSTRAP_ADMIN_BIRTH_YEAR:-}
+  gender: ${BOOTSTRAP_ADMIN_GENDER:-}

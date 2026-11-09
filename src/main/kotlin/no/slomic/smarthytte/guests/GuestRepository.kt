@@ -32,6 +32,9 @@ interface GuestRepository {
     suspend fun allGuests(): List<Guest>
     suspend fun guestById(id: String): Guest?
 
+    /** True if at least one guest has the [AppRole.ADMIN] role, with or without an email. */
+    suspend fun hasAdmin(): Boolean
+
     /**
      * Adds or updates the [guest]: every property of the stored guest is overwritten. Used as a fixture/import upsert,
      * the API uses [create] and [update]. The avatar is not touched, see [saveAvatar]. The [actor] goes in `created_by`

@@ -155,8 +155,12 @@ verifies. Values: `ADMIN`, `FAMILY_USER`, `GUEST_USER`.
 There is no import file any more: guests are no longer loaded at startup. An admin creates guests with `POST /api/guests`.
 The id is generated from the name (`ola.nordmann`, then `ola.nordmann-2` on a collision) and never changes. Migration `V1.8` gave the guests that existed before the same kind of id (`ismar` became `ismar.slomic`). A guest with a
 role but without an email cannot log in, and a guest that has to log in also needs an entry in the Cloudflare Access policy.
-Until the bootstrap admin exists (planned), the first admin on an empty database is added with SQL on `data/app.db`
-(take a backup first).
+**First admin (bootstrap).** On an empty database nobody can log in to create guests. At startup, if **no** guest has the `ADMIN` role (with or without an
+email) and the `BOOTSTRAP_ADMIN_*` variables are set (`EMAIL`, `FIRST_NAME`, `LAST_NAME`, `BIRTH_YEAR`, `GENDER`), the app creates that guest as `ADMIN`
+(same validation and id rule as `POST /api/guests`, `isFamily` false, audit actor `system`). A guest that already has the email gets the `ADMIN` role instead, and a
+warning with the guest id is logged. No variables, or an existing admin, do nothing. Partly set or invalid variables fail startup with a message that names
+them (also when an admin exists). It is meant for development, CI and disaster recovery; leave the variables unset in production. The admin also needs an
+entry in the Cloudflare Access policy.
 
 **Updates are full replaces (`PUT`).** `PUT /api/guests/{guestId}` takes the `version` the client read and every writable
 property; `PUT /api/me` takes the `version` and the four profile properties. A missing property is `400`, `null` for `email`
