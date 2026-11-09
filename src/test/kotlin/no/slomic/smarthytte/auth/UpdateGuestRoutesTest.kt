@@ -14,8 +14,10 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -25,6 +27,7 @@ import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestUpdateResult
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
@@ -100,6 +103,23 @@ class UpdateGuestRoutesTest :
                     it.birthYear shouldBe 1990
                     it.gender shouldBe Gender.FEMALE
                 }
+            }
+        }
+
+        "put me should respond with the avatarUrl of the user" {
+            givenUser("ola", AppRole.GUEST_USER)
+
+            withApp {
+                val token = accessToken("ola@example.com")
+
+                val withoutAvatar = put("/api/me", token, meBody)
+                Json.parseToJsonElement(withoutAvatar.bodyAsText()).jsonObject["avatarUrl"] shouldBe JsonNull
+
+                guestRepository.saveAvatar("ola", byteArrayOf(1), "ola")
+                val withAvatar = put("/api/me", token, meBody.replace("\"version\":1", "\"version\":2"))
+                withAvatar.status shouldBe HttpStatusCode.OK
+                Json.parseToJsonElement(withAvatar.bodyAsText()).jsonObject["avatarUrl"]?.jsonPrimitive?.content
+                    ?.startsWith("/api/guests/ola/avatar?v=") shouldBe true
             }
         }
 
@@ -254,6 +274,89 @@ class UpdateGuestRoutesTest :
                 put("/api/me", token, meBody).status shouldBe HttpStatusCode.PreconditionFailed
                 put("/api/me", token, meBody.replace("\"version\":1", "\"version\":2")).status shouldBe
                     HttpStatusCode.OK
+            }
+        }
+
+        "update routes should answer errors as json with a code and a message" {
+            givenUser("kari", AppRole.ADMIN)
+            givenUser("ola", AppRole.GUEST_USER)
+
+            withApp {
+                val admin = accessToken("kari@example.com")
+                val user = accessToken("ola@example.com")
+
+                suspend fun HttpResponse.shouldBeError(status: HttpStatusCode, code: String) {
+                    this.status shouldBe status
+                    val body = Json.parseToJsonElement(bodyAsText()).jsonObject
+                    body["code"]?.jsonPrimitive?.content shouldBe code
+                    body["message"]?.jsonPrimitive?.content?.isNotBlank() shouldBe true
+                }
+
+                put("/api/guests/ola", admin, "not json").shouldBeError(HttpStatusCode.BadRequest, "INVALID_REQUEST")
+                put("/api/guests/ola", admin, guestBody(firstName = "")).shouldBeError(
+                    HttpStatusCode.BadRequest,
+                    "INVALID_GUEST",
+                )
+                put("/api/guests/unknown", admin, guestBody()).shouldBeError(HttpStatusCode.NotFound, "NOT_FOUND")
+                put("/api/guests/ola", admin, guestBody(email = "kari@example.com")).shouldBeError(
+                    HttpStatusCode.Conflict,
+                    "EMAIL_IN_USE",
+                )
+                put("/api/guests/kari", admin, guestBody(id = "kari", role = "GUEST_USER")).shouldBeError(
+                    HttpStatusCode.Forbidden,
+                    "FORBIDDEN",
+                )
+                put("/api/guests/ola", admin, guestBody(version = 9)).shouldBeError(
+                    HttpStatusCode.PreconditionFailed,
+                    "VERSION_MISMATCH",
+                )
+
+                put("/api/me", user, "not json").shouldBeError(HttpStatusCode.BadRequest, "INVALID_REQUEST")
+                put(
+                    "/api/me",
+                    user,
+                    meBody.replace("Ola", ""),
+                ).shouldBeError(HttpStatusCode.BadRequest, "INVALID_GUEST")
+                put("/api/me", user, meBody.replace("\"version\":1", "\"version\":9")).shouldBeError(
+                    HttpStatusCode.PreconditionFailed,
+                    "VERSION_MISMATCH",
+                )
+                client.put("/api/me") {
+                    header(ACCESS_JWT_HEADER, user)
+                    header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
+                    setBody(meBody)
+                }.shouldBeError(HttpStatusCode.UnsupportedMediaType, "UNSUPPORTED_MEDIA_TYPE")
+                put("/api/me", user, """{"firstName":"${"x".repeat(70_000)}"}""").shouldBeError(
+                    HttpStatusCode.PayloadTooLarge,
+                    "BODY_TOO_LARGE",
+                )
+            }
+        }
+
+        "put me should respond 404 when the guest is gone before the update" {
+            givenUser("ola", AppRole.GUEST_USER)
+            val service = mockk<GuestProfileService>()
+            coEvery { service.updateOwnProfile(any(), any()) } returns GuestUpdateResult.NotFound
+
+            testApplication {
+                application {
+                    configureApiRoutes(
+                        ApiDependencies(
+                            guestRepository = guestRepository,
+                            guestProfileService = service,
+                            guestAdminService = GuestAdminService(guestRepository),
+                            statsService = mockk<StatsService>(),
+                            appUserService = AppUserService(guestRepository),
+                            cloudflareAccess = testCloudflareAccess,
+                        ),
+                    )
+                }
+
+                val response = put("/api/me", accessToken("ola@example.com"), meBody)
+
+                response.status shouldBe HttpStatusCode.NotFound
+                Json.parseToJsonElement(response.bodyAsText()).jsonObject["code"]?.jsonPrimitive?.content shouldBe
+                    "NOT_FOUND"
             }
         }
 

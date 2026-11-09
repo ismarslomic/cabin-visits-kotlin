@@ -154,7 +154,7 @@ fun Application.module() {
 fun Application.configureApiRoutes(dependencies: ApiDependencies) {
     configureRouting()
     configureAuthentication(dependencies.cloudflareAccess, dependencies.appUserService, dependencies.apiKeys)
-    configureAuthRoutes(dependencies.guestProfileService)
+    configureAuthRoutes(dependencies.guestProfileService, dependencies.guestRepository)
     configureGuestRoutes(
         dependencies.guestRepository,
         dependencies.guestProfileService,

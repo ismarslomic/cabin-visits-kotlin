@@ -107,6 +107,15 @@ class SqliteGuestRepository : GuestRepository {
             }
     }
 
+    override suspend fun avatarVersionTime(guestId: String): Instant? = suspendTransaction {
+        // Only these columns, so the image bytes are not loaded
+        GuestAvatarTable
+            .select(GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)
+            .where { GuestAvatarTable.id eq guestId }
+            .singleOrNull()
+            ?.let { it[GuestAvatarTable.updatedTime] ?: it[GuestAvatarTable.createdTime] }
+    }
+
     /** First image creates the row (`created_*`), a different image replaces it (`updated_*` and `version`). */
     private fun saveAvatarImage(guestId: String, image: ByteArray, actor: String): PersistenceResult {
         val stored: GuestAvatarEntity? = GuestAvatarEntity.findById(guestId)

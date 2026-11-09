@@ -1877,6 +1877,26 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.auth.MeResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.auth.MeResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.auth.MeResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.auth.UserPrincipal",
       "fields": [
         {

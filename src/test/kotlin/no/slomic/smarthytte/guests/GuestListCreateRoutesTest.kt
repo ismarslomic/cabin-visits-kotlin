@@ -177,6 +177,8 @@ class GuestListCreateRoutesTest :
                 wrongType.status shouldBe HttpStatusCode.UnsupportedMediaType
                 wrongType.jsonBody(wrongType.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe
                     "UNSUPPORTED_MEDIA_TYPE"
+                post(token, CREATE_BODY, ContentType.MultiPart.FormData).status shouldBe
+                    HttpStatusCode.UnsupportedMediaType
                 post(token, null, null).status shouldBe HttpStatusCode.UnsupportedMediaType
 
                 val large =

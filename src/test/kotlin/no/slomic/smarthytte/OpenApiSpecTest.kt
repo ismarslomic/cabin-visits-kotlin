@@ -3,12 +3,14 @@ package no.slomic.smarthytte
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -72,23 +74,66 @@ class OpenApiSpecTest :
             required.containsAll(listOf("email", "role", "isFamily", "version")) shouldBe true
         }
 
-        "write routes should declare their request body in the served spec" {
-            // The plugin infers a body only from call.receive<T>(), not from our receiveJsonBody<T>(), so every
-            // write route declares it in its describe {} block. The drift test above cannot see a missing body.
-            val paths = servedSpec().jsonObject.getValue("paths").jsonObject
-            listOf("put" to "/api/me", "post" to "/api/guests", "put" to "/api/guests/{guestId}").forEach { (m, path) ->
-                withClue("$m $path") {
-                    val schema = paths.getValue(path).jsonObject.getValue(m).jsonObject["requestBody"]
-                        ?.jsonObject?.get("content")?.jsonObject?.get("application/json")?.jsonObject?.get("schema")
+        "every put and post route should declare a request body in the served spec" {
+            // The plugin infers a body only from call.receive<T>(), not from our receiveJsonBody<T>() or
+            // receiveBinaryBody(), so every write route declares it in its describe {} block. The drift test above
+            // cannot see a missing body.
+            val operations = servedSpec().operations().filter { it.method in setOf("put", "post") }
 
-                    schema?.jsonObject?.get(
-                        "\$ref",
-                    )?.jsonPrimitive?.content?.startsWith("#/components/schemas/") shouldBe
-                        true
+            operations.map { it.name }.containsAll(
+                listOf(
+                    "put /api/me",
+                    "post /api/guests",
+                    "put /api/guests/{guestId}",
+                    "put /api/me/avatar",
+                    "put /api/guests/{guestId}/avatar",
+                ),
+            ) shouldBe true
+
+            operations.forEach { operation ->
+                withClue(operation.name) {
+                    val content = operation.body["requestBody"]?.jsonObject?.get("content")?.jsonObject
+                    content shouldNotBe null
+                    content!!.keys.size shouldBe 1
+
+                    val (mediaType, media) = content.entries.single()
+                    val schema = media.jsonObject["schema"]?.jsonObject
+                    when (mediaType) {
+                        "application/json" ->
+                            schema?.get("\$ref")?.jsonPrimitive?.content?.startsWith("#/components/schemas/") shouldBe
+                                true
+
+                        "image/jpeg" -> schema?.get("format")?.jsonPrimitive?.content shouldBe "binary"
+
+                        else -> error("Unexpected request media type $mediaType")
+                    }
+                }
+            }
+        }
+
+        "every response in the served spec should have a description" {
+            servedSpec().operations().forEach { operation ->
+                operation.body.getValue("responses").jsonObject.forEach { (status, response) ->
+                    withClue("${operation.name} $status") {
+                        response.jsonObject["description"]?.jsonPrimitive?.content?.isNotBlank() shouldBe true
+                    }
                 }
             }
         }
     })
+
+private class SpecOperation(val method: String, val path: String, val body: JsonObject) {
+    val name = "$method $path"
+}
+
+private val httpMethods = setOf("get", "put", "post", "delete", "patch", "head", "options")
+
+private fun JsonElement.operations(): List<SpecOperation> =
+    jsonObject.getValue("paths").jsonObject.flatMap { (path, item) ->
+        item.jsonObject.filterKeys { it in httpMethods }.map { (method, body) ->
+            SpecOperation(method, path, body.jsonObject)
+        }
+    }
 
 private fun servedSpec(): JsonElement {
     var spec: JsonElement? = null
