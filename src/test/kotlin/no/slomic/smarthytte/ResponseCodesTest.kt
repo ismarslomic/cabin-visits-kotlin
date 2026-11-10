@@ -27,6 +27,7 @@ import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
@@ -59,6 +60,7 @@ class ResponseCodesTest :
                         guestProfileService = GuestProfileService(guestRepository),
                         guestAdminService = GuestAdminService(guestRepository),
                         statsService = stats,
+                        reservationService = mockk<ReservationService>(),
                         appUserService = AppUserService(guestRepository),
                         cloudflareAccess = cloudflareAccess,
                     ),

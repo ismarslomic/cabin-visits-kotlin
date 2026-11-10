@@ -40,7 +40,9 @@ import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.reservations.configureReservationRoutes
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
@@ -110,6 +112,7 @@ fun Application.module() {
         vehicleTripRepository = vehicleTripRepository,
     )
     val statsService = StatsService(reservationRepository, guestRepository)
+    val reservationService = ReservationService(reservationRepository, guestRepository)
     val appUserService = AppUserService(guestRepository)
     val guestProfileService = GuestProfileService(guestRepository)
     val guestAdminService = GuestAdminService(guestRepository)
@@ -148,6 +151,7 @@ fun Application.module() {
             guestProfileService = guestProfileService,
             guestAdminService = guestAdminService,
             statsService = statsService,
+            reservationService = reservationService,
             appUserService = appUserService,
             cloudflareAccess = cloudflareAccess,
             apiKeys = apiKeys,
@@ -170,6 +174,7 @@ fun Application.configureApiRoutes(dependencies: ApiDependencies) {
         dependencies.guestProfileService,
         dependencies.guestAdminService,
     )
+    configureReservationRoutes(dependencies.reservationService)
     configureStatsRoutes(dependencies.statsService)
     configureOpenApi()
 }

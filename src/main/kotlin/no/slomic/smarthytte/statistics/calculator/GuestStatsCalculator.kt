@@ -7,6 +7,7 @@ import no.slomic.smarthytte.common.firstDayOfYear
 import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.VisitStatus
 import no.slomic.smarthytte.reservations.daysByGuest
 import no.slomic.smarthytte.reservations.nightsByGuest
 import no.slomic.smarthytte.reservations.visitsByGuest
@@ -15,7 +16,6 @@ import no.slomic.smarthytte.statistics.model.GuestProfileStats
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisit
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
-import no.slomic.smarthytte.statistics.model.VisitStatus
 
 fun calculateMonthlyGuestStats(
     year: Int,
@@ -198,12 +198,6 @@ private fun companionsOf(
     .mapNotNull { (companionId, sharedVisits) ->
         guestsById[companionId]?.let { Companion(it.firstName, it.isFamily, sharedVisits) }
     }
-
-private fun Reservation.visitStatus(today: LocalDate): VisitStatus = when {
-    startDate > today -> VisitStatus.UPCOMING
-    endDate > today -> VisitStatus.ONGOING
-    else -> VisitStatus.COMPLETED
-}
 
 /**
  * Statistics for one guest. [previousVisits] are the guest's visits before the reference visit, which decide

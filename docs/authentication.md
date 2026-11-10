@@ -61,13 +61,14 @@ before.
 | `PUT /api/guests/{guestId}/avatar` (any guest)                                     | yes                             | yes                     | no                       | no                       |
 | `PUT /api/me/avatar` (own avatar)                                                  | yes                             | yes                     | yes                      | yes                      |
 | `GET /api/stats`, `GET /api/stats/guests/{guestId}`, `GET /api/guests/{id}/avatar` | yes, **also API key (service)** | yes                     | yes                      | yes                      |
+| `GET /api/reservations`, `GET /api/reservations/{id}`                              | yes, **also API key (service)** | all                     | all                      | only those they are a guest of |
 | Other `GET /api/stats/**`                                                          | yes                             | yes                     | yes                      | yes                      |
 | `/`, `/metrics`, `/openapi.json`                                                   | no (unchanged)                  |                         |                          |                          |
 
 ### Planned permissions (reservation and guest API)
 
 Not implemented yet, see `.claude/plans/reservations-rest-api.md`. The plan wins until a row moves into the matrix above
-(the guest rows, including the avatar upload, have moved; the reservation rows are still planned).
+(the guest rows, including the avatar upload, and the reservation read row have moved; the reservation write rows are still planned).
 Past, current and future reservations are treated the same. `ADMIN` and `FAMILY_USER` may change any reservation (there is
 no owner concept). A guest without a role has no access.
 
@@ -83,7 +84,7 @@ no owner concept). A guest without a role has no access.
 **Who can read which reservation.** `ADMIN`, `FAMILY_USER` and the service (API key, the MagicMirror) read every reservation. A `GUEST_USER` reads only the reservations that have them as a guest, **for the whole stay or only part of it** (partial stays, section 9 of the plan: any `reservation_guest` link counts, whatever its `fromDate`/`toDate`). The guest of a `GUEST_USER` is the one found by the email of their Cloudflare Access login (`UserPrincipal.id`).
 - `GET /api/reservations` leaves the other reservations out for a `GUEST_USER`; the optional `from`/`to` window applies on top of that.
 - `GET /api/reservations/{id}` answers `404` for a `GUEST_USER` when the reservation does not exist **or** they are not a guest of it (the same answer, so ids cannot be probed). A `GUEST_USER` gets the whole reservation, including the other guests (`guestId`, name, `avatarUrl`), `version` and the audit fields: the response is the same for every role.
-- The filter is applied in the repository query (by guest id), not after loading every reservation.
+- The filter is applied in the repository query (by guest id), not after loading every reservation. (Implemented in PR 4a; `GET /api/reservations/{id}` loads the one reservation and checks its guests.)
 
 **Guests**
 

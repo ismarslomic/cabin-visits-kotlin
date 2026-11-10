@@ -17,6 +17,7 @@ import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.CloudflareAccessProperties
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.configureTestApiRoutes
 
@@ -56,6 +57,7 @@ class CloudflareAccessConfigTest :
                                 guestProfileService = mockk<GuestProfileService>(),
                                 guestAdminService = GuestAdminService(SqliteGuestRepository()),
                                 statsService = mockk<StatsService>(),
+                                reservationService = mockk<ReservationService>(),
                                 appUserService = mockk<AppUserService>(),
                                 cloudflareAccess = testCloudflareAccess.copy(jwkProvider = unreachable),
                             ),

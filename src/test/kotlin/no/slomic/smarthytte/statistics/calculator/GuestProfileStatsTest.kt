@@ -10,8 +10,8 @@ import kotlinx.datetime.toInstant
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.VisitStatus
 import no.slomic.smarthytte.statistics.model.GuestVisit
-import no.slomic.smarthytte.statistics.model.VisitStatus
 
 class GuestProfileStatsTest :
     ShouldSpec({

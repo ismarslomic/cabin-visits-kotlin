@@ -8,6 +8,7 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import io.mockk.mockk
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -28,6 +29,7 @@ import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.utils.configureTestApiRoutes
@@ -59,6 +61,7 @@ class StatsRoutesTest :
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
+                            reservationService = mockk<ReservationService>(),
                             appUserService = AppUserService(guestRepository),
                             cloudflareAccess = testCloudflareAccess,
                         ),
@@ -84,6 +87,7 @@ class StatsRoutesTest :
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
+                            reservationService = mockk<ReservationService>(),
                             appUserService = AppUserService(guestRepository),
                             cloudflareAccess = testCloudflareAccess,
                         ),
@@ -108,6 +112,7 @@ class StatsRoutesTest :
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
+                            reservationService = mockk<ReservationService>(),
                             appUserService = AppUserService(guestRepository),
                             cloudflareAccess = testCloudflareAccess,
                         ),
@@ -134,6 +139,7 @@ class StatsRoutesTest :
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
+                            reservationService = mockk<ReservationService>(),
                             appUserService = AppUserService(guestRepository),
                             cloudflareAccess = null,
                         ),
@@ -154,6 +160,7 @@ class StatsRoutesTest :
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
+                            reservationService = mockk<ReservationService>(),
                             appUserService = AppUserService(guestRepository),
                             cloudflareAccess = testCloudflareAccess,
                         ),

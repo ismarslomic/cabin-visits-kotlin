@@ -78,6 +78,16 @@ These apply to every new or changed endpoint. Permissions and status codes per e
     `OpenApiSpecTest` fails for a property or parameter without a description. A property that refers to another class
     (`$ref`) is documented by the description of that class, because a description on the property makes the generator
     emit a duplicate schema.
+11. **Every property has an example.** Every property of a request or response class (and every path or query parameter)
+    has a realistic `example` in the OpenAPI spec, so clients and the generated docs show real values: use
+    `@JsonSchema.Example("...")` on the property and `example = GenericElement(...)` on a parameter in `describe {}` (see
+    `ReservationResponse`, `listReservations`). The annotation value is a **JSON literal**: a string needs its own quotes
+    (`@JsonSchema.Example("\"2026-07-10T16:00:00Z\"")`), a number does not (`@JsonSchema.Example("3")`). Otherwise the
+    generator writes `Failed to resolve schema` into the spec instead of failing; `OpenApiSpecTest` checks for that.
+    Use values that look like production data and are valid for the property (an ISO instant for a time, an existing
+    enum value, a real-looking id), and keep related examples consistent (`endTime` after `startTime`). A property that refers to
+    another class, or to a list of one, takes its examples from that class. `OpenApiSpecTest` checks the reservation
+    routes today; the rest of the spec follows in a separate step (see the plan).
 
 ### Authorization and restricting endpoints by role
 
@@ -146,7 +156,7 @@ fun Application.configureReportRoutes() {
 `GuestProfileService.updateOwnProfile(user, update)`, and `PUT /api/guests/{guestId}` (`authorized(AppRole.ADMIN)`)
 calls `GuestProfileService.update(actor, guestId, update)`. The service decides what may be changed and validates the
 values. The route only maps the result to a status. Do not add such rules to the routes, see
-[docs/authentication.md](docs/authentication.md#changing-guest-data).
+[docs/authentication.md](docs/authentication.md#granting-access).
 
 #### Testing a restricted endpoint
 

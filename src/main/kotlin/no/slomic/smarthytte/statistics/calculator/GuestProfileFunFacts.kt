@@ -10,10 +10,10 @@ import no.slomic.smarthytte.common.DAYS_PER_YEAR
 import no.slomic.smarthytte.common.norwegianShortMonthYear
 import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.common.toNorwegianDecimal
+import no.slomic.smarthytte.reservations.VisitStatus
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisit
-import no.slomic.smarthytte.statistics.model.VisitStatus
 
 // Favourite season and record year: minimum number of visits (years) to have a favourite
 private const val MIN_VISITS_FOR_FAVOURITE_SEASON = 3

@@ -2,6 +2,8 @@ package no.slomic.smarthytte.reservations
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.atStartOfDayIn
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
@@ -9,14 +11,20 @@ import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
+import no.slomic.smarthytte.common.utcTimeZone
 import no.slomic.smarthytte.guests.GuestEntity
+import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.inSubQuery
+import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.SizedCollection
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 @Suppress("TooManyFunctions")
@@ -32,6 +40,31 @@ class SqliteReservationRepository : ReservationRepository {
 
         reservationEntities.map { daoToModel(it, tripTypes) }
     }
+
+    override suspend fun reservations(guestId: String?, from: LocalDate?, toExclusive: LocalDate?): List<Reservation> =
+        suspendTransaction {
+            var condition: Op<Boolean> = Op.TRUE
+            guestId?.let { id ->
+                val linked = ReservationGuestTable.select(ReservationGuestTable.reservation)
+                    .where { ReservationGuestTable.guest eq id }
+                condition = condition and (ReservationTable.id inSubQuery linked)
+            }
+            // UTC dates: startDate < toExclusive is startTime < the start of that day, and endDate >= from is
+            // endTime >= the start of from
+            toExclusive?.let {
+                condition =
+                    condition and (ReservationTable.startTime less it.atStartOfDayIn(utcTimeZone))
+            }
+            from?.let { condition = condition and (ReservationTable.endTime greaterEq it.atStartOfDayIn(utcTimeZone)) }
+
+            val reservationEntities = ReservationEntity.find(condition)
+                .with(ReservationEntity::guests, ReservationEntity::vehicleTrips)
+                .sortedWith(compareBy({ it.startTime }, { it.id.value }))
+
+            val tripTypes = fetchTripTypes(reservationEntities.map { it.id })
+
+            reservationEntities.map { daoToModel(it, tripTypes) }
+        }
 
     override suspend fun reservationById(id: String): Reservation? = suspendTransaction {
         val entityId = EntityID(id, ReservationTable)

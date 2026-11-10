@@ -27,8 +27,8 @@ import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.reservations.VisitStatus
 import no.slomic.smarthytte.statistics.model.FunFact
-import no.slomic.smarthytte.statistics.model.VisitStatus
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository

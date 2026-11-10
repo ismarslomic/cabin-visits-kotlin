@@ -4,7 +4,6 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
@@ -15,7 +14,6 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
-import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.contentOrNull
@@ -26,6 +24,7 @@ import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.utils.configureTestApiRoutes
@@ -64,6 +63,7 @@ class AuthRoutesTest :
                         guestProfileService = GuestProfileService(guestRepository),
                         guestAdminService = GuestAdminService(guestRepository),
                         statsService = mockk<StatsService>(),
+                        reservationService = mockk<ReservationService>(),
                         appUserService = AppUserService(guestRepository),
                         cloudflareAccess = cloudflareAccess,
                     ),
@@ -80,7 +80,7 @@ class AuthRoutesTest :
         suspend fun ApplicationTestBuilder.get(path: String, token: String?) =
             client.get(path) { token?.let { header(ACCESS_JWT_HEADER, it) } }
 
-        "me should return the versioned avatarUrl, which changes when the avatar is replaced" {
+        "me should return the avatarUrl versioned with the stored avatar version time" {
             givenUser("ola", AppRole.GUEST_USER)
 
             withApp {
@@ -89,15 +89,17 @@ class AuthRoutesTest :
                 suspend fun avatarUrl() = Json.parseToJsonElement(get("/api/me", token).bodyAsText())
                     .jsonObject["avatarUrl"]?.jsonPrimitive?.contentOrNull
 
+                suspend fun expectedUrl() =
+                    "/api/guests/ola/avatar?v=${guestRepository.avatarById("ola")!!.versionTime.toEpochMilliseconds()}"
+
                 avatarUrl() shouldBe null
 
                 guestRepository.saveAvatar("ola", byteArrayOf(1), "ola")
-                val first = avatarUrl()
-                first!!.startsWith("/api/guests/ola/avatar?v=") shouldBe true
+                avatarUrl() shouldBe expectedUrl()
 
-                delay(5)
+                // The version time of a replaced avatar is covered by the repository audit tests
                 guestRepository.saveAvatar("ola", byteArrayOf(2), "ola")
-                avatarUrl() shouldNotBe first
+                avatarUrl() shouldBe expectedUrl()
             }
         }
 

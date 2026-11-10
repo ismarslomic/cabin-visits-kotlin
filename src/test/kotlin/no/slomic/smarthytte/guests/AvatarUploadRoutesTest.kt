@@ -28,6 +28,7 @@ import no.slomic.smarthytte.auth.CloudflareAccessConfig
 import no.slomic.smarthytte.auth.accessToken
 import no.slomic.smarthytte.auth.testCloudflareAccess
 import no.slomic.smarthytte.auth.testGuest
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.utils.configureTestApiRoutes
@@ -60,6 +61,7 @@ class AvatarUploadRoutesTest :
                         guestProfileService = GuestProfileService(repository),
                         guestAdminService = GuestAdminService(repository),
                         statsService = mockk<StatsService>(),
+                        reservationService = mockk<ReservationService>(),
                         appUserService = AppUserService(repository),
                         cloudflareAccess = cloudflareAccess,
                     ),

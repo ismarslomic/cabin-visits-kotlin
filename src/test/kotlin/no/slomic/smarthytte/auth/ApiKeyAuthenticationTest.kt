@@ -14,6 +14,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import io.mockk.mockk
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.guests.AppRole
@@ -21,6 +22,7 @@ import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.ApiKeyProperties
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
@@ -69,6 +71,7 @@ class ApiKeyAuthenticationTest :
                         guestProfileService = GuestProfileService(guestRepository),
                         guestAdminService = GuestAdminService(guestRepository),
                         statsService = statsService,
+                        reservationService = mockk<ReservationService>(),
                         appUserService = AppUserService(guestRepository),
                         cloudflareAccess = cloudflareAccess,
                         apiKeys = apiKeys,

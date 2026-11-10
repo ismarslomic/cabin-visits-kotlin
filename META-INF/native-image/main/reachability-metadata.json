@@ -1877,6 +1877,86 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.reservations.ReservationCheckInResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationCheckInResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationCheckInResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationCheckOutResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationCheckOutResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationCheckOutResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationGuestResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationGuestResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationGuestResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.auth.MeResponse",
       "fields": [
         {
