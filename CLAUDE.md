@@ -44,15 +44,15 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 
 ## API- og gjestekonvensjoner
 
-- API-prinsipper (opprett med `POST`, oppdater med `PUT`, `version`, feilformat, OpenAPI) står i «API design principles» i `DEVELOPER.md`. Les dem før du lager eller endrer en rute.
+- API-prinsipper (opprett med `POST`, oppdater med `PUT` som full erstatning, `version` med 412/400, feilformat `ApiError`, OpenAPI, bodygrenser og `415`) står i «API design principles» i `DEVELOPER.md`. Les dem før du lager eller endrer en rute. Skrive-ruter avviker kun for avatar-opplasting (rå `image/jpeg`, ingen `version`).
 - Rollen heter `role` overalt (JSON, Kotlin, DB). Typen heter fortsatt `AppRole`.
 - En e-post tilhører én gjest (unik indeks `uq_guest_email`, case-insensitiv).
 - `ignoreUnknownKeys` er på globalt, så ukjente felt i request body ignoreres.
-- Oppdateringer er fulle erstatninger med `PUT` (ikke `PATCH`): body har alle skrivbare felt og `version` (manglende felt gir 400, utdatert versjon 412). `null` for `email` og `role` fjerner verdien. Felt som ikke kan skrives ignoreres. Opprett er `POST` på samlingen.
-- `PUT /api/me` erstatter kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `PUT /api/guests/{guestId}`. Skrive-ruter krever `application/json` (415 ellers) og leser høyst 64 KB (413); unntaket er avatar-opplasting (`PUT /api/me/avatar`, `PUT /api/guests/{guestId}/avatar`), som tar rå `image/jpeg` på høyst 4 MB og har ingen `version`.
+- `null` for `email` og `role` i `PUT /api/guests/{guestId}` fjerner verdien; felt som ikke kan skrives ignoreres.
+- `PUT /api/me` erstatter kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `PUT /api/guests/{guestId}`.
 - Alle gjesteruter svarer feil som JSON `ApiError(code, message)`. `GET /api/me` og `PUT /api/me` svarer med `MeResponse` (inkl. `avatarUrl`).
 - `configureApiRoutes` tar en `ApiDependencies`; nye tjenester legges til der.
-- **Krav:** hver property i en request- eller respons-klasse (og hver path-/query-parameter) skal ha en beskrivelse i OpenAPI: `@JsonSchema.Description("...")` på propertyen, `description` på parameteren i `describe {}`. Beskriv hva verdien betyr, grenser og format, når den er `null`, og hva den ikke må forveksles med. `OpenApiSpecTest` feiler ellers. Se prinsipp 10 i `DEVELOPER.md`.
+- **Krav:** hver property i en request- eller respons-klasse og hver path-/query-parameter skal ha både `description` og `example` i OpenAPI (`@JsonSchema.Description` / `@JsonSchema.Example` på propertyen, `description` / `example` på parameteren i `describe {}`). `@JsonSchema.Example` er en JSON-literal: en streng trenger egne anførselstegn. `OpenApiSpecTest` feiler hvis en beskrivelse mangler, og for rutene under `/api/reservations` også et eksempel. Detaljer i prinsipp 10 og 11 i `DEVELOPER.md`.
 - Endrer du auth- eller gjesteatferd, oppdater `docs/authentication.md`.
 
 ## Testdekning (Codecov)
