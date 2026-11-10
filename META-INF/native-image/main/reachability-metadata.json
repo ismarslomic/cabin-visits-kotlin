@@ -2065,6 +2065,66 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.reservations.ReservationCreate",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationCreate$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationCreate$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationGuestRef",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationGuestRef$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationGuestRef$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationUpdate",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationUpdate$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.reservations.ReservationUpdate$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.guests.GuestCreate",
       "fields": [
         {

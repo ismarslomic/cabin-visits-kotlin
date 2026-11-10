@@ -19,6 +19,7 @@ import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.auth.configureAuthRoutes
 import no.slomic.smarthytte.auth.configureAuthentication
 import no.slomic.smarthytte.auth.toConfig
+import no.slomic.smarthytte.calendar.pendingCalendarOperations
 import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.BootstrapAdmin
@@ -112,7 +113,7 @@ fun Application.module() {
         vehicleTripRepository = vehicleTripRepository,
     )
     val statsService = StatsService(reservationRepository, guestRepository)
-    val reservationService = ReservationService(reservationRepository, guestRepository)
+    val reservationService = createReservationService(reservationRepository, guestRepository, checkInOutService)
     val appUserService = AppUserService(guestRepository)
     val guestProfileService = GuestProfileService(guestRepository)
     val guestAdminService = GuestAdminService(guestRepository)
@@ -158,6 +159,18 @@ fun Application.module() {
         ),
     )
 }
+
+/** The reservation service with the calendar outbox depth and the derivation of check-in/out after a write. */
+private fun createReservationService(
+    reservationRepository: ReservationRepository,
+    guestRepository: GuestRepository,
+    checkInOutService: CheckInOutService,
+) = ReservationService(
+    reservationRepository = reservationRepository,
+    guestRepository = guestRepository,
+    pendingCalendarOperations = ::pendingCalendarOperations,
+    onTimesChanged = checkInOutService::updateCheckInOutStatusForReservation,
+)
 
 /**
  * Installs every HTTP route group served by the application, except monitoring ([configureMonitoring]).
