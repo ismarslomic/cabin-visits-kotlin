@@ -86,8 +86,9 @@ These apply to every new or changed endpoint. Permissions and status codes per e
     generator writes `Failed to resolve schema` into the spec instead of failing; `OpenApiSpecTest` checks for that.
     Use values that look like production data and are valid for the property (an ISO instant for a time, an existing
     enum value, a real-looking id), and keep related examples consistent (`endTime` after `startTime`). A property that refers to
-    another class, or to a list of one, takes its examples from that class. `OpenApiSpecTest` checks the reservation
-    routes today; the rest of the spec follows in a separate step (see the plan).
+    another class, or to a list of one, takes its examples from that class. `OpenApiSpecTest` fails for a
+    property or parameter without an example, and for an example that does not match the type or the enum values of its
+    property.
 
 ### Authorization and restricting endpoints by role
 

@@ -14,14 +14,19 @@ data class MeUpdate(
     @JsonSchema.Description(
         "The version of the guest that the client read, from GET /api/me. An outdated version gives 412.",
     )
+    @JsonSchema.Example("3")
     val version: Short,
     @JsonSchema.Description("The first name, 1-20 characters. Leading and trailing spaces are removed.")
+    @JsonSchema.Example("\"Ola\"")
     val firstName: String,
     @JsonSchema.Description("The last name, 1-20 characters. Leading and trailing spaces are removed.")
+    @JsonSchema.Example("\"Nordmann\"")
     val lastName: String,
     @JsonSchema.Description("The year of birth.")
+    @JsonSchema.Example("1985")
     val birthYear: Short,
     @JsonSchema.Description("The gender: MALE or FEMALE.")
+    @JsonSchema.Example("\"MALE\"")
     val gender: Gender,
 ) {
     /** The values of the guest with the four profile properties replaced and every other property unchanged. */

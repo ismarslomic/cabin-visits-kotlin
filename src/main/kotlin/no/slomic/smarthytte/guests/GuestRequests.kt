@@ -13,25 +13,33 @@ data class GuestUpdate(
     @JsonSchema.Description(
         "The version of the guest that the client read, from GET /api/guests. An outdated version gives 412.",
     )
+    @JsonSchema.Example("3")
     val version: Short,
     @JsonSchema.Description("The first name, 1-20 characters.")
+    @JsonSchema.Example("\"Ola\"")
     val firstName: String,
     @JsonSchema.Description("The last name, 1-20 characters.")
+    @JsonSchema.Example("\"Nordmann\"")
     val lastName: String,
     @JsonSchema.Description("The year of birth.")
+    @JsonSchema.Example("1985")
     val birthYear: Short,
     @JsonSchema.Description("The gender: MALE or FEMALE.")
+    @JsonSchema.Example("\"MALE\"")
     val gender: Gender,
     @JsonSchema.Description(
         "The email address the guest logs in with, or null to clear it. Trimmed and stored in lowercase, and a " +
             "blank email clears it. One guest per email.",
     )
+    @JsonSchema.Example("\"ola.nordmann@example.com\"")
     val email: String?,
     @JsonSchema.Description("True if the guest belongs to the family.")
+    @JsonSchema.Example("true")
     val isFamily: Boolean,
     @JsonSchema.Description(
         "The role in the application: ADMIN, FAMILY_USER or GUEST_USER, or null for no access.",
     )
+    @JsonSchema.Example("\"ADMIN\"")
     val role: AppRole?,
 ) {
     fun toProperties() = GuestProperties(
@@ -52,23 +60,30 @@ data class GuestUpdate(
 @Serializable
 data class GuestCreate(
     @JsonSchema.Description("The first name, 1-20 characters.")
+    @JsonSchema.Example("\"Ola\"")
     val firstName: String,
     @JsonSchema.Description("The last name, 1-20 characters.")
+    @JsonSchema.Example("\"Nordmann\"")
     val lastName: String,
     @JsonSchema.Description("The year of birth.")
+    @JsonSchema.Example("1985")
     val birthYear: Short,
     @JsonSchema.Description("The gender: MALE or FEMALE.")
+    @JsonSchema.Example("\"MALE\"")
     val gender: Gender,
     @JsonSchema.Description(
         "The email address the guest logs in with. Optional: a guest without an email cannot log in. Trimmed and " +
             "stored in lowercase. One guest per email.",
     )
+    @JsonSchema.Example("\"ola.nordmann@example.com\"")
     val email: String? = null,
     @JsonSchema.Description("True if the guest belongs to the family. Optional, default false.")
+    @JsonSchema.Example("true")
     val isFamily: Boolean = false,
     @JsonSchema.Description(
         "The role in the application: ADMIN, FAMILY_USER or GUEST_USER. Optional: no role means no access.",
     )
+    @JsonSchema.Example("\"ADMIN\"")
     val role: AppRole? = null,
 ) {
     fun toProperties() = GuestProperties(

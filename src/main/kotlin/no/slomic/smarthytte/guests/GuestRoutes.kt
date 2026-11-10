@@ -6,6 +6,7 @@ import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.openapi.GenericElement
 import io.ktor.openapi.JsonSchema
 import io.ktor.openapi.JsonType
 import io.ktor.openapi.jsonSchema
@@ -154,7 +155,10 @@ private fun Route.describeUpdateGuest() = describe {
     operationId = "updateGuest"
     tag("Guests")
     parameters {
-        path("guestId") { description = "Internal unique identifier of the guest." }
+        path("guestId") {
+            description = "Internal unique identifier of the guest."
+            example = GenericElement("ola.nordmann")
+        }
     }
     summary = "Update a guest"
     description = "Admin only. A full replace: the body must carry the version the client read and every " +
@@ -230,7 +234,10 @@ private fun Route.describeGuestAvatar() = describe {
     operationId = "getGuestAvatar"
     tag("Guests")
     parameters {
-        path("guestId") { description = "Internal unique identifier of the guest." }
+        path("guestId") {
+            description = "Internal unique identifier of the guest."
+            example = GenericElement("ola.nordmann")
+        }
     }
     summary = "Guest avatar"
     description = "Returns the guest's avatar as a JPEG image. The response has an ETag and Cache-Control header, " +

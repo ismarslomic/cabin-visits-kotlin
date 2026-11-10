@@ -14,8 +14,10 @@ data class ApiError(
             "FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, BODY_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE or " +
             "TEMPORARILY_UNAVAILABLE. Clients map it to their own texts.",
     )
+    @JsonSchema.Example("\"VERSION_MISMATCH\"")
     val code: String,
     @JsonSchema.Description("English description of the error for developers. Not meant to be shown to users.")
+    @JsonSchema.Example("\"The guest has changed since the version in the body\"")
     val message: String,
 ) {
     companion object {

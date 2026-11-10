@@ -159,7 +159,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "ola.nordmann"
           }
         ],
         "requestBody": {
@@ -252,7 +253,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "ola.nordmann"
           }
         ],
         "responses": {
@@ -545,7 +547,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "ola.nordmann"
           }
         ],
         "requestBody": {
@@ -841,7 +844,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "ola.nordmann"
           }
         ],
         "responses": {
@@ -961,7 +965,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "example": 2026
           }
         ],
         "responses": {
@@ -1012,7 +1017,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "example": 2026
           },
           {
             "name": "month",
@@ -1023,7 +1029,8 @@
               "type": "integer",
               "maximum": 12.0,
               "minimum": 1.0
-            }
+            },
+            "example": 7
           }
         ],
         "responses": {
@@ -1113,27 +1120,33 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Internal unique identifier of the guest, generated from the name, such as ola.nordmann."
+            "description": "Internal unique identifier of the guest, generated from the name, such as ola.nordmann.",
+            "example": "ola.nordmann"
           },
           "name": {
             "type": "string",
-            "description": "The first and last name together."
+            "description": "The first and last name together.",
+            "example": "Ola Nordmann"
           },
           "firstName": {
             "type": "string",
-            "description": "The first name."
+            "description": "The first name.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "The last name."
+            "description": "The last name.",
+            "example": "Nordmann"
           },
           "birthYear": {
             "type": "integer",
-            "description": "The year of birth."
+            "description": "The year of birth.",
+            "example": 1985
           },
           "gender": {
             "type": "string",
             "description": "The gender: MALE or FEMALE.",
+            "example": "MALE",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1141,15 +1154,18 @@
           },
           "email": {
             "type": "string",
-            "description": "The email address the user logs in with. Only an admin can change it."
+            "description": "The email address the user logs in with. Only an admin can change it.",
+            "example": "ola.nordmann@example.com"
           },
           "isFamily": {
             "type": "boolean",
-            "description": "True if the guest belongs to the family. Only an admin can change it."
+            "description": "True if the guest belongs to the family. Only an admin can change it.",
+            "example": true
           },
           "role": {
             "type": "string",
             "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER. Only an admin can change it.",
+            "example": "ADMIN",
             "enum": [
               "ADMIN",
               "FAMILY_USER",
@@ -1161,11 +1177,13 @@
               "string",
               "null"
             ],
-            "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely. Fetch /api/me again after uploading an avatar."
+            "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely. Fetch /api/me again after uploading an avatar.",
+            "example": "/api/guests/ola.nordmann/avatar?v=1767225600000"
           },
           "version": {
             "type": "integer",
-            "description": "The version of the guest. Send it back unchanged in PUT /api/me, an outdated version gives 412. It is not the version of the avatar."
+            "description": "The version of the guest. Send it back unchanged in PUT /api/me, an outdated version gives 412. It is not the version of the avatar.",
+            "example": 3
           }
         }
       },
@@ -1182,23 +1200,28 @@
         "properties": {
           "version": {
             "type": "integer",
-            "description": "The version of the guest that the client read, from GET /api/me. An outdated version gives 412."
+            "description": "The version of the guest that the client read, from GET /api/me. An outdated version gives 412.",
+            "example": 3
           },
           "firstName": {
             "type": "string",
-            "description": "The first name, 1-20 characters. Leading and trailing spaces are removed."
+            "description": "The first name, 1-20 characters. Leading and trailing spaces are removed.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "The last name, 1-20 characters. Leading and trailing spaces are removed."
+            "description": "The last name, 1-20 characters. Leading and trailing spaces are removed.",
+            "example": "Nordmann"
           },
           "birthYear": {
             "type": "integer",
-            "description": "The year of birth."
+            "description": "The year of birth.",
+            "example": 1985
           },
           "gender": {
             "type": "string",
             "description": "The gender: MALE or FEMALE.",
+            "example": "MALE",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1216,11 +1239,13 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Stable machine-readable reason, for example INVALID_REQUEST, INVALID_GUEST, INVALID_IMAGE, NOT_FOUND, FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, BODY_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE or TEMPORARILY_UNAVAILABLE. Clients map it to their own texts."
+            "description": "Stable machine-readable reason, for example INVALID_REQUEST, INVALID_GUEST, INVALID_IMAGE, NOT_FOUND, FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, BODY_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE or TEMPORARILY_UNAVAILABLE. Clients map it to their own texts.",
+            "example": "VERSION_MISMATCH"
           },
           "message": {
             "type": "string",
-            "description": "English description of the error for developers. Not meant to be shown to users."
+            "description": "English description of the error for developers. Not meant to be shown to users.",
+            "example": "The guest has changed since the version in the body"
           }
         }
       },
@@ -1241,23 +1266,28 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Internal unique identifier of the guest, generated from the name, such as ola.nordmann."
+            "description": "Internal unique identifier of the guest, generated from the name, such as ola.nordmann.",
+            "example": "ola.nordmann"
           },
           "firstName": {
             "type": "string",
-            "description": "The first name."
+            "description": "The first name.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "The last name."
+            "description": "The last name.",
+            "example": "Nordmann"
           },
           "birthYear": {
             "type": "integer",
-            "description": "The year of birth."
+            "description": "The year of birth.",
+            "example": 1985
           },
           "gender": {
             "type": "string",
             "description": "The gender: MALE or FEMALE.",
+            "example": "MALE",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1268,11 +1298,13 @@
               "string",
               "null"
             ],
-            "description": "The email address the guest logs in with, or null if the guest has none."
+            "description": "The email address the guest logs in with, or null if the guest has none.",
+            "example": "ola.nordmann@example.com"
           },
           "isFamily": {
             "type": "boolean",
-            "description": "True if the guest belongs to the family."
+            "description": "True if the guest belongs to the family.",
+            "example": true
           },
           "role": {
             "type": [
@@ -1280,6 +1312,7 @@
               "null"
             ],
             "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER, or null for no access.",
+            "example": "ADMIN",
             "enum": [
               "ADMIN",
               "FAMILY_USER",
@@ -1291,20 +1324,24 @@
               "string",
               "null"
             ],
-            "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely."
+            "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely.",
+            "example": "/api/guests/ola.nordmann/avatar?v=1767225600000"
           },
           "version": {
             "type": "integer",
-            "description": "The version of the guest. Send it back unchanged in PUT /api/guests/{guestId}, an outdated version gives 412. It is not the version of the avatar."
+            "description": "The version of the guest. Send it back unchanged in PUT /api/guests/{guestId}, an outdated version gives 412. It is not the version of the avatar.",
+            "example": 3
           },
           "createdTime": {
             "type": "string",
             "description": "When the guest was created (UTC).",
+            "example": "2026-06-01T09:15:00Z",
             "format": "date-time"
           },
           "createdBy": {
             "type": "string",
-            "description": "Who created the guest: a guest id, or the literal system, which is not a guest."
+            "description": "Who created the guest: a guest id, or the literal system, which is not a guest.",
+            "example": "ola.nordmann"
           },
           "updatedTime": {
             "type": [
@@ -1312,6 +1349,7 @@
               "null"
             ],
             "description": "When the guest was last changed (UTC), or null if never changed.",
+            "example": "2026-06-20T18:30:00Z",
             "format": "date-time"
           },
           "updatedBy": {
@@ -1319,7 +1357,8 @@
               "string",
               "null"
             ],
-            "description": "Who last changed the guest: a guest id, or the literal system, which is not a guest. Null if never changed."
+            "description": "Who last changed the guest: a guest id, or the literal system, which is not a guest. Null if never changed.",
+            "example": "kari.nordmann"
           }
         }
       },
@@ -1335,19 +1374,23 @@
         "properties": {
           "firstName": {
             "type": "string",
-            "description": "The first name, 1-20 characters."
+            "description": "The first name, 1-20 characters.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "The last name, 1-20 characters."
+            "description": "The last name, 1-20 characters.",
+            "example": "Nordmann"
           },
           "birthYear": {
             "type": "integer",
-            "description": "The year of birth."
+            "description": "The year of birth.",
+            "example": 1985
           },
           "gender": {
             "type": "string",
             "description": "The gender: MALE or FEMALE.",
+            "example": "MALE",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1358,11 +1401,13 @@
               "string",
               "null"
             ],
-            "description": "The email address the guest logs in with. Optional: a guest without an email cannot log in. Trimmed and stored in lowercase. One guest per email."
+            "description": "The email address the guest logs in with. Optional: a guest without an email cannot log in. Trimmed and stored in lowercase. One guest per email.",
+            "example": "ola.nordmann@example.com"
           },
           "isFamily": {
             "type": "boolean",
-            "description": "True if the guest belongs to the family. Optional, default false."
+            "description": "True if the guest belongs to the family. Optional, default false.",
+            "example": true
           },
           "role": {
             "type": [
@@ -1370,6 +1415,7 @@
               "null"
             ],
             "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER. Optional: no role means no access.",
+            "example": "ADMIN",
             "enum": [
               "ADMIN",
               "FAMILY_USER",
@@ -1394,23 +1440,28 @@
         "properties": {
           "version": {
             "type": "integer",
-            "description": "The version of the guest that the client read, from GET /api/guests. An outdated version gives 412."
+            "description": "The version of the guest that the client read, from GET /api/guests. An outdated version gives 412.",
+            "example": 3
           },
           "firstName": {
             "type": "string",
-            "description": "The first name, 1-20 characters."
+            "description": "The first name, 1-20 characters.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "The last name, 1-20 characters."
+            "description": "The last name, 1-20 characters.",
+            "example": "Nordmann"
           },
           "birthYear": {
             "type": "integer",
-            "description": "The year of birth."
+            "description": "The year of birth.",
+            "example": 1985
           },
           "gender": {
             "type": "string",
             "description": "The gender: MALE or FEMALE.",
+            "example": "MALE",
             "enum": [
               "MALE",
               "FEMALE"
@@ -1421,11 +1472,13 @@
               "string",
               "null"
             ],
-            "description": "The email address the guest logs in with, or null to clear it. Trimmed and stored in lowercase, and a blank email clears it. One guest per email."
+            "description": "The email address the guest logs in with, or null to clear it. Trimmed and stored in lowercase, and a blank email clears it. One guest per email.",
+            "example": "ola.nordmann@example.com"
           },
           "isFamily": {
             "type": "boolean",
-            "description": "True if the guest belongs to the family."
+            "description": "True if the guest belongs to the family.",
+            "example": true
           },
           "role": {
             "type": [
@@ -1433,6 +1486,7 @@
               "null"
             ],
             "description": "The role in the application: ADMIN, FAMILY_USER or GUEST_USER, or null for no access.",
+            "example": "ADMIN",
             "enum": [
               "ADMIN",
               "FAMILY_USER",
@@ -1636,43 +1690,50 @@
         "properties": {
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations the guest was part of that started in the period (arrival date)."
+            "description": "Number of reservations the guest was part of that started in the period (arrival date).",
+            "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Number of days the guest was present at the cabin in the period, up to and including today."
+            "description": "Number of days the guest was present at the cabin in the period, up to and including today.",
+            "example": 14
           },
           "totalNights": {
             "type": "integer",
-            "description": "Number of nights of the reservations the guest was part of that started in the period (full stay, also for an ongoing stay). Same counting as totalVisits."
+            "description": "Number of nights of the reservations the guest was part of that started in the period (full stay, also for an ongoing stay). Same counting as totalVisits.",
+            "example": 10
           },
           "visitsRank": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Guest's rank by total visits among all guests, family included, in the period (1 = most). Tied guests share rank. Null if no visits."
+            "description": "Guest's rank by total visits among all guests, family included, in the period (1 = most). Tied guests share rank. Null if no visits.",
+            "example": 3
           },
           "daysRank": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Guest's rank by total days among all guests, family included, in the period (1 = most). Tied guests share rank. Null if no visits."
+            "description": "Guest's rank by total days among all guests, family included, in the period (1 = most). Tied guests share rank. Null if no visits.",
+            "example": 2
           },
           "visitsRankAmongGuests": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Guest's rank by total visits among guests only, family members excluded (1 = most). Tied guests share rank. Null for family members and if no visits."
+            "description": "Guest's rank by total visits among guests only, family members excluded (1 = most). Tied guests share rank. Null for family members and if no visits.",
+            "example": 2
           },
           "daysRankAmongGuests": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Guest's rank by total days among guests only, family members excluded (1 = most). Tied guests share rank. Null for family members and if no visits."
+            "description": "Guest's rank by total days among guests only, family members excluded (1 = most). Tied guests share rank. Null for family members and if no visits.",
+            "example": 1
           }
         }
       },
@@ -1694,34 +1755,41 @@
         "properties": {
           "guestId": {
             "type": "string",
-            "description": "Internal unique identifier of the guest."
+            "description": "Internal unique identifier of the guest.",
+            "example": "ola.nordmann"
           },
           "firstName": {
             "type": "string",
-            "description": "Guest's first name."
+            "description": "Guest's first name.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "Guest's last name."
+            "description": "Guest's last name.",
+            "example": "Nordmann"
           },
           "age": {
             "type": "integer",
-            "description": "Guest's age in the current year (current year - birthYear)."
+            "description": "Guest's age in the current year (current year - birthYear).",
+            "example": 38
           },
           "isFamily": {
             "type": "boolean",
-            "description": "True if the guest is a family member (owner of the cabin), false for other guests."
+            "description": "True if the guest is a family member (owner of the cabin), false for other guests.",
+            "example": true
           },
           "avatarUrl": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Relative URL to the guest's avatar image (JPEG), see GET /api/guests/{guestId}/avatar. Null if the guest has no avatar."
+            "description": "Relative URL to the guest's avatar image (JPEG), see GET /api/guests/{guestId}/avatar. Null if the guest has no avatar.",
+            "example": "/api/guests/ola.nordmann/avatar?v=1767225600000"
           },
           "isFirstVisit": {
             "type": "boolean",
-            "description": "True if the guest has no reservations that started before this reservation. In a guest profile this is true only when the guest is at the cabin right now and the ongoing visit is the first one."
+            "description": "True if the guest has no reservations that started before this reservation. In a guest profile this is true only when the guest is at the cabin right now and the ongoing visit is the first one.",
+            "example": false
           },
           "firstVisitDate": {
             "type": [
@@ -1729,6 +1797,7 @@
               "null"
             ],
             "description": "Start date of the guest's first started reservation. Null if the guest has no started reservations.",
+            "example": "2019-02-16",
             "format": "date"
           },
           "lastVisitDate": {
@@ -1737,11 +1806,17 @@
               "null"
             ],
             "description": "End date of the guest's last completed visit before this reservation. Null if there is no completed visit. In a guest profile: the last visit before the current one if the guest is at the cabin right now, otherwise the last completed visit.",
+            "example": "2026-04-05",
             "format": "date"
           },
           "yearsVisited": {
             "type": "array",
             "description": "Years in which the guest has started reservations, in descending order.",
+            "example": [
+              2026,
+              2025,
+              2023
+            ],
             "items": {
               "type": "integer"
             }
@@ -1773,11 +1848,13 @@
           "startDate": {
             "type": "string",
             "description": "First day of the current reservation (check-in date, inclusive).",
+            "example": "2026-07-10",
             "format": "date"
           },
           "endDate": {
             "type": "string",
             "description": "Last day of the current reservation (check-out date). The reservation is still current on this day, and the cabin is free the day after.",
+            "example": "2026-07-12",
             "format": "date"
           },
           "guests": {
@@ -1789,15 +1866,18 @@
           },
           "remainingNights": {
             "type": "integer",
-            "description": "Number of nights remaining in the current reservation, from today until check-out. 0 on the check-out day."
+            "description": "Number of nights remaining in the current reservation, from today until check-out. 0 on the check-out day.",
+            "example": 1
           },
           "reservationOrder": {
             "type": "integer",
-            "description": "Order number of the current reservation when all reservations are sorted ascending on start date, starting at 1."
+            "description": "Order number of the current reservation when all reservations are sorted ascending on start date, starting at 1.",
+            "example": 139
           },
           "reservationOrderInYear": {
             "type": "integer",
-            "description": "Order number of the current reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1."
+            "description": "Order number of the current reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1.",
+            "example": 12
           }
         }
       },
@@ -1820,11 +1900,13 @@
           "startDate": {
             "type": "string",
             "description": "First day of the next reservation (check-in date, inclusive).",
+            "example": "2026-07-10",
             "format": "date"
           },
           "endDate": {
             "type": "string",
             "description": "Last day of the next reservation (check-out date, exclusive).",
+            "example": "2026-07-12",
             "format": "date"
           },
           "guests": {
@@ -1836,15 +1918,18 @@
           },
           "daysUntil": {
             "type": "integer",
-            "description": "Number of days from today until the next reservation starts."
+            "description": "Number of days from today until the next reservation starts.",
+            "example": 12
           },
           "reservationOrder": {
             "type": "integer",
-            "description": "Order number of the next reservation when all reservations are sorted ascending on start date, starting at 1."
+            "description": "Order number of the next reservation when all reservations are sorted ascending on start date, starting at 1.",
+            "example": 139
           },
           "reservationOrderInYear": {
             "type": "integer",
-            "description": "Order number of the next reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1."
+            "description": "Order number of the next reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1.",
+            "example": 12
           }
         }
       },
@@ -1857,11 +1942,13 @@
         "properties": {
           "text": {
             "type": "string",
-            "description": "Part of the text."
+            "description": "Part of the text.",
+            "example": "12 ganger"
           },
           "kind": {
             "type": "string",
             "description": "What the part is, so the client can style it. Omitted for plain text.",
+            "example": "stat",
             "enum": [
               "text",
               "stat",
@@ -1883,15 +1970,18 @@
               "string",
               "null"
             ],
-            "description": "Guest the fact is about. Null for facts about the whole group or the cabin."
+            "description": "Guest the fact is about. Null for facts about the whole group or the cabin.",
+            "example": "ola.nordmann"
           },
           "text": {
             "type": "string",
-            "description": "Ready-to-display text in Norwegian. Always equal to the segments joined together."
+            "description": "Ready-to-display text in Norwegian. Always equal to the segments joined together.",
+            "example": "Ola har vært på hytta 12 ganger"
           },
           "priority": {
             "type": "integer",
-            "description": "Importance from 0 to 100, higher is more important. Lists are sorted by priority, descending."
+            "description": "Importance from 0 to 100, higher is more important. Lists are sorted by priority, descending.",
+            "example": 80
           },
           "segments": {
             "type": "array",
@@ -1917,7 +2007,8 @@
         "properties": {
           "isOccupied": {
             "type": "boolean",
-            "description": "True if the cabin is currently occupied: a reservation has started and its check-out date has not passed, so also on the check-out day."
+            "description": "True if the cabin is currently occupied: a reservation has started and its check-out date has not passed, so also on the check-out day.",
+            "example": true
           },
           "currentReservation": {
             "$ref": "#/components/schemas/CurrentReservationInfo"
@@ -1927,15 +2018,18 @@
           },
           "allTimeVisits": {
             "type": "integer",
-            "description": "Total number of reservations that have started, across all years. Future bookings are excluded."
+            "description": "Total number of reservations that have started, across all years. Future bookings are excluded.",
+            "example": 139
           },
           "allTimeNights": {
             "type": "integer",
-            "description": "Total number of nights across all reservations that have started. Future bookings are excluded."
+            "description": "Total number of nights across all reservations that have started. Future bookings are excluded.",
+            "example": 412
           },
           "allTimeUniqueGuests": {
             "type": "integer",
-            "description": "Total number of unique guests registered in the system."
+            "description": "Total number of unique guests registered in the system.",
+            "example": 31
           },
           "guestFunFacts": {
             "type": "array",
@@ -1974,24 +2068,29 @@
           "startDate": {
             "type": "string",
             "description": "First day of the visit (check-in date, inclusive).",
+            "example": "2026-07-10",
             "format": "date"
           },
           "endDate": {
             "type": "string",
             "description": "Last day of the visit (check-out date). Same semantics as the end date of a reservation.",
+            "example": "2026-07-12",
             "format": "date"
           },
           "days": {
             "type": "integer",
-            "description": "Number of calendar days of the whole visit, including arrival and departure day."
+            "description": "Number of calendar days of the whole visit, including arrival and departure day.",
+            "example": 3
           },
           "nights": {
             "type": "integer",
-            "description": "Number of nights of the whole visit."
+            "description": "Number of nights of the whole visit.",
+            "example": 2
           },
           "status": {
             "type": "string",
             "description": "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the visit has not started yet).",
+            "example": "ONGOING",
             "enum": [
               "COMPLETED",
               "ONGOING",
@@ -2039,22 +2138,26 @@
         "properties": {
           "year": {
             "type": "integer",
-            "description": "The calendar year this summary covers."
+            "description": "The calendar year this summary covers.",
+            "example": 2026
           },
           "visits": {
             "type": "integer",
-            "description": "Number of reservations that started in this calendar year."
+            "description": "Number of reservations that started in this calendar year.",
+            "example": 12
           },
           "totalNights": {
             "type": "integer",
-            "description": "Total nights spent at the cabin during this calendar year, counting only nights within the year boundary."
+            "description": "Total nights spent at the cabin during this calendar year, counting only nights within the year boundary.",
+            "example": 10
           },
           "totalDistanceKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Total driving distance in kilometres for all trips to and from the cabin this year. Null if no vehicle trip data exists."
+            "description": "Total driving distance in kilometres for all trips to and from the cabin this year. Null if no vehicle trip data exists.",
+            "example": 2476.3
           }
         }
       },
@@ -2073,15 +2176,18 @@
         "properties": {
           "monthNumber": {
             "type": "integer",
-            "description": "Month number (1 = January, 12 = December)."
+            "description": "Month number (1 = January, 12 = December).",
+            "example": 7
           },
           "monthName": {
             "type": "string",
-            "description": "Localised month name (e.g. \"Januar\")."
+            "description": "Localised month name (e.g. \"Januar\").",
+            "example": "Juli"
           },
           "visitCount": {
             "type": "integer",
-            "description": "Number of reservation starts in this month."
+            "description": "Number of reservation starts in this month.",
+            "example": 2
           }
         }
       },
@@ -2097,22 +2203,26 @@
         "properties": {
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations that started in this calendar year."
+            "description": "Number of reservations that started in this calendar year.",
+            "example": 5
           },
           "comparedToPreviousYear": {
             "type": "integer",
-            "description": "Difference between this year's visit count and the previous year's visit count. Positive means more visits than last year."
+            "description": "Difference between this year's visit count and the previous year's visit count. Positive means more visits than last year.",
+            "example": 2
           },
           "avgMonthlyVisits": {
             "type": "number",
-            "description": "Average number of visits per calendar month (totalVisits / 12)."
+            "description": "Average number of visits per calendar month (totalVisits / 12).",
+            "example": 1.5
           },
           "avgGroupSize": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average number of guests per reservation this year. Null if there are no reservations."
+            "description": "Average number of guests per reservation this year. Null if there are no reservations.",
+            "example": 4.2
           },
           "monthMostVisits": {
             "$ref": "#/components/schemas/MonthlyVisitCount"
@@ -2137,15 +2247,18 @@
         "properties": {
           "monthNumber": {
             "type": "integer",
-            "description": "Month number (1 = January, 12 = December)."
+            "description": "Month number (1 = January, 12 = December).",
+            "example": 7
           },
           "monthName": {
             "type": "string",
-            "description": "Localised month name (e.g. \"Januar\")."
+            "description": "Localised month name (e.g. \"Januar\").",
+            "example": "Juli"
           },
           "daysCount": {
             "type": "integer",
-            "description": "Duration in days of the longest individual stay that started in this month."
+            "description": "Duration in days of the longest individual stay that started in this month.",
+            "example": 6
           }
         }
       },
@@ -2160,32 +2273,37 @@
         "properties": {
           "totalDays": {
             "type": "integer",
-            "description": "Total number of occupied days in this year across all reservations, counting overlapping reservations only once per day. Departure day is counted as an occupied day."
+            "description": "Total number of occupied days in this year across all reservations, counting overlapping reservations only once per day. Departure day is counted as an occupied day.",
+            "example": 14
           },
           "minDays": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist."
+            "description": "Shortest stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist.",
+            "example": 2
           },
           "maxDays": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist."
+            "description": "Longest stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist.",
+            "example": 6
           },
           "avgDays": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist."
+            "description": "Average stay in days (full duration, arrival and departure day included) among reservations that started in this year. Null if no reservations exist.",
+            "example": 3.5
           },
           "comparedToPreviousYear": {
             "type": "integer",
-            "description": "Difference between totalDays for this year and totalDays for the previous year. Positive means more occupied days than last year."
+            "description": "Difference between totalDays for this year and totalDays for the previous year. Positive means more occupied days than last year.",
+            "example": 2
           },
           "monthLongestVisit": {
             "$ref": "#/components/schemas/MonthlyDaysCount"
@@ -2204,36 +2322,42 @@
         "properties": {
           "totalNights": {
             "type": "integer",
-            "description": "Total number of occupied nights in this year across all reservations, counting overlapping reservations only once per night. Departure night is not counted."
+            "description": "Total number of occupied nights in this year across all reservations, counting overlapping reservations only once per night. Departure night is not counted.",
+            "example": 10
           },
           "minNights": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest stay in nights (full duration) among reservations that started in this year. Null if no reservations exist."
+            "description": "Shortest stay in nights (full duration) among reservations that started in this year. Null if no reservations exist.",
+            "example": 1
           },
           "maxNights": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest stay in nights (full duration) among reservations that started in this year. Null if no reservations exist."
+            "description": "Longest stay in nights (full duration) among reservations that started in this year. Null if no reservations exist.",
+            "example": 5
           },
           "avgNights": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average stay in nights (full duration) among reservations that started in this year. Null if no reservations exist."
+            "description": "Average stay in nights (full duration) among reservations that started in this year. Null if no reservations exist.",
+            "example": 2.5
           },
           "avgMonthlyNights": {
             "type": "number",
-            "description": "Average number of occupied nights per calendar month (totalNights / 12)."
+            "description": "Average number of occupied nights per calendar month (totalNights / 12).",
+            "example": 3.8
           },
           "comparedToPreviousYear": {
             "type": "integer",
-            "description": "Difference between totalNights for this year and totalNights for the previous year. Positive means more occupied nights than last year."
+            "description": "Difference between totalNights for this year and totalNights for the previous year. Positive means more occupied nights than last year.",
+            "example": 2
           }
         }
       },
@@ -2248,18 +2372,21 @@
         "properties": {
           "dayOccupancy": {
             "type": "number",
-            "description": "Percentage of calendar days in the period where the cabin was occupied, including the departure day. E.g. 25.0 means 25%."
+            "description": "Percentage of calendar days in the period where the cabin was occupied, including the departure day. E.g. 25.0 means 25%.",
+            "example": 25.0
           },
           "weekOccupancy": {
             "type": "number",
-            "description": "Percentage of ISO weeks in the period that contained at least one occupied day. E.g. 50.0 means half of all weeks had at least one visit."
+            "description": "Percentage of ISO weeks in the period that contained at least one occupied day. E.g. 50.0 means half of all weeks had at least one visit.",
+            "example": 38.5
           },
           "monthOccupancy": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Percentage of the 12 calendar months in the year that contained at least one occupied day. Only present in yearly statistics, null in monthly context."
+            "description": "Percentage of the 12 calendar months in the year that contained at least one occupied day. Only present in yearly statistics, null in monthly context.",
+            "example": 75.0
           }
         }
       },
@@ -2281,27 +2408,33 @@
         "properties": {
           "guestId": {
             "type": "string",
-            "description": "Internal unique identifier of the guest."
+            "description": "Internal unique identifier of the guest.",
+            "example": "ola.nordmann"
           },
           "firstName": {
             "type": "string",
-            "description": "Guest's first name."
+            "description": "Guest's first name.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "Guest's last name."
+            "description": "Guest's last name.",
+            "example": "Nordmann"
           },
           "age": {
             "type": "integer",
-            "description": "Guest's age in the reference year (ageYear - birthYear)."
+            "description": "Guest's age in the reference year (ageYear - birthYear).",
+            "example": 38
           },
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations the guest was part of that started in the year (arrival date)."
+            "description": "Number of reservations the guest was part of that started in the year (arrival date).",
+            "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Total number of days the guest was present at the cabin in the year."
+            "description": "Total number of days the guest was present at the cabin in the year.",
+            "example": 14
           }
         }
       },
@@ -2320,27 +2453,33 @@
         "properties": {
           "guestId": {
             "type": "string",
-            "description": "Internal unique identifier of the guest."
+            "description": "Internal unique identifier of the guest.",
+            "example": "ola.nordmann"
           },
           "firstName": {
             "type": "string",
-            "description": "Guest's first name."
+            "description": "Guest's first name.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "Guest's last name."
+            "description": "Guest's last name.",
+            "example": "Nordmann"
           },
           "age": {
             "type": "integer",
-            "description": "Guest's age in the reference year (ageYear - birthYear)."
+            "description": "Guest's age in the reference year (ageYear - birthYear).",
+            "example": 38
           },
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations the guest was part of that started in the period (arrival date)."
+            "description": "Number of reservations the guest was part of that started in the period (arrival date).",
+            "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Total number of days the guest was present at the cabin in the period, counting only days that fall within the period boundary."
+            "description": "Total number of days the guest was present at the cabin in the period, counting only days that fall within the period boundary.",
+            "example": 14
           }
         }
       },
@@ -2359,99 +2498,114 @@
         "properties": {
           "totalToCabinKm": {
             "type": "number",
-            "description": "Total driving distance in kilometres for all trips to the cabin this year."
+            "description": "Total driving distance in kilometres for all trips to the cabin this year.",
+            "example": 1240.5
           },
           "minToCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Shortest single trip distance to the cabin in km this year. Null if no trips exist."
+            "description": "Shortest single trip distance to the cabin in km this year. Null if no trips exist.",
+            "example": 148.2
           },
           "maxToCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Longest single trip distance to the cabin in km this year. Null if no trips exist."
+            "description": "Longest single trip distance to the cabin in km this year. Null if no trips exist.",
+            "example": 162.7
           },
           "avgToCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average trip distance to the cabin in km this year. Null if no trips exist."
+            "description": "Average trip distance to the cabin in km this year. Null if no trips exist.",
+            "example": 155.1
           },
           "totalFromCabinKm": {
             "type": "number",
-            "description": "Total driving distance in kilometres for all trips from the cabin this year."
+            "description": "Total driving distance in kilometres for all trips from the cabin this year.",
+            "example": 1235.8
           },
           "minFromCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Shortest single trip distance from the cabin in km this year. Null if no trips exist."
+            "description": "Shortest single trip distance from the cabin in km this year. Null if no trips exist.",
+            "example": 147.9
           },
           "maxFromCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Longest single trip distance from the cabin in km this year. Null if no trips exist."
+            "description": "Longest single trip distance from the cabin in km this year. Null if no trips exist.",
+            "example": 163.4
           },
           "avgFromCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average trip distance from the cabin in km this year. Null if no trips exist."
+            "description": "Average trip distance from the cabin in km this year. Null if no trips exist.",
+            "example": 154.5
           },
           "totalAtCabinKm": {
             "type": "number",
-            "description": "Total driving distance in kilometres for all trips at (around) the cabin this year."
+            "description": "Total driving distance in kilometres for all trips at (around) the cabin this year.",
+            "example": 86.4
           },
           "minAvgSpeedToCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the fastest reservation trip to the cabin this year. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the fastest reservation trip to the cabin this year. Null if no trips exist.",
+            "example": 72.5
           },
           "maxAvgSpeedToCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the slowest reservation trip to the cabin this year. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the slowest reservation trip to the cabin this year. Null if no trips exist.",
+            "example": 91.0
           },
           "avgAvgSpeedToCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Mean of avgSpeedKmh across all reservations with a toCabin trip this year. Null if no trips exist."
+            "description": "Mean of avgSpeedKmh across all reservations with a toCabin trip this year. Null if no trips exist.",
+            "example": 83.2
           },
           "minAvgSpeedFromCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the fastest reservation trip from the cabin this year. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the fastest reservation trip from the cabin this year. Null if no trips exist.",
+            "example": 70.8
           },
           "maxAvgSpeedFromCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the slowest reservation trip from the cabin this year. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the slowest reservation trip from the cabin this year. Null if no trips exist.",
+            "example": 89.5
           },
           "avgAvgSpeedFromCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Mean of avgSpeedKmh across all reservations with a fromCabin trip this year. Null if no trips exist."
+            "description": "Mean of avgSpeedKmh across all reservations with a fromCabin trip this year. Null if no trips exist.",
+            "example": 81.6
           }
         }
       },
@@ -2468,21 +2622,24 @@
               "number",
               "null"
             ],
-            "description": "Total energy consumed (kWh) for all trips to and from the cabin this year, derived from average consumption × distance per trip. Null if no vehicle trip data exists."
+            "description": "Total energy consumed (kWh) for all trips to and from the cabin this year, derived from average consumption × distance per trip. Null if no vehicle trip data exists.",
+            "example": 245.6
           },
           "avgEnergyConsumptionKwhPer100km": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Distance-weighted average energy consumption in kWh per 100 km across all trips to and from the cabin this year. Null if no vehicle trip data exists."
+            "description": "Distance-weighted average energy consumption in kWh per 100 km across all trips to and from the cabin this year. Null if no vehicle trip data exists.",
+            "example": 19.8
           },
           "totalEnergyRegeneratedKwh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Total energy regenerated (kWh) through regenerative braking across all trips to and from the cabin this year. Null if no vehicle trip data exists."
+            "description": "Total energy regenerated (kWh) through regenerative braking across all trips to and from the cabin this year. Null if no vehicle trip data exists.",
+            "example": 38.2
           }
         }
       },
@@ -2499,91 +2656,104 @@
         "properties": {
           "year": {
             "type": "integer",
-            "description": "The calendar year these driving time statistics cover."
+            "description": "The calendar year these driving time statistics cover.",
+            "example": 2026
           },
           "avgToCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average total driving duration to the cabin in minutes, summing all legs per trip (including stops). Null if no trip data exists."
+            "description": "Average total driving duration to the cabin in minutes, summing all legs per trip (including stops). Null if no trip data exists.",
+            "example": 165
           },
           "avgToCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average driving duration to the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Average driving duration to the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:45"
           },
           "minToCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest total driving duration to the cabin in minutes across all trips this year. Null if no trip data exists."
+            "description": "Shortest total driving duration to the cabin in minutes across all trips this year. Null if no trip data exists.",
+            "example": 150
           },
           "minToCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Shortest driving duration to the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Shortest driving duration to the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:30"
           },
           "maxToCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest total driving duration to the cabin in minutes across all trips this year. Null if no trip data exists."
+            "description": "Longest total driving duration to the cabin in minutes across all trips this year. Null if no trip data exists.",
+            "example": 190
           },
           "maxToCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Longest driving duration to the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Longest driving duration to the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "03:10"
           },
           "avgFromCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average total driving duration from the cabin in minutes, summing all legs per trip (including stops). Null if no trip data exists."
+            "description": "Average total driving duration from the cabin in minutes, summing all legs per trip (including stops). Null if no trip data exists.",
+            "example": 160
           },
           "avgFromCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average driving duration from the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Average driving duration from the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:40"
           },
           "minFromCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest total driving duration from the cabin in minutes across all trips this year. Null if no trip data exists."
+            "description": "Shortest total driving duration from the cabin in minutes across all trips this year. Null if no trip data exists.",
+            "example": 145
           },
           "minFromCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Shortest driving duration from the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Shortest driving duration from the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:25"
           },
           "maxFromCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest total driving duration from the cabin in minutes across all trips this year. Null if no trip data exists."
+            "description": "Longest total driving duration from the cabin in minutes across all trips this year. Null if no trip data exists.",
+            "example": 185
           },
           "maxFromCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Longest driving duration from the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Longest driving duration from the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "03:05"
           }
         }
       },
@@ -2600,63 +2770,72 @@
         "properties": {
           "year": {
             "type": "integer",
-            "description": "The calendar year these driving moment statistics cover."
+            "description": "The calendar year these driving moment statistics cover.",
+            "example": 2026
           },
           "avgDepartureHomeMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average departure time from home (Oslo timezone) across all toCabin trips this year, expressed as minutes since midnight. E.g. 540 = 09:00."
+            "description": "Average departure time from home (Oslo timezone) across all toCabin trips this year, expressed as minutes since midnight. E.g. 540 = 09:00.",
+            "example": 930
           },
           "avgDepartureHome": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average departure time from home formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average departure time from home formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "15:30"
           },
           "avgArrivalCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average arrival time at the cabin (Oslo timezone) across all toCabin trips this year, expressed as minutes since midnight."
+            "description": "Average arrival time at the cabin (Oslo timezone) across all toCabin trips this year, expressed as minutes since midnight.",
+            "example": 1095
           },
           "avgArrivalCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average arrival time at the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average arrival time at the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "18:15"
           },
           "avgDepartureCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average departure time from the cabin (Oslo timezone) across all fromCabin trips this year, expressed as minutes since midnight."
+            "description": "Average departure time from the cabin (Oslo timezone) across all fromCabin trips this year, expressed as minutes since midnight.",
+            "example": 840
           },
           "avgDepartureCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average departure time from the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average departure time from the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "14:00"
           },
           "avgArrivalHomeMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average arrival time back home (Oslo timezone) across all fromCabin trips this year, expressed as minutes since midnight."
+            "description": "Average arrival time back home (Oslo timezone) across all fromCabin trips this year, expressed as minutes since midnight.",
+            "example": 1005
           },
           "avgArrivalHome": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average arrival time back home formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average arrival time back home formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "16:45"
           }
         }
       },
@@ -2673,19 +2852,23 @@
         "properties": {
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations that started in this month."
+            "description": "Number of reservations that started in this month.",
+            "example": 5
           },
           "comparedToPreviousMonth": {
             "type": "integer",
-            "description": "Difference between this month's visit count and the previous calendar month's visit count. Positive means more visits than last month."
+            "description": "Difference between this month's visit count and the previous calendar month's visit count. Positive means more visits than last month.",
+            "example": 1
           },
           "comparedToSameMonthLastYear": {
             "type": "integer",
-            "description": "Difference between this month's visit count and the same month in the previous year. Positive means more visits than the same month last year."
+            "description": "Difference between this month's visit count and the same month in the previous year. Positive means more visits than the same month last year.",
+            "example": -1
           },
           "comparedToYearToDateAverage": {
             "type": "number",
-            "description": "Difference between this month's visit count and the year-to-date monthly average (sum of visits Jan–this month divided by number of months so far). Positive means above average."
+            "description": "Difference between this month's visit count and the year-to-date monthly average (sum of visits Jan–this month divided by number of months so far). Positive means above average.",
+            "example": 0.5
           }
         }
       },
@@ -2701,36 +2884,42 @@
         "properties": {
           "totalDays": {
             "type": "integer",
-            "description": "Total number of occupied days in this month across all reservations, counting overlapping reservations only once per day. Departure day is counted as an occupied day."
+            "description": "Total number of occupied days in this month across all reservations, counting overlapping reservations only once per day. Departure day is counted as an occupied day.",
+            "example": 14
           },
           "minDays": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month."
+            "description": "Shortest stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month.",
+            "example": 2
           },
           "maxDays": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month."
+            "description": "Longest stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month.",
+            "example": 6
           },
           "avgDays": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month."
+            "description": "Average stay in days (full duration, arrival and departure day included) among reservations that started in this month. Null if no reservations started this month.",
+            "example": 3.5
           },
           "comparedToPreviousMonth": {
             "type": "integer",
-            "description": "Difference between totalDays for this month and totalDays for the previous calendar month. Positive means more occupied days than last month."
+            "description": "Difference between totalDays for this month and totalDays for the previous calendar month. Positive means more occupied days than last month.",
+            "example": 1
           },
           "comparedToSameMonthLastYear": {
             "type": "integer",
-            "description": "Difference between totalDays for this month and totalDays for the same month in the previous year. Positive means more occupied days than the same month last year."
+            "description": "Difference between totalDays for this month and totalDays for the same month in the previous year. Positive means more occupied days than the same month last year.",
+            "example": -1
           }
         }
       },
@@ -2746,36 +2935,42 @@
         "properties": {
           "totalNights": {
             "type": "integer",
-            "description": "Total number of occupied nights in this month across all reservations, counting overlapping reservations only once per night. Departure night is not counted."
+            "description": "Total number of occupied nights in this month across all reservations, counting overlapping reservations only once per night. Departure night is not counted.",
+            "example": 10
           },
           "minNights": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month."
+            "description": "Shortest stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month.",
+            "example": 1
           },
           "maxNights": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month."
+            "description": "Longest stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month.",
+            "example": 5
           },
           "avgNights": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month."
+            "description": "Average stay in nights (full duration) among reservations that started in this month. Null if no reservations started this month.",
+            "example": 2.5
           },
           "comparedToPreviousMonth": {
             "type": "integer",
-            "description": "Difference between totalNights for this month and totalNights for the previous calendar month. Positive means more occupied nights than last month."
+            "description": "Difference between totalNights for this month and totalNights for the previous calendar month. Positive means more occupied nights than last month.",
+            "example": 1
           },
           "comparedToSameMonthLastYear": {
             "type": "integer",
-            "description": "Difference between totalNights for this month and totalNights for the same month in the previous year. Positive means more occupied nights than the same month last year."
+            "description": "Difference between totalNights for this month and totalNights for the same month in the previous year. Positive means more occupied nights than the same month last year.",
+            "example": -1
           }
         }
       },
@@ -2794,99 +2989,114 @@
         "properties": {
           "totalToCabinKm": {
             "type": "number",
-            "description": "Total driving distance in kilometres for all trips to the cabin in this month."
+            "description": "Total driving distance in kilometres for all trips to the cabin in this month.",
+            "example": 1240.5
           },
           "minToCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Shortest single trip distance to the cabin in km this month. Null if no trips exist."
+            "description": "Shortest single trip distance to the cabin in km this month. Null if no trips exist.",
+            "example": 148.2
           },
           "maxToCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Longest single trip distance to the cabin in km this month. Null if no trips exist."
+            "description": "Longest single trip distance to the cabin in km this month. Null if no trips exist.",
+            "example": 162.7
           },
           "avgToCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average trip distance to the cabin in km this month. Null if no trips exist."
+            "description": "Average trip distance to the cabin in km this month. Null if no trips exist.",
+            "example": 155.1
           },
           "totalFromCabinKm": {
             "type": "number",
-            "description": "Total driving distance in kilometres for all trips from the cabin in this month."
+            "description": "Total driving distance in kilometres for all trips from the cabin in this month.",
+            "example": 1235.8
           },
           "minFromCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Shortest single trip distance from the cabin in km this month. Null if no trips exist."
+            "description": "Shortest single trip distance from the cabin in km this month. Null if no trips exist.",
+            "example": 147.9
           },
           "maxFromCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Longest single trip distance from the cabin in km this month. Null if no trips exist."
+            "description": "Longest single trip distance from the cabin in km this month. Null if no trips exist.",
+            "example": 163.4
           },
           "avgFromCabinKm": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average trip distance from the cabin in km this month. Null if no trips exist."
+            "description": "Average trip distance from the cabin in km this month. Null if no trips exist.",
+            "example": 154.5
           },
           "totalAtCabinKm": {
             "type": "number",
-            "description": "Total driving distance in kilometres for all trips at (around) the cabin in this month."
+            "description": "Total driving distance in kilometres for all trips at (around) the cabin in this month.",
+            "example": 86.4
           },
           "minAvgSpeedToCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the fastest reservation trip to the cabin this month. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the fastest reservation trip to the cabin this month. Null if no trips exist.",
+            "example": 72.5
           },
           "maxAvgSpeedToCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the slowest reservation trip to the cabin this month. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all toCabin legs, for the slowest reservation trip to the cabin this month. Null if no trips exist.",
+            "example": 91.0
           },
           "avgAvgSpeedToCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Mean of avgSpeedKmh across all reservations with a toCabin trip this month. Null if no trips exist."
+            "description": "Mean of avgSpeedKmh across all reservations with a toCabin trip this month. Null if no trips exist.",
+            "example": 83.2
           },
           "minAvgSpeedFromCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the fastest reservation trip from the cabin this month. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the fastest reservation trip from the cabin this month. Null if no trips exist.",
+            "example": 70.8
           },
           "maxAvgSpeedFromCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the slowest reservation trip from the cabin this month. Null if no trips exist."
+            "description": "Average of VehicleTrip.averageSpeed across all fromCabin legs, for the slowest reservation trip from the cabin this month. Null if no trips exist.",
+            "example": 89.5
           },
           "avgAvgSpeedFromCabinKmh": {
             "type": [
               "number",
               "null"
             ],
-            "description": "Mean of avgSpeedKmh across all reservations with a fromCabin trip this month. Null if no trips exist."
+            "description": "Mean of avgSpeedKmh across all reservations with a fromCabin trip this month. Null if no trips exist.",
+            "example": 81.6
           }
         }
       },
@@ -2905,127 +3115,146 @@
         "properties": {
           "monthNumber": {
             "type": "integer",
-            "description": "Month number (1 = January, 12 = December)."
+            "description": "Month number (1 = January, 12 = December).",
+            "example": 7
           },
           "monthName": {
             "type": "string",
-            "description": "Localised month name (e.g. \"Januar\")."
+            "description": "Localised month name (e.g. \"Januar\").",
+            "example": "Juli"
           },
           "year": {
             "type": "integer",
-            "description": "The calendar year this month belongs to."
+            "description": "The calendar year this month belongs to.",
+            "example": 2026
           },
           "avgToCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average total driving duration to the cabin in minutes this month, summing all legs per trip (including stops). Null if no trip data exists."
+            "description": "Average total driving duration to the cabin in minutes this month, summing all legs per trip (including stops). Null if no trip data exists.",
+            "example": 165
           },
           "avgToCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average driving duration to the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Average driving duration to the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:45"
           },
           "minToCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest total driving duration to the cabin in minutes across all trips this month. Null if no trip data exists."
+            "description": "Shortest total driving duration to the cabin in minutes across all trips this month. Null if no trip data exists.",
+            "example": 150
           },
           "minToCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Shortest driving duration to the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Shortest driving duration to the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:30"
           },
           "maxToCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest total driving duration to the cabin in minutes across all trips this month. Null if no trip data exists."
+            "description": "Longest total driving duration to the cabin in minutes across all trips this month. Null if no trip data exists.",
+            "example": 190
           },
           "maxToCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Longest driving duration to the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Longest driving duration to the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "03:10"
           },
           "avgFromCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average total driving duration from the cabin in minutes this month, summing all legs per trip (including stops). Null if no trip data exists."
+            "description": "Average total driving duration from the cabin in minutes this month, summing all legs per trip (including stops). Null if no trip data exists.",
+            "example": 160
           },
           "avgFromCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average driving duration from the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Average driving duration from the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:40"
           },
           "minFromCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Shortest total driving duration from the cabin in minutes across all trips this month. Null if no trip data exists."
+            "description": "Shortest total driving duration from the cabin in minutes across all trips this month. Null if no trip data exists.",
+            "example": 145
           },
           "minFromCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Shortest driving duration from the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Shortest driving duration from the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "02:25"
           },
           "maxFromCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Longest total driving duration from the cabin in minutes across all trips this month. Null if no trip data exists."
+            "description": "Longest total driving duration from the cabin in minutes across all trips this month. Null if no trip data exists.",
+            "example": 185
           },
           "maxFromCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Longest driving duration from the cabin formatted as HH:mm. Null if no trip data exists."
+            "description": "Longest driving duration from the cabin formatted as HH:mm. Null if no trip data exists.",
+            "example": "03:05"
           },
           "diffAvgToCabinMinutesVsPrevMonth": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Difference between avgToCabinMinutes this month and avgToCabinMinutes the previous calendar month. Positive means longer average drive than last month. Null if either month has no data."
+            "description": "Difference between avgToCabinMinutes this month and avgToCabinMinutes the previous calendar month. Positive means longer average drive than last month. Null if either month has no data.",
+            "example": 5
           },
           "diffAvgToCabinVsPrevMonth": {
             "type": [
               "string",
               "null"
             ],
-            "description": "diffAvgToCabinMinutesVsPrevMonth formatted as +HH:mm or -HH:mm. Null if either month has no data."
+            "description": "diffAvgToCabinMinutesVsPrevMonth formatted as +HH:mm or -HH:mm. Null if either month has no data.",
+            "example": "+00:05"
           },
           "diffAvgFromCabinMinutesVsPrevMonth": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Difference between avgFromCabinMinutes this month and avgFromCabinMinutes the previous calendar month. Positive means longer average drive than last month. Null if either month has no data."
+            "description": "Difference between avgFromCabinMinutes this month and avgFromCabinMinutes the previous calendar month. Positive means longer average drive than last month. Null if either month has no data.",
+            "example": -3
           },
           "diffAvgFromCabinVsPrevMonth": {
             "type": [
               "string",
               "null"
             ],
-            "description": "diffAvgFromCabinMinutesVsPrevMonth formatted as +HH:mm or -HH:mm. Null if either month has no data."
+            "description": "diffAvgFromCabinMinutesVsPrevMonth formatted as +HH:mm or -HH:mm. Null if either month has no data.",
+            "example": "-00:03"
           }
         }
       },
@@ -3044,71 +3273,82 @@
         "properties": {
           "monthNumber": {
             "type": "integer",
-            "description": "Month number (1 = January, 12 = December)."
+            "description": "Month number (1 = January, 12 = December).",
+            "example": 7
           },
           "monthName": {
             "type": "string",
-            "description": "Localised month name (e.g. \"Januar\")."
+            "description": "Localised month name (e.g. \"Januar\").",
+            "example": "Juli"
           },
           "year": {
             "type": "integer",
-            "description": "The calendar year this month belongs to."
+            "description": "The calendar year this month belongs to.",
+            "example": 2026
           },
           "avgDepartureHomeMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average departure time from home (Oslo timezone) across all toCabin trips in this month, expressed as minutes since midnight."
+            "description": "Average departure time from home (Oslo timezone) across all toCabin trips in this month, expressed as minutes since midnight.",
+            "example": 930
           },
           "avgDepartureHome": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average departure time from home formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average departure time from home formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "15:30"
           },
           "avgArrivalCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average arrival time at the cabin (Oslo timezone) across all toCabin trips in this month, expressed as minutes since midnight."
+            "description": "Average arrival time at the cabin (Oslo timezone) across all toCabin trips in this month, expressed as minutes since midnight.",
+            "example": 1095
           },
           "avgArrivalCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average arrival time at the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average arrival time at the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "18:15"
           },
           "avgDepartureCabinMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average departure time from the cabin (Oslo timezone) across all fromCabin trips in this month, expressed as minutes since midnight."
+            "description": "Average departure time from the cabin (Oslo timezone) across all fromCabin trips in this month, expressed as minutes since midnight.",
+            "example": 840
           },
           "avgDepartureCabin": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average departure time from the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average departure time from the cabin formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "14:00"
           },
           "avgArrivalHomeMinutes": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Average arrival time back home (Oslo timezone) across all fromCabin trips in this month, expressed as minutes since midnight."
+            "description": "Average arrival time back home (Oslo timezone) across all fromCabin trips in this month, expressed as minutes since midnight.",
+            "example": 1005
           },
           "avgArrivalHome": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Average arrival time back home formatted as HH:mm (Oslo timezone). Null if no trip data exists."
+            "description": "Average arrival time back home formatted as HH:mm (Oslo timezone). Null if no trip data exists.",
+            "example": "16:45"
           }
         }
       },
@@ -3128,15 +3368,18 @@
         "properties": {
           "year": {
             "type": "integer",
-            "description": "The calendar year this month belongs to."
+            "description": "The calendar year this month belongs to.",
+            "example": 2026
           },
           "monthNumber": {
             "type": "integer",
-            "description": "Month number (1 = January, 12 = December)."
+            "description": "Month number (1 = January, 12 = December).",
+            "example": 7
           },
           "monthName": {
             "type": "string",
-            "description": "Localised month name (e.g. \"Januar\")."
+            "description": "Localised month name (e.g. \"Januar\").",
+            "example": "Juli"
           },
           "visits": {
             "$ref": "#/components/schemas/MonthVisitsStats"
@@ -3184,7 +3427,8 @@
         "properties": {
           "year": {
             "type": "integer",
-            "description": "The calendar year these statistics cover."
+            "description": "The calendar year these statistics cover.",
+            "example": 2026
           },
           "visits": {
             "$ref": "#/components/schemas/YearVisitsStats"
@@ -3249,23 +3493,28 @@
         "properties": {
           "guestId": {
             "type": "string",
-            "description": "Internal unique identifier of the guest."
+            "description": "Internal unique identifier of the guest.",
+            "example": "ola.nordmann"
           },
           "firstName": {
             "type": "string",
-            "description": "Guest's first name."
+            "description": "Guest's first name.",
+            "example": "Ola"
           },
           "lastName": {
             "type": "string",
-            "description": "Guest's last name."
+            "description": "Guest's last name.",
+            "example": "Nordmann"
           },
           "totalVisits": {
             "type": "integer",
-            "description": "Total number of reservations the guest was part of across all years."
+            "description": "Total number of reservations the guest was part of across all years.",
+            "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Total number of days the guest was present at the cabin across all years."
+            "description": "Total number of days the guest was present at the cabin across all years.",
+            "example": 14
           }
         }
       },
@@ -3282,19 +3531,23 @@
         "properties": {
           "maleCount": {
             "type": "integer",
-            "description": "Number of male guests among all registered guests."
+            "description": "Number of male guests among all registered guests.",
+            "example": 15
           },
           "femaleCount": {
             "type": "integer",
-            "description": "Number of female guests among all registered guests."
+            "description": "Number of female guests among all registered guests.",
+            "example": 14
           },
           "malePercent": {
             "type": "number",
-            "description": "Percentage of male guests (maleCount / total * 100), rounded to one decimal."
+            "description": "Percentage of male guests (maleCount / total * 100), rounded to one decimal.",
+            "example": 51.7
           },
           "femalePercent": {
             "type": "number",
-            "description": "Percentage of female guests (femaleCount / total * 100), rounded to one decimal."
+            "description": "Percentage of female guests (femaleCount / total * 100), rounded to one decimal.",
+            "example": 48.3
           }
         }
       },
@@ -3309,15 +3562,18 @@
         "properties": {
           "label": {
             "type": "string",
-            "description": "Age range label (e.g. \"0-12\", \"13-17\", \"18-30\", \"31-50\", \"51+\")."
+            "description": "Age range label (e.g. \"0-12\", \"13-17\", \"18-30\", \"31-50\", \"51+\").",
+            "example": "18-30"
           },
           "guestCount": {
             "type": "integer",
-            "description": "Number of registered guests whose current age falls within this range."
+            "description": "Number of registered guests whose current age falls within this range.",
+            "example": 6
           },
           "percent": {
             "type": "number",
-            "description": "Percentage of all registered guests in this age group, rounded to one decimal."
+            "description": "Percentage of all registered guests in this age group, rounded to one decimal.",
+            "example": 20.7
           }
         }
       },

@@ -5,6 +5,7 @@ package no.slomic.smarthytte.statistics
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.openapi.GenericElement
 import io.ktor.openapi.JsonSchema
 import io.ktor.openapi.JsonType
 import io.ktor.openapi.OpenApiDoc
@@ -20,6 +21,9 @@ import io.ktor.server.routing.openapi.hide
 import io.ktor.server.routing.routing
 import no.slomic.smarthytte.auth.authorizedAnyRole
 import no.slomic.smarthytte.common.MONTHS_PER_YEAR
+
+private const val EXAMPLE_YEAR = 2026
+private const val EXAMPLE_MONTH = 7
 
 fun Application.configureOpenApi() {
     val baseDoc = OpenApiDoc.Builder().apply {
@@ -132,6 +136,7 @@ private fun Route.describeYearStats() = describe {
     parameters {
         path("year") {
             description = "The calendar year, for example 2025."
+            example = GenericElement(EXAMPLE_YEAR)
             schema = JsonSchema(type = JsonType.INTEGER)
         }
     }
@@ -154,10 +159,12 @@ private fun Route.describeMonthStats() = describe {
     parameters {
         path("year") {
             description = "The calendar year, for example 2025."
+            example = GenericElement(EXAMPLE_YEAR)
             schema = JsonSchema(type = JsonType.INTEGER)
         }
         path("month") {
             description = "The month number, 1 (January) to 12 (December)."
+            example = GenericElement(EXAMPLE_MONTH)
             schema = JsonSchema(type = JsonType.INTEGER, minimum = 1.0, maximum = MONTHS_PER_YEAR.toDouble())
         }
     }
@@ -189,7 +196,10 @@ private fun Route.describeGuestProfileStats() = describe {
     tag("Stats")
     summary = "Guest profile"
     parameters {
-        path("guestId") { description = "Internal unique identifier of the guest." }
+        path("guestId") {
+            description = "Internal unique identifier of the guest."
+            example = GenericElement("ola.nordmann")
+        }
     }
     description = "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n" +
         "* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among " +
