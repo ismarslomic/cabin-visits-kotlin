@@ -16,8 +16,10 @@ import io.ktor.server.routing.openapi.describe
 import io.ktor.server.routing.routing
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.auth.UserPrincipal
+import no.slomic.smarthytte.auth.authorized
 import no.slomic.smarthytte.auth.authorizedAnyRole
 import no.slomic.smarthytte.common.ApiError
+import no.slomic.smarthytte.guests.AppRole
 
 private const val RESERVATIONS_PATH = "/api/reservations"
 private const val RESERVATION_PATH = "/api/reservations/{id}"
@@ -50,6 +52,10 @@ fun Application.configureReservationRoutes(reservationService: ReservationServic
                     )
                 }
             }.describeGetReservation()
+        }
+
+        authorized(AppRole.ADMIN, AppRole.FAMILY_USER) {
+            reservationWriteRoutes(reservationService)
         }
     }
 }

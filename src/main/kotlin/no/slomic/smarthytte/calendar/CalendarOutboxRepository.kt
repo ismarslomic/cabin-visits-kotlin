@@ -2,9 +2,11 @@
 
 package no.slomic.smarthytte.calendar
 
+import no.slomic.smarthytte.common.suspendReadTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import kotlin.time.Clock
 
 /*
@@ -38,3 +40,6 @@ private fun enqueueCalendarOperation(reservationId: String, operation: CalendarO
         it[nextAttemptTime] = now
     }
 }
+
+/** The number of calendar operations that are waiting to be pushed to Google (pending or failing). */
+suspend fun pendingCalendarOperations(): Long = suspendReadTransaction { CalendarOutboxTable.selectAll().count() }

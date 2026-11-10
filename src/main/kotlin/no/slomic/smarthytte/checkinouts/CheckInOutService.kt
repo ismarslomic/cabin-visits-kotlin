@@ -4,6 +4,7 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.PersistenceResult
+import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
@@ -49,47 +50,12 @@ class CheckInOutService(
         val checkInPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         val checkOutPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
         allReservations.forEach { reservation ->
-            val cabinVehicleTrip: CabinVehicleTrip? = findCabinTrip(cabinVehicleTripList, reservation)
-
-            // Link all trips associated with this cabin visit to the reservation
-            cabinVehicleTrip?.let { linkTrips(reservation, it) }
-
-            val checkIn: CheckIn? = if (reservation.hasStarted) {
-                createCheckIn(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
-            } else {
-                null
-            }
-
-            val checkOut: CheckOut? = if (reservation.hasEnded) {
-                createCheckOut(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
-            } else {
-                null
-            }
-
-            if (checkIn != null) {
-                checkInPersistenceResults.add(
-                    reservationRepository.setCheckIn(
-                        checkIn,
-                        reservation.id,
-                        reservation.startTime,
-                        reservation.endTime,
-                    ),
-                )
-            } else {
-                checkInPersistenceResults.add(PersistenceResult.NO_ACTION)
-            }
-
-            if (checkOut != null) {
-                checkOutPersistenceResults.add(
-                    reservationRepository.setCheckOut(
-                        checkOut,
-                        reservation.id,
-                        reservation.startTime,
-                        reservation.endTime,
-                    ),
-                )
-            } else {
-                checkOutPersistenceResults.add(PersistenceResult.NO_ACTION)
+            // One failing reservation must not abort the rest of the run
+            runCatchingLogged("Updating check in/out status of reservation ${reservation.id}", logger) {
+                val (checkInResult, checkOutResult) =
+                    updateReservation(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
+                checkInPersistenceResults.add(checkInResult)
+                checkOutPersistenceResults.add(checkOutResult)
             }
         }
 
@@ -103,6 +69,49 @@ class CheckInOutService(
                 "check in updated: $checkInUpdatedCount, check in no actions: $checkInNoActionCount, " +
                 "check out updated: $checkOutUpdatedCount, check out no actions: $checkOutNoActionCount",
         )
+    }
+
+    /**
+     * Derives the trip links, check-in and check-out of one reservation, for example after the API created it or
+     * moved its times (the all-reservations job only runs inside the reservation window). Does nothing if the
+     * reservation does not exist.
+     */
+    suspend fun updateCheckInOutStatusForReservation(reservationId: String) {
+        val reservation: Reservation = reservationRepository.reservationById(reservationId) ?: return
+        val checkInOutSensorsByDate = checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
+        val cabinVehicleTripList = CabinVehicleTripList(vehicleTripRepository.allVehicleTrips()).cabinTrips
+
+        updateReservation(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
+    }
+
+    /** Links the trips and sets check-in and check-out of one reservation; returns the two persistence results. */
+    private suspend fun updateReservation(
+        reservation: Reservation,
+        checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>>,
+        cabinVehicleTripList: List<CabinVehicleTrip>,
+    ): Pair<PersistenceResult, PersistenceResult> {
+        // Link all trips associated with this cabin visit to the reservation
+        findCabinTrip(cabinVehicleTripList, reservation)?.let { linkTrips(reservation, it) }
+
+        val checkIn: CheckIn? = if (reservation.hasStarted) {
+            createCheckIn(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
+        } else {
+            null
+        }
+        val checkOut: CheckOut? = if (reservation.hasEnded) {
+            createCheckOut(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
+        } else {
+            null
+        }
+
+        val checkInResult = checkIn?.let {
+            reservationRepository.setCheckIn(it, reservation.id, reservation.startTime, reservation.endTime)
+        } ?: PersistenceResult.NO_ACTION
+        val checkOutResult = checkOut?.let {
+            reservationRepository.setCheckOut(it, reservation.id, reservation.startTime, reservation.endTime)
+        } ?: PersistenceResult.NO_ACTION
+
+        return checkInResult to checkOutResult
     }
 
     /** The snapshot times make a concurrent time change or delete of the reservation skip the link. */

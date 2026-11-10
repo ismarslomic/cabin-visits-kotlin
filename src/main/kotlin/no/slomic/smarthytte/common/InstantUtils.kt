@@ -73,6 +73,7 @@ fun Instant.toOsloDate(): LocalDate = toLocalDateTime(osloTimeZone).date
 
 fun Instant.minutesOfDayOslo(): Int = toLocalDateTime(osloTimeZone).time.minutesOfDay()
 
-fun utcDateNow(): LocalDate = Clock.System.now().toLocalDateTime(utcTimeZone).date
+/** The current UTC date according to [clock]; pass a fixed clock in tests. */
+fun utcDateNow(clock: Clock = Clock.System): LocalDate = clock.now().toLocalDateTime(utcTimeZone).date
 
 fun osloDateNow(): LocalDate = Clock.System.now().toLocalDateTime(osloTimeZone).date

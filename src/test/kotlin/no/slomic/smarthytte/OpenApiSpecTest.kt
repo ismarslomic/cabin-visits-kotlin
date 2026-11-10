@@ -89,6 +89,8 @@ class OpenApiSpecTest :
                     "put /api/guests/{guestId}",
                     "put /api/me/avatar",
                     "put /api/guests/{guestId}/avatar",
+                    "post /api/reservations",
+                    "put /api/reservations/{id}",
                 ),
             ) shouldBe true
 
@@ -214,7 +216,7 @@ private fun JsonElement.jsonTypeName(): String = when {
     else -> "number"
 }
 
-private class SpecOperation(val method: String, val path: String, val body: JsonObject) {
+private class SpecOperation(val method: String, path: String, val body: JsonObject) {
     val name = "$method $path"
 }
 

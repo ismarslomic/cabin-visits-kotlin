@@ -83,4 +83,12 @@ class InstantUtilsTest :
 
             osloNow shouldBe expected
         }
+
+        "utcDateNow should use the given clock, and the UTC date of a late Oslo evening is the same day" {
+            val clock = object : Clock {
+                override fun now(): Instant = Instant.parse("2026-04-11T23:30:00Z")
+            }
+
+            utcDateNow(clock) shouldBe LocalDate(year = 2026, month = 4, day = 11)
+        }
     })
