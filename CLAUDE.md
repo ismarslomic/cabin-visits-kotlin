@@ -15,6 +15,7 @@ Ktor 3 / Kotlin backend for hytte-besøksstatistikk. Kompileres til GraalVM nati
 
 ```
 reservations/       Reservation-domenemodell og repository
+calendar/           Google Calendar-outbox (tabell, enqueue-funksjoner i samme transaksjon som reservasjonsskrivingen)
 vehicletrips/       VehicleTrip-domenemodell og repository
 statistics/
   model/            Rene dataklasser for API-respons (YearStats, MonthStats, ...)

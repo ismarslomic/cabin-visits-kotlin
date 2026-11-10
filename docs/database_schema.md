@@ -2,6 +2,16 @@
 
 ```mermaid
 erDiagram
+    calendar_outbox {
+        integer id PK
+        string reservation_id "no FK: a DELETE row outlives the reservation"
+        string operation "INSERT, UPDATE or DELETE"
+        string created_time
+        integer attempts
+        string last_error
+        string next_attempt_time
+    }
+
     check_in_out_sensor {
         string id PK
         string created_time
@@ -96,6 +106,7 @@ erDiagram
 
 | Table                   | Description                                                                                                      | Type of data  |
 |:------------------------|:-----------------------------------------------------------------------------------------------------------------|:--------------|
+| **calendar_outbox**     | Pending Google Calendar notifications. A reservation write inserts a row in the same transaction; the row is deleted when it is pushed, so only pending and failing rows stay. Internal, no audit columns. | internal      |
 | **check_in_out_sensor** | Stores sensor data for check-in and check-out events, including timestamps and status.                           | raw           |
 | **guest**               | Stores unique guest profiles, including name, contact details, and external identifiers.                         | raw           |
 | **guest_avatar**        | Stores the JPEG avatar of a guest (at most one per guest, deleted with the guest).                               | raw           |
@@ -106,7 +117,7 @@ erDiagram
 
 ### Audit columns
 
-Every table has the same audit columns and `version`:
+Every table except the internal `calendar_outbox` has the same audit columns and `version`:
 
 | Column         | Required | Set when                                          | Value                                                  |
 |:---------------|:---------|:--------------------------------------------------|:-------------------------------------------------------|

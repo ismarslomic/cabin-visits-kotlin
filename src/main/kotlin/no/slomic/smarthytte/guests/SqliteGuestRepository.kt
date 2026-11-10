@@ -7,6 +7,7 @@ import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
+import no.slomic.smarthytte.common.suspendReadTransaction
 import no.slomic.smarthytte.common.suspendTransaction
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.eq
@@ -18,19 +19,19 @@ import kotlin.time.Instant
 class SqliteGuestRepository : GuestRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteGuestRepository::class.java.name)
 
-    override suspend fun allGuests(): List<Guest> = suspendTransaction {
+    override suspend fun allGuests(): List<Guest> = suspendReadTransaction {
         GuestEntity.all().sortedBy { it.firstName }.map(::daoToModel)
     }
 
-    override suspend fun guestById(id: String): Guest? = suspendTransaction {
+    override suspend fun guestById(id: String): Guest? = suspendReadTransaction {
         GuestEntity.findById(id)?.let(::daoToModel)
     }
 
-    override suspend fun hasAdmin(): Boolean = suspendTransaction {
+    override suspend fun hasAdmin(): Boolean = suspendReadTransaction {
         !GuestEntity.find { GuestTable.role eq AppRole.ADMIN }.empty()
     }
 
-    override suspend fun guestsByEmail(email: String): List<Guest> = suspendTransaction {
+    override suspend fun guestsByEmail(email: String): List<Guest> = suspendReadTransaction {
         GuestEntity.find { GuestTable.email.lowerCase() eq email.trim().lowercase() }.map(::daoToModel)
     }
 
@@ -91,11 +92,11 @@ class SqliteGuestRepository : GuestRepository {
             }
         }
 
-    override suspend fun avatarById(guestId: String): GuestAvatar? = suspendTransaction {
+    override suspend fun avatarById(guestId: String): GuestAvatar? = suspendReadTransaction {
         GuestAvatarEntity.findById(guestId)?.let { GuestAvatar(it.image.bytes, it.versionTime()) }
     }
 
-    override suspend fun allAvatarVersionTimes(): Map<String, Instant> = suspendTransaction {
+    override suspend fun allAvatarVersionTimes(): Map<String, Instant> = suspendReadTransaction {
         // Only these columns, so the image bytes are not loaded
         GuestAvatarTable
             .select(GuestAvatarTable.id, GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)
@@ -105,7 +106,7 @@ class SqliteGuestRepository : GuestRepository {
             }
     }
 
-    override suspend fun avatarVersionTime(guestId: String): Instant? = suspendTransaction {
+    override suspend fun avatarVersionTime(guestId: String): Instant? = suspendReadTransaction {
         // Only these columns, so the image bytes are not loaded
         GuestAvatarTable
             .select(GuestAvatarTable.createdTime, GuestAvatarTable.updatedTime)

@@ -5,23 +5,16 @@ import io.ktor.server.application.log
 import no.slomic.smarthytte.properties.DatabasePropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.v1.jdbc.Database
-import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.slf4j.Logger
-import org.sqlite.SQLiteDataSource
 import java.io.File
-import java.sql.Connection
 
 @Suppress("SpreadOperator")
-fun Application.configureDatabases() {
-    val databaseProperties = loadProperties<DatabasePropertiesHolder>().database
-    val databaseFilePath = databaseProperties.filePath
-    val dataSource = SQLiteDataSource().apply {
-        url = "jdbc:sqlite:$databaseFilePath"
-        // We must enable the foreign keys constraints to enable on delete actions in Sqlite
-        // read more at https://www.sqlite.org/foreignkeys.html#fk_actions
-        config.enforceForeignKeys(true)
-    }
+fun Application.configureDatabases(
+    databaseFilePath: String = loadProperties<DatabasePropertiesHolder>().database.filePath,
+) {
+    val databaseUrl = "jdbc:sqlite:$databaseFilePath"
+    val dataSource = createSqliteDataSource(databaseUrl)
+    val readDataSource = createSqliteReadDataSource(databaseUrl)
 
     log.info("Initializing database..")
 
@@ -35,10 +28,9 @@ fun Application.configureDatabases() {
         .load()
         .migrate()
 
-    // Make an Exposed connection to the database
-    Database.connect(datasource = dataSource)
-
-    TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
+    // Make Exposed connections to the database: one for writes (the default) and one for reads
+    connectDatabase(dataSource)
+    connectReadDatabase(readDataSource)
 
     log.info("Database initialization complete")
 }

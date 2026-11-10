@@ -5,6 +5,7 @@ import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
+import no.slomic.smarthytte.common.suspendReadTransaction
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
@@ -12,7 +13,7 @@ import org.jetbrains.exposed.v1.core.dao.id.EntityID
 class SqliteCheckInOutSensorRepository : CheckInOutSensorRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteCheckInOutSensorRepository::class.java.name)
 
-    override suspend fun allCheckInOuts(): List<CheckInOutSensor> = suspendTransaction {
+    override suspend fun allCheckInOuts(): List<CheckInOutSensor> = suspendReadTransaction {
         CheckInOutSensorEntity.all().sortedBy { it.time }.map(::daoToModel)
     }
 

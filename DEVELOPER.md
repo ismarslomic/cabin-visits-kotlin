@@ -288,6 +288,32 @@ If **no guest has the `ADMIN` role at all** (an empty or restored-empty database
 [docs/authentication.md](docs/authentication.md#granting-access)). It creates the admin, or gives the role to the guest with that email, and does nothing once an
 admin exists. Unset the variables afterwards.
 
+#### SQLite locking and concurrent writes
+
+The database is one SQLite file with a single writer: the API writes, the vehicle trip import, the check-in/out job, the
+backup and (later) the calendar outbox drain all contend for the same lock. `createSqliteDataSource`
+(`plugins/SqliteDatabase.kt`) therefore uses `BEGIN IMMEDIATE` and a 5 s `busy_timeout`, so a writer waits for the
+write lock when its transaction starts. Without it, two concurrent creates both read, then both want to write, and all
+but one fail at once with `SQLITE_BUSY` instead of waiting (`ReservationConcurrencyTest` shows the difference: 7 of 8
+creates failed). With it the loser sees what the winner committed and answers `409` (overlap).
+
+- Pure reads must not use that `DataSource`: the mode is per `DataSource`, so they would take the write lock and queue
+  behind each other (measured: 50 concurrent reads took up to 4 s, 10 took up to 0.2 s). Reads therefore use a second
+  `DataSource` on the same file with the default deferred `BEGIN` (`createSqliteReadDataSource`), through
+  `suspendReadTransaction`. They run concurrently with each other and with a writer (50 reads: 0.13 s). A read-only
+  method uses `suspendReadTransaction`, a method that writes uses `suspendTransaction`; a read inside a write that
+  must be consistent with it stays in the `suspendTransaction`.
+- `journal_mode` stays `delete`. WAL did not help reads on its own (a read on the write `DataSource` still took the
+  write lock) and only made writes next to reads faster, while it adds `-wal`/`-shm` files that a backup or a copy of
+  `data/app.db` must include.
+- A repository write that checks something and then writes (overlap, `version`, the outbox row) is **one**
+  `suspendTransaction`, never several repository calls in a service. A second transaction would wait for the first
+  and fail with `database is locked`.
+- Exposed re-runs a transaction block when it throws an `SQLException`, so the block must be safe to re-run (generate
+  ids inside it, no external side effects).
+- Test concurrency on a file database with `FileDatabaseTestSupport` (the same setup as production), not on the
+  in-memory database of `TestDbSetup`, which locks differently.
+
 #### Deploy runbook
 
 Releases are GitHub Releases `2.0.0-rc.N` cut from `v2` and go to the test environment first; production stays on `1.6.x` until `v2` is merged to `main`.
