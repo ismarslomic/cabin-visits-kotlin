@@ -9,9 +9,9 @@ import org.slf4j.Logger
 import java.io.File
 
 @Suppress("SpreadOperator")
-fun Application.configureDatabases() {
-    val databaseProperties = loadProperties<DatabasePropertiesHolder>().database
-    val databaseFilePath = databaseProperties.filePath
+fun Application.configureDatabases(
+    databaseFilePath: String = loadProperties<DatabasePropertiesHolder>().database.filePath,
+) {
     val databaseUrl = "jdbc:sqlite:$databaseFilePath"
     val dataSource = createSqliteDataSource(databaseUrl)
     val readDataSource = createSqliteReadDataSource(databaseUrl)
