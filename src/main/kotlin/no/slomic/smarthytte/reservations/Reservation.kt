@@ -107,6 +107,17 @@ data class Reservation(
         get() = fromCabinVehicleTrips.takeIf { it.isNotEmpty() }
             ?.let { trips -> trips.sumOf { it.averageSpeed } / trips.size }
 
+    /**
+     * [VisitStatus.UPCOMING] before the start date, [VisitStatus.ONGOING] while the end date is after [today], and
+     * [VisitStatus.COMPLETED] from the end date itself on (UTC dates). The live statistics keep the check-out day as
+     * occupied and use their own rule.
+     */
+    fun visitStatus(today: LocalDate): VisitStatus = when {
+        startDate > today -> VisitStatus.UPCOMING
+        endDate > today -> VisitStatus.ONGOING
+        else -> VisitStatus.COMPLETED
+    }
+
     fun daysInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
         val endDateInclusive = endDate.plus(DatePeriod(days = 1))
         val overlapStart = maxOf(startDate, periodStart)

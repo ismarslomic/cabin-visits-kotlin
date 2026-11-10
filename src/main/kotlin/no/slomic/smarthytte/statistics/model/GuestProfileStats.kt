@@ -5,6 +5,7 @@ package no.slomic.smarthytte.statistics.model
 import io.ktor.openapi.JsonSchema
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import no.slomic.smarthytte.reservations.VisitStatus
 
 @Serializable
 data class GuestProfileStats(
@@ -19,9 +20,6 @@ data class GuestProfileStats(
     )
     val funFacts: List<FunFact>,
 )
-
-@Serializable
-enum class VisitStatus { COMPLETED, ONGOING, UPCOMING }
 
 @Serializable
 data class GuestVisit(

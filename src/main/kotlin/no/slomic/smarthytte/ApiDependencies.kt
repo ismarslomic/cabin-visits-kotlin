@@ -6,6 +6,7 @@ import no.slomic.smarthytte.auth.CloudflareAccessConfig
 import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
 
 /**
@@ -17,6 +18,7 @@ class ApiDependencies(
     val guestProfileService: GuestProfileService,
     val guestAdminService: GuestAdminService,
     val statsService: StatsService,
+    val reservationService: ReservationService,
     val appUserService: AppUserService,
     val cloudflareAccess: CloudflareAccessConfig?,
     val apiKeys: ApiKeyConfig = ApiKeyConfig(emptyMap()),

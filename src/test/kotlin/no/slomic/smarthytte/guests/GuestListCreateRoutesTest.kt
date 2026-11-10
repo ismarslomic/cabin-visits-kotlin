@@ -27,6 +27,7 @@ import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.auth.accessToken
 import no.slomic.smarthytte.auth.testCloudflareAccess
 import no.slomic.smarthytte.auth.testGuest
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.utils.configureTestApiRoutes
@@ -57,6 +58,7 @@ class GuestListCreateRoutesTest :
                         guestProfileService = GuestProfileService(repository),
                         guestAdminService = GuestAdminService(repository),
                         statsService = mockk<StatsService>(),
+                        reservationService = mockk<ReservationService>(),
                         appUserService = AppUserService(repository),
                         cloudflareAccess = testCloudflareAccess,
                     ),
@@ -72,7 +74,7 @@ class GuestListCreateRoutesTest :
                 body?.let { setBody(it) }
             }
 
-        fun HttpResponse.jsonBody(text: String): JsonObject = Json.parseToJsonElement(text).jsonObject
+        fun jsonBody(text: String): JsonObject = Json.parseToJsonElement(text).jsonObject
 
         "list guests should respond with every guest, version and audit fields for admin and family user" {
             givenUsers()
@@ -120,7 +122,7 @@ class GuestListCreateRoutesTest :
                 val response = post(accessToken("admin@example.com"), CREATE_BODY, ContentType.Application.Json)
 
                 response.status shouldBe HttpStatusCode.Created
-                val body = response.jsonBody(response.bodyAsText())
+                val body = jsonBody(response.bodyAsText())
                 body["id"]?.jsonPrimitive?.content shouldBe "ola.nordmann"
                 body["email"]?.jsonPrimitive?.content shouldBe "ola@example.com"
                 body["isFamily"]?.jsonPrimitive?.content shouldBe "false"
@@ -139,7 +141,7 @@ class GuestListCreateRoutesTest :
                 val response = post(accessToken("admin@example.com"), body, ContentType.Application.Json)
 
                 response.status shouldBe HttpStatusCode.Conflict
-                response.jsonBody(response.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe "EMAIL_IN_USE"
+                jsonBody(response.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe "EMAIL_IN_USE"
             }
         }
 
@@ -160,7 +162,7 @@ class GuestListCreateRoutesTest :
                         val response = post(token, body, ContentType.Application.Json)
 
                         response.status shouldBe HttpStatusCode.BadRequest
-                        response.jsonBody(response.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe code
+                        jsonBody(response.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe code
                     }
                 }
                 repository.allGuests().size shouldBe 3
@@ -175,7 +177,7 @@ class GuestListCreateRoutesTest :
 
                 val wrongType = post(token, CREATE_BODY, ContentType.Text.Plain)
                 wrongType.status shouldBe HttpStatusCode.UnsupportedMediaType
-                wrongType.jsonBody(wrongType.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe
+                jsonBody(wrongType.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe
                     "UNSUPPORTED_MEDIA_TYPE"
                 post(token, CREATE_BODY, ContentType.MultiPart.FormData).status shouldBe
                     HttpStatusCode.UnsupportedMediaType
@@ -184,7 +186,7 @@ class GuestListCreateRoutesTest :
                 val large =
                     post(token, CREATE_BODY.replace("Ola\"", "${"x".repeat(70_000)}\""), ContentType.Application.Json)
                 large.status shouldBe HttpStatusCode.PayloadTooLarge
-                large.jsonBody(large.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe "BODY_TOO_LARGE"
+                jsonBody(large.bodyAsText())["code"]?.jsonPrimitive?.content shouldBe "BODY_TOO_LARGE"
             }
         }
 

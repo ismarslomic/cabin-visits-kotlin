@@ -7,9 +7,9 @@ import io.kotest.matchers.shouldBe
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import no.slomic.smarthytte.reservations.VisitStatus
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisit
-import no.slomic.smarthytte.statistics.model.VisitStatus
 
 class GuestProfileFunFactsTest :
     ShouldSpec({

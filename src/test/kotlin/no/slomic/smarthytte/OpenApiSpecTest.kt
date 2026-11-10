@@ -19,6 +19,7 @@ import no.slomic.smarthytte.guests.GuestAdminService
 import no.slomic.smarthytte.guests.GuestProfileService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.plugins.configureMonitoring
+import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
 import java.io.File
 
@@ -100,7 +101,7 @@ class OpenApiSpecTest :
                     val schema = media.jsonObject["schema"]?.jsonObject
                     when (mediaType) {
                         "application/json" ->
-                            schema?.get("\$ref")?.jsonPrimitive?.content?.startsWith("#/components/schemas/") shouldBe
+                            schema?.get($$"$ref")?.jsonPrimitive?.content?.startsWith("#/components/schemas/") shouldBe
                                 true
 
                         "image/jpeg" -> schema?.get("format")?.jsonPrimitive?.content shouldBe "binary"
@@ -121,7 +122,7 @@ class OpenApiSpecTest :
                 schema.jsonObject["properties"]?.jsonObject?.forEach { (property, definition) ->
                     withClue("$schemaName.$property") {
                         val description = definition.jsonObject["description"]?.jsonPrimitive?.content
-                        val reference = definition.jsonObject["\$ref"]?.jsonPrimitive?.content
+                        val reference = definition.jsonObject[$$"$ref"]?.jsonPrimitive?.content
                         val referenced = reference?.substringAfterLast('/')?.let { schemas[it] }
 
                         val documented = description?.isNotBlank() == true ||
@@ -135,6 +136,37 @@ class OpenApiSpecTest :
                 operation.body["parameters"]?.jsonArray?.forEach { parameter ->
                     withClue("${operation.name} ${parameter.jsonObject["name"]}") {
                         parameter.jsonObject["description"]?.jsonPrimitive?.content?.isNotBlank() shouldBe true
+                    }
+                }
+            }
+        }
+
+        "served OpenAPI spec should not contain a schema or parameter that failed to resolve" {
+            // The generator does not fail on an invalid annotation (for example an @JsonSchema.Example that is not a
+            // JSON literal), it writes "Failed to resolve ..." into the description instead.
+            servedSpec().toString().contains("Failed to resolve") shouldBe false
+        }
+
+        "every property and parameter of the reservation routes should have an example" {
+            // API design principle 11. Only the reservation routes so far; the plan has a follow-up for the rest.
+            // A property that refers to a class (or a list of one) gets its examples from that class.
+            val spec = servedSpec()
+            val schemas = spec.jsonObject.getValue("components").jsonObject.getValue("schemas").jsonObject
+
+            schemas.filterKeys { it.startsWith("Reservation") }.forEach { (schemaName, schema) ->
+                schema.jsonObject["properties"]?.jsonObject?.forEach { (property, definition) ->
+                    withClue("$schemaName.$property") {
+                        val refersToClass = definition.jsonObject.containsKey($$"$ref") ||
+                            definition.jsonObject["items"]?.jsonObject?.containsKey($$"$ref") == true
+                        (refersToClass || definition.jsonObject.containsKey("example")) shouldBe true
+                    }
+                }
+            }
+
+            spec.operations().filter { it.path.startsWith("/api/reservations") }.forEach { operation ->
+                operation.body["parameters"]?.jsonArray?.forEach { parameter ->
+                    withClue("${operation.name} ${parameter.jsonObject["name"]}") {
+                        parameter.jsonObject.containsKey("example") shouldBe true
                     }
                 }
             }
@@ -176,6 +208,7 @@ private fun servedSpec(): JsonElement {
                     guestProfileService = mockk<GuestProfileService>(),
                     guestAdminService = mockk<GuestAdminService>(),
                     statsService = mockk<StatsService>(),
+                    reservationService = mockk<ReservationService>(),
                     appUserService = mockk<AppUserService>(),
                     cloudflareAccess = null,
                 ),

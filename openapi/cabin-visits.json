@@ -657,6 +657,141 @@
         ]
       }
     },
+    "/api/reservations": {
+      "get": {
+        "operationId": "listReservations",
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "List reservations",
+        "description": "All roles and the service user. Returns every reservation that overlaps the window, i.e. its start date is before to and its end date is on or after from (UTC dates), so a reservation that spans a month boundary appears in both months. Without parameters it returns all reservations. Admin, family user and the service user see every reservation; a guest user only sees the reservations their own guest is part of, whole stay or part of it. Sorted by startTime, then id. Errors are JSON with a code and a message.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "First day of the window (inclusive), a UTC date yyyy-MM-dd. Omit for no lower limit.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-07-01"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Day after the last day of the window (exclusive), a UTC date yyyy-MM-dd. Must be after from. Omit for no upper limit.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-08-01"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "from or to is not a date (yyyy-MM-dd), or to is not after from.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The reservations in the window, sorted by start time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReservationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token or the API key is missing or invalid."
+          },
+          "403": {
+            "description": "The caller has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/reservations/{id}": {
+      "get": {
+        "operationId": "getReservation",
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Get a reservation",
+        "description": "All roles and the service user. A guest user only gets a reservation their own guest is part of, for any other reservation the answer is the same as for an unknown id. Errors are JSON with a code and a message.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Unique identifier of the reservation. Old reservations can have an id that starts with an underscore.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "a3f9c2e17b4d4e5f8a1b2c3d4e5f6a7b"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The reservation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The reservation does not exist, or the caller is a guest user who is not a guest of it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token or the API key is missing or invalid."
+          },
+          "403": {
+            "description": "The caller has no role in the application."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
     "/api/stats": {
       "get": {
         "operationId": "getLiveStats",
@@ -1303,6 +1438,189 @@
               "FAMILY_USER",
               "GUEST_USER"
             ]
+          }
+        }
+      },
+      "ReservationGuestResponse": {
+        "type": "object",
+        "title": "ReservationGuestResponse",
+        "required": [
+          "guestId",
+          "firstName",
+          "lastName"
+        ],
+        "properties": {
+          "guestId": {
+            "type": "string",
+            "description": "Internal unique identifier of the guest.",
+            "example": "ola.nordmann"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "The first name of the guest.",
+            "example": "Ola"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "The last name of the guest.",
+            "example": "Nordmann"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely.",
+            "example": "/api/guests/ola.nordmann/avatar?v=1767225600000"
+          }
+        }
+      },
+      "ReservationCheckInResponse": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ReservationCheckInResponse",
+        "description": "The check-in, or null if the reservation has no check-in yet.",
+        "required": [
+          "time",
+          "sourceName"
+        ],
+        "properties": {
+          "time": {
+            "type": "string",
+            "description": "When the guests checked in (UTC).",
+            "example": "2026-07-10T17:42:00Z",
+            "format": "date-time"
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "What registered the check-in: CHECK_IN_SENSOR, VEHICLE_TRIP or CALENDAR_EVENT.",
+            "example": "CHECK_IN_SENSOR",
+            "enum": [
+              "CHECK_IN_SENSOR",
+              "VEHICLE_TRIP",
+              "CALENDAR_EVENT"
+            ]
+          }
+        }
+      },
+      "ReservationCheckOutResponse": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ReservationCheckOutResponse",
+        "description": "The check-out, or null if the reservation has no check-out yet.",
+        "required": [
+          "time",
+          "sourceName"
+        ],
+        "properties": {
+          "time": {
+            "type": "string",
+            "description": "When the guests checked out (UTC).",
+            "example": "2026-07-12T12:10:00Z",
+            "format": "date-time"
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "What registered the check-out: CHECK_IN_SENSOR, VEHICLE_TRIP or CALENDAR_EVENT.",
+            "example": "VEHICLE_TRIP",
+            "enum": [
+              "CHECK_IN_SENSOR",
+              "VEHICLE_TRIP",
+              "CALENDAR_EVENT"
+            ]
+          }
+        }
+      },
+      "ReservationResponse": {
+        "type": "object",
+        "title": "ReservationResponse",
+        "required": [
+          "id",
+          "startTime",
+          "endTime",
+          "guests",
+          "status",
+          "version",
+          "createdTime",
+          "createdBy"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the reservation. It is also the id of the Google Calendar event, so an old reservation can have an id that starts with an underscore.",
+            "example": "a3f9c2e17b4d4e5f8a1b2c3d4e5f6a7b"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "When the stay starts (UTC instant). Its UTC date is the first day of the stay.",
+            "example": "2026-07-10T16:00:00Z",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "When the stay ends (UTC instant). Its UTC date is the last day of the stay.",
+            "example": "2026-07-12T13:00:00Z",
+            "format": "date-time"
+          },
+          "guests": {
+            "type": "array",
+            "description": "The guests of the reservation, sorted by guest id. Never empty for a stored reservation.",
+            "items": {
+              "$ref": "#/components/schemas/ReservationGuestResponse"
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "UPCOMING before the start date, ONGOING while the end date is after today, COMPLETED from the end date itself on (UTC dates). Differs from the live stats, which keep the check-out day as occupied.",
+            "example": "UPCOMING",
+            "enum": [
+              "COMPLETED",
+              "ONGOING",
+              "UPCOMING"
+            ]
+          },
+          "checkIn": {
+            "$ref": "#/components/schemas/ReservationCheckInResponse"
+          },
+          "checkOut": {
+            "$ref": "#/components/schemas/ReservationCheckOutResponse"
+          },
+          "version": {
+            "type": "integer",
+            "description": "The version of the reservation. It changes only when a user edits the times or the guests, not when check-in/out or trips are derived.",
+            "example": 3
+          },
+          "createdTime": {
+            "type": "string",
+            "description": "When the reservation was created (UTC).",
+            "example": "2026-06-01T09:15:00Z",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "Who created the reservation: a guest id, or the literal system, which is not a guest.",
+            "example": "ola.nordmann"
+          },
+          "updatedTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When a user last edited the reservation (UTC), or null if never edited.",
+            "example": "2026-06-20T18:30:00Z",
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who last edited the reservation: a guest id, or the literal system, which is not a guest. Null if never edited.",
+            "example": "kari.nordmann"
           }
         }
       },
@@ -3057,6 +3375,10 @@
     {
       "name": "Guests",
       "description": "Guest resources, such as avatar images."
+    },
+    {
+      "name": "Reservations",
+      "description": "Cabin reservations: the stays with their guests, check-in and check-out."
     },
     {
       "name": "Auth",
