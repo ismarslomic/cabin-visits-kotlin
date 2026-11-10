@@ -9,6 +9,7 @@ import io.ktor.client.statement.bodyAsBytes
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -147,13 +148,13 @@ class OpenApiSpecTest :
             servedSpec().toString().contains("Failed to resolve") shouldBe false
         }
 
-        "every property and parameter of the reservation routes should have an example" {
-            // API design principle 11. Only the reservation routes so far; the plan has a follow-up for the rest.
-            // A property that refers to a class (or a list of one) gets its examples from that class.
+        "every property and parameter in the served spec should have an example" {
+            // API design principle 11. A property that refers to a class (or a list of one) gets its examples from
+            // that class.
             val spec = servedSpec()
             val schemas = spec.jsonObject.getValue("components").jsonObject.getValue("schemas").jsonObject
 
-            schemas.filterKeys { it.startsWith("Reservation") }.forEach { (schemaName, schema) ->
+            schemas.forEach { (schemaName, schema) ->
                 schema.jsonObject["properties"]?.jsonObject?.forEach { (property, definition) ->
                     withClue("$schemaName.$property") {
                         val refersToClass = definition.jsonObject.containsKey($$"$ref") ||
@@ -163,10 +164,30 @@ class OpenApiSpecTest :
                 }
             }
 
-            spec.operations().filter { it.path.startsWith("/api/reservations") }.forEach { operation ->
+            spec.operations().forEach { operation ->
                 operation.body["parameters"]?.jsonArray?.forEach { parameter ->
                     withClue("${operation.name} ${parameter.jsonObject["name"]}") {
                         parameter.jsonObject.containsKey("example") shouldBe true
+                    }
+                }
+            }
+        }
+
+        "every example in the served spec should match the type and the enum values of its property" {
+            val schemas = servedSpec().jsonObject.getValue("components").jsonObject.getValue("schemas").jsonObject
+
+            schemas.forEach { (schemaName, schema) ->
+                schema.jsonObject["properties"]?.jsonObject?.forEach { (property, definition) ->
+                    val example = definition.jsonObject["example"] ?: return@forEach
+                    withClue("$schemaName.$property example $example") {
+                        val types = when (val type = definition.jsonObject["type"]) {
+                            is JsonArray -> type.map { it.jsonPrimitive.content }
+                            else -> listOfNotNull(type?.jsonPrimitive?.content)
+                        }
+                        (example.jsonTypeName() in types) shouldBe true
+
+                        val allowed = definition.jsonObject["enum"]?.jsonArray?.map { it.jsonPrimitive.content }
+                        if (allowed != null) (example.jsonPrimitive.content in allowed) shouldBe true
                     }
                 }
             }
@@ -182,6 +203,16 @@ class OpenApiSpecTest :
             }
         }
     })
+
+/** The JSON schema type name of a value; a whole number is an integer, any other number a number. */
+private fun JsonElement.jsonTypeName(): String = when {
+    this is JsonArray -> "array"
+    this is JsonObject -> "object"
+    jsonPrimitive.isString -> "string"
+    jsonPrimitive.content in setOf("true", "false") -> "boolean"
+    jsonPrimitive.content.matches(Regex("-?\\d+")) -> "integer"
+    else -> "number"
+}
 
 private class SpecOperation(val method: String, val path: String, val body: JsonObject) {
     val name = "$method $path"

@@ -24,16 +24,21 @@ data class GuestProfileStats(
 @Serializable
 data class GuestVisit(
     @JsonSchema.Description("First day of the visit (check-in date, inclusive).")
+    @JsonSchema.Example("\"2026-07-10\"")
     val startDate: LocalDate,
     @JsonSchema.Description("Last day of the visit (check-out date). Same semantics as the end date of a reservation.")
+    @JsonSchema.Example("\"2026-07-12\"")
     val endDate: LocalDate,
     @JsonSchema.Description("Number of calendar days of the whole visit, including arrival and departure day.")
+    @JsonSchema.Example("3")
     val days: Int,
     @JsonSchema.Description("Number of nights of the whole visit.")
+    @JsonSchema.Example("2")
     val nights: Int,
     @JsonSchema.Description(
         "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or " +
             "UPCOMING (the visit has not started yet).",
     )
+    @JsonSchema.Example("\"ONGOING\"")
     val status: VisitStatus,
 )

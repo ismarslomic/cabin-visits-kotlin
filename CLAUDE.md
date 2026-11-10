@@ -52,7 +52,7 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - `PUT /api/me` erstatter kun `firstName`, `lastName`, `birthYear` og `gender`. E-post, `isFamily` og `role` endres kun av admin via `PUT /api/guests/{guestId}`.
 - Alle gjesteruter svarer feil som JSON `ApiError(code, message)`. `GET /api/me` og `PUT /api/me` svarer med `MeResponse` (inkl. `avatarUrl`).
 - `configureApiRoutes` tar en `ApiDependencies`; nye tjenester legges til der.
-- **Krav:** hver property i en request- eller respons-klasse og hver path-/query-parameter skal ha både `description` og `example` i OpenAPI (`@JsonSchema.Description` / `@JsonSchema.Example` på propertyen, `description` / `example` på parameteren i `describe {}`). `@JsonSchema.Example` er en JSON-literal: en streng trenger egne anførselstegn. `OpenApiSpecTest` feiler hvis en beskrivelse mangler, og for rutene under `/api/reservations` også et eksempel. Detaljer i prinsipp 10 og 11 i `DEVELOPER.md`.
+- **Krav:** hver property i en request- eller respons-klasse og hver path-/query-parameter skal ha både `description` og `example` i OpenAPI (`@JsonSchema.Description` / `@JsonSchema.Example` på propertyen, `description` / `example` på parameteren i `describe {}`). `@JsonSchema.Example` er en JSON-literal: en streng trenger egne anførselstegn. `OpenApiSpecTest` feiler hvis en beskrivelse eller et eksempel mangler, eller hvis eksemplet ikke passer til typen eller enum-verdiene. Detaljer i prinsipp 10 og 11 i `DEVELOPER.md`.
 - Endrer du auth- eller gjesteatferd, oppdater `docs/authentication.md`.
 
 ## Testdekning (Codecov)

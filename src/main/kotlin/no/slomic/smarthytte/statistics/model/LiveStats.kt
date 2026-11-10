@@ -11,6 +11,7 @@ data class LiveStats(
     @JsonSchema.Description(
         "True if the cabin is currently occupied: a reservation has started and its check-out date has not passed, so also on the check-out day.",
     )
+    @JsonSchema.Example("true")
     val isOccupied: Boolean,
     @JsonSchema.Description("Details about the ongoing reservation. Null if the cabin is not currently occupied.")
     val currentReservation: CurrentReservationInfo?,
@@ -19,12 +20,15 @@ data class LiveStats(
     @JsonSchema.Description(
         "Total number of reservations that have started, across all years. Future bookings are excluded.",
     )
+    @JsonSchema.Example("139")
     val allTimeVisits: Int,
     @JsonSchema.Description(
         "Total number of nights across all reservations that have started. Future bookings are excluded.",
     )
+    @JsonSchema.Example("412")
     val allTimeNights: Int,
     @JsonSchema.Description("Total number of unique guests registered in the system.")
+    @JsonSchema.Example("31")
     val allTimeUniqueGuests: Int,
     @JsonSchema.Description(
         "Fun facts about the guests of the current reservation, sorted by priority. Empty if the cabin is not occupied.",
@@ -41,43 +45,53 @@ data class LiveStats(
 @Serializable
 data class CurrentReservationInfo(
     @JsonSchema.Description("First day of the current reservation (check-in date, inclusive).")
+    @JsonSchema.Example("\"2026-07-10\"")
     val startDate: LocalDate,
     @JsonSchema.Description(
         "Last day of the current reservation (check-out date). The reservation is still current on this day, and the cabin is free the day after.",
     )
+    @JsonSchema.Example("\"2026-07-12\"")
     val endDate: LocalDate,
     @JsonSchema.Description("Statistics for each guest in the current reservation, ordered by current year days rank.")
     val guests: List<GuestStats>,
     @JsonSchema.Description(
         "Number of nights remaining in the current reservation, from today until check-out. 0 on the check-out day.",
     )
+    @JsonSchema.Example("1")
     val remainingNights: Int,
     @JsonSchema.Description(
         "Order number of the current reservation when all reservations are sorted ascending on start date, starting at 1.",
     )
+    @JsonSchema.Example("139")
     val reservationOrder: Int,
     @JsonSchema.Description(
         "Order number of the current reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1.",
     )
+    @JsonSchema.Example("12")
     val reservationOrderInYear: Int,
 )
 
 @Serializable
 data class NextReservationInfo(
     @JsonSchema.Description("First day of the next reservation (check-in date, inclusive).")
+    @JsonSchema.Example("\"2026-07-10\"")
     val startDate: LocalDate,
     @JsonSchema.Description("Last day of the next reservation (check-out date, exclusive).")
+    @JsonSchema.Example("\"2026-07-12\"")
     val endDate: LocalDate,
     @JsonSchema.Description("Statistics for each guest in the next reservation, ordered by current year days rank.")
     val guests: List<GuestStats>,
     @JsonSchema.Description("Number of days from today until the next reservation starts.")
+    @JsonSchema.Example("12")
     val daysUntil: Int,
     @JsonSchema.Description(
         "Order number of the next reservation when all reservations are sorted ascending on start date, starting at 1.",
     )
+    @JsonSchema.Example("139")
     val reservationOrder: Int,
     @JsonSchema.Description(
         "Order number of the next reservation among the reservations that have started in the same year as its start date, sorted ascending on start date, starting at 1.",
     )
+    @JsonSchema.Example("12")
     val reservationOrderInYear: Int,
 )

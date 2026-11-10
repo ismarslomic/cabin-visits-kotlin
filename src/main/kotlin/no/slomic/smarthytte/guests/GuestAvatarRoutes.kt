@@ -4,6 +4,7 @@ package no.slomic.smarthytte.guests
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.openapi.GenericElement
 import io.ktor.openapi.JsonSchema
 import io.ktor.openapi.JsonType
 import io.ktor.server.application.ApplicationCall
@@ -113,7 +114,10 @@ private fun Route.describeUpload(
     tag(tag)
     if (withGuestId) {
         parameters {
-            path("guestId") { this.description = "Internal unique identifier of the guest." }
+            path("guestId") {
+                this.description = "Internal unique identifier of the guest."
+                this.example = GenericElement("ola.nordmann")
+            }
         }
     }
     this.summary = summary
