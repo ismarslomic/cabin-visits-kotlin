@@ -13,8 +13,11 @@ import java.sql.Connection
  */
 class MigrationV17Test :
     StringSpec({
+        // The SQL of these tests is fixed text and test data, never user input. IntelliJ flags every non-constant string.
+        @Suppress("SqlSourceToSinkFlow")
         fun Connection.execute(sql: String) = createStatement().use { it.execute(sql) }
 
+        @Suppress("SqlSourceToSinkFlow")
         fun <T> Connection.query(sql: String, read: (java.sql.ResultSet) -> T): List<T> = createStatement().use { st ->
             st.executeQuery(sql).use { rs -> buildList { while (rs.next()) add(read(rs)) } }
         }

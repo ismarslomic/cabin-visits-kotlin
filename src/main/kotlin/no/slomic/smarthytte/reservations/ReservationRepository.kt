@@ -1,6 +1,7 @@
 package no.slomic.smarthytte.reservations
 
 import kotlinx.datetime.LocalDate
+import no.slomic.smarthytte.calendar.CalendarOperation
 import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.PersistenceResult
@@ -42,7 +43,43 @@ interface ReservationRepository {
      * for a change).
      */
     suspend fun addOrUpdate(reservation: Reservation, actor: String = SYSTEM_ACTOR): PersistenceResult
-    suspend fun deleteReservation(id: String): PersistenceResult
+
+    /**
+     * Creates a reservation with a generated id (32 lowercase hex characters, a valid Google Calendar event id) for the
+     * [guestIds], and queues a calendar [CalendarOperation.INSERT]. The overlap check, the write and the outbox row are
+     * one transaction, which is safe to re-run (the id is generated inside it). Sets `created_*` ([actor]). The service
+     * validates the request, this only guards what must hold in the transaction: no overlap and existing guests.
+     */
+    suspend fun createReservation(
+        startTime: Instant,
+        endTime: Instant,
+        guestIds: List<String>,
+        actor: String,
+    ): ReservationCreateOutcome
+
+    /**
+     * Replaces the times and guests of the reservation if the stored version is [expectedVersion]. A change bumps
+     * `version` and sets `updated_*` ([actor]). When the times change, the overlap with other reservations is checked,
+     * the trip links and the check-in/out are cleared (derived data, nothing else is touched) and a calendar
+     * [CalendarOperation.UPDATE] is queued; a guest-only change queues nothing. Times and guests that equal the stored
+     * ones change nothing ([ReservationUpdateOutcome.Unchanged]). The check, the write and the outbox row are one
+     * transaction.
+     */
+    suspend fun updateReservation(
+        id: String,
+        expectedVersion: Short,
+        startTime: Instant,
+        endTime: Instant,
+        guestIds: List<String>,
+        actor: String,
+    ): ReservationUpdateOutcome
+
+    /**
+     * Deletes the reservation if the stored version is [expectedVersion], with its guest links, trip links and
+     * check-in/out, and queues a calendar [CalendarOperation.DELETE]. Logs one INFO line with what was deleted and the
+     * [actor], so an accidental delete can be recreated by hand.
+     */
+    suspend fun deleteReservation(id: String, expectedVersion: Short, actor: String): ReservationDeleteOutcome
     suspend fun setCheckIn(checkIn: CheckIn, id: String, startTime: Instant, endTime: Instant): PersistenceResult
     suspend fun setCheckOut(checkOut: CheckOut, id: String, startTime: Instant, endTime: Instant): PersistenceResult
 }

@@ -5,6 +5,7 @@ import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.markCreated
 import no.slomic.smarthytte.common.markUpdated
+import no.slomic.smarthytte.common.suspendReadTransaction
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
@@ -13,7 +14,7 @@ import kotlin.time.Clock
 class SqliteVehicleTripRepository : VehicleTripRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteVehicleTripRepository::class.java.name)
 
-    override suspend fun allVehicleTrips(): List<VehicleTrip> = suspendTransaction {
+    override suspend fun allVehicleTrips(): List<VehicleTrip> = suspendReadTransaction {
         VehicleTripEntity.all().sortedBy { it.startTime }.map(::daoToModel)
     }
 

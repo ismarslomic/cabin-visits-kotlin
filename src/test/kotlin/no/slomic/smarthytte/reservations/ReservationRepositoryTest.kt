@@ -158,18 +158,16 @@ class ReservationRepositoryTest :
             }
         }
 
-        "delete should remove existing reservation and return DELETED as result" {
+        "delete should remove existing reservation and return Deleted as result" {
             repository.addOrUpdate(reservation)
             repository.allReservations() shouldHaveSize 1
 
-            val persistenceResult = repository.deleteReservation(reservation.id)
-            persistenceResult shouldBe PersistenceResult.DELETED
+            repository.deleteReservation(reservation.id, 1, "admin") shouldBe ReservationDeleteOutcome.Deleted
             repository.allReservations() shouldHaveSize 0
         }
 
-        "deleting non-existing reservation should return NO_ACTION as result" {
-            val persistenceResult = repository.deleteReservation("non-existing-id")
-            persistenceResult shouldBe PersistenceResult.NO_ACTION
+        "deleting non-existing reservation should return NotFound as result" {
+            repository.deleteReservation("non-existing-id", 1, "admin") shouldBe ReservationDeleteOutcome.NotFound
             repository.allReservations() shouldHaveSize 0
         }
 
@@ -432,7 +430,7 @@ class ReservationRepositoryTest :
                 allReservationGuests shouldHaveSize 2
             }
 
-            repository.deleteReservation(reservationWithGuest.id)
+            repository.deleteReservation(reservationWithGuest.id, 1, "admin")
             repository.reservationById(reservationWithGuest.id).shouldBeNull()
 
             transaction {

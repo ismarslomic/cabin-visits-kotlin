@@ -1,14 +1,10 @@
 package no.slomic.smarthytte.common
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.Column
-import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.datetime.timestamp
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -52,8 +48,4 @@ fun AuditedEntity<*>.markUpdated(actor: String) {
     version = version.inc()
     updatedTime = Clock.System.now().truncatedToMillis()
     updatedBy = actor
-}
-
-suspend fun <T> suspendTransaction(block: Transaction.() -> T): T = withContext(Dispatchers.IO) {
-    transaction { block() }
 }
