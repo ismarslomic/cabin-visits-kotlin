@@ -62,13 +62,14 @@ before.
 | `PUT /api/me/avatar` (own avatar)                                                  | yes                             | yes                     | yes                      | yes                      |
 | `GET /api/stats`, `GET /api/stats/guests/{guestId}`, `GET /api/guests/{id}/avatar` | yes, **also API key (service)** | yes                     | yes                      | yes                      |
 | `GET /api/reservations`, `GET /api/reservations/{id}`                              | yes, **also API key (service)** | all                     | all                      | only those they are a guest of |
+| `POST /api/reservations`, `PUT /api/reservations/{id}`, `DELETE /api/reservations/{id}` | yes                        | yes                     | yes                      | no                       |
 | Other `GET /api/stats/**`                                                          | yes                             | yes                     | yes                      | yes                      |
 | `/`, `/metrics`, `/openapi.json`                                                   | no (unchanged)                  |                         |                          |                          |
 
 ### Planned permissions (reservation and guest API)
 
-Not implemented yet, see `.claude/plans/reservations-rest-api.md`. The plan wins until a row moves into the matrix above
-(the guest rows, including the avatar upload, and the reservation read row have moved; the reservation write rows are still planned).
+Overview; the implemented routes are in the matrix above, see `.claude/plans/reservations-rest-api.md` for what is still planned. The plan wins until a row moves into the matrix above
+(the guest rows, including the avatar upload, and the reservation read and write rows have moved; the table below stays as the overview with the guest-stay plans).
 Past, current and future reservations are treated the same. `ADMIN` and `FAMILY_USER` may change any reservation (there is
 no owner concept). A guest without a role has no access.
 
@@ -102,14 +103,15 @@ no owner concept). A guest without a role has no access.
 Only `ADMIN` may change `email`, `isFamily` and `role`.
 
 **Status codes and versioning** (guest routes are implemented, the rest is planned, details in the plan):
-- `POST /api/guests` answers `201` with the created guest. `POST /api/reservations` (planned) answers `201` with a `Location` header; update `200`; delete `204`; unknown id `404`.
+- `POST /api/guests` answers `201` with the created guest. `POST /api/reservations` answers `201` with the created reservation and a `Location` header; `PUT` answers `200` with the reservation (unchanged data keeps the version); `DELETE` answers `204`; an unknown id is `404`.
 - A stale `version` returns `412` (reservations, and guests on `PUT /api/guests/{guestId}` and `PUT /api/me`); a missing or non-numeric `version`
   returns `400`. An overlap with another reservation and a shared guest email return `409`.
 - `DELETE /api/reservations/{id}?version=<n>` carries the version in the query.
+- Reservation writes (`ADMIN` and `FAMILY_USER`; `ReservationService`): `400` with a code for a broken rule (`END_BEFORE_START`, `TOO_LONG` over 60 nights by UTC date, `TOO_FAR_AHEAD` more than 2 years ahead, `NO_GUESTS`, `TOO_MANY_GUESTS` over 50, `DUPLICATE_GUEST`, `UNKNOWN_GUEST`; in the past is allowed; on `PUT` the range rules apply only when the times change), `409` `OVERLAP` for a reservation that overlaps another (a handover on the same instant is allowed; a retried create is `409`). On `PUT` the checks run in the order: reservation exists (`404`), version (`412`), rules (`400`), overlap (`409`). A change of the times clears check-in, check-out and trips of that reservation and derives them again after the commit.
 - Avatar upload (`PUT /api/guests/{guestId}/avatar`, `PUT /api/me/avatar`, implemented): the body is the raw JPEG. `Content-Type: image/jpeg` is required (`415` otherwise, parameters such as `charset` are ignored), at most 4 MB (`413`), not a valid JPEG or larger than 4000 x 4000 pixels `400` (`INVALID_IMAGE`), unknown guest `404`; the answer is `204`. The server removes all metadata without re-encoding (Exif including GPS and orientation, XMP, comments, thumbnails, appended images; `JpegSanitizer.kt`), so clients must upload upright pixels. It is last write wins: no `version`, and the same image changes nothing. Errors are JSON `{code, message}`.
-- Errors on every guest route (`GET`/`POST /api/guests`, `PUT /api/guests/{guestId}`, `PUT /api/me`, the avatar uploads) are JSON `{code, message}` with stable codes (`INVALID_REQUEST`, `INVALID_GUEST`, `INVALID_IMAGE`, `NOT_FOUND`, `FORBIDDEN`, `EMAIL_IN_USE`, `LAST_ADMIN`, `VERSION_MISMATCH`, `BODY_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`, `TEMPORARILY_UNAVAILABLE`); the status codes are unchanged. `GET /api/me` and the response of `PUT /api/me` carry `avatarUrl` (null without an avatar, versioned like `GuestResponse`), so the web app refetches `/api/me` after `PUT /api/me/avatar` to get the new url.
+- Errors on every guest route (`GET`/`POST /api/guests`, `PUT /api/guests/{guestId}`, `PUT /api/me`, the avatar uploads) are JSON `{code, message}` with stable codes (`INVALID_REQUEST`, `INVALID_GUEST`, `INVALID_IMAGE`, `NOT_FOUND`, `FORBIDDEN`, `EMAIL_IN_USE`, `LAST_ADMIN`, `VERSION_MISMATCH`, `BODY_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`, `TEMPORARILY_UNAVAILABLE`); the status codes are unchanged. The reservation routes use the same format with the codes above and `OVERLAP`. `GET /api/me` and the response of `PUT /api/me` carry `avatarUrl` (null without an avatar, versioned like `GuestResponse`), so the web app refetches `/api/me` after `PUT /api/me/avatar` to get the new url.
 - A JSON write body above 64 KB returns `413`; a non-JSON content type on a write route returns `415` (also on `PUT /api/guests/{guestId}` and `PUT /api/me`, which answered `400` before); a `version` outside the `Short` range, an invalid `from`/`to`, or `to <= from` returns `400`.
-- When the database stays locked after the retries (`SQLITE_BUSY`) or the Calendar outbox is full, writes return `503`.
+- When the database stays locked after the 5 s busy timeout (`SQLITE_BUSY`) or 200 or more calendar operations are waiting in the outbox, reservation writes return `503` `TEMPORARILY_UNAVAILABLE` (nothing is written).
 - **State-changing routes** require `application/json` or `image/jpeg`, never change state on `GET`, and have no body-less `POST` (this is what keeps cross-site requests out, because Cloudflare Access authenticates by cookie). No CORS plugin is installed, so a cross-site request needs a preflight that is never allowed. `UpdateGuestRoutesTest` checks `415` for `text/plain`, `multipart/form-data` and no body, and that a preflight gets no `Access-Control-Allow-*` header.
 
 `GET /api/guests` returns the same fields (incl. email, role, `version` and the audit fields) to `ADMIN` and `FAMILY_USER`. Avatars are JPEG only,
