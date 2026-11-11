@@ -40,6 +40,25 @@ The spec is inferred from the code when it is compiled, and an incremental build
 missing request body after `formatKotlin` changed a file). If `OpenApiSpecTest` fails without an API change, or the
 regenerated spec looks wrong, run `./gradlew clean` first and regenerate again.
 
+### Layering and package boundaries
+
+Dependencies point one way: route (controller) -> service -> repository -> table (entity).
+
+- A route only calls services. A service only calls repositories (and other services). A repository only touches its own tables.
+- **Across packages, call the other package's service, not its repository.** A package owns its data and the rules around it
+  (validation, versions, overlap, derived data). Example: the calendar push reads a reservation through
+  `ReservationService.byId(id)`, not `ReservationRepository`.
+- A service method for another package's background task has no caller and applies no visibility rule (see `byId(id)`);
+  keep it small, document that it acts for the system, and mark it with an opt-in annotation (`UnfilteredReservationAccess`)
+  so every caller has to say that it skips access control.
+- Avoid dependency cycles between services: wire the other direction with a function parameter that `Application.kt` fills in
+  (as `ReservationService` does with `pendingCalendarOperations` and `onTimesChanged`).
+- **Be pragmatic.** Do not add a pass-through layer when it only adds code. Accepted exceptions: startup wiring in
+  `Application.kt`, and writes that must share one transaction with another package's write (the reservation repository
+  enqueues the `calendar_outbox` row in the reservation transaction). Say why in a comment or in the PR when you take one.
+- Some older code reads another package's repository directly (for example `StatsService` and `CheckInOutService`). Do not
+  copy that into new code; move it behind a service when you touch it anyway.
+
 ### API design principles
 
 These apply to every new or changed endpoint. Permissions and status codes per endpoint are in
@@ -291,7 +310,7 @@ admin exists. Unset the variables afterwards.
 #### SQLite locking and concurrent writes
 
 The database is one SQLite file with a single writer: the API writes, the vehicle trip import, the check-in/out job, the
-backup and (later) the calendar outbox drain all contend for the same lock. `createSqliteDataSource`
+backup and the calendar outbox drain all contend for the same lock. `createSqliteDataSource`
 (`plugins/SqliteDatabase.kt`) therefore uses `BEGIN IMMEDIATE` and a 5 s `busy_timeout`, so a writer waits for the
 write lock when its transaction starts. Without it, two concurrent creates both read, then both want to write, and all
 but one fail at once with `SQLITE_BUSY` instead of waiting (`ReservationConcurrencyTest` shows the difference: 7 of 8
@@ -337,6 +356,27 @@ For every release:
 
 Rows 0a and 0b are already deployed. The env vars removed in 0a and 0b (`GUEST_FILE_PATH`, `GUEST_AVATARS_DIRECTORY_PATH`, `GOOGLE_CALENDAR_SYNC_*`,
 `GOOGLE_CALENDAR_SUMMARY_TO_GUEST_FILE_PATH`) stay in the deployment config until those releases have proven stable, because the old image fails startup without them.
+
+#### Google Calendar notifications (outbox)
+
+A reservation write never calls Google. In the same transaction it adds a row to `calendar_outbox` (`INSERT`, `UPDATE` or `DELETE`), and a task
+(`CalendarOutboxDrain`, every `CALENDAR_OUTBOX_DRAIN_INTERVAL_SECONDS`, around the clock) pushes the rows: one push per reservation, the current times, the event id is the
+reservation id, only `start` and `end` are patched. Only pushed rows are deleted, a failed push keeps its row with a growing wait (`attempts`, `last_error` of at most 500
+characters, `next_attempt_time`). The Google client is created inside the first push, so a missing or invalid `GOOGLE_CREDENTIALS_FILE_PATH` never stops the app: pushes fail
+and retry and the table fills up; at 200 pending rows reservation writes answer `503`.
+
+- **Watch:** `calendar_outbox_pending` and `calendar_outbox_oldest_age_seconds` on `/metrics` (`/metrics` is unauthenticated; the Pi is only reachable through Cloudflare). The app logs
+  an ERROR when the oldest row is older than `CALENDAR_OUTBOX_STUCK_THRESHOLD_MINUTES`, and an ERROR for a row that needs attention (a `403` that is not a rate limit, usually the calendar
+  is not shared with the service account, or a `401`). Look at the rows:
+  `sqlite3 data/app.db "select id, reservation_id, operation, attempts, next_attempt_time, last_error from calendar_outbox order by id"`.
+- **Never retried:** a legacy reservation id (starts with `_`, 110 of 139) is never inserted (Google rejects it): logged as ERROR and the row is deleted, so a legacy event that was
+  deleted in Google loses its notification. An insert that answers `400`, or `409` after a failed restore, is dropped the same way.
+- **After restoring an old backup** Google Calendar is out of step (events for reservations that no longer exist, stale times) and the outbox is gone. Re-enqueue every reservation and
+  delete the phantom events by hand in Google Calendar:
+  `sqlite3 data/app.db "insert into calendar_outbox (reservation_id, operation, created_time, next_attempt_time) select id, 'UPDATE', strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now') from reservation"`
+  (an `UPDATE` of a missing event restores it or creates it). A reconcile command is not built.
+- **Test calendar:** use a separate calendar (`GOOGLE_CALENDAR_ID`) until these Google behaviours are checked, they are not documented: insert with the id of a deleted event (`409`?), a patch that sets
+  `status = confirmed` on a cancelled event, delete of a missing vs an already deleted event (`404` or `410`), a patch of an all-day event to a timed one, and patch and delete of a legacy `_` id.
 
 #### Logging and privacy
 

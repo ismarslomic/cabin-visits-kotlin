@@ -15,6 +15,15 @@ google-calendar:
   credentials-file-path: ${GOOGLE_CREDENTIALS_FILE_PATH}
   calendar-id: ${GOOGLE_CALENDAR_ID}
 
+calendar-outbox:
+  event-title: ${CALENDAR_EVENT_TITLE:-Hyttebesøk}
+  batch-size: ${CALENDAR_OUTBOX_BATCH_SIZE:-50}
+  drain-interval-seconds: ${CALENDAR_OUTBOX_DRAIN_INTERVAL_SECONDS:-30}
+  backoff-start-seconds: ${CALENDAR_OUTBOX_BACKOFF_START_SECONDS:-30}
+  backoff-factor: ${CALENDAR_OUTBOX_BACKOFF_FACTOR:-2.0}
+  backoff-cap-seconds: ${CALENDAR_OUTBOX_BACKOFF_CAP_SECONDS:-3600}
+  stuck-threshold-minutes: ${CALENDAR_OUTBOX_STUCK_THRESHOLD_MINUTES:-60}
+
 database:
   file-path: ${folders.data}/app.db
 

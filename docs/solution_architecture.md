@@ -58,6 +58,119 @@ sequenceDiagram
 
 `reservation.startTime - 1 day <= now <= reservation.endTime + 1 day`
 
+## Calendar outbox (reservation changes to Google Calendar)
+
+Google Calendar is a one-way notification: the app owns the reservations and never reads the calendar back. A reservation
+write (create, change of the times, delete) adds a row to `calendar_outbox` in the same transaction; a background task
+pushes the rows to Google. A reservation write never waits for Google, and a Google outage never fails a write.
+
+### Data flow
+
+```mermaid
+flowchart LR
+    user["Admin / family member<br/>(Cloudflare Access)"] -->|"POST / PUT / DELETE<br/>/api/reservations"| api["Reservation routes<br/>+ ReservationService"]
+
+    subgraph tx["One SQLite write transaction"]
+        direction TB
+        res[("reservation")]
+        outbox[("calendar_outbox<br/>operation INSERT / UPDATE / DELETE<br/>attempts, last_error, next_attempt_time")]
+    end
+    api -->|"write + enqueue"| tx
+    api -.->|"times changed: clear check-in/out and trips,<br/>derived again by the check-in/out job"| res
+
+    subgraph bg["Background task, started with the sync jobs"]
+        drain["CalendarOutboxDrain<br/>one run at a time, every 30 s<br/>max 50 due rows per run"]
+        pusher["CalendarEventPusher<br/>decides insert / patch / restore / delete"]
+        gateway["GoogleCalendarGateway<br/>client created on first use"]
+        drain --> pusher --> gateway
+    end
+    outbox -->|"due rows, oldest first,<br/>grouped per reservation"| drain
+    drain -->|"success: delete the pushed rows only<br/>failure: attempts + 1, last_error, backoff"| outbox
+
+    gateway -->|"event id = reservation id<br/>timed, Europe/Oslo, no notifications"| google["Google Calendar"]
+    google -->|"status + reason"| gateway
+
+    drain -->|"calendar_outbox_pending<br/>calendar_outbox_oldest_age_seconds"| prom["/metrics (Prometheus)"]
+    drain -->|"stuck rows, config errors: ERROR log"| logs["Application log"]
+```
+
+### One push, step by step
+
+```mermaid
+sequenceDiagram
+    participant DB as SQLite (calendar_outbox)
+    participant Drain as CalendarOutboxDrain
+    participant Pusher as CalendarEventPusher
+    participant Google as Google Calendar
+    loop every drain interval (30 s)
+        Drain->>DB: read due rows (next_attempt_time <= now), max batch size
+        Note over Drain: group per reservation, the last row decides:<br/>DELETE means delete, anything else means upsert with the current times
+        Drain->>Pusher: upsert(reservation) or delete(reservation)
+        alt first operation was INSERT
+            Pusher->>Google: insert (id = reservation id)
+            opt 409, id already exists (e.g. deleted earlier)
+                Pusher->>Google: patch with status confirmed (restore)
+            end
+        else UPDATE
+            Pusher->>Google: patch start + end (date cleared, all-day becomes timed)
+            opt 404 / 410, event is gone
+                Pusher->>Google: patch with status confirmed (restore)
+                opt still 404 / 410
+                    Pusher->>Google: insert
+                end
+            end
+        else DELETE
+            Pusher->>Google: delete (404 / 410 counts as success)
+        end
+        Google-->>Pusher: result
+        alt pushed (or terminal and dropped)
+            Drain->>DB: delete the pushed row ids only (a change written meanwhile keeps its own row)
+        else failed
+            Drain->>DB: attempts + 1, last_error, next_attempt_time = now + backoff
+        end
+    end
+```
+
+### What happens on failure
+
+| Result from Google | Action | Wait before next try |
+|--------------------|--------|----------------------|
+| Network error, timeout, 5xx, 429, 403 rate limit | Retry, WARN log | `start x factor^(attempts-1)`, at most the cap (default 30 s, x2, 1 h) |
+| 403 `quotaExceeded` | Keep the row, ERROR log | The cap |
+| 401, other 403, other 4xx (credentials, sharing, bad request) | Keep the row, ERROR log | Backoff |
+| 400 on insert, 409 after a failed restore | Terminal: the row is dropped | None |
+| Legacy reservation id (not `a-v0-9`, 5+ chars, e.g. starts with `_`) | Never inserted, ERROR log, the row is dropped | None |
+
+When the oldest row has waited longer than the stuck threshold (default 60 min), the drain logs an ERROR on every run.
+See "Google Calendar notifications (outbox)" in `DEVELOPER.md` for the settings (`CALENDAR_*`) and operations.
+
+### Metrics
+
+The drain publishes the state of the outbox as two Prometheus gauges on `GET /metrics` (unauthenticated, the Pi is only
+reachable through Cloudflare). The drain sets the values after every run, so a scrape never reads the database.
+
+| Metric | Meaning | Healthy value | Act when |
+|--------|---------|---------------|----------|
+| `calendar_outbox_pending` | Rows in `calendar_outbox`, including rows that wait for a retry | 0, or a few for up to one drain interval after a write | It stays above 0 and grows, or never returns to 0 |
+| `calendar_outbox_oldest_age_seconds` | Age of the oldest row, 0 when the outbox is empty | 0, or below the drain interval (30 s) | It passes the stuck threshold (`CALENDAR_OUTBOX_STUCK_THRESHOLD_MINUTES`, default 60 min); the drain also logs an ERROR |
+
+Reading them: a growing `pending` with a small `oldest_age` means the drain works and writes come faster than pushes (not a
+problem). A growing `oldest_age` means one or more rows fail, so check `last_error` in `calendar_outbox` and the ERROR logs.
+Both values freeze if the drain loop stops, so alert on the metric being absent or constant for a long time as well. The
+gauges exist from startup and report 0 until the first drain run.
+
+Example alert rules (Prometheus):
+
+```yaml
+- alert: CalendarOutboxStuck
+  expr: calendar_outbox_oldest_age_seconds > 3600
+  for: 5m
+- alert: CalendarOutboxNotDraining
+  expr: calendar_outbox_pending > 0 and changes(calendar_outbox_pending[1h]) == 0 and calendar_outbox_oldest_age_seconds > 600
+```
+
+The application also exposes the standard JVM, process and Ktor request metrics on the same endpoint.
+
 ## Vehicle Trip Service
 
 The `VehicleTripService` manages the synchronization and storage of vehicle trip data within the application. It

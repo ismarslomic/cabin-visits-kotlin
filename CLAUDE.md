@@ -31,6 +31,8 @@ auth/               Cloudflare Access-autentisering, roller (AppRole), UserPrinc
 
 Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVELOPER.md`. Kommandoer og rutiner står der.
 
+- **Lagdeling:** route -> service -> repository -> tabell. Over pakkegrenser kaller en service den andre pakkens service, ikke dens repository (f.eks. kalenderpushen leser via `ReservationService.byId(id)`). Vær pragmatisk: ikke legg til et gjennomgangslag som bare gir mer kode, og si hvorfor når du tar et unntak. Se «Layering and package boundaries» i `DEVELOPER.md`.
+
 ## OpenAPI
 
 - `openapi/cabin-visits.json` genereres fra koden og skal aldri redigeres for hånd. `OpenApiSpecTest` feiler hvis den er utdatert.

@@ -19,7 +19,8 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 
-fun Application.configureMonitoring() {
+/** Installs the metrics and `/metrics`; returns the registry so other components can add their own meters. */
+fun Application.configureMonitoring(): PrometheusMeterRegistry {
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     install(MicrometerMetrics) {
@@ -40,4 +41,5 @@ fun Application.configureMonitoring() {
             call.respond(appMicrometerRegistry.scrape())
         }.hide()
     }
+    return appMicrometerRegistry
 }
