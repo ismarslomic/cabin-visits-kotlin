@@ -1,3 +1,5 @@
+@file:OptIn(UnfilteredReservationAccess::class)
+
 package no.slomic.smarthytte.reservations
 
 import io.kotest.core.spec.style.StringSpec
@@ -61,6 +63,18 @@ class ReservationWriteServiceTest :
             created.version shouldBe 1
             created.createdBy shouldBe "a"
             derived shouldBe listOf(created.id)
+        }
+
+        "byId without a caller should return the stored reservation without a caller, and null for an unknown id" {
+            givenReservations(guests, reservations)
+            val created = service().create(actor(), create())
+                .shouldBeInstanceOf<ReservationWriteResult.Created>().reservation
+
+            val found = service().byId(created.id)
+
+            found?.id shouldBe created.id
+            found?.startTime shouldBe Instant.parse(START)
+            service().byId("unknown") shouldBe null
         }
 
         "create should reject every broken rule with its code" {

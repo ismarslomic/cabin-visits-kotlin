@@ -65,6 +65,14 @@ class ReservationService(
         return ReservationReadResult.Found(toResponses(listOf(reservation)).single())
     }
 
+    /**
+     * The reservation as stored, for background tasks of other packages (the calendar push). Unlike
+     * [byId] with a caller it applies NO visibility rule: the task acts for the system, not for a user. Never call it
+     * from a route or with a user's request; the opt-in [UnfilteredReservationAccess] makes every caller say so.
+     */
+    @UnfilteredReservationAccess
+    suspend fun byId(id: String): Reservation? = reservationRepository.reservationById(id)
+
     suspend fun create(actor: UserPrincipal, request: ReservationCreate): ReservationWriteResult {
         val guestIds = request.guests.map { it.guestId }
 
