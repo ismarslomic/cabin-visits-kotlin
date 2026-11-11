@@ -22,7 +22,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
@@ -59,12 +61,13 @@ class AuthRoutesTest :
             application {
                 configureTestApiRoutes(
                     ApiDependencies(
-                        guestRepository = guestRepository,
+                        guestQueryService = GuestQueryService(guestRepository),
+                        guestAvatarService = GuestAvatarService(guestRepository),
                         guestProfileService = GuestProfileService(guestRepository),
                         guestAdminService = GuestAdminService(guestRepository),
                         statsService = mockk<StatsService>(),
                         reservationService = mockk<ReservationService>(),
-                        appUserService = AppUserService(guestRepository),
+                        appUserService = AppUserService(GuestQueryService(guestRepository)),
                         cloudflareAccess = cloudflareAccess,
                     ),
                 )

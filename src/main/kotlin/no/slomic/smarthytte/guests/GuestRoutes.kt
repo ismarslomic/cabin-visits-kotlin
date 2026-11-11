@@ -40,16 +40,16 @@ private const val GUESTS_PATH = "/api/guests"
 private const val GUEST_PATH = "/api/guests/{guestId}"
 
 fun Application.configureGuestRoutes(
-    guestRepository: GuestRepository,
+    guestQueryService: GuestQueryService,
     guestProfileService: GuestProfileService,
     guestAdminService: GuestAdminService,
-    guestAvatarService: GuestAvatarService = GuestAvatarService(guestRepository),
+    guestAvatarService: GuestAvatarService,
 ) {
     routing {
         authorizedAnyRole(allowService = true) {
             get(GUEST_AVATAR_PATH) {
                 val guestId = checkNotNull(call.parameters["guestId"]) { "The route has a guestId" }
-                val avatar = guestRepository.avatarById(guestId)
+                val avatar = guestAvatarService.avatarById(guestId)
                     ?: return@get call.respond(HttpStatusCode.NotFound)
 
                 val eTag = "\"${avatar.versionTime.toEpochMilliseconds()}\""
@@ -71,8 +71,8 @@ fun Application.configureGuestRoutes(
 
         authorized(AppRole.ADMIN, AppRole.FAMILY_USER) {
             get(GUESTS_PATH) {
-                val avatarVersionTimes = guestRepository.allAvatarVersionTimes()
-                val guests = guestRepository.allGuests().map { it.toResponse(avatarVersionTimes[it.id]) }
+                val avatarVersionTimes = guestAvatarService.allAvatarVersionTimes()
+                val guests = guestQueryService.allGuests().map { it.toResponse(avatarVersionTimes[it.id]) }
 
                 call.respond(guests)
             }.describeListGuests()
@@ -100,17 +100,16 @@ fun Application.configureGuestRoutes(
                 }
 
                 when (val result = guestProfileService.update(actor, guestId, update)) {
-                    is GuestUpdateResult.Updated -> call.respond(result.guest.toResponse(guestRepository))
+                    is GuestUpdateResult.Updated -> call.respond(
+                        result.guest.toResponse(guestAvatarService.avatarVersionTime(result.guest.id)),
+                    )
+
                     else -> call.respondNotUpdated(result)
                 }
             }.describeUpdateGuest()
         }
     }
 }
-
-/** The guest as the API returns it, with the avatar url if it has an avatar. */
-suspend fun Guest.toResponse(guestRepository: GuestRepository): GuestResponse =
-    toResponse(guestRepository.avatarVersionTime(id))
 
 private suspend fun ApplicationCall.respondCreateResult(result: GuestCreateResult) {
     when (result) {

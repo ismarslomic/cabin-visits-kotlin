@@ -7,6 +7,7 @@ import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 
@@ -35,7 +36,7 @@ class AppUserServiceTest :
         afterTest { testDbSetup.teardownDb() }
 
         val guestRepository = SqliteGuestRepository()
-        val repository = AppUserService(guestRepository)
+        val repository = AppUserService(GuestQueryService(guestRepository))
 
         "guest with a role should be found by email, ignoring case" {
             guestRepository.addOrUpdate(

@@ -8,10 +8,13 @@ import io.mockk.spyk
 import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorQueryService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.VehicleTripQueryService
 import kotlin.time.Instant
 
 class CheckInOutServiceReservationTest :
@@ -25,9 +28,9 @@ class CheckInOutServiceReservationTest :
         val reservations = SqliteReservationRepository()
 
         fun serviceFor(repository: SqliteReservationRepository = reservations) = CheckInOutService(
-            repository,
-            SqliteCheckInOutSensorRepository(),
-            SqliteVehicleTripRepository(),
+            ReservationSystemService(repository),
+            CheckInOutSensorQueryService(SqliteCheckInOutSensorRepository()),
+            VehicleTripQueryService(SqliteVehicleTripRepository()),
         )
 
         suspend fun givenReservation(id: String, start: String, end: String) {

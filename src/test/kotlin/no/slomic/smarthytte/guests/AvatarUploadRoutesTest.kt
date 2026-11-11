@@ -57,12 +57,13 @@ class AvatarUploadRoutesTest :
             application {
                 configureTestApiRoutes(
                     ApiDependencies(
-                        guestRepository = repository,
+                        guestQueryService = GuestQueryService(repository),
+                        guestAvatarService = GuestAvatarService(repository),
                         guestProfileService = GuestProfileService(repository),
                         guestAdminService = GuestAdminService(repository),
                         statsService = mockk<StatsService>(),
                         reservationService = mockk<ReservationService>(),
-                        appUserService = AppUserService(repository),
+                        appUserService = AppUserService(GuestQueryService(repository)),
                         cloudflareAccess = cloudflareAccess,
                     ),
                 )

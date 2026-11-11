@@ -14,7 +14,9 @@ import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.CloudflareAccessProperties
 import no.slomic.smarthytte.reservations.ReservationService
@@ -53,7 +55,8 @@ class CloudflareAccessConfigTest :
                     application {
                         configureTestApiRoutes(
                             ApiDependencies(
-                                guestRepository = SqliteGuestRepository(),
+                                guestQueryService = GuestQueryService(SqliteGuestRepository()),
+                                guestAvatarService = GuestAvatarService(SqliteGuestRepository()),
                                 guestProfileService = mockk<GuestProfileService>(),
                                 guestAdminService = GuestAdminService(SqliteGuestRepository()),
                                 statsService = mockk<StatsService>(),

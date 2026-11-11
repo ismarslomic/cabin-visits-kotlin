@@ -25,7 +25,9 @@ import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.GuestUpdateResult
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.ReservationService
@@ -50,12 +52,13 @@ class UpdateGuestRoutesTest :
             application {
                 configureTestApiRoutes(
                     ApiDependencies(
-                        guestRepository = guestRepository,
+                        guestQueryService = GuestQueryService(guestRepository),
+                        guestAvatarService = GuestAvatarService(guestRepository),
                         guestProfileService = GuestProfileService(guestRepository),
                         guestAdminService = GuestAdminService(guestRepository),
                         statsService = mockk<StatsService>(),
                         reservationService = mockk<ReservationService>(),
-                        appUserService = AppUserService(guestRepository),
+                        appUserService = AppUserService(GuestQueryService(guestRepository)),
                         cloudflareAccess = testCloudflareAccess,
                     ),
                 )
@@ -344,12 +347,13 @@ class UpdateGuestRoutesTest :
                 application {
                     configureTestApiRoutes(
                         ApiDependencies(
-                            guestRepository = guestRepository,
+                            guestQueryService = GuestQueryService(guestRepository),
+                            guestAvatarService = GuestAvatarService(guestRepository),
                             guestProfileService = service,
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = mockk<StatsService>(),
                             reservationService = mockk<ReservationService>(),
-                            appUserService = AppUserService(guestRepository),
+                            appUserService = AppUserService(GuestQueryService(guestRepository)),
                             cloudflareAccess = testCloudflareAccess,
                         ),
                     )

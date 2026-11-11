@@ -2,8 +2,7 @@ package no.slomic.smarthytte.calendar
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.util.logging.KtorSimpleLogger
-import no.slomic.smarthytte.reservations.ReservationService
-import no.slomic.smarthytte.reservations.UnfilteredReservationAccess
+import no.slomic.smarthytte.reservations.ReservationSystemService
 
 /** The result of pushing the changes of one reservation. */
 sealed interface PushOutcome {
@@ -25,7 +24,10 @@ private val badRequest = HttpStatusCode.BadRequest.value
  * id. Several pending changes collapse into one push, because an insert or a patch sends the current state of the
  * reservation; the title is only set by an insert.
  */
-class CalendarEventPusher(private val gateway: CalendarGateway, private val reservationService: ReservationService) {
+class CalendarEventPusher(
+    private val gateway: CalendarGateway,
+    private val reservationService: ReservationSystemService,
+) {
     /** Removes the event. A missing (`404`) or already deleted (`410`) event is success. */
     suspend fun delete(reservationId: String): PushOutcome = when (val result = gateway.delete(reservationId)) {
         CalendarCallResult.Success -> {
@@ -50,7 +52,6 @@ class CalendarEventPusher(private val gateway: CalendarGateway, private val rese
      * Pushes the current times of the reservation: an insert if the oldest pending operation is [firstOperation]
      * `INSERT`, otherwise a patch. A reservation that is gone has nothing to push (its delete row follows).
      */
-    @OptIn(UnfilteredReservationAccess::class) // the push acts for the system, not for a user
     suspend fun upsert(reservationId: String, firstOperation: CalendarOperation): PushOutcome {
         val reservation = reservationService.byId(reservationId)
         val times = reservation?.let { CalendarEventTimes(it.startTime, it.endTime) }

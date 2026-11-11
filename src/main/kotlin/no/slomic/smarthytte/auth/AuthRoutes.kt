@@ -16,17 +16,17 @@ import no.slomic.smarthytte.common.ApiError
 import no.slomic.smarthytte.common.RequestBody
 import no.slomic.smarthytte.common.receiveJsonBody
 import no.slomic.smarthytte.common.respondApiBodyError
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
-import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.GuestUpdateResult
 import no.slomic.smarthytte.guests.MeUpdate
 
-fun Application.configureAuthRoutes(guestProfileService: GuestProfileService, guestRepository: GuestRepository) {
+fun Application.configureAuthRoutes(guestProfileService: GuestProfileService, guestAvatarService: GuestAvatarService) {
     routing {
         authorizedAnyRole {
             get("/api/me") {
                 val user = checkNotNull(call.principal<UserPrincipal>()) { "Authenticated route without a user" }
-                call.respond(user.toMeResponse(guestRepository.avatarVersionTime(user.id)))
+                call.respond(user.toMeResponse(guestAvatarService.avatarVersionTime(user.id)))
             }.describeMe()
 
             put("/api/me") {
@@ -39,7 +39,7 @@ fun Application.configureAuthRoutes(guestProfileService: GuestProfileService, gu
                 when (val result = guestProfileService.updateOwnProfile(user, update)) {
                     is GuestUpdateResult.Updated -> call.respond(
                         checkNotNull(result.guest.toUserPrincipal()).toMeResponse(
-                            guestRepository.avatarVersionTime(user.id),
+                            guestAvatarService.avatarVersionTime(user.id),
                         ),
                     )
 

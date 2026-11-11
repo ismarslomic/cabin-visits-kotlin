@@ -26,7 +26,9 @@ import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.BootstrapAdmin
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.guests.configureGuestRoutes
@@ -44,8 +46,10 @@ import no.slomic.smarthytte.properties.KtorPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationService
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.reservations.configureReservationRoutes
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorQueryService
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorService
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
@@ -56,14 +60,13 @@ import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.VehicleTripQueryService
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripService
 import java.util.*
 import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Instant
 
 fun main() {
     // Set UTC as the default timezone for the entire app to avoid inconsistency between the local dev environment
@@ -109,10 +112,15 @@ fun Application.module() {
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
     val vehicleTripService = VehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
     val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
-    val checkInOutService = CheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository)
-    val statsService = StatsService(reservationRepository, guestRepository)
-    val reservationService = createReservationService(reservationRepository, guestRepository, checkInOutService)
-    val appUserService = AppUserService(guestRepository)
+    val guestQueryService = GuestQueryService(guestRepository)
+    val guestAvatarService = GuestAvatarService(guestRepository)
+    val checkInOutService =
+        createCheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository)
+    val statsService =
+        StatsService(ReservationSystemService(reservationRepository), guestQueryService, guestAvatarService)
+    val reservationService =
+        createReservationService(reservationRepository, guestQueryService, guestAvatarService, checkInOutService)
+    val appUserService = AppUserService(guestQueryService)
     val guestProfileService = GuestProfileService(guestRepository)
     val guestAdminService = GuestAdminService(guestRepository)
 
@@ -126,17 +134,12 @@ fun Application.module() {
 
     // Run initial load BEFORE starting to handle requests and running synchronization processes in the background
     runBlocking {
-        initialLoad(
-            vehicleTripService,
-            checkInOutSensorService,
-            checkInOutService,
-        )
+        initialLoad(vehicleTripService, checkInOutSensorService, checkInOutService)
     }
 
     // 🔁 Start background sync after the initial load
     startBackgroundSync(
-        reservationRepository,
-        reservationService,
+        ReservationSystemService(reservationRepository),
         vehicleTripService,
         checkInOutSensorService,
         checkInOutService,
@@ -148,7 +151,8 @@ fun Application.module() {
     val apiKeys = loadProperties<ApiKeyPropertiesHolder>().apiKey.toConfig()
     configureApiRoutes(
         ApiDependencies(
-            guestRepository = guestRepository,
+            guestQueryService = guestQueryService,
+            guestAvatarService = guestAvatarService,
             guestProfileService = guestProfileService,
             guestAdminService = guestAdminService,
             statsService = statsService,
@@ -160,14 +164,26 @@ fun Application.module() {
     )
 }
 
+private fun createCheckInOutService(
+    reservationRepository: ReservationRepository,
+    checkInOutSensorRepository: CheckInOutSensorRepository,
+    vehicleTripRepository: VehicleTripRepository,
+) = CheckInOutService(
+    ReservationSystemService(reservationRepository),
+    CheckInOutSensorQueryService(checkInOutSensorRepository),
+    VehicleTripQueryService(vehicleTripRepository),
+)
+
 /** The reservation service with the calendar outbox depth and the derivation of check-in/out after a write. */
 private fun createReservationService(
     reservationRepository: ReservationRepository,
-    guestRepository: GuestRepository,
+    guestQueryService: GuestQueryService,
+    guestAvatarService: GuestAvatarService,
     checkInOutService: CheckInOutService,
 ) = ReservationService(
     reservationRepository = reservationRepository,
-    guestRepository = guestRepository,
+    guestQueryService = guestQueryService,
+    guestAvatarService = guestAvatarService,
     pendingCalendarOperations = ::pendingCalendarOperations,
     onTimesChanged = checkInOutService::updateCheckInOutStatusForReservation,
 )
@@ -181,11 +197,12 @@ private fun createReservationService(
 fun Application.configureApiRoutes(dependencies: ApiDependencies) {
     configureRouting()
     configureAuthentication(dependencies.cloudflareAccess, dependencies.appUserService, dependencies.apiKeys)
-    configureAuthRoutes(dependencies.guestProfileService, dependencies.guestRepository)
+    configureAuthRoutes(dependencies.guestProfileService, dependencies.guestAvatarService)
     configureGuestRoutes(
-        dependencies.guestRepository,
+        dependencies.guestQueryService,
         dependencies.guestProfileService,
         dependencies.guestAdminService,
+        dependencies.guestAvatarService,
     )
     configureReservationRoutes(dependencies.reservationService)
     configureStatsRoutes(dependencies.statsService)
@@ -219,8 +236,7 @@ suspend fun Application.initialLoad(
 }
 
 fun Application.startBackgroundSync(
-    reservationRepository: ReservationRepository,
-    reservationService: ReservationService,
+    reservationService: ReservationSystemService,
     vehicleTripService: VehicleTripService,
     checkInOutSensorService: CheckInOutSensorService,
     checkInOutService: CheckInOutService,
@@ -246,7 +262,7 @@ fun Application.startBackgroundSync(
     schedulerScope.launch {
         while (isActive) {
             runCatchingLogged("Background sync") {
-                if (isDaytime() && isWithinReservationWindow(reservationRepository)) {
+                if (isDaytime() && reservationService.isWithinReservationWindow()) {
                     runCatchingLogged("Fetch vehicle trips") { vehicleTripService.fetchVehicleTrips() }
                     runCatchingLogged("Fetch check in/out sensor data") { checkInOutSensorService.fetchCheckInOut() }
                     runCatchingLogged("Update check in/out status") {
@@ -260,18 +276,6 @@ fun Application.startBackgroundSync(
 
     // Push the reservation changes in the calendar outbox to Google Calendar
     startCalendarOutboxDrain(reservationService, meterRegistry)
-}
-
-suspend fun isWithinReservationWindow(reservationRepository: ReservationRepository): Boolean {
-    val now: Instant = Clock.System.now()
-    val reservations = reservationRepository.allReservations()
-
-    return reservations.any { reservation ->
-        val windowStart = reservation.startTime.minus(1.days)
-        val windowEnd = reservation.endTime.plus(1.days)
-
-        now >= windowStart && now <= windowEnd
-    }
 }
 
 fun isDaytime(): Boolean {

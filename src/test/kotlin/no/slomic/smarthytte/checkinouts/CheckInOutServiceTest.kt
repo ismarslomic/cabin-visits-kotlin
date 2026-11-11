@@ -11,14 +11,17 @@ import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.common.utcTimeZone
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorQueryService
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInStatus
 import no.slomic.smarthytte.sensors.checkinouts.SqliteCheckInOutSensorRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import no.slomic.smarthytte.vehicletrips.VehicleTripQueryService
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.createTrip
 import java.util.*
@@ -41,7 +44,11 @@ class CheckInOutServiceTest :
             reservationRepository = SqliteReservationRepository()
             checkInOutSensorRepository = SqliteCheckInOutSensorRepository()
             vehicleTripRepository = SqliteVehicleTripRepository()
-            service = CheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository)
+            service = CheckInOutService(
+                ReservationSystemService(reservationRepository),
+                CheckInOutSensorQueryService(checkInOutSensorRepository),
+                VehicleTripQueryService(vehicleTripRepository),
+            )
         }
 
         afterEach {

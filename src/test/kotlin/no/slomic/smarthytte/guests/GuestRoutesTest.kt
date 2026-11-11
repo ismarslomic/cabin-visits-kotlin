@@ -22,8 +22,16 @@ import no.slomic.smarthytte.utils.recordResponses
 
 private fun Application.configureGuestApp(repository: GuestRepository) {
     recordResponses()
-    configureAuthentication(config = testCloudflareAccess, appUserService = AppUserService(repository))
-    configureGuestRoutes(repository, GuestProfileService(repository), GuestAdminService(repository))
+    configureAuthentication(
+        config = testCloudflareAccess,
+        appUserService = AppUserService(GuestQueryService(repository)),
+    )
+    configureGuestRoutes(
+        GuestQueryService(repository),
+        GuestProfileService(repository),
+        GuestAdminService(repository),
+        GuestAvatarService(repository),
+    )
 }
 
 class GuestRoutesTest :

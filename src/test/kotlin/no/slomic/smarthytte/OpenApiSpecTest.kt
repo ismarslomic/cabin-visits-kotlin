@@ -17,8 +17,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
-import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.plugins.configureMonitoring
 import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
@@ -237,7 +238,8 @@ private fun servedSpec(): JsonElement {
             configureMonitoring()
             configureApiRoutes(
                 ApiDependencies(
-                    guestRepository = mockk<GuestRepository>(),
+                    guestQueryService = mockk<GuestQueryService>(),
+                    guestAvatarService = mockk<GuestAvatarService>(),
                     guestProfileService = mockk<GuestProfileService>(),
                     guestAdminService = mockk<GuestAdminService>(),
                     statsService = mockk<StatsService>(),

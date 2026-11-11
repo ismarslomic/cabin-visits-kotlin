@@ -14,7 +14,7 @@ import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.properties.CalendarOutboxPropertiesHolder
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
-import no.slomic.smarthytte.reservations.ReservationService
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.seconds
  * app: the Google client is created inside the first push, so a missing or invalid credentials file only makes the
  * pushes fail and retry while reservation writes go on and the outbox fills up.
  */
-fun Application.startCalendarOutboxDrain(reservationService: ReservationService, registry: MeterRegistry) {
+fun Application.startCalendarOutboxDrain(reservationService: ReservationSystemService, registry: MeterRegistry) {
     val properties = loadProperties<CalendarOutboxPropertiesHolder>().calendarOutbox
     val gateway = GoogleCalendarGateway(
         clientProvider = { createCalendarClient(loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar) },

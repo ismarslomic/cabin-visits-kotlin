@@ -15,7 +15,7 @@ import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.CalendarOutboxProperties
 import no.slomic.smarthytte.reservations.ReservationCreateOutcome
-import no.slomic.smarthytte.reservations.ReservationService
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -59,7 +59,7 @@ class CalendarOutboxDrainTest :
             metrics: CalendarOutboxMetrics = CalendarOutboxMetrics(),
         ) = CalendarOutboxDrain(
             outbox,
-            CalendarEventPusher(gateway, ReservationService(reservations, SqliteGuestRepository())),
+            CalendarEventPusher(gateway, ReservationSystemService(reservations)),
             props,
             metrics,
             clock,

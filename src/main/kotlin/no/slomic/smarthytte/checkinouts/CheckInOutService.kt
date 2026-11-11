@@ -6,18 +6,18 @@ import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.reservations.Reservation
-import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensor
-import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorRepository
+import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorQueryService
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
-import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
+import no.slomic.smarthytte.vehicletrips.VehicleTripQueryService
 import kotlin.time.Instant
 
 class CheckInOutService(
-    private val reservationRepository: ReservationRepository,
-    private val checkInOutSensorRepository: CheckInOutSensorRepository,
-    private val vehicleTripRepository: VehicleTripRepository,
+    private val reservationService: ReservationSystemService,
+    private val checkInOutSensorQueryService: CheckInOutSensorQueryService,
+    private val vehicleTripQueryService: VehicleTripQueryService,
 ) {
     private val logger: Logger = KtorSimpleLogger(CheckInOutService::class.java.name)
 
@@ -29,22 +29,22 @@ class CheckInOutService(
      * - If the reservation has ended, attempts to create and persist a check-out entry.
      * For both actions, tracks and logs the results (updated or no action).
      *
-     * The process uses data from the reservation repository, check-in/out sensors, and vehicle trips.
+     * The process uses data from the reservations, check-in/out sensors, and vehicle trips.
      *
      * This function is intended for system-wide status synchronization,
      * such as a scheduled job or maintenance action.
      *
-     * @see ReservationRepository.allReservations
-     * @see CheckInOutSensorRepository.allCheckInOuts
-     * @see VehicleTripRepository.allVehicleTrips
+     * @see ReservationSystemService.all
+     * @see CheckInOutSensorQueryService.allCheckInOuts
+     * @see VehicleTripQueryService.allVehicleTrips
      */
     suspend fun updateCheckInOutStatusForAllReservations() {
         logger.info("Updating check in/out status for all reservations...")
 
-        val allReservations: List<Reservation> = reservationRepository.allReservations()
+        val allReservations: List<Reservation> = reservationService.all()
         val checkInOutSensorsByDate: Map<LocalDate, List<CheckInOutSensor>> =
-            checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
-        val allVehicleTrips: List<VehicleTrip> = vehicleTripRepository.allVehicleTrips()
+            checkInOutSensorQueryService.allCheckInOuts().groupBy { it.date }
+        val allVehicleTrips: List<VehicleTrip> = vehicleTripQueryService.allVehicleTrips()
         val cabinVehicleTripList: List<CabinVehicleTrip> = CabinVehicleTripList(allVehicleTrips).cabinTrips
 
         val checkInPersistenceResults: MutableList<PersistenceResult> = mutableListOf()
@@ -77,9 +77,9 @@ class CheckInOutService(
      * reservation does not exist.
      */
     suspend fun updateCheckInOutStatusForReservation(reservationId: String) {
-        val reservation: Reservation = reservationRepository.reservationById(reservationId) ?: return
-        val checkInOutSensorsByDate = checkInOutSensorRepository.allCheckInOuts().groupBy { it.date }
-        val cabinVehicleTripList = CabinVehicleTripList(vehicleTripRepository.allVehicleTrips()).cabinTrips
+        val reservation: Reservation = reservationService.byId(reservationId) ?: return
+        val checkInOutSensorsByDate = checkInOutSensorQueryService.allCheckInOuts().groupBy { it.date }
+        val cabinVehicleTripList = CabinVehicleTripList(vehicleTripQueryService.allVehicleTrips()).cabinTrips
 
         updateReservation(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
     }
@@ -105,10 +105,10 @@ class CheckInOutService(
         }
 
         val checkInResult = checkIn?.let {
-            reservationRepository.setCheckIn(it, reservation.id, reservation.startTime, reservation.endTime)
+            reservationService.setCheckIn(it, reservation.id, reservation.startTime, reservation.endTime)
         } ?: PersistenceResult.NO_ACTION
         val checkOutResult = checkOut?.let {
-            reservationRepository.setCheckOut(it, reservation.id, reservation.startTime, reservation.endTime)
+            reservationService.setCheckOut(it, reservation.id, reservation.startTime, reservation.endTime)
         } ?: PersistenceResult.NO_ACTION
 
         return checkInResult to checkOutResult
@@ -124,7 +124,7 @@ class CheckInOutService(
 
         tripsByType.forEach { (type, trips) ->
             trips.forEach {
-                reservationRepository.addVehicleTripLink(
+                reservationService.addVehicleTripLink(
                     reservation.id,
                     it.id,
                     type,

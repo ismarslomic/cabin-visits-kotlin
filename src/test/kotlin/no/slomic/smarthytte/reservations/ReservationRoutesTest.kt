@@ -30,7 +30,9 @@ import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.ApiKeyProperties
 import no.slomic.smarthytte.statistics.StatsService
@@ -57,12 +59,18 @@ class ReservationRoutesTest :
             application {
                 configureTestApiRoutes(
                     ApiDependencies(
-                        guestRepository = guests,
+                        guestQueryService = GuestQueryService(guests),
+                        guestAvatarService = GuestAvatarService(guests),
                         guestProfileService = GuestProfileService(guests),
                         guestAdminService = GuestAdminService(guests),
                         statsService = mockk<StatsService>(),
-                        reservationService = ReservationService(reservations, guests, fixedClock),
-                        appUserService = AppUserService(guests),
+                        reservationService = ReservationService(
+                            reservations,
+                            GuestQueryService(guests),
+                            GuestAvatarService(guests),
+                            fixedClock,
+                        ),
+                        appUserService = AppUserService(GuestQueryService(guests)),
                         cloudflareAccess = cloudflareAccess,
                         apiKeys = ApiKeyProperties("mirror:${sha256Hex(MIRROR_KEY)}").toConfig(),
                     ),
