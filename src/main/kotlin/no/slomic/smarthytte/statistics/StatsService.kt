@@ -12,12 +12,13 @@ import no.slomic.smarthytte.common.round1
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
-import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.GuestAvatarService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.guestAvatarUrl
 import no.slomic.smarthytte.properties.StatisticsPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.Reservation
-import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.countByMonth
 import no.slomic.smarthytte.statistics.calculator.CabinFunFactContext
 import no.slomic.smarthytte.statistics.calculator.CabinTotals
@@ -82,18 +83,19 @@ private const val AGE_SENIOR_MIN = 51
 
 @Suppress("TooManyFunctions")
 class StatsService(
-    private val reservationRepository: ReservationRepository,
-    private val guestRepository: GuestRepository,
+    private val reservationService: ReservationSystemService,
+    private val guestQueryService: GuestQueryService,
+    private val guestAvatarService: GuestAvatarService,
     private val dataStartDate: LocalDate =
         LocalDate.parse(loadProperties<StatisticsPropertiesHolder>().statistics.dataStartDate),
 ) {
 
     suspend fun getLiveStats(): LiveStats {
         val today = utcDateNow()
-        val allReservations = reservationRepository.allReservations()
-        val allGuests = guestRepository.allGuests()
+        val allReservations = reservationService.all()
+        val allGuests = guestQueryService.allGuests()
         val guestsById = allGuests.associateBy { it.id }
-        val avatarUrlsByGuestId = guestRepository.allAvatarVersionTimes()
+        val avatarUrlsByGuestId = guestAvatarService.allAvatarVersionTimes()
             .mapValues { (guestId, versionTime) -> guestAvatarUrl(guestId, versionTime) }
 
         // The stay is still current on its check-out day, until the date has passed, so the mirror can show the last
@@ -182,7 +184,7 @@ class StatsService(
 
     suspend fun getYearStats(year: Int): YearStats {
         val allReservations = startedReservations()
-        val allGuests = guestRepository.allGuests()
+        val allGuests = guestQueryService.allGuests()
         val guestsById = allGuests.associateBy { it.id }
         val byYear = allReservations.groupBy { it.startDate.year }
         val yearReservations = byYear[year] ?: emptyList()
@@ -234,7 +236,7 @@ class StatsService(
     suspend fun getMonthStats(year: Int, month: Int): MonthStats {
         val kotlinMonth = Month.entries[month - 1]
         val allReservations = startedReservations()
-        val allGuests = guestRepository.allGuests()
+        val allGuests = guestQueryService.allGuests()
         val guestsById = allGuests.associateBy { it.id }
         val byYear = allReservations.groupBy { it.startDate.year }
 
@@ -243,12 +245,12 @@ class StatsService(
 
     /** The profile of one guest as of today, or null if there is no guest with [guestId]. */
     suspend fun getGuestProfileStats(guestId: String): GuestProfileStats? {
-        val guestsById = guestRepository.allGuests().associateBy { it.id }
-        val avatarUrl = guestRepository.allAvatarVersionTimes()[guestId]?.let { guestAvatarUrl(guestId, it) }
+        val guestsById = guestQueryService.allGuests().associateBy { it.id }
+        val avatarUrl = guestAvatarService.allAvatarVersionTimes()[guestId]?.let { guestAvatarUrl(guestId, it) }
         return calculateGuestProfileStats(
             guestId = guestId,
             today = utcDateNow(),
-            allReservations = reservationRepository.allReservations(),
+            allReservations = reservationService.all(),
             guestsById = guestsById,
             dataStartDate = dataStartDate,
             avatarUrl = avatarUrl,
@@ -256,7 +258,7 @@ class StatsService(
     }
 
     suspend fun getAllGuestsStats(): AllGuestsStats {
-        val allGuests = guestRepository.allGuests()
+        val allGuests = guestQueryService.allGuests()
         val allReservations = startedReservations()
         val guestsById = allGuests.associateBy { it.id }
 
@@ -310,8 +312,7 @@ class StatsService(
     }
 
     // Year, month and guest stats only count reservations that have started, i.e. future bookings are excluded
-    private suspend fun startedReservations(): List<Reservation> =
-        reservationRepository.allReservations().filter { it.hasStarted }
+    private suspend fun startedReservations(): List<Reservation> = reservationService.all().filter { it.hasStarted }
 
     private fun GuestVisitStats.toGuestRanking() = GuestRanking(
         guestId = guestId,

@@ -5,7 +5,8 @@ import no.slomic.smarthytte.auth.UserPrincipal
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.AppRole
-import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.GuestAvatarService
+import no.slomic.smarthytte.guests.GuestQueryService
 import kotlin.time.Clock
 
 /** Pending calendar operations at which writes are refused. */
@@ -37,7 +38,8 @@ sealed interface ReservationListResult {
  */
 class ReservationService(
     private val reservationRepository: ReservationRepository,
-    private val guestRepository: GuestRepository,
+    private val guestQueryService: GuestQueryService,
+    private val guestAvatarService: GuestAvatarService,
     private val clock: Clock = Clock.System,
     private val pendingCalendarOperations: suspend () -> Long = { 0L },
     private val maxPendingCalendarOperations: Long = MAX_PENDING_CALENDAR_OPERATIONS,
@@ -64,14 +66,6 @@ class ReservationService(
 
         return ReservationReadResult.Found(toResponses(listOf(reservation)).single())
     }
-
-    /**
-     * The reservation as stored, for background tasks of other packages (the calendar push). Unlike
-     * [byId] with a caller it applies NO visibility rule: the task acts for the system, not for a user. Never call it
-     * from a route or with a user's request; the opt-in [UnfilteredReservationAccess] makes every caller say so.
-     */
-    @UnfilteredReservationAccess
-    suspend fun byId(id: String): Reservation? = reservationRepository.reservationById(id)
 
     suspend fun create(actor: UserPrincipal, request: ReservationCreate): ReservationWriteResult {
         val guestIds = request.guests.map { it.guestId }
@@ -177,8 +171,8 @@ class ReservationService(
 
     // One guest query and one avatar query per request, not per reservation
     private suspend fun toResponses(reservations: List<Reservation>): List<ReservationResponse> {
-        val guestsById = guestRepository.allGuests().associateBy { it.id }
-        val avatarVersionTimes = guestRepository.allAvatarVersionTimes()
+        val guestsById = guestQueryService.allGuests().associateBy { it.id }
+        val avatarVersionTimes = guestAvatarService.allAvatarVersionTimes()
         val today = today()
 
         return reservations.map { it.toResponse(guestsById, avatarVersionTimes, today) }

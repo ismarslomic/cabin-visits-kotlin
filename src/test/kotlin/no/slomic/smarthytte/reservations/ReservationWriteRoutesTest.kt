@@ -32,7 +32,9 @@ import no.slomic.smarthytte.auth.testCloudflareAccess
 import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
@@ -63,18 +65,20 @@ class ReservationWriteRoutesTest :
 
         fun withApp(
             cloudflareAccess: CloudflareAccessConfig? = testCloudflareAccess,
-            service: ReservationService = ReservationService(reservations, guests, fixedClock),
+            service: ReservationService =
+                ReservationService(reservations, GuestQueryService(guests), GuestAvatarService(guests), fixedClock),
             block: suspend ApplicationTestBuilder.() -> Unit,
         ) = testApplication {
             application {
                 configureTestApiRoutes(
                     ApiDependencies(
-                        guestRepository = guests,
+                        guestQueryService = GuestQueryService(guests),
+                        guestAvatarService = GuestAvatarService(guests),
                         guestProfileService = GuestProfileService(guests),
                         guestAdminService = GuestAdminService(guests),
                         statsService = mockk<StatsService>(),
                         reservationService = service,
-                        appUserService = AppUserService(guests),
+                        appUserService = AppUserService(GuestQueryService(guests)),
                         cloudflareAccess = cloudflareAccess,
                     ),
                 )
@@ -330,7 +334,10 @@ class ReservationWriteRoutesTest :
 
         "write routes should respond 503 TEMPORARILY_UNAVAILABLE when the calendar queue is full" {
             givenReservations(guests, reservations)
-            val full = ReservationService(reservations, guests, fixedClock, { 200L })
+            val full =
+                ReservationService(reservations, GuestQueryService(guests), GuestAvatarService(guests), fixedClock, {
+                    200L
+                })
 
             withApp(service = full) {
                 val response = send("post", PATH, payload = newBody)
@@ -350,7 +357,9 @@ class ReservationWriteRoutesTest :
             coEvery { busy.updateReservation(any(), any(), any(), any(), any(), any()) } throws busyError
             coEvery { busy.deleteReservation(any(), any(), any()) } throws busyError
 
-            withApp(service = ReservationService(busy, guests, fixedClock)) {
+            withApp(
+                service = ReservationService(busy, GuestQueryService(guests), GuestAvatarService(guests), fixedClock),
+            ) {
                 listOf(
                     Triple("post", PATH, newBody),
                     Triple("put", "$PATH/r1", body("2026-03-30T16:00:00Z", "2026-04-03T13:00:00Z", version = 1)),

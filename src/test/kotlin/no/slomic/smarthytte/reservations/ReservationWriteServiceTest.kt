@@ -1,5 +1,3 @@
-@file:OptIn(UnfilteredReservationAccess::class)
-
 package no.slomic.smarthytte.reservations
 
 import io.kotest.core.spec.style.StringSpec
@@ -12,6 +10,8 @@ import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.auth.toUserPrincipal
 import no.slomic.smarthytte.common.ApiError
 import no.slomic.smarthytte.guests.AppRole
+import no.slomic.smarthytte.guests.GuestAvatarService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 import org.sqlite.SQLiteErrorCode
@@ -38,7 +38,9 @@ class ReservationWriteServiceTest :
             max: Long = 200,
             repository: ReservationRepository = reservations,
             onTimesChanged: suspend (String) -> Unit = { derived.add(it) },
-        ) = ReservationService(repository, guests, fixedClock, { pending }, max, onTimesChanged)
+        ) = ReservationService(repository, GuestQueryService(guests), GuestAvatarService(guests), fixedClock, {
+            pending
+        }, max, onTimesChanged)
 
         suspend fun actor(): UserPrincipal = checkNotNull(guests.guestById("a")?.toUserPrincipal())
 
@@ -63,18 +65,6 @@ class ReservationWriteServiceTest :
             created.version shouldBe 1
             created.createdBy shouldBe "a"
             derived shouldBe listOf(created.id)
-        }
-
-        "byId without a caller should return the stored reservation without a caller, and null for an unknown id" {
-            givenReservations(guests, reservations)
-            val created = service().create(actor(), create())
-                .shouldBeInstanceOf<ReservationWriteResult.Created>().reservation
-
-            val found = service().byId(created.id)
-
-            found?.id shouldBe created.id
-            found?.startTime shouldBe Instant.parse(START)
-            service().byId("unknown") shouldBe null
         }
 
         "create should reject every broken rule with its code" {

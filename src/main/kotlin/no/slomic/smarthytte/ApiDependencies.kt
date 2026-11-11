@@ -4,8 +4,9 @@ import no.slomic.smarthytte.auth.ApiKeyConfig
 import no.slomic.smarthytte.auth.AppUserService
 import no.slomic.smarthytte.auth.CloudflareAccessConfig
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
-import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.reservations.ReservationService
 import no.slomic.smarthytte.statistics.StatsService
 
@@ -14,7 +15,8 @@ import no.slomic.smarthytte.statistics.StatsService
  * adds a property here, so the call sites do not change.
  */
 class ApiDependencies(
-    val guestRepository: GuestRepository,
+    val guestQueryService: GuestQueryService,
+    val guestAvatarService: GuestAvatarService,
     val guestProfileService: GuestProfileService,
     val guestAdminService: GuestAdminService,
     val statsService: StatsService,

@@ -25,11 +25,14 @@ import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationService
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.utils.configureTestApiRoutes
@@ -43,7 +46,13 @@ class StatsRoutesTest :
 
         val guestRepository: GuestRepository = SqliteGuestRepository()
         val reservationRepository: ReservationRepository = SqliteReservationRepository()
-        val service = StatsService(reservationRepository, guestRepository, LocalDate(2020, 9, 1))
+        val service =
+            StatsService(
+                ReservationSystemService(reservationRepository),
+                GuestQueryService(guestRepository),
+                GuestAvatarService(guestRepository),
+                LocalDate(2020, 9, 1),
+            )
         val userToken = accessToken("viewer@example.com")
 
         beforeTest {
@@ -57,12 +66,13 @@ class StatsRoutesTest :
                 application {
                     configureTestApiRoutes(
                         ApiDependencies(
-                            guestRepository = guestRepository,
+                            guestQueryService = GuestQueryService(guestRepository),
+                            guestAvatarService = GuestAvatarService(guestRepository),
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
                             reservationService = mockk<ReservationService>(),
-                            appUserService = AppUserService(guestRepository),
+                            appUserService = AppUserService(GuestQueryService(guestRepository)),
                             cloudflareAccess = testCloudflareAccess,
                         ),
                     )
@@ -83,12 +93,13 @@ class StatsRoutesTest :
                 application {
                     configureTestApiRoutes(
                         ApiDependencies(
-                            guestRepository = guestRepository,
+                            guestQueryService = GuestQueryService(guestRepository),
+                            guestAvatarService = GuestAvatarService(guestRepository),
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
                             reservationService = mockk<ReservationService>(),
-                            appUserService = AppUserService(guestRepository),
+                            appUserService = AppUserService(GuestQueryService(guestRepository)),
                             cloudflareAccess = testCloudflareAccess,
                         ),
                     )
@@ -108,12 +119,13 @@ class StatsRoutesTest :
                 application {
                     configureTestApiRoutes(
                         ApiDependencies(
-                            guestRepository = guestRepository,
+                            guestQueryService = GuestQueryService(guestRepository),
+                            guestAvatarService = GuestAvatarService(guestRepository),
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
                             reservationService = mockk<ReservationService>(),
-                            appUserService = AppUserService(guestRepository),
+                            appUserService = AppUserService(GuestQueryService(guestRepository)),
                             cloudflareAccess = testCloudflareAccess,
                         ),
                     )
@@ -135,12 +147,13 @@ class StatsRoutesTest :
                 application {
                     configureTestApiRoutes(
                         ApiDependencies(
-                            guestRepository = guestRepository,
+                            guestQueryService = GuestQueryService(guestRepository),
+                            guestAvatarService = GuestAvatarService(guestRepository),
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
                             reservationService = mockk<ReservationService>(),
-                            appUserService = AppUserService(guestRepository),
+                            appUserService = AppUserService(GuestQueryService(guestRepository)),
                             cloudflareAccess = null,
                         ),
                     )
@@ -156,12 +169,13 @@ class StatsRoutesTest :
                 application {
                     configureTestApiRoutes(
                         ApiDependencies(
-                            guestRepository = guestRepository,
+                            guestQueryService = GuestQueryService(guestRepository),
+                            guestAvatarService = GuestAvatarService(guestRepository),
                             guestProfileService = GuestProfileService(guestRepository),
                             guestAdminService = GuestAdminService(guestRepository),
                             statsService = service,
                             reservationService = mockk<ReservationService>(),
-                            appUserService = AppUserService(guestRepository),
+                            appUserService = AppUserService(GuestQueryService(guestRepository)),
                             cloudflareAccess = testCloudflareAccess,
                         ),
                     )

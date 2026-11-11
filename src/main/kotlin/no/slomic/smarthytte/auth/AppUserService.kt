@@ -4,10 +4,10 @@ import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.Guest
-import no.slomic.smarthytte.guests.GuestRepository
+import no.slomic.smarthytte.guests.GuestQueryService
 
 /** Maps the identity of Cloudflare Access to a guest, so persons are never duplicated. */
-class AppUserService(private val guestRepository: GuestRepository) {
+class AppUserService(private val guestQueryService: GuestQueryService) {
     private val logger: Logger = KtorSimpleLogger(AppUserService::class.java.name)
 
     /**
@@ -17,7 +17,7 @@ class AppUserService(private val guestRepository: GuestRepository) {
      */
     suspend fun userByEmail(email: String?): UserPrincipal? {
         val guests: List<Guest> = email?.takeIf { it.isNotBlank() }
-            ?.let { guestRepository.guestsByEmail(it) }
+            ?.let { guestQueryService.guestsByEmail(it) }
             .orEmpty()
             .filter { it.role != null }
 

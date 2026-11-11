@@ -21,10 +21,13 @@ import no.slomic.smarthytte.common.firstDayOfYearAfter
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
+import no.slomic.smarthytte.guests.GuestAvatarService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.reservations.VisitStatus
@@ -50,7 +53,13 @@ class StatsServiceTest :
         val guestRepository: GuestRepository = SqliteGuestRepository()
         val reservationRepository: ReservationRepository = SqliteReservationRepository()
         val vehicleTripRepository: VehicleTripRepository = SqliteVehicleTripRepository()
-        val service = StatsService(reservationRepository, guestRepository, dataStart)
+        val service =
+            StatsService(
+                ReservationSystemService(reservationRepository),
+                GuestQueryService(guestRepository),
+                GuestAvatarService(guestRepository),
+                dataStart,
+            )
 
         val anna = Guest("anna", "Anna", "Test", 1990, gender = Gender.FEMALE)
         val bjorn = Guest("bjorn", "Bjorn", "Test", 1985, gender = Gender.MALE, isFamily = true)

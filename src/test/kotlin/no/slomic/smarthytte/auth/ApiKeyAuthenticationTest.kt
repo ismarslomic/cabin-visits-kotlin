@@ -19,10 +19,13 @@ import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.ApiDependencies
 import no.slomic.smarthytte.guests.AppRole
 import no.slomic.smarthytte.guests.GuestAdminService
+import no.slomic.smarthytte.guests.GuestAvatarService
 import no.slomic.smarthytte.guests.GuestProfileService
+import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.properties.ApiKeyProperties
 import no.slomic.smarthytte.reservations.ReservationService
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.statistics.StatsService
 import no.slomic.smarthytte.utils.TestDbSetup
@@ -53,7 +56,13 @@ class ApiKeyAuthenticationTest :
         afterTest { testDbSetup.teardownDb() }
 
         val guestRepository = SqliteGuestRepository()
-        val statsService = StatsService(SqliteReservationRepository(), guestRepository, LocalDate(2020, 9, 1))
+        val statsService =
+            StatsService(
+                ReservationSystemService(SqliteReservationRepository()),
+                GuestQueryService(guestRepository),
+                GuestAvatarService(guestRepository),
+                LocalDate(2020, 9, 1),
+            )
 
         suspend fun givenUser(id: String, role: AppRole?) {
             guestRepository.addOrUpdate(testGuest(id, firstName = "Test", role = role))
@@ -67,12 +76,13 @@ class ApiKeyAuthenticationTest :
             application {
                 configureTestApiRoutes(
                     ApiDependencies(
-                        guestRepository = guestRepository,
+                        guestQueryService = GuestQueryService(guestRepository),
+                        guestAvatarService = GuestAvatarService(guestRepository),
                         guestProfileService = GuestProfileService(guestRepository),
                         guestAdminService = GuestAdminService(guestRepository),
                         statsService = statsService,
                         reservationService = mockk<ReservationService>(),
-                        appUserService = AppUserService(guestRepository),
+                        appUserService = AppUserService(GuestQueryService(guestRepository)),
                         cloudflareAccess = cloudflareAccess,
                         apiKeys = apiKeys,
                     ),

@@ -5,10 +5,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
-import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationRepository
-import no.slomic.smarthytte.reservations.ReservationService
+import no.slomic.smarthytte.reservations.ReservationSystemService
 import kotlin.time.Instant
 
 private const val ID = "a3f9c2e17b4d4e5f8a1b2c3d4e5f6a7b"
@@ -26,7 +25,7 @@ class CalendarEventPusherTest :
                 coEvery { repository.reservationById(it) } returns Reservation(it, start, end, listOf("a"))
             }
             coEvery { repository.reservationById("gone") } returns null
-            return CalendarEventPusher(gateway, ReservationService(repository, mockk<GuestRepository>()))
+            return CalendarEventPusher(gateway, ReservationSystemService(repository))
         }
 
         beforeEach {
