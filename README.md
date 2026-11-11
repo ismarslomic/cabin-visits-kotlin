@@ -21,7 +21,14 @@ with the `-e` option:
 | Variable                                     | Required | Default                | Description                                                                                                                                                                                                                                |
 |----------------------------------------------|----------|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `GOOGLE_CREDENTIALS_FILE_PATH`               | Yes      | N/A                    | The path to the Google Service Account credentials, inside the container.                                                                                                                                                                  |
-| `GOOGLE_CALENDAR_ID`                         | Yes      | N/A                    | The id of the Google Calendar. Not read by the app at the moment; kept for the planned write of reservations to the calendar.                                                                                                              |
+| `GOOGLE_CALENDAR_ID`                         | Yes      | N/A                    | The id of the Google Calendar that receives one event per reservation (written by the app, never read back). Share it with the service account at "Make changes to events" level. |
+| `CALENDAR_EVENT_TITLE`                       | No       | `Hyttebesøk`           | Title of the calendar event the app creates for a reservation. Existing events keep their title. |
+| `CALENDAR_OUTBOX_BATCH_SIZE`                 | No       | `50`                   | The most pending calendar changes one push reads. |
+| `CALENDAR_OUTBOX_DRAIN_INTERVAL_SECONDS`     | No       | `30`                   | Seconds between two pushes of the calendar outbox. |
+| `CALENDAR_OUTBOX_BACKOFF_START_SECONDS`      | No       | `30`                   | Seconds to wait after the first failed push of a change. |
+| `CALENDAR_OUTBOX_BACKOFF_FACTOR`             | No       | `2.0`                  | Each further failure waits this many times longer. |
+| `CALENDAR_OUTBOX_BACKOFF_CAP_SECONDS`        | No       | `3600`                 | The longest wait between two pushes of a change. |
+| `CALENDAR_OUTBOX_STUCK_THRESHOLD_MINUTES`    | No       | `60`                   | A change that waits longer is logged as stuck (gauges `calendar_outbox_pending` and `calendar_outbox_oldest_age_seconds` on `/metrics`). |
 | `STATISTICS_DATA_START_DATE`                 | Yes      | N/A                    | First date visits are registered (format: `YYYY-MM-DD`), used in fun facts about the cabin.                                                                                                                                                |
 | `CLOUDFLARE_ACCESS_TEAM_DOMAIN`              | No       | N/A                    | Team domain of Cloudflare Access (e.g., `myteam.cloudflareaccess.com`). Needed together with `CLOUDFLARE_ACCESS_AUD` for endpoints that require authentication, see [docs/authentication.md](docs/authentication.md).                      |
 | `API_KEYS`                                   | No       | N/A                    | Comma separated `name:sha256` entries, the hex SHA-256 of the API key of each service (MagicMirror). Without it no service can call the API; see [docs/authentication.md](docs/authentication.md#api-key-for-a-service-magicmirror).       |
@@ -68,7 +75,7 @@ services:
     container_name: cabin-visits
     image: ismarslomic/cabin-visits-kotlin:1.0.0
     ports:
-      - 8079:8079 # port for REST API
+      - "8079:8079" # port for REST API
     volumes:
       - ./config:/config # the google credentials file
       - ./data:/data # sqlite db file and the vehicle trips file
@@ -283,3 +290,12 @@ Fun facts are calculated by the backend, the same way as the fun facts in `/api/
 ```bash
 curl http://localhost:8079/metrics
 ```
+
+Besides the JVM, process and HTTP request metrics, the app exposes the state of the Google Calendar outbox:
+
+| Metric | Meaning |
+|--------|---------|
+| `calendar_outbox_pending` | Calendar changes that are not pushed yet (includes changes that wait for a retry). Normally 0. |
+| `calendar_outbox_oldest_age_seconds` | Seconds the oldest unpushed change has waited, 0 when none. A value above `CALENDAR_OUTBOX_STUCK_THRESHOLD_MINUTES` also logs an ERROR. |
+
+See "Metrics" in [docs/solution_architecture.md](docs/solution_architecture.md) for how to read them.
