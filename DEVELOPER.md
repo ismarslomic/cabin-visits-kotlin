@@ -44,20 +44,40 @@ regenerated spec looks wrong, run `./gradlew clean` first and regenerate again.
 
 Dependencies point one way: route (controller) -> service -> repository -> table (entity).
 
-- A route only calls services. A service only calls repositories (and other services). A repository only touches its own tables.
+- A route only calls services. A service only calls repositories of its own package, and services of other packages. A
+  repository only touches its own tables.
 - **Across packages, call the other package's service, not its repository.** A package owns its data and the rules around it
-  (validation, versions, overlap, derived data). Example: the calendar push reads a reservation through
-  `ReservationService.byId(id)`, not `ReservationRepository`.
-- A service method for another package's background task has no caller and applies no visibility rule (see `byId(id)`);
-  keep it small, document that it acts for the system, and mark it with an opt-in annotation (`UnfilteredReservationAccess`)
-  so every caller has to say that it skips access control.
+  (validation, versions, overlap, derived data).
+- **Where does a read for another package live?** In a service, never by injecting the repository. Do not split reads
+  from writes by default: small reads without logic do not justify a class of their own. In this order:
+  1. **In the existing service of the package** when it is a natural home and cheap to depend on. Example: the avatar
+     reads are in `GuestAvatarService`, which already owns avatars.
+  2. **In a thin `...QueryService`** only when the existing service is a poor dependency or there is no natural home:
+     - The existing service is heavy to depend on: it loads configuration, needs an HTTP client or runs imports and sync.
+       Example: `VehicleTripService` and `CheckInOutSensorService`, so `VehicleTripQueryService` and
+       `CheckInOutSensorQueryService` exist.
+     - No existing service fits the purpose of the read. Example: `GuestQueryService` for `allGuests` and `guestsByEmail`,
+       because the other guest services each own one kind of write.
+  3. **In a second service** when the reads must not follow the same rules as the user-facing service, or when a single
+     class would create a dependency cycle. Example: see the next bullet.
+- **Reservations have two services.** `ReservationService` serves users: it takes the caller and limits what a guest user
+  sees. `ReservationSystemService` is for tasks that act for the system (the calendar push, the derivation of check-in/out,
+  statistics): it has no caller and applies **no visibility rule**, so never use it from a route to answer a user's
+  request. It also holds the derived-data writes (`setCheckIn`, `setCheckOut`, `addVehicleTripLink`). They are separate
+  classes because `ReservationService` calls the derivation after a write, so a single class would make the derivation
+  and the reservations depend on each other.
 - Avoid dependency cycles between services: wire the other direction with a function parameter that `Application.kt` fills in
   (as `ReservationService` does with `pendingCalendarOperations` and `onTimesChanged`).
-- **Be pragmatic.** Do not add a pass-through layer when it only adds code. Accepted exceptions: startup wiring in
-  `Application.kt`, and writes that must share one transaction with another package's write (the reservation repository
-  enqueues the `calendar_outbox` row in the reservation transaction). Say why in a comment or in the PR when you take one.
-- Some older code reads another package's repository directly (for example `StatsService` and `CheckInOutService`). Do not
-  copy that into new code; move it behind a service when you touch it anyway.
+- **Be pragmatic.** Do not add a pass-through layer when it only adds code. Accepted exceptions, say why in a comment or in the
+  PR when you take one:
+  - Startup wiring in `Application.kt`.
+  - Writes that must share one transaction with another package's write: the reservation repository enqueues the
+    `calendar_outbox` row in the reservation transaction.
+  - ORM relationships between entities: `ReservationEntity` links `GuestEntity` and `VehicleTripEntity`, and the
+    reservation repository checks that the guests exist inside the write transaction, so it reads guest rows. A service
+    cannot do that without a second transaction.
+- Package cycles through shared domain types (`Reservation` and `CheckIn`/`CheckOut`, `guests` and `auth`) are accepted; do
+  not add a new one through a service or a repository.
 
 ### API design principles
 

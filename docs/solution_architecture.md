@@ -330,34 +330,34 @@ sequenceDiagram
     autonumber
     participant Application
     participant CheckInOutService as Check In/Out Service
-    participant ReservationRepository as Reservation Repository
-    participant CheckInOutSensorRepository as Check In/Out Sensor Repository
-    participant VehicleTripRepository as Vehicle Trip Repository
+    participant ReservationSystemService as Reservation System Service
+    participant CheckInOutSensorQueryService as Check In/Out Sensor Query Service
+    participant VehicleTripQueryService as Vehicle Trip Query Service
     participant CabinVehicleTrip as Cabin Vehicle Trip
     
     Application->>CheckInOutService: update check in/out status for all reservations
     activate CheckInOutService
     
-    CheckInOutService->>ReservationRepository: all reservations
-    ReservationRepository-->>CheckInOutService: reservations
+    CheckInOutService->>ReservationSystemService: all reservations
+    ReservationSystemService-->>CheckInOutService: reservations
     
-    CheckInOutService->>CheckInOutSensorRepository: all check in/outs
-    CheckInOutSensorRepository-->>CheckInOutService: all check in/outs
+    CheckInOutService->>CheckInOutSensorQueryService: all check in/outs
+    CheckInOutSensorQueryService-->>CheckInOutService: all check in/outs
     
-    CheckInOutService->>VehicleTripRepository: all vehicle trips
-    VehicleTripRepository-->>CheckInOutService: all vehicle trips
+    CheckInOutService->>VehicleTripQueryService: all vehicle trips
+    VehicleTripQueryService-->>CheckInOutService: all vehicle trips
     
     CheckInOutService->>CabinVehicleTrip: find cabin trips with extra stops
     CabinVehicleTrip-->>CheckInOutService: vehicle trips
     
     loop every reservation
         CheckInOutService->>CheckInOutService: create check in
-        CheckInOutService->>ReservationRepository: set check in
-        ReservationRepository-->>CheckInOutService: persistence result
+        CheckInOutService->>ReservationSystemService: set check in
+        ReservationSystemService-->>CheckInOutService: persistence result
         
         CheckInOutService->>CheckInOutService: create check out
-        CheckInOutService->>ReservationRepository: set check out
-        ReservationRepository-->>CheckInOutService: persistence result
+        CheckInOutService->>ReservationSystemService: set check out
+        ReservationSystemService-->>CheckInOutService: persistence result
     end
     
     deactivate CheckInOutService
