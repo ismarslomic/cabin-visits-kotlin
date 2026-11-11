@@ -5,6 +5,7 @@ import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.log
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,6 +21,7 @@ import no.slomic.smarthytte.auth.configureAuthRoutes
 import no.slomic.smarthytte.auth.configureAuthentication
 import no.slomic.smarthytte.auth.toConfig
 import no.slomic.smarthytte.calendar.pendingCalendarOperations
+import no.slomic.smarthytte.calendar.startCalendarOutboxDrain
 import no.slomic.smarthytte.checkinouts.CheckInOutService
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.BootstrapAdmin
@@ -87,7 +89,7 @@ fun Application.module() {
     configureDatabases()
 
     // Initialize monitoring
-    configureMonitoring()
+    val meterRegistry = configureMonitoring()
 
     // Create the Http client
     val httpClient = HttpClientProvider.client
@@ -107,11 +109,7 @@ fun Application.module() {
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
     val vehicleTripService = VehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
     val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
-    val checkInOutService = CheckInOutService(
-        reservationRepository = reservationRepository,
-        checkInOutSensorRepository = checkInOutSensorRepository,
-        vehicleTripRepository = vehicleTripRepository,
-    )
+    val checkInOutService = CheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository)
     val statsService = StatsService(reservationRepository, guestRepository)
     val reservationService = createReservationService(reservationRepository, guestRepository, checkInOutService)
     val appUserService = AppUserService(guestRepository)
@@ -138,9 +136,11 @@ fun Application.module() {
     // 🔁 Start background sync after the initial load
     startBackgroundSync(
         reservationRepository,
+        reservationService,
         vehicleTripService,
         checkInOutSensorService,
         checkInOutService,
+        meterRegistry,
     )
 
     // Configure Ktor routing (after the initial load is completed)
@@ -220,9 +220,11 @@ suspend fun Application.initialLoad(
 
 fun Application.startBackgroundSync(
     reservationRepository: ReservationRepository,
+    reservationService: ReservationService,
     vehicleTripService: VehicleTripService,
     checkInOutSensorService: CheckInOutSensorService,
     checkInOutService: CheckInOutService,
+    meterRegistry: MeterRegistry,
 ) {
     val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
     val checkInOutSensorProperties: CheckInProperties = influxdbProperties.checkIn
@@ -255,6 +257,9 @@ fun Application.startBackgroundSync(
             delay(duration = checkInOutSyncFrequency)
         }
     }
+
+    // Push the reservation changes in the calendar outbox to Google Calendar
+    startCalendarOutboxDrain(reservationService, meterRegistry)
 }
 
 suspend fun isWithinReservationWindow(reservationRepository: ReservationRepository): Boolean {

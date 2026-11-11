@@ -2233,6 +2233,34 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.properties.CalendarOutboxProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "int",
+            "long",
+            "long",
+            "double",
+            "long",
+            "long"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.CalendarOutboxPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.CalendarOutboxProperties"
+          ]
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.CheckInProperties",
       "methods": [
         {
