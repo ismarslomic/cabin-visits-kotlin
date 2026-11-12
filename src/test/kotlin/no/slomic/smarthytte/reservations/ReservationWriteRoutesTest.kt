@@ -20,7 +20,9 @@ import io.ktor.server.testing.testApplication
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.ApiDependencies
@@ -372,6 +374,33 @@ class ReservationWriteRoutesTest :
                         response.code() shouldBe "TEMPORARILY_UNAVAILABLE"
                     }
                 }
+            }
+        }
+
+        "post and put should write and answer the own stay of a guest, and respond 400 INVALID_STAY outside the dates" {
+            givenReservations(guests, reservations)
+            fun stays(from: String) =
+                """{"startTime":"2026-07-10T16:00:00Z","endTime":"2026-07-12T13:00:00Z","guests":[{"guestId":"a"},""" +
+                    """{"guestId":"b","fromDate":"$from","toDate":"2026-07-12"}]}"""
+
+            withApp {
+                val created = send("post", PATH, payload = stays("2026-07-11"))
+
+                created.status shouldBe HttpStatusCode.Created
+                val guestsJson = created.bodyAsText().json().getValue("guests").jsonArray
+                guestsJson[0].jsonObject["fromDate"] shouldBe JsonNull
+                guestsJson[1].jsonObject.getValue("fromDate").jsonPrimitive.content shouldBe "2026-07-11"
+                // The last day equals the last day of the reservation: stored as null
+                guestsJson[1].jsonObject["toDate"] shouldBe JsonNull
+
+                val outside =
+                    send(
+                        "post",
+                        PATH,
+                        payload = stays("2026-07-09").replace("07-10T16", "08-10T16").replace("07-12T13", "08-12T13"),
+                    )
+                outside.status shouldBe HttpStatusCode.BadRequest
+                outside.code() shouldBe "INVALID_STAY"
             }
         }
     })

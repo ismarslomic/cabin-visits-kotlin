@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.auth.UserPrincipal
 import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.auth.toUserPrincipal
@@ -261,5 +262,99 @@ class ReservationWriteServiceTest :
         "a guest user principal is never needed: the role check is the route's job" {
             guests.addOrUpdate(testGuest("viewer", role = AppRole.GUEST_USER))
             guests.guestById("viewer")?.toUserPrincipal()?.role shouldBe AppRole.GUEST_USER
+        }
+
+        // START is 2026-07-10 and END 2026-07-12 (UTC dates)
+        fun stay(from: String? = null, to: String? = null) = listOf(
+            ReservationGuestRef("a"),
+            ReservationGuestRef("b", from?.let(LocalDate::parse), to?.let(LocalDate::parse)),
+        )
+
+        fun withStays(stays: List<ReservationGuestRef>) =
+            ReservationCreate(Instant.parse(START), Instant.parse(END), stays)
+
+        fun ReservationWriteResult.guestsOf() = (this as ReservationWriteResult.Created).reservation.guests.associate {
+            it.guestId to
+                (it.fromDate to it.toDate)
+        }
+
+        "create should store the own stay of a guest, each end independently, and answer with it" {
+            givenReservations(guests, reservations)
+            val sut = service()
+            val a = actor()
+
+            sut.create(a, withStays(stay(from = "2026-07-11"))).guestsOf() shouldBe
+                mapOf("a" to (null to null), "b" to (LocalDate(2026, 7, 11) to null))
+        }
+
+        "create should store a stay date that equals the first or last day of the reservation as null" {
+            givenReservations(guests, reservations)
+
+            val created = service().create(actor(), withStays(stay(from = "2026-07-10", to = "2026-07-12")))
+
+            created.guestsOf().getValue("b") shouldBe (null to null)
+            reservations.allReservations().flatMap { it.guests }.filter { it.guestId == "b" }
+                .all { it.fromDate == null && it.toDate == null } shouldBe true
+        }
+
+        "create should answer INVALID_STAY for a stay outside the reservation or one that ends before it starts" {
+            givenReservations(guests, reservations)
+            val sut = service()
+            val a = actor()
+
+            sut.create(a, withStays(stay(from = "2026-07-09"))).code() shouldBe ApiError.INVALID_STAY
+            sut.create(a, withStays(stay(to = "2026-07-13"))).code() shouldBe ApiError.INVALID_STAY
+            sut.create(a, withStays(stay(from = "2026-07-12", to = "2026-07-11"))).code() shouldBe
+                ApiError.INVALID_STAY
+            sut.create(a, withStays(stay(from = "2026-07-13"))).code() shouldBe ApiError.INVALID_STAY
+            sut.create(a, withStays(stay(to = "2026-07-09"))).code() shouldBe ApiError.INVALID_STAY
+            reservations.allReservations().none { it.startTime == Instant.parse(START) } shouldBe true
+        }
+
+        "create should accept a single-day stay inside the reservation" {
+            givenReservations(guests, reservations)
+
+            service().create(actor(), withStays(stay(from = "2026-07-11", to = "2026-07-11"))).guestsOf()
+                .getValue("b") shouldBe (LocalDate(2026, 7, 11) to LocalDate(2026, 7, 11))
+        }
+
+        "update should validate the stays against the new dates without clamping, and replace them" {
+            givenReservations(guests, reservations)
+            val sut = service()
+            val a = actor()
+            val created = sut.create(a, withStays(stay(from = "2026-07-11"))) as ReservationWriteResult.Created
+            val id = created.reservation.id
+            fun put(version: Short, start: String, end: String, stays: List<ReservationGuestRef>) =
+                ReservationUpdate(version, Instant.parse(start), Instant.parse(end), stays)
+
+            // The stay starts on 11 July: moving the reservation to 12-14 July leaves it outside
+            sut.update(a, id, put(1, "2026-07-12T10:00:00Z", "2026-07-14T10:00:00Z", stay(from = "2026-07-11")))
+                .code() shouldBe ApiError.INVALID_STAY
+
+            // The same request with adjusted stays works, and a stay equal to the new first day becomes null
+            val moved = sut.update(
+                a,
+                id,
+                put(1, "2026-07-12T10:00:00Z", "2026-07-14T10:00:00Z", stay(from = "2026-07-12")),
+            )
+            moved.shouldBeInstanceOf<ReservationWriteResult.Updated>().reservation.guests
+                .single { it.guestId == "b" }.fromDate shouldBe null
+        }
+
+        "update should check the stays also when the times do not change, and reset a stay that is left out" {
+            givenReservations(guests, reservations)
+            val sut = service()
+            val a = actor()
+            val created = sut.create(a, withStays(stay(from = "2026-07-11"))) as ReservationWriteResult.Created
+            val id = created.reservation.id
+            fun put(version: Short, stays: List<ReservationGuestRef>) =
+                ReservationUpdate(version, Instant.parse(START), Instant.parse(END), stays)
+
+            sut.update(a, id, put(1, stay(from = "2026-07-09"))).code() shouldBe ApiError.INVALID_STAY
+
+            val reset = sut.update(a, id, put(1, stay())) as ReservationWriteResult.Updated
+            reset.reservation.version shouldBe 2
+            reset.reservation.guests.map { it.fromDate to it.toDate } shouldBe listOf(null to null, null to null)
+            derived shouldBe listOf(id)
         }
     })

@@ -79,6 +79,18 @@ data class ReservationGuestResponse(
     )
     @JsonSchema.Example("\"/api/guests/ola.nordmann/avatar?v=1767225600000\"")
     val avatarUrl: String?,
+    @JsonSchema.Description(
+        "The guest's own first day (UTC date) when the guest arrived after the reservation started, otherwise " +
+            "null: the guest follows the start of the reservation. Compare with the UTC date of startTime.",
+    )
+    @JsonSchema.Example("\"2026-07-11\"")
+    val fromDate: LocalDate?,
+    @JsonSchema.Description(
+        "The guest's own last day (UTC date) when the guest left before the reservation ended, otherwise null: " +
+            "the guest follows the end of the reservation. Compare with the UTC date of endTime.",
+    )
+    @JsonSchema.Example("\"2026-07-12\"")
+    val toDate: LocalDate?,
 )
 
 @Serializable
@@ -113,12 +125,14 @@ fun Reservation.toResponse(
     id = id,
     startTime = startTime,
     endTime = endTime,
-    guests = guestIds.mapNotNull { guestsById[it] }.map {
+    guests = guests.mapNotNull { stay -> guestsById[stay.guestId]?.let { it to stay } }.map { (guest, stay) ->
         ReservationGuestResponse(
-            guestId = it.id,
-            firstName = it.firstName,
-            lastName = it.lastName,
-            avatarUrl = avatarVersionTimes[it.id]?.let { time -> guestAvatarUrl(it.id, time) },
+            guestId = guest.id,
+            firstName = guest.firstName,
+            lastName = guest.lastName,
+            avatarUrl = avatarVersionTimes[guest.id]?.let { time -> guestAvatarUrl(guest.id, time) },
+            fromDate = stay.fromDate,
+            toDate = stay.toDate,
         )
     },
     status = visitStatus(today),

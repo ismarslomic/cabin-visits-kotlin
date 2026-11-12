@@ -42,15 +42,24 @@ sealed interface ReservationWriteResult {
 
 private val logger = KtorSimpleLogger("no.slomic.smarthytte.reservations.ReservationWriteService")
 
-/** Validates the request and rejects the first rule it breaks, or returns null. [today] is the UTC date of now. */
+/**
+ * Validates the request and returns the first rule it breaks, or null: the guests, then the times, then the stays.
+ * [today] is the UTC date of now. The range rules for the times only apply when [checkTimes] is true, so an old
+ * reservation can still get other guests or stays without a change of its times.
+ */
 internal fun invalidReservation(
     startTime: Instant,
     endTime: Instant,
-    guestIds: List<String>,
+    guests: List<ReservationGuestRef>,
     today: LocalDate,
     checkTimes: Boolean,
-): ReservationWriteResult.Invalid? =
-    invalidGuests(guestIds) ?: if (checkTimes) invalidTimes(startTime, endTime, today) else null
+): ReservationWriteResult.Invalid? {
+    val guestsRule = invalidGuests(guests.map { it.guestId })
+    val timesRule = if (checkTimes) invalidTimes(startTime, endTime, today) else null
+    val staysRule = invalidStays(guests, startTime.toUtcDate(), endTime.toUtcDate())
+
+    return guestsRule ?: timesRule ?: staysRule
+}
 
 private fun invalidGuests(guestIds: List<String>): ReservationWriteResult.Invalid? = when {
     guestIds.isEmpty() -> invalid(ApiError.NO_GUESTS, "A reservation needs at least one guest")
@@ -72,6 +81,41 @@ private fun invalidTimes(startTime: Instant, endTime: Instant, today: LocalDate)
             invalid(ApiError.TOO_FAR_AHEAD, "The start is at most $MAX_YEARS_AHEAD years ahead")
 
         else -> null
+    }
+}
+
+/**
+ * Every own stay must lie within the reservation dates and not end before it starts. Only validated, never clamped: the
+ * client sends the new dates and the stays in one request (plan decision 29).
+ */
+private fun invalidStays(
+    guests: List<ReservationGuestRef>,
+    startDate: LocalDate,
+    endDate: LocalDate,
+): ReservationWriteResult.Invalid? = guests.firstNotNullOfOrNull { guest ->
+    val from = guest.fromDate ?: startDate
+    val to = guest.toDate ?: endDate
+
+    when {
+        from < startDate || to > endDate ->
+            invalid(ApiError.INVALID_STAY, "The stay of ${guest.guestId} must be within $startDate and $endDate")
+
+        from > to -> invalid(ApiError.INVALID_STAY, "The stay of ${guest.guestId} ends before it starts")
+
+        else -> null
+    }
+}
+
+/** The guests to store: a stay date that equals the reservation's own first or last day is stored as null. */
+internal fun List<ReservationGuestRef>.toGuests(startTime: Instant, endTime: Instant): List<ReservationGuest> {
+    val (startDate, endDate) = startTime.toUtcDate() to endTime.toUtcDate()
+
+    return map {
+        ReservationGuest(
+            guestId = it.guestId,
+            fromDate = it.fromDate?.takeIf { date -> date != startDate },
+            toDate = it.toDate?.takeIf { date -> date != endDate },
+        )
     }
 }
 

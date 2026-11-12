@@ -1,15 +1,37 @@
 package no.slomic.smarthytte.reservations
 
 import io.ktor.openapi.JsonSchema
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
-/** A guest of a reservation in a request. Names and avatar are read-only and come from the guest. */
+/**
+ * A guest of a reservation in a request. Names and avatar are read-only and come from the guest. [fromDate] and
+ * [toDate] are the guest's own stay when it is shorter than the reservation.
+ */
 @Serializable
 data class ReservationGuestRef(
     @JsonSchema.Description("Internal unique identifier of an existing guest, from GET /api/guests.")
     @JsonSchema.Example("\"ola.nordmann\"")
     val guestId: String,
+    @JsonSchema.Description(
+        "The guest's first day when the guest arrives after the reservation starts: a UTC date, compared with the " +
+            "UTC date of startTime, so it is on or after that date and not after the last day. Omit or null when " +
+            "the guest arrives with the group. A date equal to the first day of the reservation is stored as null " +
+            "(the guest then follows the reservation if its dates change), so the response can differ from the " +
+            "request. The update is a full replace: leaving it out resets the guest's stay, so send back what you " +
+            "read.",
+    )
+    @JsonSchema.Example("\"2026-07-11\"")
+    val fromDate: LocalDate? = null,
+    @JsonSchema.Description(
+        "The guest's last day when the guest leaves before the reservation ends: a UTC date, compared with the " +
+            "UTC date of endTime, so it is on or before that date and not before the first day or fromDate. Omit " +
+            "or null when the guest leaves with the group. A date equal to the last day of the reservation is " +
+            "stored as null. Leaving it out in an update resets the guest's stay, so send back what you read.",
+    )
+    @JsonSchema.Example("\"2026-07-12\"")
+    val toDate: LocalDate? = null,
 )
 
 /**

@@ -67,17 +67,15 @@ class ReservationService(
         return ReservationReadResult.Found(toResponses(listOf(reservation)).single())
     }
 
-    suspend fun create(actor: UserPrincipal, request: ReservationCreate): ReservationWriteResult {
-        val guestIds = request.guests.map { it.guestId }
-
-        return invalidReservation(request.startTime, request.endTime, guestIds, today(), checkTimes = true)
+    suspend fun create(actor: UserPrincipal, request: ReservationCreate): ReservationWriteResult =
+        invalidReservation(request.startTime, request.endTime, request.guests, today(), checkTimes = true)
             ?: queueFull()
             ?: guardedWrite {
                 when (
                     val outcome = reservationRepository.createReservation(
                         request.startTime,
                         request.endTime,
-                        guestIds.map(::ReservationGuest),
+                        request.guests.toGuests(request.startTime, request.endTime),
                         actor.id,
                     )
                 ) {
@@ -91,12 +89,10 @@ class ReservationService(
                     is ReservationCreateOutcome.UnknownGuests -> unknownGuests(outcome.guestIds)
                 }
             }
-    }
 
     /** Order: exists (404), version (412), validation (400), then the transaction checks overlap (409) and guests. */
     suspend fun update(actor: UserPrincipal, id: String, request: ReservationUpdate): ReservationWriteResult {
         val stored = reservationRepository.reservationById(id)
-        val guestIds = request.guests.map { it.guestId }
 
         return when {
             stored == null -> ReservationWriteResult.NotFound
@@ -106,11 +102,11 @@ class ReservationService(
             else -> invalidReservation(
                 request.startTime,
                 request.endTime,
-                guestIds,
+                request.guests,
                 today(),
                 // The range rules apply when the times change, so an old reservation can still get other guests
                 checkTimes = !stored.hasTimes(request.startTime, request.endTime),
-            ) ?: queueFull() ?: guardedWrite { persistUpdate(actor, id, request, guestIds) }
+            ) ?: queueFull() ?: guardedWrite { persistUpdate(actor, id, request) }
         }
     }
 
@@ -127,14 +123,13 @@ class ReservationService(
         actor: UserPrincipal,
         id: String,
         request: ReservationUpdate,
-        guestIds: List<String>,
     ): ReservationWriteResult = when (
         val outcome = reservationRepository.updateReservation(
             id,
             request.version,
             request.startTime,
             request.endTime,
-            guestIds.map(::ReservationGuest),
+            request.guests.toGuests(request.startTime, request.endTime),
             actor.id,
         )
     ) {
