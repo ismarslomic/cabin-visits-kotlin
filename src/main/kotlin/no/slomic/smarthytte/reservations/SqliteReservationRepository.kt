@@ -28,11 +28,13 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.inSubQuery
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.dao.flushCache
 import org.jetbrains.exposed.v1.dao.with
-import org.jetbrains.exposed.v1.jdbc.SizedCollection
+import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.util.UUID
 import kotlin.time.Instant
 
@@ -42,12 +44,10 @@ class SqliteReservationRepository : ReservationRepository {
 
     override suspend fun allReservations(): List<Reservation> = suspendReadTransaction {
         val reservationEntities = ReservationEntity.all()
-            .with(ReservationEntity::guests, ReservationEntity::vehicleTrips)
+            .with(ReservationEntity::vehicleTrips)
             .sortedBy { it.startTime }
 
-        val tripTypes = fetchTripTypes(reservationEntities.map { it.id })
-
-        reservationEntities.map { daoToModel(it, tripTypes) }
+        toModels(reservationEntities)
     }
 
     override suspend fun reservations(guestId: String?, from: LocalDate?, toExclusive: LocalDate?): List<Reservation> =
@@ -67,22 +67,17 @@ class SqliteReservationRepository : ReservationRepository {
             from?.let { condition = condition and (ReservationTable.endTime greaterEq it.atStartOfDayIn(utcTimeZone)) }
 
             val reservationEntities = ReservationEntity.find(condition)
-                .with(ReservationEntity::guests, ReservationEntity::vehicleTrips)
+                .with(ReservationEntity::vehicleTrips)
                 .sortedWith(compareBy({ it.startTime }, { it.id.value }))
 
-            val tripTypes = fetchTripTypes(reservationEntities.map { it.id })
-
-            reservationEntities.map { daoToModel(it, tripTypes) }
+            toModels(reservationEntities)
         }
 
     override suspend fun reservationById(id: String): Reservation? = suspendReadTransaction {
         val entityId = EntityID(id, ReservationTable)
         val storedReservation = ReservationEntity.findById(entityId)
 
-        storedReservation?.let {
-            val tripTypes = fetchTripTypes(listOf(it.id))
-            daoToModel(it, tripTypes)
-        }
+        storedReservation?.let { toModels(listOf(it)).single() }
     }
 
     override suspend fun addOrUpdate(reservation: Reservation, actor: String): PersistenceResult = suspendTransaction {
@@ -138,15 +133,15 @@ class SqliteReservationRepository : ReservationRepository {
     override suspend fun createReservation(
         startTime: Instant,
         endTime: Instant,
-        guestIds: List<String>,
+        guests: List<ReservationGuest>,
         actor: String,
     ): ReservationCreateOutcome = suspendTransaction {
         val start = startTime.truncatedToMillis()
         val end = endTime.truncatedToMillis()
-        val guests = loadGuests(guestIds)
+        val loaded = loadGuests(guests)
 
         when {
-            guests.missing.isNotEmpty() -> ReservationCreateOutcome.UnknownGuests(guests.missing)
+            loaded.missing.isNotEmpty() -> ReservationCreateOutcome.UnknownGuests(loaded.missing)
 
             existsOverlapping(start, end, excludeId = null) -> ReservationCreateOutcome.Overlap
 
@@ -159,11 +154,11 @@ class SqliteReservationRepository : ReservationRepository {
                     markCreated(actor)
                     this.startTime = start
                     this.endTime = end
-                    this.guests = SizedCollection(guests.found)
                 }
+                replaceGuests(id, loaded.found)
                 enqueueCalendarEventCreated(id)
 
-                ReservationCreateOutcome.Created(daoToModel(created))
+                ReservationCreateOutcome.Created(toModels(listOf(created)).single())
             }
         }
     }
@@ -173,40 +168,37 @@ class SqliteReservationRepository : ReservationRepository {
         expectedVersion: Short,
         startTime: Instant,
         endTime: Instant,
-        guestIds: List<String>,
+        guests: List<ReservationGuest>,
         actor: String,
     ): ReservationUpdateOutcome = suspendTransaction {
         val start = startTime.truncatedToMillis()
         val end = endTime.truncatedToMillis()
         val stored: ReservationEntity? = ReservationEntity.findById(id)
-        val guests = loadGuests(guestIds)
+        val loaded = loadGuests(guests)
 
         when {
             stored == null -> ReservationUpdateOutcome.NotFound
 
             stored.version != expectedVersion -> ReservationUpdateOutcome.VersionMismatch
 
-            guests.missing.isNotEmpty() -> ReservationUpdateOutcome.UnknownGuests(guests.missing)
+            loaded.missing.isNotEmpty() -> ReservationUpdateOutcome.UnknownGuests(loaded.missing)
 
             else -> {
                 val timesChanged = stored.startTime != start || stored.endTime != end
-                val guestsChanged =
-                    stored.guests.map { it.id.value }.toSet() != guests.found.map { it.id.value }.toSet()
+                val storedGuests = fetchGuests(listOf(stored.id))[stored.id.value].orEmpty()
+                val guestsChanged = storedGuests != loaded.found
 
                 when {
                     !timesChanged && !guestsChanged -> {
                         logger.trace("No changes detected for reservation with id: $id")
-                        ReservationUpdateOutcome.Unchanged(daoToModel(stored, fetchTripTypes(listOf(stored.id))))
+                        ReservationUpdateOutcome.Unchanged(toModels(listOf(stored)).single())
                     }
 
                     timesChanged && existsOverlapping(start, end, excludeId = id) -> ReservationUpdateOutcome.Overlap
 
                     else -> {
-                        applyUpdate(stored, start, end, guests.found, timesChanged, actor)
-                        ReservationUpdateOutcome.Updated(
-                            daoToModel(stored, fetchTripTypes(listOf(stored.id))),
-                            timesChanged,
-                        )
+                        applyUpdate(stored, start, end, loaded.found, timesChanged, actor)
+                        ReservationUpdateOutcome.Updated(toModels(listOf(stored)).single(), timesChanged)
                     }
                 }
             }
@@ -230,7 +222,7 @@ class SqliteReservationRepository : ReservationRepository {
 
             else -> {
                 // What the log line needs must be read before the delete
-                val guestIds = stored.guests.map { it.id.value }.sorted()
+                val guestIds = fetchGuests(listOf(stored.id))[stored.id.value].orEmpty().map { it.guestId }
                 val (start, end) = stored.startTime to stored.endTime
 
                 stored.delete()
@@ -259,7 +251,7 @@ class SqliteReservationRepository : ReservationRepository {
         stored: ReservationEntity,
         start: Instant,
         end: Instant,
-        guests: List<GuestEntity>,
+        guests: List<ReservationGuest>,
         timesChanged: Boolean,
         actor: String,
     ) {
@@ -272,9 +264,7 @@ class SqliteReservationRepository : ReservationRepository {
         }
 
         stored.markUpdated(actor)
-
-        // Assigning the guests flushes the changes, so it comes last
-        stored.guests = SizedCollection(guests)
+        replaceGuests(stored.id.value, guests)
     }
 
     private fun ReservationEntity.clearCheckInOut() {
@@ -294,13 +284,58 @@ class SqliteReservationRepository : ReservationRepository {
         return !ReservationEntity.find(condition).empty()
     }
 
-    private class LoadedGuests(val found: List<GuestEntity>, val missing: List<String>)
+    /** [found] is sorted by guest id, like the stored guests, so the two lists compare equal when nothing changed. */
+    private class LoadedGuests(val found: List<ReservationGuest>, val missing: List<String>)
 
-    private fun loadGuests(guestIds: List<String>): LoadedGuests {
-        val ids = guestIds.distinct()
-        val found = ids.mapNotNull { GuestEntity.findById(it) }
+    private fun loadGuests(guests: List<ReservationGuest>): LoadedGuests {
+        val distinct = guests.distinctBy { it.guestId }
+        val existing = distinct.mapNotNull { GuestEntity.findById(it.guestId)?.id?.value }.toSet()
 
-        return LoadedGuests(found, missing = ids - found.map { it.id.value }.toSet())
+        return LoadedGuests(
+            found = distinct.filter { it.guestId in existing }.sortedBy { it.guestId },
+            missing = distinct.map { it.guestId }.filter { it !in existing },
+        )
+    }
+
+    /** Maps the entities with their guests (and stays) and vehicle trip types, read with two queries in total. */
+    private fun toModels(entities: List<ReservationEntity>): List<Reservation> {
+        val ids = entities.map { it.id }
+        val guests = fetchGuests(ids)
+        val tripTypes = fetchTripTypes(ids)
+
+        return entities.map { daoToModel(it, guests[it.id.value].orEmpty(), tripTypes) }
+    }
+
+    /** The guests of each reservation (by reservation id), sorted by guest id. */
+    private fun fetchGuests(reservationIds: List<EntityID<String>>): Map<String, List<ReservationGuest>> {
+        if (reservationIds.isEmpty()) return emptyMap()
+
+        return ReservationGuestTable.selectAll()
+            .where { ReservationGuestTable.reservation inList reservationIds }
+            .groupBy(
+                keySelector = { it[ReservationGuestTable.reservation].value },
+                valueTransform = {
+                    ReservationGuest(
+                        guestId = it[ReservationGuestTable.guest].value,
+                        fromDate = it[ReservationGuestTable.fromDate],
+                        toDate = it[ReservationGuestTable.toDate],
+                    )
+                },
+            )
+            .mapValues { (_, guests) -> guests.sortedBy { it.guestId } }
+    }
+
+    /** Replaces the guest links of the reservation, with the stays. The row of the reservation must exist. */
+    private fun Transaction.replaceGuests(reservationId: String, guests: List<ReservationGuest>) {
+        // The reservation row can still be waiting in the entity cache
+        flushCache()
+        ReservationGuestTable.deleteWhere { reservation eq reservationId }
+        ReservationGuestTable.batchInsert(guests) { guest ->
+            this[ReservationGuestTable.reservation] = reservationId
+            this[ReservationGuestTable.guest] = guest.guestId
+            this[ReservationGuestTable.fromDate] = guest.fromDate
+            this[ReservationGuestTable.toDate] = guest.toDate
+        }
     }
 
     override suspend fun setCheckIn(
@@ -365,10 +400,10 @@ class SqliteReservationRepository : ReservationRepository {
         }
     }
 
-    private fun addReservation(reservation: Reservation, actor: String): PersistenceResult {
+    private fun Transaction.addReservation(reservation: Reservation, actor: String): PersistenceResult {
         logger.trace("Adding reservation with id: ${reservation.id}")
 
-        val reservationGuests: List<GuestEntity> = reservation.guestIds.mapNotNull { id -> GuestEntity.findById(id) }
+        val reservationGuests = loadGuests(reservation.guests).found
 
         ReservationEntity.new(reservation.id) {
             markCreated(actor)
@@ -376,10 +411,11 @@ class SqliteReservationRepository : ReservationRepository {
             description = reservation.description
             startTime = reservation.startTime.truncatedToMillis()
             endTime = reservation.endTime.truncatedToMillis()
-            guests = SizedCollection(reservationGuests)
             sourceCreatedTime = reservation.sourceCreatedTime?.truncatedToMillis()
             sourceUpdatedTime = reservation.sourceUpdatedTime?.truncatedToMillis()
         }
+
+        replaceGuests(reservation.id, reservationGuests)
 
         logger.trace("Added reservation with id: ${reservation.id} and summary: ${reservation.summary}")
         return PersistenceResult.ADDED
@@ -390,10 +426,10 @@ class SqliteReservationRepository : ReservationRepository {
      * calling findByIdAndUpdate is not necessary doing any update if all columns have the same value in stored and new
      * reservation.
      */
-    private fun updateReservation(reservation: Reservation, actor: String): PersistenceResult {
+    private fun Transaction.updateReservation(reservation: Reservation, actor: String): PersistenceResult {
         logger.trace("Updating reservation with id: ${reservation.id}")
 
-        val reservationGuests: List<GuestEntity> = reservation.guestIds.mapNotNull { id -> GuestEntity.findById(id) }
+        val reservationGuests = loadGuests(reservation.guests).found
 
         val storedReservation: ReservationEntity =
             ReservationEntity.findById(reservation.id) ?: return PersistenceResult.NO_ACTION
@@ -407,17 +443,16 @@ class SqliteReservationRepository : ReservationRepository {
             sourceUpdatedTime = reservation.sourceUpdatedTime?.truncatedToMillis()
         }
 
-        // A guest-only edit is a change too, but is not part of writeValues: compare the id sets explicitly
+        // A guest-only edit is a change too, but is not part of writeValues: compare the guests explicitly
         val guestsChanged: Boolean =
-            storedReservation.guests.map { it.id.value }.toSet() != reservationGuests.map { it.id.value }.toSet()
+            fetchGuests(listOf(storedReservation.id))[storedReservation.id.value].orEmpty() != reservationGuests
         val isDirty: Boolean = storedReservation.writeValues.isNotEmpty() || guestsChanged
 
         if (isDirty) {
             storedReservation.markUpdated(actor)
         }
 
-        // This triggers flushing changes and thus empties the writeValues, so we keep it as the last change
-        storedReservation.guests = SizedCollection(reservationGuests)
+        replaceGuests(reservation.id, reservationGuests)
 
         return if (isDirty) {
             logger.trace("Updated reservation with id: ${reservation.id} and summary: ${reservation.summary}")

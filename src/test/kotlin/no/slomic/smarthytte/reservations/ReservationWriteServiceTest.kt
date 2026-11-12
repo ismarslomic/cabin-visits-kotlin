@@ -176,7 +176,7 @@ class ReservationWriteServiceTest :
                     id = "old",
                     startTime = Instant.parse("2029-01-01T10:00:00Z"),
                     endTime = Instant.parse("2029-03-12T10:00:00Z"),
-                    guestIds = listOf("a"),
+                    guests = listOf("a").map(::ReservationGuest),
                 ),
             )
 

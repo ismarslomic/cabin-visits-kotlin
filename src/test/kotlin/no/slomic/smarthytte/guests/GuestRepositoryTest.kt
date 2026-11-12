@@ -11,6 +11,7 @@ import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.truncatedToMillis
+import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.ReservationGuestTable
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
@@ -236,7 +237,7 @@ class GuestRepositoryTest :
             repository.addOrUpdate(guest2)
 
             val reservationWithGuest = reservation.copy(
-                guestIds = listOf(guest.id, guest2.id),
+                guests = listOf(guest.id, guest2.id).map(::ReservationGuest),
             )
             reservationRepository.addOrUpdate(reservationWithGuest)
             reservationRepository.reservationById(reservationWithGuest.id).shouldNotBeNull()

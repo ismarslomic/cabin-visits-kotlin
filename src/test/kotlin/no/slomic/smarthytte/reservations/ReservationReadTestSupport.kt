@@ -35,5 +35,5 @@ private fun reservation(id: String, start: String, end: String, vararg guestIds:
     id = id,
     startTime = Instant.parse(start),
     endTime = Instant.parse(end),
-    guestIds = guestIds.toList(),
+    guests = guestIds.toList().map(::ReservationGuest),
 )

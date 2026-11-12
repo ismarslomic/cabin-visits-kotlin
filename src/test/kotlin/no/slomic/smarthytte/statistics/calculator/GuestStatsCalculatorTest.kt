@@ -14,6 +14,7 @@ import kotlinx.datetime.toInstant
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.statistics.model.GuestPeriodStats
 
 class GuestStatsCalculatorTest :
@@ -27,7 +28,7 @@ class GuestStatsCalculatorTest :
                 id = id,
                 startTime = start.atTime(0, 0).toInstant(TimeZone.UTC),
                 endTime = end.atTime(0, 0).toInstant(TimeZone.UTC),
-                guestIds = guestIds,
+                guests = guestIds.map(::ReservationGuest),
             )
 
         context("aggregateGuestVisitStats") {
@@ -267,7 +268,7 @@ class GuestStatsCalculatorTest :
                     id = id,
                     startTime = start.atStartOfDayIn(TimeZone.UTC),
                     endTime = start.plus(DatePeriod(days = 2)).atStartOfDayIn(TimeZone.UTC),
-                    guestIds = guestIds.toList(),
+                    guests = guestIds.toList().map(::ReservationGuest),
                 )
 
                 val standings = calculateGuestStandings(

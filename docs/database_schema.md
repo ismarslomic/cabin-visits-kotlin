@@ -78,6 +78,8 @@ erDiagram
     reservation_guest {
         string reservation_id PK, FK
         string guest_id PK, FK
+        string from_date
+        string to_date
     }
 
     vehicle_trip {
@@ -111,7 +113,7 @@ erDiagram
 | **guest**               | Stores unique guest profiles, including name, contact details, and external identifiers.                         | raw           |
 | **guest_avatar**        | Stores the JPEG avatar of a guest (at most one per guest, deleted with the guest).                               | raw           |
 | **reservation**         | Stores cabin reservations, including planned start/end times and calculated actual check-in and check-out times. | raw + derived |
-| **reservation_guest**   | Links reservations with guests in a many-to-many relationship.                                                   | derived       |
+| **reservation_guest**   | Links reservations with guests in a many-to-many relationship. `from_date`/`to_date` (ISO dates, both inclusive) are the guest's own stay when it is shorter than the reservation; null means the guest follows the reservation. | derived       |
 | **sync_checkpoint**     | Stores the last synchronization checkpoints for various data sources.                                            | raw           |
 | **vehicle_trip**        | Stores details for all vehicle trips, including consumption, distance, duration, locations, and timestamps.      | raw           |
 

@@ -9,6 +9,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.calendar.CalendarOperation
 import no.slomic.smarthytte.calendar.CalendarOutboxTable
@@ -17,6 +18,7 @@ import no.slomic.smarthytte.checkinouts.CheckIn
 import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.checkinouts.HOME_CITY_NAME
+import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
@@ -223,7 +225,7 @@ class ReservationWriteRepositoryTest :
             val first = created()
             // An old reservation that overlaps the first one (only possible through the fixture upsert)
             repository.addOrUpdate(
-                Reservation("old", start + 1.hours, end + 1.hours, listOf("a")),
+                Reservation("old", start + 1.hours, end + 1.hours, listOf(ReservationGuest("a"))),
             )
 
             repository.updateReservation(first.id, 1, start, end, listOf("a", "b"), "admin")
@@ -318,5 +320,75 @@ class ReservationWriteRepositoryTest :
 
             repository.deleteReservation(reservation.id, 1, "admin") shouldBe ReservationDeleteOutcome.VersionMismatch
             repository.deleteReservation(reservation.id, 2, "admin") shouldBe ReservationDeleteOutcome.Deleted
+        }
+
+        "create should store the own stay of a guest and read it back, a guest without dates follows the reservation" {
+            givenGuests()
+            val stays = listOf(
+                ReservationGuest("a"),
+                ReservationGuest("b", fromDate = LocalDate(2026, 7, 11), toDate = LocalDate(2026, 7, 12)),
+            )
+
+            val created = repository.createReservation(start, end, stays, "admin")
+                .shouldBeInstanceOf<ReservationCreateOutcome.Created>().reservation
+
+            created.guests shouldBe stays
+            repository.reservationById(created.id)!!.guests shouldBe stays
+            repository.allReservations().single().guests shouldBe stays
+        }
+
+        "create should keep the two ends of a stay independent" {
+            givenGuests()
+            val stays = listOf(
+                ReservationGuest("a", fromDate = LocalDate(2026, 7, 11)),
+                ReservationGuest("b", toDate = LocalDate(2026, 7, 11)),
+            )
+
+            val created = repository.createReservation(start, end, stays, "admin")
+                .shouldBeInstanceOf<ReservationCreateOutcome.Created>().reservation
+
+            repository.reservationById(created.id)!!.guests shouldBe stays
+        }
+
+        "update should count a changed stay as a change: bump the version, keep the derived data and queue nothing" {
+            givenGuests()
+            val reservation = created(guestIds = arrayOf("a", "b"))
+            val stays = listOf(ReservationGuest("a"), ReservationGuest("b", fromDate = LocalDate(2026, 7, 11)))
+
+            val outcome = repository.updateReservation(reservation.id, 1, start, end, stays, "admin")
+                .shouldBeInstanceOf<ReservationUpdateOutcome.Updated>()
+
+            outcome.timesChanged shouldBe false
+            outcome.reservation.guests shouldBe stays
+            outcome.reservation.version shouldBe 2
+            outbox() shouldContainExactly listOf(reservation.id to CalendarOperation.INSERT)
+        }
+
+        "update should answer Unchanged when the stays are the same and reset a stay that is left out" {
+            givenGuests()
+            val stays = listOf(ReservationGuest("a"), ReservationGuest("b", toDate = LocalDate(2026, 7, 11)))
+            val reservation = repository.createReservation(start, end, stays, "admin")
+                .shouldBeInstanceOf<ReservationCreateOutcome.Created>().reservation
+
+            repository.updateReservation(reservation.id, 1, start, end, stays.reversed(), "admin")
+                .shouldBeInstanceOf<ReservationUpdateOutcome.Unchanged>()
+
+            val reset = repository.updateReservation(reservation.id, 1, start, end, listOf("a", "b"), "admin")
+                .shouldBeInstanceOf<ReservationUpdateOutcome.Updated>().reservation
+
+            reset.guests shouldBe listOf(ReservationGuest("a"), ReservationGuest("b"))
+        }
+
+        "addOrUpdate should write and change the stays" {
+            givenGuests()
+            val stays = listOf(ReservationGuest("a", fromDate = LocalDate(2026, 7, 11)))
+            val reservation = Reservation("old", start, end, stays)
+
+            repository.addOrUpdate(reservation) shouldBe PersistenceResult.ADDED
+            repository.reservationById("old")!!.guests shouldBe stays
+
+            val changed = reservation.copy(guests = listOf(ReservationGuest("a", toDate = LocalDate(2026, 7, 11))))
+            repository.addOrUpdate(changed) shouldBe PersistenceResult.UPDATED
+            repository.reservationById("old")!!.guests shouldBe changed.guests
         }
     })

@@ -19,7 +19,7 @@ data class Reservation(
     val id: String,
     val startTime: Instant,
     val endTime: Instant,
-    val guestIds: List<String>,
+    val guests: List<ReservationGuest>,
     val toCabinVehicleTrips: List<VehicleTrip> = emptyList(),
     val atCabinVehicleTrips: List<VehicleTrip> = emptyList(),
     val fromCabinVehicleTrips: List<VehicleTrip> = emptyList(),
@@ -44,6 +44,10 @@ data class Reservation(
     var updatedBy: String? = null
         internal set
 
+    /** The ids of all linked guests, whatever their own stay. */
+    val guestIds: List<String>
+        get() = guests.map { it.guestId }
+
     val hasStarted: Boolean
         get() = startDate <= utcDateNow()
 
@@ -62,6 +66,19 @@ data class Reservation(
     // Calendar days of the full stay, including both arrival and departure day
     val durationDays: Int
         get() = durationNights + 1
+
+    /** The first day of the [guest]'s own stay: their [ReservationGuest.fromDate], or the reservation's [startDate]. */
+    fun guestStartDate(guest: ReservationGuest): LocalDate = guest.fromDate ?: startDate
+
+    /** The last day of the [guest]'s own stay: their [ReservationGuest.toDate], or the reservation's [endDate]. */
+    fun guestEndDate(guest: ReservationGuest): LocalDate = guest.toDate ?: endDate
+
+    /** Nights of the [guest]'s own stay, like [durationNights] but for their own dates. */
+    fun guestNights(guest: ReservationGuest): Int =
+        guestStartDate(guest).daysUntilSafe(endExclusive = guestEndDate(guest))
+
+    /** Calendar days of the [guest]'s own stay, including arrival and departure day. */
+    fun guestDays(guest: ReservationGuest): Int = guestNights(guest) + 1
 
     val toCabinDrivingDuration: Duration?
         get() = toCabinVehicleTrips

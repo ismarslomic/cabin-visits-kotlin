@@ -5,6 +5,8 @@ import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.reservations.createReservation
+import no.slomic.smarthytte.reservations.updateReservation
 import no.slomic.smarthytte.utils.TestDbSetup
 import kotlin.time.Instant
 

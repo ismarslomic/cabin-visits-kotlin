@@ -10,6 +10,7 @@ import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.common.utcTimeZone
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
@@ -428,21 +429,21 @@ data class CheckInOutScenario(
                 id = UUID.randomUUID().toString(),
                 startTime = now.plus(7.days),
                 endTime = now.plus(14.days),
-                guestIds = guest,
+                guests = guest.map(::ReservationGuest),
             )
 
             ReservationTestState.ACTIVE -> Reservation(
                 id = UUID.randomUUID().toString(),
                 startTime = now.minus(1.days),
                 endTime = now.plus(6.days),
-                guestIds = guest,
+                guests = guest.map(::ReservationGuest),
             )
 
             ReservationTestState.ENDED -> Reservation(
                 id = UUID.randomUUID().toString(),
                 startTime = now.minus(7.days),
                 endTime = now.minus(1.days),
-                guestIds = guest,
+                guests = guest.map(::ReservationGuest),
             )
         }
     }

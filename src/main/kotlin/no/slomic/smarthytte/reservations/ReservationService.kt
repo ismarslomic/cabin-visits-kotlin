@@ -77,7 +77,7 @@ class ReservationService(
                     val outcome = reservationRepository.createReservation(
                         request.startTime,
                         request.endTime,
-                        guestIds,
+                        guestIds.map(::ReservationGuest),
                         actor.id,
                     )
                 ) {
@@ -134,7 +134,7 @@ class ReservationService(
             request.version,
             request.startTime,
             request.endTime,
-            guestIds,
+            guestIds.map(::ReservationGuest),
             actor.id,
         )
     ) {

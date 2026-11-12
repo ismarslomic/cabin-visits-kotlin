@@ -35,7 +35,7 @@ val reservation = Reservation(
     id = "reservation1",
     startTime = now.truncatedToMillis(),
     endTime = now.plus(2.days).truncatedToMillis(),
-    guestIds = listOf(),
+    guests = emptyList(),
     toCabinVehicleTrips = listOf(),
     atCabinVehicleTrips = listOf(),
     fromCabinVehicleTrips = listOf(),
@@ -345,12 +345,12 @@ class ReservationRepositoryTest :
             guestRepository.addOrUpdate(guestCarlos)
 
             val reservationWithGuest = reservation.copy(
-                guestIds = listOf(guestLena.id, guestCarlos.id),
+                guests = listOf(guestLena.id, guestCarlos.id).map(::ReservationGuest),
             )
             repository.addOrUpdate(reservationWithGuest)
 
             // We are currently not loading the guests when reading from database
-            repository.reservationById(reservation.id)!!.copy(guestIds = reservationWithGuest.guestIds) shouldBe
+            repository.reservationById(reservation.id)!!.copy(guests = reservationWithGuest.guests) shouldBe
                 reservationWithGuest
 
             transaction {
@@ -375,7 +375,7 @@ class ReservationRepositoryTest :
 
             // Add a new reservation with guests Lena and Carlos in the Reservation table
             val reservationWithGuest = reservation.copy(
-                guestIds = listOf(guestLena.id, guestCarlos.id),
+                guests = listOf(guestLena.id, guestCarlos.id).map(::ReservationGuest),
             )
             repository.addOrUpdate(reservationWithGuest)
 
@@ -395,7 +395,7 @@ class ReservationRepositoryTest :
 
             // Remove the guest Carlos and add the guest Amira to the reservation
             val modifiedReservationWithGuest = reservation.copy(
-                guestIds = listOf(guestLena.id, guestAmira.id),
+                guests = listOf(guestLena.id, guestAmira.id).map(::ReservationGuest),
             )
             repository.addOrUpdate(modifiedReservationWithGuest)
 
@@ -420,7 +420,7 @@ class ReservationRepositoryTest :
             guestRepository.addOrUpdate(guestCarlos)
 
             val reservationWithGuest = reservation.copy(
-                guestIds = listOf(guestLena.id, guestCarlos.id),
+                guests = listOf(guestLena.id, guestCarlos.id).map(::ReservationGuest),
             )
             repository.addOrUpdate(reservationWithGuest)
             repository.reservationById(reservationWithGuest.id).shouldNotBeNull()
@@ -583,7 +583,6 @@ private fun ReservationEntity.shouldBeEqualToReservation(
     id.value shouldBe other.id
     startTime shouldBe other.startTime
     endTime shouldBe other.endTime
-    guests.shouldBeEmpty()
     summary shouldBe other.summary
     description shouldBe other.description
     sourceCreatedTime shouldBe other.sourceCreatedTime
