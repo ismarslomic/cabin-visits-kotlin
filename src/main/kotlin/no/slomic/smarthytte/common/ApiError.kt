@@ -12,7 +12,8 @@ data class ApiError(
     @JsonSchema.Description(
         "Stable machine-readable reason, for example INVALID_REQUEST, INVALID_GUEST, INVALID_IMAGE, NOT_FOUND, " +
             "FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, OVERLAP, END_BEFORE_START, TOO_LONG, " +
-            "TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST, UNKNOWN_GUEST, BODY_TOO_LARGE, " +
+            "TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST, UNKNOWN_GUEST, INVALID_STAY, " +
+            "BODY_TOO_LARGE, " +
             "UNSUPPORTED_MEDIA_TYPE or TEMPORARILY_UNAVAILABLE. Clients map it to their own texts.",
     )
     @JsonSchema.Example("\"VERSION_MISMATCH\"")
@@ -41,5 +42,6 @@ data class ApiError(
         const val TOO_MANY_GUESTS = "TOO_MANY_GUESTS"
         const val DUPLICATE_GUEST = "DUPLICATE_GUEST"
         const val UNKNOWN_GUEST = "UNKNOWN_GUEST"
+        const val INVALID_STAY = "INVALID_STAY"
     }
 }

@@ -158,7 +158,8 @@ private fun Route.describeDeleteReservation() = describe {
 private fun Responses.Builder.writeErrorResponses() {
     HttpStatusCode.BadRequest {
         description = "The body is not valid JSON or a property is missing, or a rule is broken: END_BEFORE_START, " +
-            "TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST or UNKNOWN_GUEST."
+            "TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST, UNKNOWN_GUEST or " +
+            "INVALID_STAY (a guest's own stay is outside the reservation or ends before it starts)."
     }
     HttpStatusCode.Unauthorized { description = "The Cloudflare Access token is missing or invalid." }
     HttpStatusCode.Forbidden { description = "The caller is not an admin or family user, or has no role." }

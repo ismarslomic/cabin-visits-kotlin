@@ -715,7 +715,7 @@
             }
           },
           "400": {
-            "description": "The body is not valid JSON or a property is missing, or a rule is broken: END_BEFORE_START, TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST or UNKNOWN_GUEST.",
+            "description": "The body is not valid JSON or a property is missing, or a rule is broken: END_BEFORE_START, TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST, UNKNOWN_GUEST or INVALID_STAY (a guest's own stay is outside the reservation or ends before it starts).",
             "headers": {
               "Location": {
                 "content": {
@@ -924,7 +924,7 @@
             }
           },
           "400": {
-            "description": "The body is not valid JSON or a property is missing, or a rule is broken: END_BEFORE_START, TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST or UNKNOWN_GUEST.",
+            "description": "The body is not valid JSON or a property is missing, or a rule is broken: END_BEFORE_START, TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST, UNKNOWN_GUEST or INVALID_STAY (a guest's own stay is outside the reservation or ends before it starts).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1592,7 +1592,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Stable machine-readable reason, for example INVALID_REQUEST, INVALID_GUEST, INVALID_IMAGE, NOT_FOUND, FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, OVERLAP, END_BEFORE_START, TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST, UNKNOWN_GUEST, BODY_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE or TEMPORARILY_UNAVAILABLE. Clients map it to their own texts.",
+            "description": "Stable machine-readable reason, for example INVALID_REQUEST, INVALID_GUEST, INVALID_IMAGE, NOT_FOUND, FORBIDDEN, EMAIL_IN_USE, LAST_ADMIN, VERSION_MISMATCH, OVERLAP, END_BEFORE_START, TOO_LONG, TOO_FAR_AHEAD, NO_GUESTS, TOO_MANY_GUESTS, DUPLICATE_GUEST, UNKNOWN_GUEST, INVALID_STAY, BODY_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE or TEMPORARILY_UNAVAILABLE. Clients map it to their own texts.",
             "example": "VERSION_MISMATCH"
           },
           "message": {
@@ -1879,6 +1879,24 @@
             ],
             "description": "Relative URL of the avatar image, or null if the guest has no avatar. The v parameter changes when the image does, so the URL can be cached safely.",
             "example": "/api/guests/ola.nordmann/avatar?v=1767225600000"
+          },
+          "fromDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The guest's own first day (UTC date) when the guest arrived after the reservation started, otherwise null: the guest follows the start of the reservation. Compare with the UTC date of startTime.",
+            "example": "2026-07-11",
+            "format": "date"
+          },
+          "toDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The guest's own last day (UTC date) when the guest left before the reservation ended, otherwise null: the guest follows the end of the reservation. Compare with the UTC date of endTime.",
+            "example": "2026-07-12",
+            "format": "date"
           }
         }
       },
@@ -2042,6 +2060,24 @@
             "type": "string",
             "description": "Internal unique identifier of an existing guest, from GET /api/guests.",
             "example": "ola.nordmann"
+          },
+          "fromDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The guest's first day when the guest arrives after the reservation starts: a UTC date, compared with the UTC date of startTime, so it is on or after that date and not after the last day. Omit or null when the guest arrives with the group. A date equal to the first day of the reservation is stored as null (the guest then follows the reservation if its dates change), so the response can differ from the request. The update is a full replace: leaving it out resets the guest's stay, so send back what you read.",
+            "example": "2026-07-11",
+            "format": "date"
+          },
+          "toDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The guest's last day when the guest leaves before the reservation ends: a UTC date, compared with the UTC date of endTime, so it is on or before that date and not before the first day or fromDate. Omit or null when the guest leaves with the group. A date equal to the last day of the reservation is stored as null. Leaving it out in an update resets the guest's stay, so send back what you read.",
+            "example": "2026-07-12",
+            "format": "date"
           }
         }
       },
