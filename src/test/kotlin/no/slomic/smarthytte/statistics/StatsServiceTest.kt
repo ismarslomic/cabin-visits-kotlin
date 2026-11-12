@@ -26,6 +26,7 @@ import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
@@ -73,7 +74,7 @@ class StatsServiceTest :
                 id = id,
                 startTime = start.atStartOfDayIn(TimeZone.UTC),
                 endTime = end.atStartOfDayIn(TimeZone.UTC),
-                guestIds = guests.map { it.id },
+                guests = guests.map { it.id }.map(::ReservationGuest),
             )
             reservationRepository.addOrUpdate(reservation)
         }

@@ -15,7 +15,7 @@ class VisitStatsCalculatorTest :
             id = id,
             startTime = start.atTime(0, 0).toInstant(TimeZone.UTC),
             endTime = end.atTime(0, 0).toInstant(TimeZone.UTC),
-            guestIds = emptyList(),
+            guests = emptyList(),
         )
 
         context("calculateMonthlyDaysStats returns MonthDaysStats") {

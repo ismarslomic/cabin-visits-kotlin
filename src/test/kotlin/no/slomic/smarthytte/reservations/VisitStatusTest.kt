@@ -12,7 +12,7 @@ class VisitStatusTest :
             id = "r",
             startTime = Instant.parse("2026-07-10T16:00:00Z"),
             endTime = Instant.parse("2026-07-12T13:00:00Z"),
-            guestIds = listOf("a"),
+            guests = listOf("a").map(::ReservationGuest),
         )
 
         "visit status should be upcoming before the start date" {

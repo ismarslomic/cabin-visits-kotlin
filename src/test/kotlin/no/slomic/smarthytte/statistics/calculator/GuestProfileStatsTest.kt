@@ -10,6 +10,7 @@ import kotlinx.datetime.toInstant
 import no.slomic.smarthytte.guests.Gender
 import no.slomic.smarthytte.guests.Guest
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.VisitStatus
 import no.slomic.smarthytte.statistics.model.GuestVisit
 
@@ -26,7 +27,7 @@ class GuestProfileStatsTest :
             id = id,
             startTime = start.atTime(0, 0).toInstant(TimeZone.UTC),
             endTime = end.atTime(0, 0).toInstant(TimeZone.UTC),
-            guestIds = guestIds.toList(),
+            guests = guestIds.toList().map(::ReservationGuest),
         )
 
         val past1 = reservation("1", LocalDate(2025, 6, 1), LocalDate(2025, 6, 5), "anna", "bo")

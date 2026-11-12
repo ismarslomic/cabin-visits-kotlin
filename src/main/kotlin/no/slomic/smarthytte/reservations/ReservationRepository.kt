@@ -46,14 +46,14 @@ interface ReservationRepository {
 
     /**
      * Creates a reservation with a generated id (32 lowercase hex characters, a valid Google Calendar event id) for the
-     * [guestIds], and queues a calendar [CalendarOperation.INSERT]. The overlap check, the write and the outbox row are
+     * [guests], and queues a calendar [CalendarOperation.INSERT]. The overlap check, the write and the outbox row are
      * one transaction, which is safe to re-run (the id is generated inside it). Sets `created_*` ([actor]). The service
      * validates the request, this only guards what must hold in the transaction: no overlap and existing guests.
      */
     suspend fun createReservation(
         startTime: Instant,
         endTime: Instant,
-        guestIds: List<String>,
+        guests: List<ReservationGuest>,
         actor: String,
     ): ReservationCreateOutcome
 
@@ -70,7 +70,7 @@ interface ReservationRepository {
         expectedVersion: Short,
         startTime: Instant,
         endTime: Instant,
-        guestIds: List<String>,
+        guests: List<ReservationGuest>,
         actor: String,
     ): ReservationUpdateOutcome
 

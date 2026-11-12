@@ -17,6 +17,8 @@ import no.slomic.smarthytte.properties.CalendarOutboxProperties
 import no.slomic.smarthytte.reservations.ReservationCreateOutcome
 import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
+import no.slomic.smarthytte.reservations.createReservation
+import no.slomic.smarthytte.reservations.updateReservation
 import no.slomic.smarthytte.utils.TestDbSetup
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import kotlin.time.Clock

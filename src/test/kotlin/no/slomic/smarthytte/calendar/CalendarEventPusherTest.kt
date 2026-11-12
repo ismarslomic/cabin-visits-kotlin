@@ -6,6 +6,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationSystemService
 import kotlin.time.Instant
@@ -22,7 +23,8 @@ class CalendarEventPusherTest :
 
         fun pusher(): CalendarEventPusher {
             listOf(ID, LEGACY_ID).forEach {
-                coEvery { repository.reservationById(it) } returns Reservation(it, start, end, listOf("a"))
+                coEvery { repository.reservationById(it) } returns
+                    Reservation(it, start, end, listOf(ReservationGuest("a")))
             }
             coEvery { repository.reservationById("gone") } returns null
             return CalendarEventPusher(gateway, ReservationSystemService(repository))

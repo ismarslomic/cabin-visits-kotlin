@@ -64,9 +64,9 @@ class ReservationRepositoryAuditTest :
 
         "update of the guests only should count as a change" {
             withGuests()
-            repository.addOrUpdate(reservation.copy(guestIds = listOf(guestLena.id)), "ola")
+            repository.addOrUpdate(reservation.copy(guests = listOf(guestLena.id).map(::ReservationGuest)), "ola")
             repository.addOrUpdate(
-                reservation.copy(guestIds = listOf(guestLena.id, guestCarlos.id)),
+                reservation.copy(guests = listOf(guestLena.id, guestCarlos.id).map(::ReservationGuest)),
                 "kari",
             ) shouldBe PersistenceResult.UPDATED
 
@@ -78,9 +78,12 @@ class ReservationRepositoryAuditTest :
 
         "saving the same guests in another order should not change anything" {
             withGuests()
-            repository.addOrUpdate(reservation.copy(guestIds = listOf(guestLena.id, guestCarlos.id)), "ola")
             repository.addOrUpdate(
-                reservation.copy(guestIds = listOf(guestCarlos.id, guestLena.id)),
+                reservation.copy(guests = listOf(guestLena.id, guestCarlos.id).map(::ReservationGuest)),
+                "ola",
+            )
+            repository.addOrUpdate(
+                reservation.copy(guests = listOf(guestCarlos.id, guestLena.id).map(::ReservationGuest)),
                 "kari",
             ) shouldBe PersistenceResult.NO_ACTION
 

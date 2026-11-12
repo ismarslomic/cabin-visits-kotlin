@@ -5,7 +5,6 @@ import no.slomic.smarthytte.checkinouts.CheckInOutSource
 import no.slomic.smarthytte.checkinouts.CheckOut
 import no.slomic.smarthytte.common.AuditedEntity
 import no.slomic.smarthytte.common.AuditedIdTable
-import no.slomic.smarthytte.guests.GuestEntity
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType.AT_CABIN
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType.FROM_CABIN
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType.TO_CABIN
@@ -46,7 +45,6 @@ class ReservationEntity(id: EntityID<String>) : AuditedEntity<String>(id, Reserv
     var endTime: Instant by ReservationTable.endTime
     var summary: String? by ReservationTable.summary
     var description: String? by ReservationTable.description
-    var guests by GuestEntity via ReservationGuestTable
     var vehicleTrips by VehicleTripEntity via ReservationVehicleTripTable
     var sourceCreatedTime: Instant? by ReservationTable.sourceCreatedTime
     var sourceUpdatedTime: Instant? by ReservationTable.sourceUpdatedTime
@@ -72,15 +70,21 @@ class ReservationEntity(id: EntityID<String>) : AuditedEntity<String>(id, Reserv
  * Providing this map allows for efficient bulk loading of trip categories and avoids the N+1 query problem during
  * mapping.
  *
+ * @param guests The guests of the reservation with their own stays, sorted by guest id.
+ *
  * @return A populated [Reservation] domain object with categorized vehicle trips.
  */
-fun daoToModel(dao: ReservationEntity, tripTypes: Map<String, String> = emptyMap()): Reservation = Reservation(
+fun daoToModel(
+    dao: ReservationEntity,
+    guests: List<ReservationGuest>,
+    tripTypes: Map<String, String> = emptyMap(),
+): Reservation = Reservation(
     id = dao.id.value,
     summary = dao.summary,
     description = dao.description,
     startTime = dao.startTime,
     endTime = dao.endTime,
-    guestIds = dao.guests.map { it.id.value }.sorted(),
+    guests = guests,
     toCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, TO_CABIN),
     atCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, AT_CABIN),
     fromCabinVehicleTrips = daoToModel(dao.vehicleTrips, tripTypes, FROM_CABIN),

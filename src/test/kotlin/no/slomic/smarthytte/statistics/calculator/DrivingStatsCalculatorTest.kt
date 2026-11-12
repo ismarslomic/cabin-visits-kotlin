@@ -63,7 +63,7 @@ class DrivingStatsCalculatorTest :
                 id = id,
                 startTime = start.atTime(0, 0).toInstant(TimeZone.UTC),
                 endTime = end.atTime(0, 0).toInstant(TimeZone.UTC),
-                guestIds = emptyList(),
+                guests = emptyList(),
                 toCabinVehicleTrips = toTrips,
                 fromCabinVehicleTrips = fromTrips,
             )
@@ -123,7 +123,7 @@ class DrivingStatsCalculatorTest :
                     id = "r1",
                     startTime = start.atTime(0, 0).toInstant(TimeZone.UTC),
                     endTime = end.atTime(0, 0).toInstant(TimeZone.UTC),
-                    guestIds = emptyList(),
+                    guests = emptyList(),
                     toCabinVehicleTrips = listOf(
                         createTrip(t0, t0 + 90.minutes), // leg 1: 90 min
                         createTrip(t0 + 100.minutes, t0 + 130.minutes), // leg 2: 30 min
@@ -181,7 +181,7 @@ class DrivingStatsCalculatorTest :
                         id = "r1",
                         startTime = Instant.parse("2024-01-01T00:00:00Z"),
                         endTime = Instant.parse("2024-01-03T00:00:00Z"),
-                        guestIds = emptyList(),
+                        guests = emptyList(),
                         toCabinVehicleTrips = listOf(createTrip(trip1Start, trip1End)),
                         fromCabinVehicleTrips = listOf(createTrip(from1Start, from1End)),
                     ),
@@ -189,7 +189,7 @@ class DrivingStatsCalculatorTest :
                         id = "r2",
                         startTime = Instant.parse("2024-01-03T00:00:00Z"),
                         endTime = Instant.parse("2024-01-05T00:00:00Z"),
-                        guestIds = emptyList(),
+                        guests = emptyList(),
                         toCabinVehicleTrips = listOf(createTrip(trip2Start, trip2End)),
                         fromCabinVehicleTrips = listOf(createTrip(from2Start, from2End)),
                     ),
@@ -230,7 +230,7 @@ class DrivingStatsCalculatorTest :
                         id = "r1",
                         startTime = Instant.parse("2024-06-01T00:00:00Z"),
                         endTime = Instant.parse("2024-06-03T00:00:00Z"),
-                        guestIds = emptyList(),
+                        guests = emptyList(),
                         toCabinVehicleTrips = listOf(
                             createTrip(toTrip1Start, toTrip1End),
                             createTrip(toTrip2Start, toTrip2End),
@@ -270,14 +270,14 @@ class DrivingStatsCalculatorTest :
                         id = "r1",
                         startTime = Instant.parse("2025-07-01T00:00:00Z"),
                         endTime = Instant.parse("2025-07-08T00:00:00Z"),
-                        guestIds = emptyList(),
+                        guests = emptyList(),
                         fromCabinVehicleTrips = listOf(createTrip(lateStart, lateEnd)),
                     ),
                     Reservation(
                         id = "r2",
                         startTime = Instant.parse("2025-07-20T00:00:00Z"),
                         endTime = Instant.parse("2025-07-23T00:00:00Z"),
-                        guestIds = emptyList(),
+                        guests = emptyList(),
                         fromCabinVehicleTrips = listOf(createTrip(earlyStart, earlyEnd)),
                     ),
                 )
@@ -301,7 +301,7 @@ class DrivingStatsCalculatorTest :
                         id = "r$i",
                         startTime = start,
                         endTime = start,
-                        guestIds = emptyList(),
+                        guests = emptyList(),
                         toCabinVehicleTrips = listOf(createTrip(start, end)),
                     )
                 }

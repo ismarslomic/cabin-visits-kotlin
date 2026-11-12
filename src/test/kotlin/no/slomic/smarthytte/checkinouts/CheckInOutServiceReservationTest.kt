@@ -8,6 +8,7 @@ import io.mockk.spyk
 import no.slomic.smarthytte.auth.testGuest
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.reservations.Reservation
+import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.SqliteReservationRepository
 import no.slomic.smarthytte.sensors.checkinouts.CheckInOutSensorQueryService
@@ -40,7 +41,7 @@ class CheckInOutServiceReservationTest :
                     id = id,
                     startTime = Instant.parse(start),
                     endTime = Instant.parse(end),
-                    guestIds = listOf("a"),
+                    guests = listOf("a").map(::ReservationGuest),
                 ),
             )
         }
@@ -75,7 +76,7 @@ class CheckInOutServiceReservationTest :
                     id = "fine",
                     startTime = Instant.parse("2020-02-10T16:00:00Z"),
                     endTime = Instant.parse("2020-02-12T13:00:00Z"),
-                    guestIds = listOf("a"),
+                    guests = listOf("a").map(::ReservationGuest),
                 ),
             )
             val failing = spyk(reservations)
