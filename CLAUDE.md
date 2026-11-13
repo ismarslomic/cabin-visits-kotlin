@@ -90,6 +90,7 @@ Før du endrer API, auth, OpenAPI, migrasjoner eller GraalVM-oppsett: les `DEVEL
 - `startDate` / `endDate`: `Instant` → `LocalDate` via `toUtcDate()`
 - `toCabinDrivingDepartureDate` / `fromCabinDrivingDepartureDate`: `LocalDate` fra første VehicleTrip i henholdsvis `toCabinVehicleTrips` / `fromCabinVehicleTrips`
 - `toCabinDrivingDistanceKm`, `fromCabinDrivingDistanceKm`: sum av km for alle turer i retningen
+- `stays`: `GuestStay` per gjest (gjestens egne `fromDate`/`toDate`, ellers reservasjonens datoer). Gjestestatistikk (besøk, dager, netter, rangering, profil) teller med oppholdet; belegg, gruppestørrelse, kjøring og totaler per reservasjon bruker reservasjonsperioden. Tabell i `docs/solution_architecture.md` («Reservation period vs guest stay»).
 
 ## Detekt-regler å kjenne til
 

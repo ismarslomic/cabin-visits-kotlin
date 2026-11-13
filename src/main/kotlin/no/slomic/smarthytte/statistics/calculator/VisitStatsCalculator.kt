@@ -38,6 +38,8 @@ data class MonthDates(
     val lastOfPreviousMonth: LocalDate = firstOfMonth.minus(DatePeriod(days = DAY_OFFSET_PREVIOUS))
 }
 
+// Occupancy is about the cabin, not the guests: it deliberately uses the reservation period (a guest who stays only
+// part of a reservation does not change it)
 data class YearOccupancy(val dayOccupancy: Double, val weekOccupancy: Double, val monthOccupancy: Double)
 
 fun computeYearOccupancy(year: Int, allReservations: List<Reservation>): YearOccupancy {

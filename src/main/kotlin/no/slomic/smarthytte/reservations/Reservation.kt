@@ -67,18 +67,14 @@ data class Reservation(
     val durationDays: Int
         get() = durationNights + 1
 
-    /** The first day of the [guest]'s own stay: their [ReservationGuest.fromDate], or the reservation's [startDate]. */
-    fun guestStartDate(guest: ReservationGuest): LocalDate = guest.fromDate ?: startDate
-
-    /** The last day of the [guest]'s own stay: their [ReservationGuest.toDate], or the reservation's [endDate]. */
-    fun guestEndDate(guest: ReservationGuest): LocalDate = guest.toDate ?: endDate
-
-    /** Nights of the [guest]'s own stay, like [durationNights] but for their own dates. */
-    fun guestNights(guest: ReservationGuest): Int =
-        guestStartDate(guest).daysUntilSafe(endExclusive = guestEndDate(guest))
-
-    /** Calendar days of the [guest]'s own stay, including arrival and departure day. */
-    fun guestDays(guest: ReservationGuest): Int = guestNights(guest) + 1
+    /**
+     * The own stay of every guest: a guest's own dates, or the dates of the reservation where they have none. Sorted by
+     * guest id, like [guests].
+     */
+    val stays: List<GuestStay>
+        get() = guests.map {
+            GuestStay(it.guestId, id, startDate = it.fromDate ?: startDate, endDate = it.toDate ?: endDate)
+        }
 
     val toCabinDrivingDuration: Duration?
         get() = toCabinVehicleTrips
@@ -129,18 +125,10 @@ data class Reservation(
      * [VisitStatus.COMPLETED] from the end date itself on (UTC dates). The live statistics keep the check-out day as
      * occupied and use their own rule.
      */
-    fun visitStatus(today: LocalDate): VisitStatus = when {
-        startDate > today -> VisitStatus.UPCOMING
-        endDate > today -> VisitStatus.ONGOING
-        else -> VisitStatus.COMPLETED
-    }
+    fun visitStatus(today: LocalDate): VisitStatus = visitStatusOf(startDate, endDate, today)
 
-    fun daysInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int {
-        val endDateInclusive = endDate.plus(DatePeriod(days = 1))
-        val overlapStart = maxOf(startDate, periodStart)
-        val overlapEndExclusive = minOf(endDateInclusive, periodEndExclusive)
-        return if (overlapStart < overlapEndExclusive) overlapStart.daysUntilSafe(overlapEndExclusive) else 0
-    }
+    fun daysInPeriod(periodStart: LocalDate, periodEndExclusive: LocalDate): Int =
+        daysWithin(startDate, endDate, periodStart, periodEndExclusive)
 }
 
 fun List<Reservation>.countByMonth(): Map<Month, Int> =
@@ -163,16 +151,3 @@ fun List<Reservation>.countOccupiedDaysInWindow(startInclusive: LocalDate, endEx
         if (start < endEx) start.datesUntil(endEx).toList() else emptyList()
     }.toSet().size
 }
-
-fun List<Reservation>.visitsByGuest(): Map<String, Int> = this.flatMap { it.guestIds }.groupingBy { it }.eachCount()
-
-fun List<Reservation>.nightsByGuest(): Map<String, Int> = this
-    .flatMap { reservation -> reservation.guestIds.map { it to reservation.durationNights } }
-    .groupingBy { (guestId, _) -> guestId }
-    .fold(0) { acc, (_, nights) -> acc + nights }
-
-fun List<Reservation>.daysByGuest(periodStart: LocalDate, periodEndExclusive: LocalDate): Map<String, Int> =
-    this.flatMap { reservation ->
-        val days = reservation.daysInPeriod(periodStart, periodEndExclusive)
-        reservation.guestIds.map { it to days }
-    }.groupingBy { (guestId, _) -> guestId }.fold(0) { acc, (_, days) -> acc + days }

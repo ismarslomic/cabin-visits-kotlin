@@ -219,6 +219,10 @@ in which the **visit started** (arrival date).
 Calculated from the total number of **Days** for a single visit. The complete stay is always associated with the arrival
 period. The same rule applies when a stay is measured in **Nights**.
 
+A stay is the whole reservation. A guest can stay only part of it, see [Guests](#guests): the guest's own part is the
+**guest stay**, and it follows the same rules with the guest's own arrival and departure date. "Longest stay" and
+"Average stay" are about reservations and always use the reservation's dates.
+
 **Example**
 
 Stay:
@@ -246,10 +250,17 @@ Examples of period-based statistics:
 **Definition**  
 Visits, days and nights per guest within a specified period (e.g. a month or year).
 
+**Guest stay**  
+A guest normally stays for the whole reservation. A guest who arrives later or leaves earlier has own dates
+(`fromDate` and `toDate` on the guest in the reservation API, both inclusive, null means the guest follows the
+reservation on that end). The **guest stay** is the guest's own dates, with the reservation's dates where the guest has
+none. All numbers per guest below use the guest stay, so a guest without own dates gets the same numbers as the
+reservation.
+
 **Source**  
-Guest **visits** follow the **Visits** definition: each stay is counted once per guest, based on its **arrival date**.
-Guest **days** follow the **Days** definition: all calendar dates within the selected period that overlap the guest's
-stays.
+Guest **visits** follow the **Visits** definition: each guest stay is counted once, based on the guest's own **arrival
+date**. Guest **days** follow the **Days** definition: all calendar dates within the selected period that overlap the
+guest stay.
 
 **Example**
 
@@ -262,8 +273,19 @@ Result:
 - March: guest A has **1 visit** and **5 days**
 - April: guest A has **0 visits** and **6 days**
 
-Guest **nights** follow the **Stay** definition: the full nights of every stay that started in the period (also for a
-stay that is still ongoing).
+Same reservation, but guest B arrives on 2026-04-02 (own `fromDate`) and leaves with the group:
+
+- March: guest B has **0 visits** and **0 days**
+- April: guest B has **1 visit** and **5 days** (2–6)
+
+Guest **nights** follow the **Stay** definition: the full nights of every guest stay that started in the period (also
+for a stay that is still ongoing).
+
+**Reservation period or guest stay**  
+Only the numbers per guest use the guest stay. Everything about the cabin uses the reservation: occupancy, visits and
+nights per reservation, longest and average stay, average group size, unique guests, who is listed in the live
+statistics (every guest of the current and next reservation), check-in/out and driving. The full table is in
+[docs/solution_architecture.md](docs/solution_architecture.md#reservation-period-vs-guest-stay).
 
 **Ranks**  
 Guests are ranked by visits and by days (1 = most, tied guests share a rank and the next rank is skipped). The ranking
@@ -276,9 +298,9 @@ mirror. It answers `404` if the guest does not exist.
 
 - **guest**: the guest's statistics (visits, days, nights, ranks, first and last visit date, avatar url). If the guest
   is at the cabin right now, the last visit date is the last visit **before** the current one.
-- **visits**: all visits of the guest, oldest first, each with `startDate`, `endDate`, `days`, `nights` and a `status`:
-  `COMPLETED` (the guest has left), `ONGOING` (the guest is at the cabin) or `UPCOMING` (not started yet, not counted in
-  the statistics).
+- **visits**: all visits of the guest, oldest first, each with `startDate`, `endDate`, `days`, `nights` and a `status`,
+  all of the [guest stay](#guests): `COMPLETED` (the guest has left), `ONGOING` (the guest is at the cabin) or `UPCOMING`
+  (the guest has not arrived yet, also when the reservation has started; not counted in the statistics).
 - **funFacts**: ready-to-display fun facts in Norwegian, written about the guest by first name and sorted by priority
   (highest first). The list is **not capped**, so pick the facts to show. A fact is only included when its threshold
   holds, so the list is short for guests with few visits. Driving statistics are not part of the profile.

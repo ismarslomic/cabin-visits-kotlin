@@ -26,7 +26,7 @@ data class MonthStats(
     val nights: MonthNightsStats,
     val occupancy: OccupancyStats,
     @JsonSchema.Description(
-        "All guests present in this month, sorted by total days descending. Visits count reservations that started in this month, days count days within this month.",
+        "All guests present in this month, sorted by total days descending. Basis: the guest's own stay (falls back to the reservation period when the guest has no own dates). Visits count stays that arrive in this month (guest's own arrival date), days count the guest's own days within this month.",
     )
     val guests: List<GuestVisitStats>,
     @JsonSchema.Description(

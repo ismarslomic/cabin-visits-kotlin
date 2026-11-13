@@ -98,7 +98,9 @@ private fun Route.describeLiveStats() = describe {
     summary = "Live occupancy status"
     description = "Returns whether the cabin is currently occupied, details about the ongoing and next " +
         "reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, " +
-        "unique guests) excluding future bookings. Suitable for a smart mirror or real-time dashboard."
+        "unique guests) excluding future bookings. The current and next reservation list every linked guest, " +
+        "whatever their own stay; the numbers per guest count with the guest's own stay and the reservation-level " +
+        "numbers (dates, nights, totals) with the reservation. Suitable for a smart mirror or real-time dashboard."
     responses {
         HttpStatusCode.OK { description = "Live occupancy status." }
         default { description = "Unexpected server error." }
@@ -145,7 +147,9 @@ private fun Route.describeYearStats() = describe {
         "regeneration), driving time stats (avg/min/max to and from cabin), typical departure and arrival " +
         "times, and a monthly breakdown for all 12 months.\n\n" +
         "A guest is counted as **new** in a given year if that year is the first year in which they " +
-        "appear in any reservation."
+        "arrive, with the guest's own arrival date.\n\n" +
+        "**Basis:** the guest lists count with the guest's own stay (own dates, or the reservation period when " +
+        "the guest has none). Visit counts, nights, occupancy, group size and driving use the reservation."
     responses {
         HttpStatusCode.OK { description = "Full statistics for the requested year." }
         HttpStatusCode.BadRequest { description = "Invalid year parameter." }
@@ -184,7 +188,8 @@ private fun Route.describeAllGuestsStats() = describe {
     summary = "Statistics for all guests"
     description = "Returns statistics for all guests across all years: top 10 guests by number of visits and by " +
         "total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). " +
-        "Suitable for a hall-of-fame view or demographic overview."
+        "Visits and days count with the guest's own stay (own dates, or the reservation period when the guest " +
+        "has none). Suitable for a hall-of-fame view or demographic overview."
     responses {
         HttpStatusCode.OK { description = "Guest statistics across all years." }
         default { description = "Unexpected server error." }
@@ -210,7 +215,10 @@ private fun Route.describeGuestProfileStats() = describe {
         "* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). " +
         "The list is not capped, so pick the facts to display. A fact is only included when it is true for the " +
         "guest, so the list can be short or empty for guests with few visits.\n\n" +
-        "Driving statistics are not included. Upcoming visits are not counted in totals or facts."
+        "All numbers about the guest count with the guest's own stay (own dates, or the reservation period when " +
+        "the guest has none): a visit is ongoing between the guest's own arrival and departure, also when the " +
+        "reservation started earlier. Driving statistics are not included. Upcoming visits are not counted in " +
+        "totals or facts."
     responses {
         HttpStatusCode.OK { description = "The profile of the guest." }
         HttpStatusCode.NotFound { description = "There is no guest with the given id." }

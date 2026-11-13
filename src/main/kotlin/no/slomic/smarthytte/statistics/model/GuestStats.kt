@@ -7,8 +7,9 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 @JsonSchema.Description(
-    "Statistics for one guest as of today, counting only reservations that have started. Used for the guests of " +
-        "the current and next reservation in the live stats and for the guest profile.",
+    "Statistics for one guest as of today, counted with the guest's own stays (a guest's own dates, or the " +
+        "reservation period when the guest has no own dates) that have started. Used for the guests of the current " +
+        "and next reservation in the live stats and for the guest profile.",
 )
 @Serializable
 data class GuestStats(
@@ -34,24 +35,25 @@ data class GuestStats(
     @JsonSchema.Example("\"/api/guests/ola.nordmann/avatar?v=1767225600000\"")
     val avatarUrl: String?,
     @JsonSchema.Description(
-        "True if the guest has no reservations that started before this reservation. In a guest profile this " +
-            "is true only when the guest is at the cabin right now and the ongoing visit is the first one.",
+        "True if the guest has no stay that started before this one (guest's own arrival date). In a guest " +
+            "profile this is true only when the guest is at the cabin right now and the ongoing visit is the " +
+            "first one.",
     )
     @JsonSchema.Example("false")
     val isFirstVisit: Boolean,
     @JsonSchema.Description(
-        "Start date of the guest's first started reservation. Null if the guest has no started reservations.",
+        "Own arrival date of the guest's first started stay. Null if the guest has no started stays.",
     )
     @JsonSchema.Example("\"2019-02-16\"")
     val firstVisitDate: LocalDate?,
     @JsonSchema.Description(
-        "End date of the guest's last completed visit before this reservation. Null if there is no completed visit. " +
+        "Own departure date of the guest's last completed stay before this one. Null if there is no completed stay. " +
             "In a guest profile: the last visit before the current one if the guest is at the cabin right now, " +
             "otherwise the last completed visit.",
     )
     @JsonSchema.Example("\"2026-04-05\"")
     val lastVisitDate: LocalDate?,
-    @JsonSchema.Description("Years in which the guest has started reservations, in descending order.")
+    @JsonSchema.Description("Years in which the guest has arrived (own arrival date), in descending order.")
     @JsonSchema.Example("[2026, 2025, 2023]")
     val yearsVisited: List<Int>,
     val currentYear: GuestPeriodStats,
@@ -59,21 +61,22 @@ data class GuestStats(
 )
 
 @JsonSchema.Description(
-    "Guest statistics for one period (the current year or all years), counting only started reservations up to today.",
+    "Guest statistics for one period (the current year or all years), counted with the guest's own stays that " +
+        "have started, up to today (falls back to the reservation period when the guest has no own dates).",
 )
 @Serializable
 data class GuestPeriodStats(
-    @JsonSchema.Description("Number of reservations the guest was part of that started in the period (arrival date).")
+    @JsonSchema.Description("Number of stays of the guest that arrived in the period (guest's own arrival date).")
     @JsonSchema.Example("5")
     val totalVisits: Int,
     @JsonSchema.Description(
-        "Number of days the guest was present at the cabin in the period, up to and including today.",
+        "Number of days of the guest's own stay within the period, up to and including today.",
     )
     @JsonSchema.Example("14")
     val totalDays: Int,
     @JsonSchema.Description(
-        "Number of nights of the reservations the guest was part of that started in the period (full stay, " +
-            "also for an ongoing stay). Same counting as totalVisits.",
+        "Number of nights of the guest's own stays that arrived in the period (the whole stay, also for an " +
+            "ongoing stay). Same counting as totalVisits.",
     )
     @JsonSchema.Example("10")
     val totalNights: Int,
