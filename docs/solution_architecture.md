@@ -416,7 +416,7 @@ reservation). The statistics therefore use two bases:
 | `/api/stats/guests`: `totalVisits`, `totalDays` | Guest stay |
 | `/api/stats/guests/{guestId}`: `visits` (dates, days, nights, status), `GuestStats` (visits, days, nights, ranks, first/last visit, years visited), fun facts about the guest | Guest stay |
 | Live stats: `GuestStats` of the guests of the current and next reservation (visits, days, nights, ranks, first visit) | Guest stay |
-| Live stats: which guests are listed (every linked guest), current/next reservation, remaining and upcoming nights | Reservation period |
+| Live stats: which guests are listed (every linked guest, each with `stayStartDate`/`stayEndDate` so a client can tell who is at the cabin today), current/next reservation, remaining and upcoming nights | Reservation period |
 | Cabin occupancy, occupied days/nights, visits and nights per reservation, monthly/yearly totals | Reservation period |
 | `avgGroupSize` (head count of linked guests), unique guests, companions ("together with") | Reservation period |
 | Check-in/out, vehicle trips and driving statistics | Reservation period |

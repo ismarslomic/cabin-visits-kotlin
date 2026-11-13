@@ -1155,7 +1155,7 @@
           "Stats"
         ],
         "summary": "Live occupancy status",
-        "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. The current and next reservation list every linked guest, whatever their own stay; the numbers per guest count with the guest's own stay and the reservation-level numbers (dates, nights, totals) with the reservation. Suitable for a smart mirror or real-time dashboard.",
+        "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. The current and next reservation list every linked guest, whatever their own stay, each with `stayStartDate` and `stayEndDate` (a guest who has not arrived or has left is listed too: compare with today); the numbers per guest count with the guest's own stay and the reservation-level numbers (dates, nights, totals) with the reservation. Suitable for a smart mirror or real-time dashboard.",
         "responses": {
           "default": {
             "description": "Unexpected server error."
@@ -2206,10 +2206,10 @@
           }
         }
       },
-      "GuestStats": {
+      "LiveGuestStats": {
         "type": "object",
-        "title": "GuestStats",
-        "description": "Statistics for one guest as of today, counted with the guest's own stays (a guest's own dates, or the reservation period when the guest has no own dates) that have started. Used for the guests of the current and next reservation in the live stats and for the guest profile.",
+        "title": "LiveGuestStats",
+        "description": "A guest of the current or next reservation: the statistics of the guest as of today, counted with the guest's own stays (a guest's own dates, or the reservation period when the guest has no own dates) that have started, and the dates of the guest's own stay in this reservation. The reservation lists every linked guest, so a guest who has not arrived yet or has already left is listed too: compare stayStartDate and stayEndDate with today.",
         "required": [
           "guestId",
           "firstName",
@@ -2219,7 +2219,9 @@
           "isFirstVisit",
           "yearsVisited",
           "currentYear",
-          "allTime"
+          "allTime",
+          "stayStartDate",
+          "stayEndDate"
         ],
         "properties": {
           "guestId": {
@@ -2295,6 +2297,18 @@
           },
           "allTime": {
             "$ref": "#/components/schemas/GuestPeriodStats"
+          },
+          "stayStartDate": {
+            "type": "string",
+            "description": "First day of the guest's own stay in this reservation (inclusive): the guest's own arrival date, or the first day of the reservation when the guest has no own dates.",
+            "example": "2026-07-11",
+            "format": "date"
+          },
+          "stayEndDate": {
+            "type": "string",
+            "description": "Last day of the guest's own stay in this reservation: the guest's own departure date, or the last day of the reservation when the guest has no own dates. Same semantics as the end date of the reservation.",
+            "example": "2026-07-12",
+            "format": "date"
           }
         }
       },
@@ -2328,9 +2342,9 @@
           },
           "guests": {
             "type": "array",
-            "description": "Statistics for each guest in the current reservation, ordered by current year days rank.",
+            "description": "Every linked guest of the current reservation, ordered by current year days rank, with the dates of the guest's own stay. A guest who has not arrived yet or has left is listed too, see stayStartDate and stayEndDate.",
             "items": {
-              "$ref": "#/components/schemas/GuestStats"
+              "$ref": "#/components/schemas/LiveGuestStats"
             }
           },
           "remainingNights": {
@@ -2380,9 +2394,9 @@
           },
           "guests": {
             "type": "array",
-            "description": "Statistics for each guest in the next reservation, ordered by current year days rank.",
+            "description": "Every linked guest of the next reservation, ordered by current year days rank, with the dates of the guest's own stay. A guest who arrives after the reservation starts is listed too, see stayStartDate.",
             "items": {
-              "$ref": "#/components/schemas/GuestStats"
+              "$ref": "#/components/schemas/LiveGuestStats"
             }
           },
           "daysUntil": {
@@ -2520,6 +2534,98 @@
             "items": {
               "$ref": "#/components/schemas/FunFact"
             }
+          }
+        }
+      },
+      "GuestStats": {
+        "type": "object",
+        "title": "GuestStats",
+        "description": "Statistics for one guest as of today, counted with the guest's own stays (a guest's own dates, or the reservation period when the guest has no own dates) that have started. Used for the guests of the current and next reservation in the live stats and for the guest profile.",
+        "required": [
+          "guestId",
+          "firstName",
+          "lastName",
+          "age",
+          "isFamily",
+          "isFirstVisit",
+          "yearsVisited",
+          "currentYear",
+          "allTime"
+        ],
+        "properties": {
+          "guestId": {
+            "type": "string",
+            "description": "Internal unique identifier of the guest.",
+            "example": "ola.nordmann"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Guest's first name.",
+            "example": "Ola"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Guest's last name.",
+            "example": "Nordmann"
+          },
+          "age": {
+            "type": "integer",
+            "description": "Guest's age in the current year (current year - birthYear).",
+            "example": 38
+          },
+          "isFamily": {
+            "type": "boolean",
+            "description": "True if the guest is a family member (owner of the cabin), false for other guests.",
+            "example": true
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative URL to the guest's avatar image (JPEG), see GET /api/guests/{guestId}/avatar. Null if the guest has no avatar.",
+            "example": "/api/guests/ola.nordmann/avatar?v=1767225600000"
+          },
+          "isFirstVisit": {
+            "type": "boolean",
+            "description": "True if the guest has no stay that started before this one (guest's own arrival date). In a guest profile this is true only when the guest is at the cabin right now and the ongoing visit is the first one.",
+            "example": false
+          },
+          "firstVisitDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Own arrival date of the guest's first started stay. Null if the guest has no started stays.",
+            "example": "2019-02-16",
+            "format": "date"
+          },
+          "lastVisitDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Own departure date of the guest's last completed stay before this one. Null if there is no completed stay. In a guest profile: the last visit before the current one if the guest is at the cabin right now, otherwise the last completed visit.",
+            "example": "2026-04-05",
+            "format": "date"
+          },
+          "yearsVisited": {
+            "type": "array",
+            "description": "Years in which the guest has arrived (own arrival date), in descending order.",
+            "example": [
+              2026,
+              2025,
+              2023
+            ],
+            "items": {
+              "type": "integer"
+            }
+          },
+          "currentYear": {
+            "$ref": "#/components/schemas/GuestPeriodStats"
+          },
+          "allTime": {
+            "$ref": "#/components/schemas/GuestPeriodStats"
           }
         }
       },

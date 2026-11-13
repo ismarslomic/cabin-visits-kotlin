@@ -99,7 +99,9 @@ private fun Route.describeLiveStats() = describe {
     description = "Returns whether the cabin is currently occupied, details about the ongoing and next " +
         "reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, " +
         "unique guests) excluding future bookings. The current and next reservation list every linked guest, " +
-        "whatever their own stay; the numbers per guest count with the guest's own stay and the reservation-level " +
+        "whatever their own stay, each with `stayStartDate` and `stayEndDate` (a guest who has not arrived or has " +
+        "left is listed too: compare with today); the numbers per guest count with the guest's own stay and the " +
+        "reservation-level " +
         "numbers (dates, nights, totals) with the reservation. Suitable for a smart mirror or real-time dashboard."
     responses {
         HttpStatusCode.OK { description = "Live occupancy status." }

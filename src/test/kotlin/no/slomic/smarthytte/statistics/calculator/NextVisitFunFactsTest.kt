@@ -7,9 +7,11 @@ import io.kotest.matchers.shouldBe
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import no.slomic.smarthytte.reservations.GuestStay
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
+import no.slomic.smarthytte.statistics.model.toLive
 import no.slomic.smarthytte.statistics.shouldContainFact
 
 class NextVisitFunFactsTest :
@@ -22,7 +24,7 @@ class NextVisitFunFactsTest :
                     NextReservationInfo(
                         today.plus(DatePeriod(days = daysUntil)),
                         today,
-                        guests.toList(),
+                        guests.map { it.toLive(GuestStay(it.guestId, "r", today, today)) },
                         daysUntil,
                         1,
                         1,

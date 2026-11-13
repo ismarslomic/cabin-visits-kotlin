@@ -324,6 +324,49 @@ class StatsServiceTest :
             }
         }
 
+        context("getLiveStats guests with an own stay") {
+            suspend fun addPartialReservation(id: String, start: LocalDate, end: LocalDate, from: LocalDate?) {
+                reservationRepository.addOrUpdate(
+                    Reservation(
+                        id = id,
+                        startTime = start.atStartOfDayIn(TimeZone.UTC),
+                        endTime = end.atStartOfDayIn(TimeZone.UTC),
+                        guests = listOf(ReservationGuest("anna"), ReservationGuest("bjorn", fromDate = from)),
+                    ),
+                )
+            }
+
+            should("list every guest of the current reservation with the dates of the own stay") {
+                addGuests(anna, bjorn)
+                addPartialReservation("r1", daysFromToday(-1), daysFromToday(2), from = daysFromToday(1))
+
+                val guests = service.getLiveStats().currentReservation.shouldNotBeNull().guests.associateBy {
+                    it.guestId
+                }
+
+                guests.keys shouldBe setOf("anna", "bjorn")
+                guests.getValue("anna").stayStartDate shouldBe daysFromToday(-1)
+                guests.getValue("anna").stayEndDate shouldBe daysFromToday(2)
+                // Bjorn has not arrived yet: listed, with no visit counted
+                guests.getValue("bjorn").stayStartDate shouldBe daysFromToday(1)
+                guests.getValue("bjorn").stayEndDate shouldBe daysFromToday(2)
+                guests.getValue("bjorn").allTime.totalVisits shouldBe 0
+            }
+
+            should("list every guest of the next reservation with the dates of the own stay") {
+                addGuests(anna, bjorn)
+                addPartialReservation("r1", daysFromToday(3), daysFromToday(6), from = daysFromToday(4))
+
+                val guests = service.getLiveStats().nextReservation.shouldNotBeNull().guests.associateBy {
+                    it.guestId
+                }
+
+                guests.getValue("anna").stayStartDate shouldBe daysFromToday(3)
+                guests.getValue("bjorn").stayStartDate shouldBe daysFromToday(4)
+                guests.getValue("bjorn").stayEndDate shouldBe daysFromToday(6)
+            }
+        }
+
         context("getLiveStats between stays") {
             should("report the next reservation and exclude it from the all-time totals") {
                 addGuests(anna)

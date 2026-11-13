@@ -2590,6 +2590,9 @@
       "type": "no.slomic.smarthytte.statistics.model.GuestVisitStats$$serializer"
     },
     {
+      "type": "no.slomic.smarthytte.statistics.model.LiveGuestStats$$serializer"
+    },
+    {
       "type": "no.slomic.smarthytte.statistics.model.LiveStats",
       "fields": [
         {
