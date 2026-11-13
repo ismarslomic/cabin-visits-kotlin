@@ -21,11 +21,11 @@ data class YearStats(
     val occupancy: OccupancyStats,
     val topGuestByDays: TopGuestByDays?,
     @JsonSchema.Description(
-        "Guests who appear in this year's reservations but did not appear in any reservation in the previous year. Sorted by total days descending.",
+        "Guests who arrive in this year (guest's own arrival date) and had no stay that arrived in the previous year. Sorted by total days descending.",
     )
     val newGuests: List<GuestVisitStats>,
     @JsonSchema.Description(
-        "All guests present in this year, sorted by total days descending. Visits count reservations that started in this year, days count days within this year.",
+        "All guests present in this year, sorted by total days descending. Basis: the guest's own stay (falls back to the reservation period when the guest has no own dates). Visits count stays that arrive in this year (guest's own arrival date), days count the guest's own days within this year.",
     )
     val guests: List<GuestVisitStats>,
     @JsonSchema.Description(
@@ -61,7 +61,9 @@ data class YearVisitsStats(
     @JsonSchema.Description("Average number of visits per calendar month (totalVisits / 12).")
     @JsonSchema.Example("1.5")
     val avgMonthlyVisits: Double,
-    @JsonSchema.Description("Average number of guests per reservation this year. Null if there are no reservations.")
+    @JsonSchema.Description(
+        "Average number of guests per reservation this year (reservation period: every linked guest counts, whatever their own stay). Null if there are no reservations.",
+    )
     @JsonSchema.Example("4.2")
     val avgGroupSize: Double?,
     val monthMostVisits: MonthlyVisitCount?,
@@ -280,10 +282,14 @@ data class TopGuestByDays(
     @JsonSchema.Description("Guest's age in the reference year (ageYear - birthYear).")
     @JsonSchema.Example("38")
     val age: Int,
-    @JsonSchema.Description("Number of reservations the guest was part of that started in the year (arrival date).")
+    @JsonSchema.Description(
+        "Number of stays of the guest that arrived in the year (guest's own arrival date; the reservation start when the guest has no own dates).",
+    )
     @JsonSchema.Example("5")
     val totalVisits: Int,
-    @JsonSchema.Description("Total number of days the guest was present at the cabin in the year.")
+    @JsonSchema.Description(
+        "Total number of days of the guest's own stay within the year (falls back to the reservation period when the guest has no own dates).",
+    )
     @JsonSchema.Example("14")
     val totalDays: Int,
 )
@@ -297,7 +303,9 @@ fun GuestVisitStats.toTopGuestByDays() = TopGuestByDays(
     totalDays = totalDays,
 )
 
-@JsonSchema.Description("A guest's visits and days at the cabin within a period (year or month).")
+@JsonSchema.Description(
+    "A guest's visits and days at the cabin within a period (year or month), counted with the guest's own stay (falls back to the reservation period when the guest has no own dates).",
+)
 @Serializable
 data class GuestVisitStats(
     @JsonSchema.Description("Internal unique identifier of the guest.")
@@ -312,11 +320,13 @@ data class GuestVisitStats(
     @JsonSchema.Description("Guest's age in the reference year (ageYear - birthYear).")
     @JsonSchema.Example("38")
     val age: Int,
-    @JsonSchema.Description("Number of reservations the guest was part of that started in the period (arrival date).")
+    @JsonSchema.Description(
+        "Number of stays of the guest that arrived in the period (guest's own arrival date; the reservation start when the guest has no own dates).",
+    )
     @JsonSchema.Example("5")
     val totalVisits: Int,
     @JsonSchema.Description(
-        "Total number of days the guest was present at the cabin in the period, counting only days that fall within the period boundary.",
+        "Total number of days of the guest's own stay within the period, counting only days that fall within the period boundary (falls back to the reservation period when the guest has no own dates).",
     )
     @JsonSchema.Example("14")
     val totalDays: Int,

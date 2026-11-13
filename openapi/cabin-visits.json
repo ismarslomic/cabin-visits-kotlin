@@ -1155,7 +1155,7 @@
           "Stats"
         ],
         "summary": "Live occupancy status",
-        "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. Suitable for a smart mirror or real-time dashboard.",
+        "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. The current and next reservation list every linked guest, whatever their own stay; the numbers per guest count with the guest's own stay and the reservation-level numbers (dates, nights, totals) with the reservation. Suitable for a smart mirror or real-time dashboard.",
         "responses": {
           "default": {
             "description": "Unexpected server error."
@@ -1188,7 +1188,7 @@
           "Stats"
         ],
         "summary": "Guest profile",
-        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nDriving statistics are not included. Upcoming visits are not counted in totals or facts.",
+        "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nAll numbers about the guest count with the guest's own stay (own dates, or the reservation period when the guest has none): a visit is ongoing between the guest's own arrival and departure, also when the reservation started earlier. Driving statistics are not included. Upcoming visits are not counted in totals or facts.",
         "parameters": [
           {
             "name": "guestId",
@@ -1309,7 +1309,7 @@
           "Stats"
         ],
         "summary": "Full year statistics",
-        "description": "Returns full statistics for a given year, including visit counts, nights, occupancy percentages (days/weeks/months), guest overview, EV statistics (distance, energy consumption, regeneration), driving time stats (avg/min/max to and from cabin), typical departure and arrival times, and a monthly breakdown for all 12 months.\n\nA guest is counted as **new** in a given year if that year is the first year in which they appear in any reservation.",
+        "description": "Returns full statistics for a given year, including visit counts, nights, occupancy percentages (days/weeks/months), guest overview, EV statistics (distance, energy consumption, regeneration), driving time stats (avg/min/max to and from cabin), typical departure and arrival times, and a monthly breakdown for all 12 months.\n\nA guest is counted as **new** in a given year if that year is the first year in which they arrive, with the guest's own arrival date.\n\n**Basis:** the guest lists count with the guest's own stay (own dates, or the reservation period when the guest has none). Visit counts, nights, occupancy, group size and driving use the reservation.",
         "parameters": [
           {
             "name": "year",
@@ -1425,7 +1425,7 @@
           "Stats"
         ],
         "summary": "Statistics for all guests",
-        "description": "Returns statistics for all guests across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Suitable for a hall-of-fame view or demographic overview.",
+        "description": "Returns statistics for all guests across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Visits and days count with the guest's own stay (own dates, or the reservation period when the guest has none). Suitable for a hall-of-fame view or demographic overview.",
         "responses": {
           "default": {
             "description": "Unexpected server error."
@@ -2150,7 +2150,7 @@
       "GuestPeriodStats": {
         "type": "object",
         "title": "GuestPeriodStats",
-        "description": "Guest statistics for one period (the current year or all years), counting only started reservations up to today.",
+        "description": "Guest statistics for one period (the current year or all years), counted with the guest's own stays that have started, up to today (falls back to the reservation period when the guest has no own dates).",
         "required": [
           "totalVisits",
           "totalDays",
@@ -2159,17 +2159,17 @@
         "properties": {
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations the guest was part of that started in the period (arrival date).",
+            "description": "Number of stays of the guest that arrived in the period (guest's own arrival date).",
             "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Number of days the guest was present at the cabin in the period, up to and including today.",
+            "description": "Number of days of the guest's own stay within the period, up to and including today.",
             "example": 14
           },
           "totalNights": {
             "type": "integer",
-            "description": "Number of nights of the reservations the guest was part of that started in the period (full stay, also for an ongoing stay). Same counting as totalVisits.",
+            "description": "Number of nights of the guest's own stays that arrived in the period (the whole stay, also for an ongoing stay). Same counting as totalVisits.",
             "example": 10
           },
           "visitsRank": {
@@ -2209,7 +2209,7 @@
       "GuestStats": {
         "type": "object",
         "title": "GuestStats",
-        "description": "Statistics for one guest as of today, counting only reservations that have started. Used for the guests of the current and next reservation in the live stats and for the guest profile.",
+        "description": "Statistics for one guest as of today, counted with the guest's own stays (a guest's own dates, or the reservation period when the guest has no own dates) that have started. Used for the guests of the current and next reservation in the live stats and for the guest profile.",
         "required": [
           "guestId",
           "firstName",
@@ -2257,7 +2257,7 @@
           },
           "isFirstVisit": {
             "type": "boolean",
-            "description": "True if the guest has no reservations that started before this reservation. In a guest profile this is true only when the guest is at the cabin right now and the ongoing visit is the first one.",
+            "description": "True if the guest has no stay that started before this one (guest's own arrival date). In a guest profile this is true only when the guest is at the cabin right now and the ongoing visit is the first one.",
             "example": false
           },
           "firstVisitDate": {
@@ -2265,7 +2265,7 @@
               "string",
               "null"
             ],
-            "description": "Start date of the guest's first started reservation. Null if the guest has no started reservations.",
+            "description": "Own arrival date of the guest's first started stay. Null if the guest has no started stays.",
             "example": "2019-02-16",
             "format": "date"
           },
@@ -2274,13 +2274,13 @@
               "string",
               "null"
             ],
-            "description": "End date of the guest's last completed visit before this reservation. Null if there is no completed visit. In a guest profile: the last visit before the current one if the guest is at the cabin right now, otherwise the last completed visit.",
+            "description": "Own departure date of the guest's last completed stay before this one. Null if there is no completed stay. In a guest profile: the last visit before the current one if the guest is at the cabin right now, otherwise the last completed visit.",
             "example": "2026-04-05",
             "format": "date"
           },
           "yearsVisited": {
             "type": "array",
-            "description": "Years in which the guest has started reservations, in descending order.",
+            "description": "Years in which the guest has arrived (own arrival date), in descending order.",
             "example": [
               2026,
               2025,
@@ -2536,29 +2536,29 @@
         "properties": {
           "startDate": {
             "type": "string",
-            "description": "First day of the visit (check-in date, inclusive).",
+            "description": "First day of the guest's own stay (inclusive): the guest's own arrival date, or the check-in date of the reservation when the guest has no own dates.",
             "example": "2026-07-10",
             "format": "date"
           },
           "endDate": {
             "type": "string",
-            "description": "Last day of the visit (check-out date). Same semantics as the end date of a reservation.",
+            "description": "Last day of the guest's own stay: the guest's own departure date, or the check-out date of the reservation when the guest has no own dates. Same semantics as the end date of a reservation.",
             "example": "2026-07-12",
             "format": "date"
           },
           "days": {
             "type": "integer",
-            "description": "Number of calendar days of the whole visit, including arrival and departure day.",
+            "description": "Number of calendar days of the guest's own stay, including arrival and departure day.",
             "example": 3
           },
           "nights": {
             "type": "integer",
-            "description": "Number of nights of the whole visit.",
+            "description": "Number of nights of the guest's own stay.",
             "example": 2
           },
           "status": {
             "type": "string",
-            "description": "Where the visit stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the visit has not started yet).",
+            "description": "Where the guest's own stay stands today: COMPLETED (the guest has left), ONGOING (the guest is at the cabin) or UPCOMING (the guest has not arrived yet, also when the reservation has started).",
             "example": "ONGOING",
             "enum": [
               "COMPLETED",
@@ -2690,7 +2690,7 @@
               "number",
               "null"
             ],
-            "description": "Average number of guests per reservation this year. Null if there are no reservations.",
+            "description": "Average number of guests per reservation this year (reservation period: every linked guest counts, whatever their own stay). Null if there are no reservations.",
             "example": 4.2
           },
           "monthMostVisits": {
@@ -2897,12 +2897,12 @@
           },
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations the guest was part of that started in the year (arrival date).",
+            "description": "Number of stays of the guest that arrived in the year (guest's own arrival date; the reservation start when the guest has no own dates).",
             "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Total number of days the guest was present at the cabin in the year.",
+            "description": "Total number of days of the guest's own stay within the year (falls back to the reservation period when the guest has no own dates).",
             "example": 14
           }
         }
@@ -2910,7 +2910,7 @@
       "GuestVisitStats": {
         "type": "object",
         "title": "GuestVisitStats",
-        "description": "A guest's visits and days at the cabin within a period (year or month).",
+        "description": "A guest's visits and days at the cabin within a period (year or month), counted with the guest's own stay (falls back to the reservation period when the guest has no own dates).",
         "required": [
           "guestId",
           "firstName",
@@ -2942,12 +2942,12 @@
           },
           "totalVisits": {
             "type": "integer",
-            "description": "Number of reservations the guest was part of that started in the period (arrival date).",
+            "description": "Number of stays of the guest that arrived in the period (guest's own arrival date; the reservation start when the guest has no own dates).",
             "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Total number of days the guest was present at the cabin in the period, counting only days that fall within the period boundary.",
+            "description": "Total number of days of the guest's own stay within the period, counting only days that fall within the period boundary (falls back to the reservation period when the guest has no own dates).",
             "example": 14
           }
         }
@@ -3864,7 +3864,7 @@
           },
           "guests": {
             "type": "array",
-            "description": "All guests present in this month, sorted by total days descending. Visits count reservations that started in this month, days count days within this month.",
+            "description": "All guests present in this month, sorted by total days descending. Basis: the guest's own stay (falls back to the reservation period when the guest has no own dates). Visits count stays that arrive in this month (guest's own arrival date), days count the guest's own days within this month.",
             "items": {
               "$ref": "#/components/schemas/GuestVisitStats"
             }
@@ -3916,14 +3916,14 @@
           },
           "newGuests": {
             "type": "array",
-            "description": "Guests who appear in this year's reservations but did not appear in any reservation in the previous year. Sorted by total days descending.",
+            "description": "Guests who arrive in this year (guest's own arrival date) and had no stay that arrived in the previous year. Sorted by total days descending.",
             "items": {
               "$ref": "#/components/schemas/GuestVisitStats"
             }
           },
           "guests": {
             "type": "array",
-            "description": "All guests present in this year, sorted by total days descending. Visits count reservations that started in this year, days count days within this year.",
+            "description": "All guests present in this year, sorted by total days descending. Basis: the guest's own stay (falls back to the reservation period when the guest has no own dates). Visits count stays that arrive in this year (guest's own arrival date), days count the guest's own days within this year.",
             "items": {
               "$ref": "#/components/schemas/GuestVisitStats"
             }
@@ -3977,12 +3977,12 @@
           },
           "totalVisits": {
             "type": "integer",
-            "description": "Total number of reservations the guest was part of across all years.",
+            "description": "Total number of stays of the guest across all years (guest's own stay; one per reservation).",
             "example": 5
           },
           "totalDays": {
             "type": "integer",
-            "description": "Total number of days the guest was present at the cabin across all years.",
+            "description": "Total number of days of the guest's own stay across all years (falls back to the reservation period when the guest has no own dates).",
             "example": 14
           }
         }
@@ -4058,14 +4058,14 @@
         "properties": {
           "topGuestsByVisits": {
             "type": "array",
-            "description": "Top 10 guests ranked by total number of reservation visits across all years.",
+            "description": "Top 10 guests ranked by total number of visits across all years. A visit is a stay of the guest, counted with the guest's own stay (falls back to the reservation period when the guest has no own dates).",
             "items": {
               "$ref": "#/components/schemas/GuestRanking"
             }
           },
           "topGuestsByDays": {
             "type": "array",
-            "description": "Top 10 guests ranked by total number of days spent at the cabin across all years.",
+            "description": "Top 10 guests ranked by total number of days spent at the cabin across all years, counted with the guest's own stay (falls back to the reservation period when the guest has no own dates).",
             "items": {
               "$ref": "#/components/schemas/GuestRanking"
             }

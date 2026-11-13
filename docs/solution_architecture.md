@@ -400,3 +400,27 @@ choose the most accurate and relevant timestamp:
 
 This logic ensures that the system always records the check-out time using the **best available evidence**, giving
 priority to real-world events and falling back on the original reservation details when necessary.
+
+## Reservation period vs guest stay
+
+A guest can stay only part of a reservation (`reservation_guest.from_date` / `to_date`, null = follows the
+reservation). The statistics therefore use two bases:
+
+- **Reservation period:** `Reservation.startDate`..`endDate` (UTC dates, both inclusive). About the cabin.
+- **Guest stay:** `GuestStay` (`Reservation.stays`): the guest's own dates, each end falling back to the reservation's.
+  About the guest. A guest's visit counts in the period of the guest's **own arrival date**.
+
+| Statistic | Basis |
+|---|---|
+| Guest lists in `/api/stats/years/{year}` and `/months/{month}` (`guests`, `newGuests`, `topGuestByDays`): visits, days | Guest stay |
+| `/api/stats/guests`: `totalVisits`, `totalDays` | Guest stay |
+| `/api/stats/guests/{guestId}`: `visits` (dates, days, nights, status), `GuestStats` (visits, days, nights, ranks, first/last visit, years visited), fun facts about the guest | Guest stay |
+| Live stats: `GuestStats` of the guests of the current and next reservation (visits, days, nights, ranks, first visit) | Guest stay |
+| Live stats: which guests are listed (every linked guest), current/next reservation, remaining and upcoming nights | Reservation period |
+| Cabin occupancy, occupied days/nights, visits and nights per reservation, monthly/yearly totals | Reservation period |
+| `avgGroupSize` (head count of linked guests), unique guests, companions ("together with") | Reservation period |
+| Check-in/out, vehicle trips and driving statistics | Reservation period |
+
+A visit is **ongoing** for a guest between the guest's own arrival and departure, so a guest who arrives later in a
+started reservation has an upcoming visit until their own arrival date.
+

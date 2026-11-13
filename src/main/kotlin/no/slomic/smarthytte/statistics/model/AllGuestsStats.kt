@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength")
+
 package no.slomic.smarthytte.statistics.model
 
 import io.ktor.openapi.JsonSchema
@@ -5,9 +7,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AllGuestsStats(
-    @JsonSchema.Description("Top 10 guests ranked by total number of reservation visits across all years.")
+    @JsonSchema.Description(
+        "Top 10 guests ranked by total number of visits across all years. A visit is a stay of the guest, counted with the guest's own stay (falls back to the reservation period when the guest has no own dates).",
+    )
     val topGuestsByVisits: List<GuestRanking>,
-    @JsonSchema.Description("Top 10 guests ranked by total number of days spent at the cabin across all years.")
+    @JsonSchema.Description(
+        "Top 10 guests ranked by total number of days spent at the cabin across all years, counted with the guest's own stay (falls back to the reservation period when the guest has no own dates).",
+    )
     val topGuestsByDays: List<GuestRanking>,
     @JsonSchema.Description("Gender distribution across all registered guests.")
     val genderDistribution: GenderDistribution,
@@ -26,10 +32,14 @@ data class GuestRanking(
     @JsonSchema.Description("Guest's last name.")
     @JsonSchema.Example("\"Nordmann\"")
     val lastName: String,
-    @JsonSchema.Description("Total number of reservations the guest was part of across all years.")
+    @JsonSchema.Description(
+        "Total number of stays of the guest across all years (guest's own stay; one per reservation).",
+    )
     @JsonSchema.Example("5")
     val totalVisits: Int,
-    @JsonSchema.Description("Total number of days the guest was present at the cabin across all years.")
+    @JsonSchema.Description(
+        "Total number of days of the guest's own stay across all years (falls back to the reservation period when the guest has no own dates).",
+    )
     @JsonSchema.Example("14")
     val totalDays: Int,
 )

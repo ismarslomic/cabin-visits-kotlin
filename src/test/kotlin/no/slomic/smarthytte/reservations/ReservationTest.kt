@@ -46,46 +46,73 @@ class ReservationTest :
             fromCabinVehicleTrips = fromCabinTrips,
         )
 
-        context("guest stay") {
+        context("stays") {
             // baseReservation: 2024-06-01 to 2024-06-05 (UTC dates), 4 nights, 5 days
-            val reservation = baseReservation()
+            fun stayOf(guest: ReservationGuest) = baseReservation().copy(guests = listOf(guest)).stays.single()
 
             should("follow the reservation for a guest without own dates") {
-                val guest = ReservationGuest("g1")
+                val stay = stayOf(ReservationGuest("g1"))
 
-                reservation.guestStartDate(guest) shouldBe LocalDate(2024, 6, 1)
-                reservation.guestEndDate(guest) shouldBe LocalDate(2024, 6, 5)
-                reservation.guestNights(guest) shouldBe reservation.durationNights
-                reservation.guestDays(guest) shouldBe reservation.durationDays
+                stay shouldBe GuestStay("g1", "r1", LocalDate(2024, 6, 1), LocalDate(2024, 6, 5))
+                stay.nights shouldBe baseReservation().durationNights
+                stay.days shouldBe baseReservation().durationDays
             }
 
             should("use the own dates, each end independently") {
-                val late = ReservationGuest("g1", fromDate = LocalDate(2024, 6, 3))
-                val early = ReservationGuest("g2", toDate = LocalDate(2024, 6, 2))
-                val middle = ReservationGuest("g3", LocalDate(2024, 6, 2), LocalDate(2024, 6, 4))
+                val late = stayOf(ReservationGuest("g1", fromDate = LocalDate(2024, 6, 3)))
+                val early = stayOf(ReservationGuest("g2", toDate = LocalDate(2024, 6, 2)))
+                val middle = stayOf(ReservationGuest("g3", LocalDate(2024, 6, 2), LocalDate(2024, 6, 4)))
 
-                reservation.guestNights(late) shouldBe 2
-                reservation.guestDays(late) shouldBe 3
-                reservation.guestNights(early) shouldBe 1
-                reservation.guestDays(early) shouldBe 2
-                reservation.guestStartDate(middle) shouldBe LocalDate(2024, 6, 2)
-                reservation.guestEndDate(middle) shouldBe LocalDate(2024, 6, 4)
-                reservation.guestDays(middle) shouldBe 3
+                late.startDate shouldBe LocalDate(2024, 6, 3)
+                late.endDate shouldBe LocalDate(2024, 6, 5)
+                late.nights shouldBe 2
+                late.days shouldBe 3
+                early.startDate shouldBe LocalDate(2024, 6, 1)
+                early.endDate shouldBe LocalDate(2024, 6, 2)
+                early.nights shouldBe 1
+                early.days shouldBe 2
+                middle.nights shouldBe 2
+                middle.days shouldBe 3
             }
 
             should("count a single-day stay as 0 nights and 1 day") {
-                val day = ReservationGuest("g1", LocalDate(2024, 6, 3), LocalDate(2024, 6, 3))
+                val day = stayOf(ReservationGuest("g1", LocalDate(2024, 6, 3), LocalDate(2024, 6, 3)))
 
-                reservation.guestNights(day) shouldBe 0
-                reservation.guestDays(day) shouldBe 1
+                day.nights shouldBe 0
+                day.days shouldBe 1
             }
 
-            should("list the guest ids whatever the stays") {
-                val withStays = reservation.copy(
+            should("have one stay per guest, in the order of the guests, and list the guest ids") {
+                val withStays = baseReservation().copy(
                     guests = listOf(ReservationGuest("g1"), ReservationGuest("g2", fromDate = LocalDate(2024, 6, 3))),
                 )
 
                 withStays.guestIds shouldBe listOf("g1", "g2")
+                withStays.stays.map { it.guestId to it.startDate } shouldBe
+                    listOf("g1" to LocalDate(2024, 6, 1), "g2" to LocalDate(2024, 6, 3))
+            }
+
+            should("count the days of a stay inside a period, and its status on a day") {
+                val stay = stayOf(ReservationGuest("g1", LocalDate(2024, 6, 3), LocalDate(2024, 6, 4)))
+
+                stay.daysInPeriod(LocalDate(2024, 6, 1), LocalDate(2024, 6, 4)) shouldBe 1
+                stay.daysInPeriod(LocalDate(2024, 6, 4), LocalDate(2024, 7, 1)) shouldBe 1
+                stay.daysInPeriod(LocalDate(2024, 6, 5), LocalDate(2024, 7, 1)) shouldBe 0
+                stay.visitStatus(LocalDate(2024, 6, 2)) shouldBe VisitStatus.UPCOMING
+                stay.visitStatus(LocalDate(2024, 6, 3)) shouldBe VisitStatus.ONGOING
+                stay.visitStatus(LocalDate(2024, 6, 4)) shouldBe VisitStatus.COMPLETED
+            }
+
+            should("sum visits, nights and days per guest over the stays") {
+                val stays = listOf(
+                    GuestStay("g1", "r1", LocalDate(2024, 6, 1), LocalDate(2024, 6, 3)),
+                    GuestStay("g1", "r2", LocalDate(2024, 6, 10), LocalDate(2024, 6, 10)),
+                    GuestStay("g2", "r1", LocalDate(2024, 6, 2), LocalDate(2024, 6, 3)),
+                )
+
+                stays.visitsByGuest() shouldBe mapOf("g1" to 2, "g2" to 1)
+                stays.nightsByGuest() shouldBe mapOf("g1" to 2, "g2" to 1)
+                stays.daysByGuest(LocalDate(2024, 6, 2), LocalDate(2024, 6, 11)) shouldBe mapOf("g1" to 3, "g2" to 2)
             }
         }
 
