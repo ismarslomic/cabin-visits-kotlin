@@ -52,8 +52,11 @@ data class CurrentReservationInfo(
     )
     @JsonSchema.Example("\"2026-07-12\"")
     val endDate: LocalDate,
-    @JsonSchema.Description("Statistics for each guest in the current reservation, ordered by current year days rank.")
-    val guests: List<GuestStats>,
+    @JsonSchema.Description(
+        "Every linked guest of the current reservation, ordered by current year days rank, with the dates of the " +
+            "guest's own stay. A guest who has not arrived yet or has left is listed too, see stayStartDate and stayEndDate.",
+    )
+    val guests: List<LiveGuestStats>,
     @JsonSchema.Description(
         "Number of nights remaining in the current reservation, from today until check-out. 0 on the check-out day.",
     )
@@ -79,8 +82,11 @@ data class NextReservationInfo(
     @JsonSchema.Description("Last day of the next reservation (check-out date, exclusive).")
     @JsonSchema.Example("\"2026-07-12\"")
     val endDate: LocalDate,
-    @JsonSchema.Description("Statistics for each guest in the next reservation, ordered by current year days rank.")
-    val guests: List<GuestStats>,
+    @JsonSchema.Description(
+        "Every linked guest of the next reservation, ordered by current year days rank, with the dates of the " +
+            "guest's own stay. A guest who arrives after the reservation starts is listed too, see stayStartDate.",
+    )
+    val guests: List<LiveGuestStats>,
     @JsonSchema.Description("Number of days from today until the next reservation starts.")
     @JsonSchema.Example("12")
     val daysUntil: Int,

@@ -284,7 +284,8 @@ for a stay that is still ongoing).
 **Reservation period or guest stay**  
 Only the numbers per guest use the guest stay. Everything about the cabin uses the reservation: occupancy, visits and
 nights per reservation, longest and average stay, average group size, unique guests, who is listed in the live
-statistics (every guest of the current and next reservation), check-in/out and driving. The full table is in
+statistics (every guest of the current and next reservation, each with `stayStartDate` and `stayEndDate`, so a guest
+who has not arrived yet or has left can be told apart), check-in/out and driving. The full table is in
 [docs/solution_architecture.md](docs/solution_architecture.md#reservation-period-vs-guest-stay).
 
 **Ranks**  

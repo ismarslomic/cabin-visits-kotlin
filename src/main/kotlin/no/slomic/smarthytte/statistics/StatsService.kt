@@ -57,6 +57,7 @@ import no.slomic.smarthytte.statistics.model.GuestProfileStats
 import no.slomic.smarthytte.statistics.model.GuestRanking
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.GuestVisitStats
+import no.slomic.smarthytte.statistics.model.LiveGuestStats
 import no.slomic.smarthytte.statistics.model.LiveStats
 import no.slomic.smarthytte.statistics.model.MonthStats
 import no.slomic.smarthytte.statistics.model.MonthVisitsStats
@@ -66,6 +67,7 @@ import no.slomic.smarthytte.statistics.model.OccupancyStats
 import no.slomic.smarthytte.statistics.model.YearEvStats
 import no.slomic.smarthytte.statistics.model.YearStats
 import no.slomic.smarthytte.statistics.model.YearVisitsStats
+import no.slomic.smarthytte.statistics.model.toLive
 import no.slomic.smarthytte.statistics.model.toTopGuestByDays
 
 private val BY_START_DATE_THEN_ID = compareBy<Reservation> { it.startDate }.thenBy { it.id }
@@ -105,17 +107,11 @@ class StatsService(
 
         val orderById = reservationOrderById(allReservations)
 
-        val currentInfo =
-            current?.let { r ->
-                val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
-                currentReservationInfo(r, guests, today, orderById.getValue(r.id), orderInYear(r, allReservations))
-            }
+        fun guestsOf(r: Reservation) = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
 
-        val nextInfo =
-            next?.let { r ->
-                val guests = calculateGuestStats(r, today, allReservations, guestsById, avatarUrlsByGuestId)
-                nextReservationInfo(r, guests, today, orderById.getValue(r.id), orderInYear(r, allReservations))
-            }
+        val currentGuests = current?.let(::guestsOf).orEmpty()
+        val currentInfo = current?.let { currentReservationInfo(it, currentGuests, today, orderById, allReservations) }
+        val nextInfo = next?.let { nextReservationInfo(it, guestsOf(it), today, orderById, allReservations) }
 
         // All-time totals only count reservations that have started, i.e. future bookings are excluded
         val startedReservations = allReservations.filter { it.hasStarted }
@@ -131,7 +127,7 @@ class StatsService(
                     today,
                     dataStartDate,
                 )
-            calculateGuestFunFacts(info.guests, context)
+            calculateGuestFunFacts(currentGuests, context)
         }.orEmpty()
 
         val cabinContext = CabinFunFactContext(
@@ -448,12 +444,38 @@ private fun currentReservationInfo(
     r: Reservation,
     guests: List<GuestStats>,
     today: LocalDate,
-    order: Int,
-    inYear: Int,
-) = CurrentReservationInfo(r.startDate, r.endDate, guests, today.daysUntilSafe(r.endDate), order, inYear)
+    orderById: Map<String, Int>,
+    allReservations: List<Reservation>,
+) = CurrentReservationInfo(
+    r.startDate,
+    r.endDate,
+    r.live(guests),
+    today.daysUntilSafe(r.endDate),
+    orderById.getValue(r.id),
+    orderInYear(r, allReservations),
+)
 
-private fun nextReservationInfo(r: Reservation, guests: List<GuestStats>, today: LocalDate, order: Int, inYear: Int) =
-    NextReservationInfo(r.startDate, r.endDate, guests, today.daysUntilSafe(r.startDate), order, inYear)
+private fun nextReservationInfo(
+    r: Reservation,
+    guests: List<GuestStats>,
+    today: LocalDate,
+    orderById: Map<String, Int>,
+    allReservations: List<Reservation>,
+) = NextReservationInfo(
+    r.startDate,
+    r.endDate,
+    r.live(guests),
+    today.daysUntilSafe(r.startDate),
+    orderById.getValue(r.id),
+    orderInYear(r, allReservations),
+)
+
+/** The guests with the dates of their own stay in this reservation. */
+private fun Reservation.live(guests: List<GuestStats>): List<LiveGuestStats> {
+    val staysByGuest = stays.associateBy { it.guestId }
+
+    return guests.map { it.toLive(staysByGuest.getValue(it.guestId)) }
+}
 
 /**
  * Order number (from 1) of [reservation] among the started reservations with the same start year, sorted ascending on

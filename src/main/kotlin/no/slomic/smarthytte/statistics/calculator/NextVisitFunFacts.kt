@@ -3,6 +3,7 @@ package no.slomic.smarthytte.statistics.calculator
 import no.slomic.smarthytte.statistics.model.FunFact
 import no.slomic.smarthytte.statistics.model.GuestStats
 import no.slomic.smarthytte.statistics.model.NextReservationInfo
+import no.slomic.smarthytte.statistics.model.toGuestStats
 
 // Arrival soon (today, tomorrow, the day after) and countdown for later arrivals
 private const val ARRIVAL_SOON_MAX_DAYS = 2
@@ -11,10 +12,17 @@ private const val ARRIVAL_SOON_MAX_DAYS = 2
  * Fun facts about the next reservation, sorted by priority (highest first). [isOccupied] tells whether a stay is
  * in progress, in which case a countdown to the next visit is relevant.
  */
-fun calculateNextVisitFunFacts(next: NextReservationInfo, isOccupied: Boolean): List<FunFact> = (
-    listOfNotNull(arrivalSoon(next.daysUntil), countdownToNextVisit(next.daysUntil, isOccupied)) +
-        next.guests.flatMap { listOfNotNull(nextFirstTimer(it), nextVisitMilestone(it)) }
-    ).sortedByDescending { it.priority }
+fun calculateNextVisitFunFacts(next: NextReservationInfo, isOccupied: Boolean): List<FunFact> {
+    val visitFacts = listOfNotNull(
+        arrivalSoon(next.daysUntil),
+        countdownToNextVisit(next.daysUntil, isOccupied),
+    )
+    val guestFacts = next.guests
+        .map { it.toGuestStats() }
+        .flatMap { guest -> listOfNotNull(nextFirstTimer(guest), nextVisitMilestone(guest)) }
+
+    return (visitFacts + guestFacts).sortedByDescending { it.priority }
+}
 
 private fun arrivalSoon(daysUntil: Int): FunFact? {
     val day = when (daysUntil) {
