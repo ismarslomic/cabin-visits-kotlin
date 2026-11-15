@@ -24,21 +24,6 @@ class HttpClientProviderTest :
             }
         }
 
-        should("handle cookies with AcceptAllCookiesStorage") {
-            run {
-                val client = HttpClientProvider.client
-
-                // Step 1: Hit the endpoint that sets a cookie using response-headers (no redirect involved)
-                val setCookieResponse: HttpResponse =
-                    client.get("https://httpbingo.org/response-headers?Set-Cookie=testCookie=foobar")
-                setCookieResponse.status shouldBe HttpStatusCode.OK
-
-                // Step 2: Call /cookies to verify the cookie is sent back and echoed in the response
-                val verifyResponse: HttpResponse = client.get("https://httpbingo.org/cookies")
-                verifyResponse.status shouldBe HttpStatusCode.OK
-            }
-        }
-
         should("ignore unknown JSON keys in responses") {
             run {
                 val client = HttpClientProvider.client

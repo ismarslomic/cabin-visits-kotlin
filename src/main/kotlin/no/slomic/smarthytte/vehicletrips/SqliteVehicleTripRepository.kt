@@ -8,8 +8,12 @@ import no.slomic.smarthytte.common.markUpdated
 import no.slomic.smarthytte.common.suspendReadTransaction
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
-import kotlin.time.Clock
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.lessEq
+import kotlin.time.Instant
 
 class SqliteVehicleTripRepository : VehicleTripRepository {
     private val logger: Logger = KtorSimpleLogger(SqliteVehicleTripRepository::class.java.name)
@@ -17,6 +21,64 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
     override suspend fun allVehicleTrips(): List<VehicleTrip> = suspendReadTransaction {
         VehicleTripEntity.all().sortedBy { it.startTime }.map(::daoToModel)
     }
+
+    override suspend fun findByEndTimeBetween(from: Instant, to: Instant): List<VehicleTrip> = suspendReadTransaction {
+        VehicleTripEntity
+            .find { (VehicleTripTable.endTime greaterEq from) and (VehicleTripTable.endTime lessEq to) }
+            .sortedBy { it.endTime }
+            .map(::daoToModel)
+    }
+
+    override suspend fun findByDataQuality(quality: DataQuality): List<VehicleTrip> = suspendReadTransaction {
+        VehicleTripEntity.find { VehicleTripTable.dataQuality eq quality }.sortedBy { it.startTime }.map(::daoToModel)
+    }
+
+    override suspend fun setJlrData(
+        id: String,
+        jlrJourneyId: String,
+        startPoint: GeoPoint,
+        endPoint: GeoPoint,
+        actor: String,
+    ): PersistenceResult = suspendTransaction {
+        val trip = VehicleTripEntity.findById(id)
+        if (trip == null) {
+            PersistenceResult.NO_ACTION
+        } else {
+            trip.jlrJourneyId = jlrJourneyId
+            trip.startLatitude = startPoint.latitude
+            trip.startLongitude = startPoint.longitude
+            trip.endLatitude = endPoint.latitude
+            trip.endLongitude = endPoint.longitude
+            markChanged(trip, actor)
+        }
+    }
+
+    override suspend fun updatePlaces(
+        id: String,
+        places: TripPlaces,
+        quality: DataQuality,
+        actor: String,
+    ): PersistenceResult = suspendTransaction {
+        val trip = VehicleTripEntity.findById(id)
+        if (trip == null) {
+            PersistenceResult.NO_ACTION
+        } else {
+            trip.startCity = places.startCity
+            trip.startAddress = places.startAddress
+            trip.endCity = places.endCity
+            trip.endAddress = places.endAddress
+            trip.dataQuality = quality
+            markChanged(trip, actor)
+        }
+    }
+
+    private fun markChanged(trip: VehicleTripEntity, actor: String): PersistenceResult =
+        if (trip.writeValues.isNotEmpty()) {
+            trip.markUpdated(actor)
+            PersistenceResult.UPDATED
+        } else {
+            PersistenceResult.NO_ACTION
+        }
 
     override suspend fun addOrUpdate(vehicleTrip: VehicleTrip, actor: String): PersistenceResult = suspendTransaction {
         val entityId: EntityID<String> = EntityID(vehicleTrip.id, VehicleTripTable)
@@ -52,6 +114,12 @@ class SqliteVehicleTripRepository : VehicleTripRepository {
             startCity = vehicleTrip.startCity
             startTime = vehicleTrip.startTime.truncatedToMillis()
             totalDistance = vehicleTrip.totalDistance
+            dataQuality = vehicleTrip.dataQuality
+            jlrJourneyId = vehicleTrip.jlrJourneyId
+            startLatitude = vehicleTrip.startPoint?.latitude
+            startLongitude = vehicleTrip.startPoint?.longitude
+            endLatitude = vehicleTrip.endPoint?.latitude
+            endLongitude = vehicleTrip.endPoint?.longitude
         }
 
         logger.trace("Added vehicle trip with id: ${vehicleTrip.id}")

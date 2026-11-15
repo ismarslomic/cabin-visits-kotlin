@@ -1,0 +1,651 @@
+{
+  "info": {
+    "name": "Cabin Visits API",
+    "description": "# Cabin Visits API\n\nREST API for cabin visit statistics. Generated from `openapi/cabin-visits.json` by `postman/cabin-visits/generate.py`.\n\n## Setup\n\n1. Import this collection and the environments `local.postman_environment.json` and `rpi.postman_environment.json`.\n2. Select the environment (top right): **Local** or **RPi**. Edit `baseUrl` if needed (RPi: the host or Cloudflare hostname).\n3. Paste a token into the **`authToken`** variable (Environments -> your environment -> `authToken`, **Current value**). It is a secret and stays local to your Postman.\n\nEvery request sends the header named by `authHeader` with the value of `authToken` (collection-level auth).\n\n## Getting a valid JWT (Cloudflare Access)\n\nThe app only accepts a JWT signed by Cloudflare Access (checked: signature, issuer, audience, expiry), and the `email` claim must match a guest with a role. Use `authHeader` = `Cf-Access-Jwt-Assertion` (default).\n\n**Option A - cloudflared (recommended)**\n\n    cloudflared access login https://<your-app-hostname>\n    cloudflared access token -app=https://<your-app-hostname>\n\nPaste the printed token into `authToken`.\n\n**Option B - browser**\n\n1. Open `https://<your-app-hostname>` and log in through Cloudflare Access.\n2. DevTools -> Application -> Cookies -> copy the value of the cookie `CF_Authorization` (it is the same JWT).\n3. Paste it into `authToken`.\n\nThe token expires (Cloudflare session duration, often 24 h). On `401`, get a new one.\n\n**Local app:** it needs `CLOUDFLARE_ACCESS_TEAM_DOMAIN` and `CLOUDFLARE_ACCESS_AUD` set to the same values as production. A token from the production Access application is then valid locally too. Without them, protected endpoints answer `503`.\n\n## Service API key (MagicMirror style)\n\nSet `authHeader` = `X-Api-Key` and `authToken` = the plain key (the app holds its SHA-256 in `API_KEYS`). Only routes that allow services accept it; others answer `403`. See `docs/authentication.md`.\n\n## Notes\n\n- `PUT` and `DELETE` need the current `version` from a previous `GET`.\n- The avatar `PUT` routes take a raw `image/jpeg` (Body -> binary).\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "{{authHeader}}",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{authToken}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8079"
+    },
+    {
+      "key": "authHeader",
+      "value": "Cf-Access-Jwt-Assertion"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "description": "JWT (Cf-Access-Jwt-Assertion) or API key (X-Api-Key). See the collection description."
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "PUT /api/me – Update the authenticated user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "A full replace of the profile of the authenticated user's own guest. Every role sends firstName, lastName, birthYear and gender, all required, together with the version the client read (from GET /api/me). Other properties, such as email, isFamily and role, cannot be changed here and are ignored. Errors are JSON with a code and a message.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": 3,\n  \"firstName\": \"Ola\",\n  \"lastName\": \"Nordmann\",\n  \"birthYear\": 1985,\n  \"gender\": \"MALE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/me – Authenticated user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Returns the user that Cloudflare Access authenticated (the Cf-Access-Jwt-Assertion header, verified against Cloudflare's signing keys) together with the profile and the application role stored for that person."
+          }
+        },
+        {
+          "name": "PUT /api/me/avatar – Upload the avatar of the authenticated user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "image/jpeg"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/me/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me",
+                "avatar"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Every role. Creates or replaces the avatar of the authenticated user's own guest. The body is the raw JPEG (Content-Type image/jpeg, at most 4 MB, at most 4000 x 4000 pixels). The server removes all metadata (Exif including GPS and orientation, XMP, comments, thumbnails) without re-encoding, so the client must upload upright pixels: draw the image to a canvas, which applies the orientation. Last write wins: no version is sent, and the same image changes nothing. A changed image gives the guest a new avatarUrl (the v parameter). The guest's own version is not changed. Errors are JSON with a code and a message.",
+            "body": {
+              "mode": "file",
+              "file": {}
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Guests",
+      "item": [
+        {
+          "name": "PUT /api/guests/{guestId}/avatar – Upload the avatar of a guest",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "image/jpeg"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/guests/:guestId/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "guests",
+                ":guestId",
+                "avatar"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "guestId",
+                  "value": "ola.nordmann",
+                  "description": "Internal unique identifier of the guest."
+                }
+              ]
+            },
+            "description": "Admin only. Creates or replaces the avatar of any guest. The body is the raw JPEG (Content-Type image/jpeg, at most 4 MB, at most 4000 x 4000 pixels). The server removes all metadata (Exif including GPS and orientation, XMP, comments, thumbnails) without re-encoding, so the client must upload upright pixels: draw the image to a canvas, which applies the orientation. Last write wins: no version is sent, and the same image changes nothing. A changed image gives the guest a new avatarUrl (the v parameter). The guest's own version is not changed. Errors are JSON with a code and a message.",
+            "body": {
+              "mode": "file",
+              "file": {}
+            }
+          }
+        },
+        {
+          "name": "GET /api/guests/{guestId}/avatar – Guest avatar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/guests/:guestId/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "guests",
+                ":guestId",
+                "avatar"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "guestId",
+                  "value": "ola.nordmann",
+                  "description": "Internal unique identifier of the guest."
+                }
+              ]
+            },
+            "description": "Returns the guest's avatar as a JPEG image. The response has an ETag and Cache-Control header, and a conditional request with If-None-Match returns 304. Use the avatarUrl from the live stats response, which changes when the image does."
+          }
+        },
+        {
+          "name": "POST /api/guests – Create a guest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/guests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "guests"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Admin only. Required: firstName, lastName (1-20 characters), birthYear and gender. Optional: email, role (no role means no access) and isFamily (default false). The id is generated from the name, such as ola.nordmann or ola.nordmann-2. A guest with a role but no email cannot log in, and a guest that has to log in also needs an entry in the Cloudflare Access policy. Errors are JSON with a code and a message.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ola\",\n  \"lastName\": \"Nordmann\",\n  \"birthYear\": 1985,\n  \"gender\": \"MALE\",\n  \"email\": \"ola.nordmann@example.com\",\n  \"isFamily\": true,\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/guests – List guests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/guests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "guests"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Admin and family user. All guests with every property, including email, role, version and the audit fields. avatarUrl is null for a guest without an avatar. createdBy and updatedBy are a guest id or the literal system, which is not a guest."
+          }
+        },
+        {
+          "name": "PUT /api/guests/{guestId} – Update a guest",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/guests/:guestId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "guests",
+                ":guestId"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "guestId",
+                  "value": "ola.nordmann",
+                  "description": "Internal unique identifier of the guest."
+                }
+              ]
+            },
+            "description": "Admin only. A full replace: the body must carry the version the client read and every writable property (firstName, lastName, birthYear, gender, email, isFamily, role). A null email or role clears it, and a guest without a role has no access. Other properties in the body are ignored. An admin cannot remove their own admin role or change their own email, and the last admin with an email cannot lose the role or the email. The email is trimmed and stored in lowercase, and a blank email clears it. Errors are JSON with a code and a message.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": 3,\n  \"firstName\": \"Ola\",\n  \"lastName\": \"Nordmann\",\n  \"birthYear\": 1985,\n  \"gender\": \"MALE\",\n  \"email\": \"ola.nordmann@example.com\",\n  \"isFamily\": true,\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "item": [
+        {
+          "name": "POST /api/reservations – Create a reservation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Admin and family user. Errors are JSON with a code and a message. The id is generated by the server (32 hex characters). The stay is at least one instant long, at most 60 nights (UTC dates) and starts at most 2 years ahead, in the past is allowed. It must not overlap another reservation. Needs 1-50 existing guests, each once. A calendar notification is queued; it never makes the request fail. A retried request after a lost response answers 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startTime\": \"2026-07-10T16:00:00Z\",\n  \"endTime\": \"2026-07-12T13:00:00Z\",\n  \"guests\": [\n    {\n      \"guestId\": \"ola.nordmann\",\n      \"fromDate\": \"2026-07-11\",\n      \"toDate\": \"2026-07-12\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/reservations – List reservations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations?from=2026-07-01&to=2026-08-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservations"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-07-01",
+                  "description": "First day of the window (inclusive), a UTC date yyyy-MM-dd. Omit for no lower limit.",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-08-01",
+                  "description": "Day after the last day of the window (exclusive), a UTC date yyyy-MM-dd. Must be after from. Omit for no upper limit.",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "All roles and the service user. Returns every reservation that overlaps the window, i.e. its start date is before to and its end date is on or after from (UTC dates), so a reservation that spans a month boundary appears in both months. Without parameters it returns all reservations. Admin, family user and the service user see every reservation; a guest user only sees the reservations their own guest is part of, whole stay or part of it. Sorted by startTime, then id. Errors are JSON with a code and a message."
+          }
+        },
+        {
+          "name": "PUT /api/reservations/{id} – Update a reservation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservations",
+                ":id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a3f9c2e17b4d4e5f8a1b2c3d4e5f6a7b",
+                  "description": "Unique identifier of the reservation. Old reservations can have an id that starts with an underscore."
+                }
+              ]
+            },
+            "description": "Admin and family user. Errors are JSON with a code and a message. A full replace: the body must carry the version the client read, startTime, endTime and the guests. The checks run in this order: the reservation exists (404), the version (412), the rules of the request (400), overlap (409). The range rules (at most 60 nights, start at most 2 years ahead) apply when the times change. Changing the times clears check-in, check-out and the linked trips in the same transaction and queues a calendar update. They are derived again right after the commit, in the same request; if that fails it is only logged and the next startup or background run recomputes them. A change of guests only, or no change, queues nothing, and no change keeps the version.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": 3,\n  \"startTime\": \"2026-07-10T16:00:00Z\",\n  \"endTime\": \"2026-07-12T13:00:00Z\",\n  \"guests\": [\n    {\n      \"guestId\": \"ola.nordmann\",\n      \"fromDate\": \"2026-07-11\",\n      \"toDate\": \"2026-07-12\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/reservations/{id} – Delete a reservation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/:id?version=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservations",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "version",
+                  "value": "3",
+                  "description": "The version of the reservation that the client read.",
+                  "disabled": false
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a3f9c2e17b4d4e5f8a1b2c3d4e5f6a7b",
+                  "description": "Unique identifier of the reservation. Old reservations can have an id that starts with an underscore."
+                }
+              ]
+            },
+            "description": "Admin and family user. Errors are JSON with a code and a message. Also deletes the guest links, trip links and check-in/out, and queues the removal of the calendar event. Past reservations can be deleted, so statistics change retroactively."
+          }
+        },
+        {
+          "name": "GET /api/reservations/{id} – Get a reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservations",
+                ":id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "a3f9c2e17b4d4e5f8a1b2c3d4e5f6a7b",
+                  "description": "Unique identifier of the reservation. Old reservations can have an id that starts with an underscore."
+                }
+              ]
+            },
+            "description": "All roles and the service user. A guest user only gets a reservation their own guest is part of, for any other reservation the answer is the same as for an unknown id. Errors are JSON with a code and a message."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "GET /api/stats – Live occupancy status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Returns whether the cabin is currently occupied, details about the ongoing and next reservation (dates, guest statistics, remaining/upcoming nights), and all-time totals (visits, nights, unique guests) excluding future bookings. The current and next reservation list every linked guest, whatever their own stay; the numbers per guest count with the guest's own stay and the reservation-level numbers (dates, nights, totals) with the reservation. Suitable for a smart mirror or real-time dashboard."
+          }
+        },
+        {
+          "name": "GET /api/stats/guests/{guestId} – Guest profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/guests/:guestId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "guests",
+                ":guestId"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "guestId",
+                  "value": "ola.nordmann",
+                  "description": "Internal unique identifier of the guest."
+                }
+              ]
+            },
+            "description": "Returns the profile of one guest as of today, suitable for a guest page on a smart mirror:\n\n* **guest**: the guest's statistics, with total visits, days and nights, ranks among all guests and among guests only (family excluded), first and last visit date and an avatar url. If the guest is at the cabin right now, the last visit date is the last visit before the current one.\n* **visits**: all visits of the guest, historical, ongoing and upcoming, oldest first, each with a status (COMPLETED, ONGOING or UPCOMING), days and nights. Suitable for a timeline.\n* **funFacts**: ready-to-display Norwegian fun facts about the guest, sorted by priority (highest first). The list is not capped, so pick the facts to display. A fact is only included when it is true for the guest, so the list can be short or empty for guests with few visits.\n\nAll numbers about the guest count with the guest's own stay (own dates, or the reservation period when the guest has none): a visit is ongoing between the guest's own arrival and departure, also when the reservation started earlier. Driving statistics are not included. Upcoming visits are not counted in totals or facts."
+          }
+        },
+        {
+          "name": "GET /api/stats/current-year – Current year summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/current-year",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "current-year"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Returns a quick summary for the current calendar year: number of visits, total nights, and total driving distance to/from the cabin. Suitable for a summary card or widget."
+          }
+        },
+        {
+          "name": "GET /api/stats/years – Available years",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/years",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "years"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Returns a sorted list of years for which reservations exist. Use this to populate a year picker in a dashboard."
+          }
+        },
+        {
+          "name": "GET /api/stats/years/{year} – Full year statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/years/:year",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "years",
+                ":year"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "The calendar year, for example 2025."
+                }
+              ]
+            },
+            "description": "Returns full statistics for a given year, including visit counts, nights, occupancy percentages (days/weeks/months), guest overview, EV statistics (distance, energy consumption, regeneration), driving time stats (avg/min/max to and from cabin), typical departure and arrival times, and a monthly breakdown for all 12 months.\n\nA guest is counted as **new** in a given year if that year is the first year in which they arrive, with the guest's own arrival date.\n\n**Basis:** the guest lists count with the guest's own stay (own dates, or the reservation period when the guest has none). Visit counts, nights, occupancy, group size and driving use the reservation."
+          }
+        },
+        {
+          "name": "GET /api/stats/years/{year}/months/{month} – Monthly statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/years/:year/months/:month",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "years",
+                ":year",
+                "months",
+                ":month"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "The calendar year, for example 2025."
+                },
+                {
+                  "key": "month",
+                  "value": "7",
+                  "description": "The month number, 1 (January) to 12 (December)."
+                }
+              ]
+            },
+            "description": "Returns statistics for a specific month: visit count with comparisons against the previous 30 days, the same month last year, and the year-to-date monthly average; nights min/avg/max; occupancy percentages; guest list; and driving time and moment stats including diff vs. the previous month."
+          }
+        },
+        {
+          "name": "GET /api/stats/guests – Statistics for all guests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/guests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "guests"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Returns statistics for all guests across all years: top 10 guests by number of visits and by total nights, gender distribution, and age group breakdown (0–12, 13–17, 18–30, 31–50, 51+). Visits and days count with the guest's own stay (own dates, or the reservation period when the guest has none). Suitable for a hall-of-fame view or demographic overview."
+          }
+        }
+      ]
+    }
+  ]
+}

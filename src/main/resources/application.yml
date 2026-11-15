@@ -44,16 +44,29 @@ influx-db:
 
 vehicle-trip:
   file-path: ${VEHICLE_TRIP_FILE_PATH}
-  login-url: ${VEHICLE_TRIP_LOGIN_URL}
-  trips-url: ${VEHICLE_TRIP_TRIPS_URL}
-  username: ${VEHICLE_TRIP_USERNAME}
-  password: ${VEHICLE_TRIP_PASSWORD}
   sync-enabled: ${VEHICLE_TRIP_SYNC_ENABLED:-true}
   sync-from-date: ${VEHICLE_TRIP_SYNC_FROM_DATE}
-  user-agent: ${VEHICLE_TRIP_USER_AGENT}
-  referrer: ${VEHICLE_TRIP_REFERRER}
-  locale: ${VEHICLE_TRIP_LOCALE}
-  page-size: ${VEHICLE_TRIP_PAGE_SIZE:-200}
+
+# The JLR Data Hub (vehicle trips). The client id and the private key are the Data Access Credential.
+jlr:
+  client-id: ${JLR_CLIENT_ID}
+  vin: ${JLR_VIN}
+  private-key: ${JLR_PRIVATE_KEY}
+  fetch-interval-hours: ${JLR_FETCH_INTERVAL_HOURS:-12}
+
+# The home and the cabin need no place lookup: a point within radius-meters of them is that place. Positions are
+# personal data, so there is no default for them.
+places:
+  home:
+    latitude: ${HOME_LATITUDE}
+    longitude: ${HOME_LONGITUDE}
+    address: ${HOME_ADDRESS}
+    radius-meters: ${HOME_RADIUS_METERS:-200}
+  cabin:
+    latitude: ${CABIN_LATITUDE}
+    longitude: ${CABIN_LONGITUDE}
+    address: ${CABIN_ADDRESS}
+    radius-meters: ${CABIN_RADIUS_METERS:-200}
 
 cloudflare-access:
   team-domain: ${CLOUDFLARE_ACCESS_TEAM_DOMAIN:-}

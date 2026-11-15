@@ -1,5 +1,6 @@
 package no.slomic.smarthytte
 
+import io.ktor.client.HttpClient
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.log
@@ -23,6 +24,8 @@ import no.slomic.smarthytte.auth.toConfig
 import no.slomic.smarthytte.calendar.pendingCalendarOperations
 import no.slomic.smarthytte.calendar.startCalendarOutboxDrain
 import no.slomic.smarthytte.checkinouts.CheckInOutService
+import no.slomic.smarthytte.common.issues.IssueReporter
+import no.slomic.smarthytte.common.issues.LoggingIssueReporter
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.BootstrapAdmin
 import no.slomic.smarthytte.guests.GuestAdminService
@@ -42,7 +45,9 @@ import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.CloudflareAccessPropertiesHolder
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
+import no.slomic.smarthytte.properties.JlrPropertiesHolder
 import no.slomic.smarthytte.properties.KtorPropertiesHolder
+import no.slomic.smarthytte.properties.PlacesPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.reservations.ReservationRepository
 import no.slomic.smarthytte.reservations.ReservationService
@@ -59,13 +64,23 @@ import no.slomic.smarthytte.statistics.configureStatsRoutes
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointRepository
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
+import no.slomic.smarthytte.vehicletrips.BackgroundSyncMode
 import no.slomic.smarthytte.vehicletrips.SqliteVehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripQueryService
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripService
+import no.slomic.smarthytte.vehicletrips.backgroundSyncMode
+import no.slomic.smarthytte.vehicletrips.jlr.JlrAuthService
+import no.slomic.smarthytte.vehicletrips.jlr.JlrJourneyClient
+import no.slomic.smarthytte.vehicletrips.jlr.JlrJwtSigner
+import no.slomic.smarthytte.vehicletrips.jlr.SqliteJlrTokenRepository
+import no.slomic.smarthytte.vehicletrips.places.KartverketPlaceResolver
+import no.slomic.smarthytte.vehicletrips.places.TripPlaceService
+import no.slomic.smarthytte.vehicletrips.places.toKnownPlaces
 import java.util.*
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 fun main() {
@@ -110,7 +125,7 @@ fun Application.module() {
 
     // Initialize services
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
-    val vehicleTripService = VehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
+    val vehicleTripService = createVehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
     val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
     val guestQueryService = GuestQueryService(guestRepository)
     val guestAvatarService = GuestAvatarService(guestRepository)
@@ -256,14 +271,20 @@ fun Application.startBackgroundSync(
     }
 
     // Fetch vehicle trips and check-in/out sensor data and update the check-in / out status for all reservations
-    // (sync task).
-    // This task is scheduled only within the daytime and during the reservation window (between from and end time),
-    // to reduce unnecessary data fetching from the external sources outside the reservation window.
+    // (sync task). Only in the daytime. Within the reservation window every step runs on every pass. Outside it only
+    // the vehicle trips are fetched, and only when the last fetch is old: the Data Hub history may be a rolling window.
     schedulerScope.launch {
         while (isActive) {
             runCatchingLogged("Background sync") {
-                if (isDaytime() && reservationService.isWithinReservationWindow()) {
+                val mode = backgroundSyncMode(
+                    isDaytime = isDaytime(),
+                    isWithinReservationWindow = reservationService.isWithinReservationWindow(),
+                    isTripFetchDue = vehicleTripService.isFetchDue(),
+                )
+                if (mode != BackgroundSyncMode.NONE) {
                     runCatchingLogged("Fetch vehicle trips") { vehicleTripService.fetchVehicleTrips() }
+                }
+                if (mode == BackgroundSyncMode.ALL) {
                     runCatchingLogged("Fetch check in/out sensor data") { checkInOutSensorService.fetchCheckInOut() }
                     runCatchingLogged("Update check in/out status") {
                         checkInOutService.updateCheckInOutStatusForAllReservations()
@@ -286,4 +307,35 @@ fun isDaytime(): Boolean {
     val endTime = LocalTime.parse(System.getenv("DAYTIME_END") ?: "23:00")
 
     return now in startTime..endTime
+}
+
+private fun createVehicleTripService(
+    vehicleTripRepository: VehicleTripRepository,
+    syncCheckpointService: SyncCheckpointService,
+    httpClient: HttpClient,
+): VehicleTripService {
+    val jlr = loadProperties<JlrPropertiesHolder>().jlr
+    val knownPlaces = loadProperties<PlacesPropertiesHolder>().places.toKnownPlaces()
+    val issueReporter: IssueReporter = LoggingIssueReporter()
+
+    val signer = JlrJwtSigner(privateKeyPem = jlr.privateKey.value)
+    val authService = JlrAuthService(
+        httpClient = httpClient,
+        signer = signer,
+        tokenRepository = SqliteJlrTokenRepository(),
+        issueReporter = issueReporter,
+        clientId = jlr.clientId,
+    )
+    val journeyClient = JlrJourneyClient(httpClient = httpClient, authService = authService, vin = jlr.vin)
+    val placeResolver = KartverketPlaceResolver(httpClient = httpClient, knownPlaces = knownPlaces)
+    val tripPlaceService = TripPlaceService(placeResolver, vehicleTripRepository, issueReporter)
+
+    return VehicleTripService(
+        vehicleTripRepository = vehicleTripRepository,
+        syncCheckpointService = syncCheckpointService,
+        journeyClient = journeyClient,
+        tripPlaceService = tripPlaceService,
+        issueReporter = issueReporter,
+        fetchInterval = jlr.fetchIntervalHours.hours,
+    )
 }

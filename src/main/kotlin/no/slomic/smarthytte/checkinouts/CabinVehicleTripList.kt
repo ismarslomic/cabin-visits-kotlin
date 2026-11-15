@@ -9,12 +9,14 @@ import no.slomic.smarthytte.vehicletrips.VehicleTrip
  * This helps [CheckInOutService] match vehicle movements against reservation rules to determine
  * actual arrival and departure events.
  */
-internal class CabinVehicleTripList(private val allVehicleTrips: List<VehicleTrip>) {
+internal class CabinVehicleTripList(allVehicleTrips: List<VehicleTrip>) {
     val cabinTrips: List<CabinVehicleTrip>
 
     init {
         cabinTrips = buildCabinTrips(
-            vehicleTrips = allVehicleTrips.sortedBy { it.startTime },
+            // A trip without start or end city (failed place lookup) cannot be placed in a round trip, it is
+            // ignored until the next re-resolve gives it cities
+            vehicleTrips = allVehicleTrips.filter(::hasCities).sortedBy { it.startTime },
             homeCity = HOME_CITY_NAME,
             cabinCity = CABIN_CITY_NAME,
         )
@@ -26,7 +28,7 @@ internal class CabinVehicleTripList(private val allVehicleTrips: List<VehicleTri
     }
 
     fun groupTripsByRoundTrip(trips: List<VehicleTrip>): List<List<VehicleTrip>> {
-        if (allVehicleTrips.isEmpty()) return emptyList()
+        if (trips.isEmpty()) return emptyList()
 
         val sorted = trips.sortedBy { it.startTime }
         val result = mutableListOf<MutableList<VehicleTrip>>()
@@ -216,3 +218,5 @@ internal class CabinVehicleTripList(private val allVehicleTrips: List<VehicleTri
         return acc
     }
 }
+
+private fun hasCities(trip: VehicleTrip): Boolean = trip.startCity != null && trip.endCity != null

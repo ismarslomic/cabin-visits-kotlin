@@ -12,6 +12,12 @@ erDiagram
         string next_attempt_time
     }
 
+    jlr_token {
+        integer id PK "always 1"
+        string refresh_token "secret, plain text, never logged"
+        string updated_time
+    }
+
     check_in_out_sensor {
         string id PK
         string created_time
@@ -92,6 +98,12 @@ erDiagram
         string start_time
         string end_time
         string notion_id
+        string data_quality
+        string jlr_journey_id UK
+        double start_latitude
+        double start_longitude
+        double end_latitude
+        double end_longitude
         string created_time
         string updated_time
         string created_by
@@ -112,14 +124,27 @@ erDiagram
 | **check_in_out_sensor** | Stores sensor data for check-in and check-out events, including timestamps and status.                           | raw           |
 | **guest**               | Stores unique guest profiles, including name, contact details, and external identifiers.                         | raw           |
 | **guest_avatar**        | Stores the JPEG avatar of a guest (at most one per guest, deleted with the guest).                               | raw           |
+| **jlr_token**           | The rotating refresh token of the JLR Data Hub login (one row, `id` = 1). A secret kept as plain text, so the DB file and its backups are as sensitive as the private key. Internal, no audit columns. | internal      |
 | **reservation**         | Stores cabin reservations, including planned start/end times and calculated actual check-in and check-out times. | raw + derived |
 | **reservation_guest**   | Links reservations with guests in a many-to-many relationship. `from_date`/`to_date` (ISO dates, both inclusive) are the guest's own stay when it is shorter than the reservation; null means the guest follows the reservation. | derived       |
 | **sync_checkpoint**     | Stores the last synchronization checkpoints for various data sources.                                            | raw           |
-| **vehicle_trip**        | Stores details for all vehicle trips, including consumption, distance, duration, locations, and timestamps.      | raw           |
+| **vehicle_trip**        | Stores details for all vehicle trips, including consumption, distance, duration, locations, and timestamps. Energy, address and city are nullable: see [vehicle_trip](#vehicle_trip). | raw           |
+
+### vehicle_trip
+
+- `duration` is a Kotlin `Duration` stored as nanoseconds (`BIGINT`). `duration_unit` is only a label.
+- `avg_energy_consumption(_unit)`, `energy_regenerated`, `energy_generated_unit`, `start_address`, `end_address`,
+  `start_city` and `end_city` are nullable. Trips from the JLR Data Hub have no energy values, and no place when the
+  lookup fails. Statistics count only trips with energy values, check-in/out ignores trips without start or end city.
+- `data_quality` is `COMPLETE` or `PLACE_MISSING` (city or address missing, retried at the next trip fetch). Old rows are
+  `COMPLETE`. The name is stored, so a value cannot be renamed without a data migration.
+- `jlr_journey_id` is the journey id in the JLR Data Hub (unique, null for trips that only exist in the archive file).
+  The four coordinate columns are stored so places can be recomputed.
+- The archive import (`addOrUpdate`) never writes `data_quality`, `jlr_journey_id` or the coordinates on an existing row.
 
 ### Audit columns
 
-Every table except the internal `calendar_outbox` has the same audit columns and `version`:
+Every table except the internal `calendar_outbox` and `jlr_token` has the same audit columns and `version`:
 
 | Column         | Required | Set when                                          | Value                                                  |
 |:---------------|:---------|:--------------------------------------------------|:-------------------------------------------------------|

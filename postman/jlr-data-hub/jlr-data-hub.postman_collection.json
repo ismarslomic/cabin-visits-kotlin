@@ -1,0 +1,823 @@
+{
+  "info": {
+    "name": "JLR Data Hub",
+    "description": "# JLR Data Hub\n\nExplore the JLR Data Hub REST API (`https://data.jlr-vcdp.com`) with a **Device Code** Data Access Credential. Based on the OpenAPI spec `public-api-gateway.yaml` and the JLR developer docs.\n\n## One-time setup\n\n1. Import this collection and `jlr-data-hub.postman_environment.json`, and select the environment.\n2. Set these variables (Environments -> JLR Data Hub):\n   - `clientId`: the client id of your Data Access Credential.\n   - `vin`: your 17-character VIN.\n   - `privateKeyPem` (secret): the private key whose certificate you uploaded when creating the credential. Unencrypted PEM (`-----BEGIN PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----`), 2048-bit RSA. Paste it on one line with literal `\\n` between the lines, or as is. Put it in **Current value** only, so it stays local.\n3. Signing is done by the collection pre-request script itself (PS256 with plain JavaScript and the `crypto-js` module bundled in Postman). No packages or internet access are needed.\n\n## Getting a token (Auth folder)\n\n1. **1. Device authorization**: signs a client assertion, creates a PKCE verifier and challenge, and returns a `user_code` and `verification_uri_complete` (see the Visualize tab or the Console). Open the URL in a browser, log in with your JLR account and approve. You have about 15 minutes.\n2. **2. Poll token**: (sends a DPoP proof) send it every 5 seconds until it returns 200. `authorization_pending` means you have not approved yet; `slow_down` means wait longer. The token response is stored in `accessToken`, `refreshToken` and `accessTokenExpiresAt`.\n3. **3. Refresh token**: gets a new access token from `refreshToken` when the access token has expired (about 1 hour; the refresh token about 14 days, per the docs).\n\n## Calling the API\n\nEvery request under **Vehicle Data** sends `Authorization: DPoP {{accessToken}}` and a fresh `DPoP` proof JWT (with an `ath` claim). The poll and refresh requests also send a DPoP proof, which binds the token to your key. The collection pre-request script signs both the client assertion (for the auth server) and the DPoP proof (`htm`, `htu` without query, `jti`, `iat`) with PS256 and your private key. Start with **Journeys**.\n\n## Notes\n\n- The DPoP proof must use the same key pair that obtained the token.\n- Nothing here was verified against the live service when this was generated: check the Console on the first failure (401 with `invalid-dpop-proof` usually means a wrong key, URL or clock).\n- Do not commit real values of `privateKeyPem`, `accessToken` or `refreshToken`.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection pre-request: builds the signed JWTs the JLR Data Hub needs.",
+          "//  - {{clientAssertion}}: private_key_jwt for requests to the auth server (RFC 7523)",
+          "//  - {{dpopProof}}:       DPoP proof (RFC 9449) for REST API calls and for the token requests",
+          "//                         that bind the token to your key (poll and refresh)",
+          "// Both are PS256 (RSASSA-PSS, SHA-256), signed with the private key of your Data Access Credential.",
+          "// No external packages: only crypto-js (bundled in Postman) and BigInt.",
+          "",
+          "const CryptoJS = require('crypto-js');",
+          "",
+          "// ---- byte helpers ----",
+          "function wordsToBytes(wa) {",
+          "    const out = new Uint8Array(wa.sigBytes);",
+          "    for (let i = 0; i < wa.sigBytes; i++) out[i] = (wa.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;",
+          "    return out;",
+          "}",
+          "function bytesToWords(bytes) {",
+          "    const words = [];",
+          "    for (let i = 0; i < bytes.length; i++) words[i >>> 2] |= bytes[i] << (24 - (i % 4) * 8);",
+          "    return CryptoJS.lib.WordArray.create(words, bytes.length);",
+          "}",
+          "function utf8Bytes(str) { return wordsToBytes(CryptoJS.enc.Utf8.parse(str)); }",
+          "function sha256(bytes) { return wordsToBytes(CryptoJS.SHA256(bytesToWords(bytes))); }",
+          "function concat(...arrs) {",
+          "    const out = new Uint8Array(arrs.reduce((n, a) => n + a.length, 0));",
+          "    let o = 0;",
+          "    for (const a of arrs) { out.set(a, o); o += a.length; }",
+          "    return out;",
+          "}",
+          "function b64url(bytes) {",
+          "    return CryptoJS.enc.Base64.stringify(bytesToWords(bytes)).replace(/=+$/, '').replace(/\\+/g, '-').replace(/\\//g, '_');",
+          "}",
+          "function bytesToBig(bytes) {",
+          "    let n = 0n;",
+          "    for (const b of bytes) n = (n << 8n) | BigInt(b);",
+          "    return n;",
+          "}",
+          "function bigToBytes(n, len) {",
+          "    const out = new Uint8Array(len);",
+          "    for (let i = len - 1; i >= 0; i--) { out[i] = Number(n & 0xffn); n >>= 8n; }",
+          "    return out;",
+          "}",
+          "function modPow(base, exp, mod) {",
+          "    let result = 1n;",
+          "    base %= mod;",
+          "    while (exp > 0n) {",
+          "        if (exp & 1n) result = (result * base) % mod;",
+          "        base = (base * base) % mod;",
+          "        exp >>= 1n;",
+          "    }",
+          "    return result;",
+          "}",
+          "function stripZeros(bytes) {",
+          "    let i = 0;",
+          "    while (i < bytes.length - 1 && bytes[i] === 0) i++;",
+          "    return bytes.subarray(i);",
+          "}",
+          "",
+          "// ---- minimal ASN.1 DER reader (enough for RSA private keys, PKCS#1 and PKCS#8) ----",
+          "function readTlv(buf, pos) {",
+          "    const tag = buf[pos];",
+          "    let len = buf[pos + 1];",
+          "    let hdr = 2;",
+          "    if (len & 0x80) {",
+          "        const n = len & 0x7f;",
+          "        len = 0;",
+          "        for (let i = 0; i < n; i++) len = (len << 8) | buf[pos + 2 + i];",
+          "        hdr = 2 + n;",
+          "    }",
+          "    return { tag, start: pos + hdr, end: pos + hdr + len };",
+          "}",
+          "function readSequence(buf, tlv) {",
+          "    const items = [];",
+          "    let pos = tlv.start;",
+          "    while (pos < tlv.end) {",
+          "        const t = readTlv(buf, pos);",
+          "        items.push(t);",
+          "        pos = t.end;",
+          "    }",
+          "    return items;",
+          "}",
+          "function parsePrivateKey(raw) {",
+          "    const pem = String(raw).trim().replace(/\\\\n/g, '\\n');",
+          "    if (/ENCRYPTED/.test(pem)) throw new Error('privateKeyPem is encrypted; use an unencrypted key.');",
+          "    const b64 = pem.replace(/-----[^-]+-----/g, '').replace(/\\s+/g, '');",
+          "    if (!b64) throw new Error('privateKeyPem is empty or not a PEM.');",
+          "    let der = wordsToBytes(CryptoJS.enc.Base64.parse(b64));",
+          "    let top = readSequence(der, readTlv(der, 0));",
+          "    if (top[1] && top[1].tag === 0x30) {",
+          "        // PKCS#8: SEQUENCE { version, algorithm SEQUENCE, OCTET STRING { RSAPrivateKey } }",
+          "        const octet = top[2];",
+          "        der = der.subarray(octet.start, octet.end);",
+          "        top = readSequence(der, readTlv(der, 0));",
+          "    }",
+          "    // RSAPrivateKey: version, n, e, d, ...",
+          "    const int = (t) => bytesToBig(stripZeros(der.subarray(t.start, t.end)));",
+          "    const n = int(top[1]);",
+          "    const e = int(top[2]);",
+          "    const d = int(top[3]);",
+          "    return { n, e, d };",
+          "}",
+          "",
+          "// ---- RSASSA-PSS (RFC 8017) with SHA-256 and a 32-byte salt ----",
+          "function mgf1(seed, length) {",
+          "    const parts = [];",
+          "    for (let counter = 0; parts.length * 32 < length; counter++) {",
+          "        parts.push(sha256(concat(seed, bigToBytes(BigInt(counter), 4))));",
+          "    }",
+          "    return concat(...parts).subarray(0, length);",
+          "}",
+          "function pssSign(key, message) {",
+          "    const modBits = key.n.toString(2).length;",
+          "    const k = Math.ceil(modBits / 8);",
+          "    const emBits = modBits - 1;",
+          "    const emLen = Math.ceil(emBits / 8);",
+          "    const hLen = 32;",
+          "    const sLen = 32;",
+          "    const mHash = sha256(message);",
+          "    const salt = wordsToBytes(CryptoJS.lib.WordArray.random(sLen));",
+          "    const h = sha256(concat(new Uint8Array(8), mHash, salt));",
+          "    const db = concat(new Uint8Array(emLen - sLen - hLen - 2), Uint8Array.of(1), salt);",
+          "    const mask = mgf1(h, emLen - hLen - 1);",
+          "    const maskedDb = db.map((b, i) => b ^ mask[i]);",
+          "    maskedDb[0] &= 0xff >> (8 * emLen - emBits);",
+          "    const em = concat(maskedDb, h, Uint8Array.of(0xbc));",
+          "    const s = modPow(bytesToBig(em), key.d, key.n);",
+          "    return bigToBytes(s, k);",
+          "}",
+          "",
+          "// ---- JWT helpers ----",
+          "function uuid() {",
+          "    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {",
+          "        const r = (Math.random() * 16) | 0;",
+          "        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);",
+          "    });",
+          "}",
+          "function signJwt(key, header, payload) {",
+          "    const input = b64url(utf8Bytes(JSON.stringify(header))) + '.' + b64url(utf8Bytes(JSON.stringify(payload)));",
+          "    const sig = pssSign(key, utf8Bytes(input));",
+          "    return input + '.' + b64url(sig);",
+          "}",
+          "function publicJwk(key) {",
+          "    const byteLen = (big) => Math.ceil(big.toString(16).length / 2);",
+          "    return { kty: 'RSA', n: b64url(bigToBytes(key.n, byteLen(key.n))), e: b64url(bigToBytes(key.e, byteLen(key.e))) };",
+          "}",
+          "",
+          "// ---- what to sign for this request ----",
+          "const authBaseUrl = pm.variables.get('authBaseUrl');",
+          "const baseUrl = pm.variables.get('baseUrl');",
+          "const requestUrl = pm.variables.replaceIn(pm.request.url.toString());",
+          "const noQuery = requestUrl.split('?')[0].split('#')[0];",
+          "",
+          "const needsAssertion = !!authBaseUrl && requestUrl.startsWith(authBaseUrl);",
+          "const isApiCall = !!baseUrl && requestUrl.startsWith(baseUrl + '/v1/vehicles');",
+          "const isTokenCall = !!authBaseUrl && requestUrl === authBaseUrl + '/token';",
+          "const needsDpop = isApiCall || isTokenCall;",
+          "",
+          "if (needsAssertion || needsDpop) {",
+          "    const rawKey = pm.variables.get('privateKeyPem');",
+          "    if (!rawKey) throw new Error('Set the secret variable privateKeyPem (see collection description).');",
+          "    const key = parsePrivateKey(rawKey);",
+          "    const now = Math.floor(Date.now() / 1000);",
+          "",
+          "    if (needsAssertion) {",
+          "        const clientId = pm.variables.get('clientId');",
+          "        if (!clientId) throw new Error('Set the variable clientId.');",
+          "        pm.variables.set('clientAssertion', signJwt(",
+          "            key,",
+          "            { alg: 'PS256', typ: 'JWT' },",
+          "            { iss: clientId, sub: clientId, aud: authBaseUrl + '/token', jti: uuid(), iat: now, exp: now + 300 },",
+          "        ));",
+          "    }",
+          "",
+          "    if (needsDpop) {",
+          "        const claims = { jti: uuid(), htm: pm.request.method.toUpperCase(), htu: noQuery, iat: now };",
+          "        const accessToken = pm.variables.get('accessToken');",
+          "        // The platform wants ath (hash of the access token) on API calls, although the docs do not say so.",
+          "        if (isApiCall && accessToken) claims.ath = b64url(sha256(utf8Bytes(accessToken)));",
+          "        pm.variables.set('dpopProof', signJwt(key, { alg: 'PS256', typ: 'dpop+jwt', jwk: publicJwk(key) }, claims));",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Device Code flow. Run 1, approve in the browser, then run 2 until 200.",
+      "item": [
+        {
+          "name": "1. Device authorization",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const CryptoJS = require('crypto-js');",
+                  "const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';",
+                  "let verifier = '';",
+                  "for (let i = 0; i < 64; i++) verifier += alphabet[Math.floor(Math.random() * alphabet.length)];",
+                  "const challenge = CryptoJS.SHA256(verifier).toString(CryptoJS.enc.Base64)",
+                  "    .replace(/=+$/, '').replace(/\\+/g, '-').replace(/\\//g, '_');",
+                  "pm.environment.set('codeVerifier', verifier);",
+                  "pm.variables.set('codeChallenge', challenge);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const b = pm.response.json();",
+                  "    pm.environment.set('deviceCode', b.device_code);",
+                  "    console.log('Open ' + (b.verification_uri_complete || b.verification_uri) + ' and enter code ' + b.user_code);",
+                  "    pm.visualizer.set('<h2>Approve in browser</h2><p>Open <a href=\"{{uri}}\">{{uri}}</a></p><p>User code: <b>{{code}}</b></p><p>Expires in {{exp}} s, poll every {{interval}} s</p>',",
+                  "        { uri: b.verification_uri_complete || b.verification_uri, code: b.user_code, exp: b.expires_in, interval: b.interval });",
+                  "} else {",
+                  "    console.log('Device authorization failed: ' + pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "response_type",
+                  "value": "device_code",
+                  "type": "text"
+                },
+                {
+                  "key": "code_challenge",
+                  "value": "{{codeChallenge}}",
+                  "type": "text"
+                },
+                {
+                  "key": "code_challenge_method",
+                  "value": "S256",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_assertion_type",
+                  "value": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                  "type": "text"
+                },
+                {
+                  "key": "client_assertion",
+                  "value": "{{clientAssertion}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Starts the flow. The docs say no client assertion here, but the server answers invalid_client without one, so it is sent. No scope.",
+            "url": {
+              "raw": "{{authBaseUrl}}/auth/device",
+              "host": [
+                "{{authBaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "device"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Poll token (device code)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.access_token) {",
+                  "    pm.environment.set('accessToken', body.access_token);",
+                  "    if (body.refresh_token) pm.environment.set('refreshToken', body.refresh_token);",
+                  "    pm.environment.set('accessTokenExpiresAt', new Date(Date.now() + body.expires_in * 1000).toISOString());",
+                  "    console.log('token_type=' + body.token_type + ', expires_in=' + body.expires_in + ', refresh_expires_in=' + body.refresh_expires_in);",
+                  "} else {",
+                  "    console.log('Token request: ' + pm.response.code + ' ' + JSON.stringify(body));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:device_code",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_assertion_type",
+                  "value": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                  "type": "text"
+                },
+                {
+                  "key": "client_assertion",
+                  "value": "{{clientAssertion}}",
+                  "type": "text"
+                },
+                {
+                  "key": "device_code",
+                  "value": "{{deviceCode}}",
+                  "type": "text"
+                },
+                {
+                  "key": "code_verifier",
+                  "value": "{{codeVerifier}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Repeat every 5 s until 200. 400 authorization_pending = not approved yet; slow_down = wait 5 s more; expired_token = restart at step 1.",
+            "url": {
+              "raw": "{{authBaseUrl}}/token",
+              "host": [
+                "{{authBaseUrl}}"
+              ],
+              "path": [
+                "token"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.access_token) {",
+                  "    pm.environment.set('accessToken', body.access_token);",
+                  "    if (body.refresh_token) pm.environment.set('refreshToken', body.refresh_token);",
+                  "    pm.environment.set('accessTokenExpiresAt', new Date(Date.now() + body.expires_in * 1000).toISOString());",
+                  "    console.log('token_type=' + body.token_type + ', expires_in=' + body.expires_in + ', refresh_expires_in=' + body.refresh_expires_in);",
+                  "} else {",
+                  "    console.log('Token request: ' + pm.response.code + ' ' + JSON.stringify(body));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "refresh_token",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_assertion_type",
+                  "value": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                  "type": "text"
+                },
+                {
+                  "key": "client_assertion",
+                  "value": "{{clientAssertion}}",
+                  "type": "text"
+                },
+                {
+                  "key": "refresh_token",
+                  "value": "{{refreshToken}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Gets a new access token when the old one has expired. Whether the refresh token is rotated is not documented; this stores any new one.",
+            "url": {
+              "raw": "{{authBaseUrl}}/token",
+              "host": [
+                "{{authBaseUrl}}"
+              ],
+              "path": [
+                "token"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vehicle Data",
+      "description": "Requires a valid accessToken. A DPoP proof is generated per request.",
+      "item": [
+        {
+          "name": "Vehicle details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "DPoP {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Vehicle details.",
+            "url": {
+              "raw": "{{baseUrl}}/v1/vehicles/{{vin}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "vehicles",
+                "{{vin}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vehicle status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "DPoP {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Real-time vehicle status.",
+            "url": {
+              "raw": "{{baseUrl}}/v1/vehicles/{{vin}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "vehicles",
+                "{{vin}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Journeys (latest page)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "DPoP {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "First page of journeys. Enable `sort` to try ordering; the sortable field names are not documented (spec example: `createdAt,desc`).",
+            "url": {
+              "raw": "{{baseUrl}}/v1/vehicles/{{vin}}/journeys?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "vehicles",
+                "{{vin}}",
+                "journeys"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Zero-based page index"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Items per page, 1-100"
+                },
+                {
+                  "key": "sort",
+                  "value": "startTime,desc",
+                  "description": "field,direction. Field names undocumented",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Journeys (date range)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "DPoP {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Journeys between journeysFrom and journeysTo (ISO date-time, inclusive).",
+            "url": {
+              "raw": "{{baseUrl}}/v1/vehicles/{{vin}}/journeys?page=0&size=20&from={{journeysFrom}}&to={{journeysTo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "vehicles",
+                "{{vin}}",
+                "journeys"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Zero-based page index"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Items per page, 1-100"
+                },
+                {
+                  "key": "from",
+                  "value": "{{journeysFrom}}",
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "{{journeysTo}}",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Journeys (max page size)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "DPoP {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "100 per page. Change `page` to walk through all pages and check `page.totalPages` / `page.totalElements`.",
+            "url": {
+              "raw": "{{baseUrl}}/v1/vehicles/{{vin}}/journeys?page=0&size=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "vehicles",
+                "{{vin}}",
+                "journeys"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "100",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vehicle location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "DPoP {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Current location.",
+            "url": {
+              "raw": "{{baseUrl}}/v1/vehicles/{{vin}}/location",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "vehicles",
+                "{{vin}}",
+                "location"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Electric vehicle data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "DPoP {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpopProof}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "EV and charging data.",
+            "url": {
+              "raw": "{{baseUrl}}/v1/vehicles/{{vin}}/ev",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "vehicles",
+                "{{vin}}",
+                "ev"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public (no token)",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List signals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/signals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "signals"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

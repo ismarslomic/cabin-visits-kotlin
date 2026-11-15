@@ -5,6 +5,7 @@ import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.utils.withTestEnvironment
 
@@ -20,14 +21,10 @@ class AppPropertiesTest :
         val envVarInfluxDbCheckInRangeStart = "2019-01-01T00:00:00Z"
         val envVarInfluxDbCheckInRangeStop = "2025-01-09T00:00:00Z"
         val envVarVehicleTripFilePath = "/data/vehicle-trips.json"
-        val envVarVehicleTripLoginUrl = "https://mycar.com/login"
-        val envVarVehicleTripTripsUrl = "https://mycar.com/trips"
-        val envVarVehicleTripUsername = "secretName"
-        val envVarVehicleTripPassword = "secretPassword"
         val envVarVehicleTripSyncFromDate = "2020-01-01"
-        val envVarVehicleTripUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
-        val envVarVehicleTripReferrer = "https://myapp.com"
-        val envVarVehicleTripLocale = "key=nb_NO"
+        val envVarJlrClientId = "client-1"
+        val envVarJlrVin = "SAL0000000VIN0001"
+        val envVarJlrPrivateKey = "-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----"
         val envVarStatisticsDataStartDate = "2020-09-01"
 
         Given("required environment variables are set") {
@@ -41,15 +38,17 @@ class AppPropertiesTest :
                 "INFLUXDB_CHECK_IN_MEASUREMENT" to envVarInfluxDbCheckInMeasurement,
                 "INFLUXDB_CHECK_IN_RANGE_START" to envVarInfluxDbCheckInRangeStart,
                 "VEHICLE_TRIP_FILE_PATH" to envVarVehicleTripFilePath,
-                "VEHICLE_TRIP_LOGIN_URL" to envVarVehicleTripLoginUrl,
-                "VEHICLE_TRIP_TRIPS_URL" to envVarVehicleTripTripsUrl,
-                "VEHICLE_TRIP_USERNAME" to envVarVehicleTripUsername,
-                "VEHICLE_TRIP_PASSWORD" to envVarVehicleTripPassword,
                 "VEHICLE_TRIP_SYNC_FROM_DATE" to envVarVehicleTripSyncFromDate,
-                "VEHICLE_TRIP_USER_AGENT" to envVarVehicleTripUserAgent,
-                "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
-                "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
+                "JLR_CLIENT_ID" to envVarJlrClientId,
+                "JLR_VIN" to envVarJlrVin,
+                "JLR_PRIVATE_KEY" to envVarJlrPrivateKey,
                 "STATISTICS_DATA_START_DATE" to envVarStatisticsDataStartDate,
+                "HOME_LATITUDE" to "59.1",
+                "HOME_LONGITUDE" to "10.1",
+                "HOME_ADDRESS" to "Homestreet 1, 0100 Oslo",
+                "CABIN_LATITUDE" to "60.2",
+                "CABIN_LONGITUDE" to "8.2",
+                "CABIN_ADDRESS" to "Cabinroad 2, 3560 Hemsedal",
             )
             withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -72,6 +71,34 @@ class AppPropertiesTest :
 
                     Then("database.filePath should be set to the default value") {
                         databaseFilePath shouldBe defaultDatabaseFilePath
+                    }
+                }
+
+                When("reading jlr properties") {
+                    val jlr = loadProperties<JlrPropertiesHolder>().jlr
+
+                    Then("client id, VIN and private key come from the environment variables") {
+                        jlr.clientId shouldBe envVarJlrClientId
+                        jlr.vin shouldBe envVarJlrVin
+                        jlr.privateKey.value shouldBe envVarJlrPrivateKey
+                    }
+
+                    Then("the private key is masked when the properties are printed") {
+                        jlr.privateKey.toString() shouldNotContain "abc"
+                        jlr.toString() shouldNotContain "abc"
+                    }
+
+                    Then("the fetch interval is 12 hours by default") {
+                        jlr.fetchIntervalHours shouldBe 12
+                    }
+                }
+
+                When("reading places properties") {
+                    val places = loadProperties<PlacesPropertiesHolder>().places
+
+                    Then("home and cabin come from the environment variables") {
+                        places.home shouldBe PlaceProperties(59.1, 10.1, "Homestreet 1, 0100 Oslo", 200.0)
+                        places.cabin shouldBe PlaceProperties(60.2, 8.2, "Cabinroad 2, 3560 Hemsedal", 200.0)
                     }
                 }
 
@@ -131,15 +158,8 @@ class AppPropertiesTest :
                     }
 
                     Then("properties for external service should be set to the environment variable value") {
-                        vehicleTripProperties.loginUrl shouldBe envVarVehicleTripLoginUrl
-                        vehicleTripProperties.tripsUrl shouldBe envVarVehicleTripTripsUrl
-                        vehicleTripProperties.username shouldBe envVarVehicleTripUsername
-                        vehicleTripProperties.password shouldBe envVarVehicleTripPassword
                         LocalDate.parse(vehicleTripProperties.syncFromDate) shouldBe
                             LocalDate.parse(envVarVehicleTripSyncFromDate)
-                        vehicleTripProperties.userAgent shouldBe envVarVehicleTripUserAgent
-                        vehicleTripProperties.referrer shouldBe envVarVehicleTripReferrer
-                        vehicleTripProperties.locale shouldBe envVarVehicleTripLocale
                     }
                 }
             }
@@ -150,6 +170,9 @@ class AppPropertiesTest :
                     "INFLUXDB_CHECK_IN_RANGE_STOP" to envVarInfluxDbCheckInRangeStop,
                     "INFLUXDB_CHECK_IN_SYNC_ENABLED" to "false",
                     "VEHICLE_TRIP_SYNC_ENABLED" to "false",
+                    "JLR_FETCH_INTERVAL_HOURS" to "6",
+                    "HOME_RADIUS_METERS" to "150",
+                    "CABIN_RADIUS_METERS" to "250",
                 )
                 val requiredAndOptionalEnvVars = requiredEnvVars + optionalEnvVars
 
@@ -162,6 +185,21 @@ class AppPropertiesTest :
 
                         Then("database.filePath should use the data folder set from the environment variable value") {
                             databaseFilePath shouldBe expectedDatabaseFilePath
+                        }
+                    }
+
+                    When("reading jlr properties") {
+                        Then("the fetch interval should be set to the environment variable value") {
+                            loadProperties<JlrPropertiesHolder>().jlr.fetchIntervalHours shouldBe 6
+                        }
+                    }
+
+                    When("reading places properties") {
+                        val places = loadProperties<PlacesPropertiesHolder>().places
+
+                        Then("the radii should be set to the environment variable values") {
+                            places.home.radiusMeters shouldBe 150.0
+                            places.cabin.radiusMeters shouldBe 250.0
                         }
                     }
 
@@ -199,7 +237,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CREDENTIALS_FILE_PATH}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CREDENTIALS_FILE_PATH}"
                     }
                 }
             }
@@ -216,7 +254,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CALENDAR_ID}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CALENDAR_ID}"
                     }
                 }
             }
