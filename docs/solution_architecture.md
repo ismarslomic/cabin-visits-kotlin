@@ -22,8 +22,9 @@ sequenceDiagram
 The background sync task automatically keeps application data in sync with external sources. It launches scheduled tasks
 as background coroutines that:
 
-- Periodically synchronize vehicle trips and check-in/out sensor data, but only within both daytime and active
-  reservation windows, to minimize unnecessary operations.
+- Periodically synchronize vehicle trips and check-in/out sensor data. Only in the daytime. Within the reservation
+  window all steps run on every pass; outside it only the vehicle trips are fetched, and only when the last successful
+  fetch is old, because the JLR Data Hub history may be a rolling window.
 - Continuously update the check-in/out status for all reservations based on the latest data.
 
 Each sync task operates at its own configurable interval, and all background tasks are automatically stopped when the
@@ -37,12 +38,14 @@ sequenceDiagram
     participant CheckInOutSensorService as Check In Out Sensor Service
     participant CheckInOutService as Check In Out Service
 
-    alt is day time
-        alt is within reservation window
-            loop every 60 minutes (VEHICLE_TRIP_SYNC_FREQ_MINUTES)
+    loop every 10 minutes (INFLUXDB_CHECK_IN_SYNC_FREQ_MINUTES)
+        alt is day time
+            alt is within reservation window
                 BackgroundSync->>VehicleTripService: fetch vehicle trips
                 BackgroundSync->>CheckInOutSensorService: fetch check in/out
                 BackgroundSync->>CheckInOutService: update check in/out status for all reservations
+            else is vehicle trip fetch due
+                BackgroundSync->>VehicleTripService: fetch vehicle trips
             end
         end
     end
@@ -57,6 +60,11 @@ sequenceDiagram
 #### Is within reservation window?
 
 `reservation.startTime - 1 day <= now <= reservation.endTime + 1 day`
+
+#### Is vehicle trip fetch due?
+
+No fetch has succeeded since startup, or `now - last successful fetch >= JLR_FETCH_INTERVAL_HOURS (default 12)`. The time
+of the last success is kept in memory. A failed fetch does not count, so the next pass retries.
 
 ## Calendar outbox (reservation changes to Google Calendar)
 
@@ -173,21 +181,18 @@ The application also exposes the standard JVM, process and Ktor request metrics 
 
 ## Vehicle Trip Service
 
-The `VehicleTripService` manages the synchronization and storage of vehicle trip data within the application. It
-provides
-two main functions:
+The `VehicleTripService` manages the storage of vehicle trip data within the application. It provides two main
+functions:
 
 1. `insertVehicleTripsFromFile`:
-   This function reads vehicle trip data from a specified JSON file, then updates the local database by adding new
-   trips, updating changed trips, or skipping unchanged ones.
+   This function reads vehicle trip data from a specified JSON file (the archive of the retired InControl service), then
+   updates the local database by adding new trips, updating changed trips, or skipping unchanged ones.
 2. `fetchVehicleTrips`:
-   This function connects to an external vehicle trip service. After authenticating, it fetches trip data (using either
-   a full or incremental sync based on a saved checkpoint), processes all available pages, and updates the local
-   database. It then saves the latest sync date for future use and logs statistics about added, updated, or unchanged
-   trips.
+   This function reads the journeys of the vehicle from the JLR Data Hub REST API since a saved checkpoint. A journey
+   that is an archive trip is linked to it, any other journey is stored as a new trip with a city and an address from
+   Kartverket. Trips whose place lookup failed are looked up again at the start of every fetch.
 
-Through these methods, VehicleTripService ensures that local records remain consistent with both offline files and
-external sources, enabling reliable and up-to-date vehicle trip management.
+Problems never stop the background loop: they are reported through the `IssueReporter` (see "What happens on failure (vehicle trips)").
 
 ### insert vehicle trips from file
 
@@ -215,43 +220,94 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Application
     participant VehicleTripService as Vehicle Trip Service
+    participant TripPlaceService as Trip Place Service
+    participant Kartverket as Kartverket (External)
     participant SyncCheckpointService as Sync Checkpoint Service
-    participant SyncCheckpointRepository as Sync Checkpoint Repository
-    participant sync_checkpoint as db:sync_checkpoint
-    participant VehicleTrips as Http Vehicle Trips (External)
+    participant JlrJourneyClient as Jlr Journey Client
+    participant JlrAuthService as Jlr Auth Service
+    participant JLR as JLR Data Hub (External)
     participant VehicleTripRepository as Vehicle Trip Repository
-    participant vehicleTrip as db:vehicle_trip
-    
-    Application->>VehicleTripService: fetch vehicle trips
-    activate VehicleTripService
-    
-    VehicleTripService->>SyncCheckpointService: checkpoint for Vehicle Trips
-    SyncCheckpointService->>SyncCheckpointRepository: checkpoint by id
-    SyncCheckpointRepository->>sync_checkpoint: checkpoint by id
-    sync_checkpoint-->>SyncCheckpointRepository: checkpoint
-    SyncCheckpointRepository-->>SyncCheckpointService: checkpoint
-    SyncCheckpointService-->>VehicleTripService: checkpoint
-    
-    alt is checkpoint null
-        VehicleTripService->>VehicleTrips: read all vehicle trips (full sync)
-        VehicleTrips-->>VehicleTripService: all vehicle trips
-    else
-        VehicleTripService->>VehicleTrips: read new vehicle trips since checkpoint (incremental sync)
-        VehicleTrips-->>VehicleTripService: new vehicle trips
+
+    VehicleTripService->>TripPlaceService: look up places of PLACE_MISSING trips again
+    TripPlaceService->>Kartverket: place names and address of the missing points
+    TripPlaceService->>VehicleTripRepository: update places and data quality
+
+    VehicleTripService->>SyncCheckpointService: checkpoint for vehicle trips
+    Note over VehicleTripService: none: start at VEHICLE_TRIP_SYNC_FROM_DATE (full sync)<br/>else start of the checkpoint date, Oslo time
+
+    loop every page of 100 journeys
+        VehicleTripService->>JlrJourneyClient: journeys since the start
+        JlrJourneyClient->>JlrAuthService: access token
+        JlrJourneyClient->>JLR: GET /v1/vehicles/{vin}/journeys (DPoP proof)
+        JLR-->>JlrJourneyClient: page of journeys
     end
-    
-    VehicleTripService->>VehicleTripRepository: add/update vehicle trips
-    VehicleTripRepository->>vehicleTrip: add/update vehicle trips
-    VehicleTripRepository-->>VehicleTripService: persistence result
-    
-    VehicleTripService->>SyncCheckpointService: add/update checkpoint for vehicle trips
-    SyncCheckpointService->>SyncCheckpointRepository: add/update checkpoint
-    SyncCheckpointRepository->>sync_checkpoint: add/update checkpoint
-    SyncCheckpointRepository-->>SyncCheckpointService: persistence result
-    deactivate VehicleTripService
+
+    loop every journey
+        VehicleTripService->>VehicleTripRepository: trips that ended within 2 minutes of the journey
+        alt a trip has the journey id already
+            Note over VehicleTripService: known, nothing to do
+        else an archive trip matches (id within 10 s of the end, distance within 0.1 km)
+            VehicleTripService->>VehicleTripRepository: link: journey id and coordinates only
+        else new trip
+            VehicleTripService->>TripPlaceService: places of start and end
+            TripPlaceService->>Kartverket: place names and address (not for home and cabin)
+            VehicleTripService->>VehicleTripRepository: add trip, id = end time in epoch milliseconds
+        end
+    end
+
+    VehicleTripService->>SyncCheckpointService: checkpoint = Oslo date of the latest end time
 ```
+
+### JLR Data Hub login
+
+`JlrAuthService` gives a valid access token (valid 5 minutes, renewed 60 seconds before it expires). One caller renews at
+a time. Both requests to the auth server carry a `private_key_jwt` client assertion, signed with `JLR_PRIVATE_KEY`
+(PS256), and the token requests and every API call carry a DPoP proof that binds the token to the same key. Assertions and
+proofs are single use, so a retry gets new ones. The refresh token rotates on every use and is stored in `jlr_token`
+before anything else happens.
+
+```mermaid
+flowchart TD
+    start["Access token needed"] --> cached{"Cached token valid<br/>for more than 60 s?"}
+    cached -->|yes| done["Use it"]
+    cached -->|no| stored{"Refresh token<br/>stored?"}
+    stored -->|yes| refresh["Refresh grant"]
+    stored -->|no| device["Device login: report JLR_APPROVAL_REQUIRED<br/>with link and code, poll until approved"]
+    refresh --> ok{"Accepted?"}
+    device --> ok
+    ok -->|yes| save["Store the rotated refresh token first,<br/>then cache the access token"]
+    save --> done
+    ok -->|"invalid_grant"| forget["Forget the refresh token,<br/>JlrAuthException: next call starts a device login"]
+    ok -->|"invalid_client, unauthorized_client"| config["JlrAuthException: check client id and key"]
+    ok -->|"5xx, network"| retry["JlrRequestException"]
+```
+
+The device login is approved by the owner in a browser, once, and again only when the refresh token is rejected. After a
+failed or expired device login the next one starts at the earliest one hour later.
+
+### City and address of a trip
+
+The city decides check-in/out (`Oslo` is home, `Ullsåk` is the cabin). The first match wins:
+
+1. **Known place:** the point is within the radius of the home or the cabin (`HOME_*`, `CABIN_*`). The configured city and
+   address, no call.
+2. **Village:** the approved name of the nearest `Bygdelag (bygd)` within 300 m, from the Kartverket place name search.
+3. **Postal town:** of the nearest address within 300 m, from the Kartverket address search.
+
+The address is the nearest address (the configured one for a known place) and does not affect the city. A trip is
+`COMPLETE` when it has a start and an end city, otherwise `PLACE_MISSING`. A trip without a city is ignored by the
+check-in/out logic until a re-resolve finds one.
+
+### What happens on failure (vehicle trips)
+
+| Failure | Reported as | What happens |
+|---------|-------------|--------------|
+| No refresh token, or the last one was rejected | `JLR_APPROVAL_REQUIRED` (WARN) with link and code | The fetch waits up to 15 minutes for the approval |
+| Login rejected, device login denied or expired | `JLR_AUTH_FAILED` (ERROR) | No journeys are stored and the checkpoint stays (places of `PLACE_MISSING` trips are still looked up again first), the next pass tries again (a new device login at the earliest after one hour) |
+| Data Hub down, 429, network, unreadable answer | `JLR_REQUEST_FAILED` (ERROR) | The same, after the retries of the HTTP client (3, with back-off) |
+| Kartverket lookup fails for a point | `PLACE_LOOKUP_FAILED` (WARN), then `PLACE_MISSING` (WARN) | The trip is stored without that city, as `PLACE_MISSING`, and looked up again at the next fetch |
+| Anything else | `FETCH_FAILED` (ERROR) | The same as for the Data Hub |
 
 ## Check In/Out Sensor Service
 

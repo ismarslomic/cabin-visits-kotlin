@@ -398,6 +398,28 @@ and retry and the table fills up; at 200 pending rows reservation writes answer 
 - **Test calendar:** use a separate calendar (`GOOGLE_CALENDAR_ID`) until these Google behaviours are checked, they are not documented: insert with the id of a deleted event (`409`?), a patch that sets
   `status = confirmed` on a cancelled event, delete of a missing vs an already deleted event (`404` or `410`), a patch of an all-day event to a timed one, and patch and delete of a legacy `_` id.
 
+#### JLR Data Hub (vehicle trips)
+
+New trips come from the JLR Data Hub REST API (flow and failure table in
+[docs/solution_architecture.md](docs/solution_architecture.md#vehicle-trip-service)). The app uses the Data Access Credential created in
+the portal (https://data.jlr.com): `JLR_CLIENT_ID` and the matching private key in `JLR_PRIVATE_KEY`. The key is a secret: it is never
+stored in the database or logged.
+
+- **First start, or after a rejected refresh token:** the app logs `[JLR_APPROVAL_REQUIRED] ... Approve the JLR login at <link> with code
+  <code>` and waits up to 15 minutes. Open the link, sign in and approve. The refresh token is then stored in the table `jlr_token`
+  (one row, plain text, rotates on every use), so the approval is needed only once. The database file and its backups are as sensitive
+  as the private key.
+- **`[JLR_AUTH_FAILED]`:** the login does not work. `invalid_grant` means the refresh token is spent or revoked (the next fetch starts a
+  new device login, at the earliest one hour after a failed one). `invalid_client` or `unauthorized_client` means the client id or the
+  key is wrong or the credential was deleted in the portal.
+- **`[JLR_REQUEST_FAILED]`:** the Data Hub did not answer or answered something unexpected. The fetch is tried again at the next pass.
+- **`[PLACE_MISSING]`:** a trip has no city (Kartverket failed, or knows nothing there). It is ignored by check-in/out until the
+  re-resolve at the start of the next fetch finds one. `[PLACE_LOOKUP_FAILED]` names the failed lookup.
+- Trips of the old archive are linked to their journey (the trip keeps its values). Find unlinked archive trips with
+  `select id from vehicle_trip where jlr_journey_id is null`.
+- Place names and addresses are from Kartverket (CC BY 4.0, credited in the README). Positions and addresses of the home and the
+  cabin come from `HOME_*` and `CABIN_*` and are personal data: keep them out of logs and test data.
+
 #### Logging and privacy
 
 - `logback.xml` only has a console appender, so rotation is the container runtime's job. Set a size-limited Docker logging driver on the host, for example

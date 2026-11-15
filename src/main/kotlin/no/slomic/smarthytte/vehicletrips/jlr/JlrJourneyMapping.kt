@@ -45,3 +45,5 @@ fun JlrJourneyResponse.toVehicleTrip(places: TripPlaces?): VehicleTrip = Vehicle
     startPoint = GeoPoint(startLocation.latitude, startLocation.longitude),
     endPoint = GeoPoint(endLocation.latitude, endLocation.longitude),
 )
+
+fun JlrLocationResponse.toGeoPoint(): GeoPoint = GeoPoint(latitude, longitude)

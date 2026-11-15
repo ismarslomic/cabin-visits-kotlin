@@ -1,53 +1,56 @@
 package no.slomic.smarthytte.vehicletrips
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.cookies.cookies
-import io.ktor.client.request.accept
-import io.ktor.client.request.forms.submitForm
-import io.ktor.client.request.headers
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.http.ContentType
-import io.ktor.http.Cookie
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.http.parameters
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.atStartOfDayIn
 import no.slomic.smarthytte.common.PersistenceResult
-import no.slomic.smarthytte.common.PersistenceResults
 import no.slomic.smarthytte.common.SYSTEM_ACTOR
-import no.slomic.smarthytte.common.osloDateNow
+import no.slomic.smarthytte.common.issues.IssueCode
+import no.slomic.smarthytte.common.issues.IssueReporter
+import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.readVehicleTripsFromJsonFile
 import no.slomic.smarthytte.common.toOsloDate
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
+import no.slomic.smarthytte.vehicletrips.jlr.JlrAuthException
+import no.slomic.smarthytte.vehicletrips.jlr.JlrJourneyClient
+import no.slomic.smarthytte.vehicletrips.jlr.JlrJourneyResponse
+import no.slomic.smarthytte.vehicletrips.jlr.JlrRequestException
+import no.slomic.smarthytte.vehicletrips.jlr.MATCH_CANDIDATE_WINDOW
+import no.slomic.smarthytte.vehicletrips.jlr.findMatchIn
+import no.slomic.smarthytte.vehicletrips.jlr.toGeoPoint
+import no.slomic.smarthytte.vehicletrips.jlr.toVehicleTrip
+import no.slomic.smarthytte.vehicletrips.places.TripPlaceService
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
+
+/** What happened to one journey from the Data Hub. */
+private enum class JourneyResult { ADDED, MATCHED, KNOWN }
 
 class VehicleTripService(
     private val vehicleTripRepository: VehicleTripRepository,
     private val syncCheckpointService: SyncCheckpointService,
-    private val httpClient: HttpClient,
-    vehicleTripPropertiesHolder: VehicleTripPropertiesHolder =
-        loadProperties<VehicleTripPropertiesHolder>(),
+    private val journeyClient: JlrJourneyClient,
+    private val tripPlaceService: TripPlaceService,
+    private val issueReporter: IssueReporter,
+    vehicleTripPropertiesHolder: VehicleTripPropertiesHolder = loadProperties<VehicleTripPropertiesHolder>(),
+    private val fetchInterval: Duration = 12.hours,
+    private val clock: Clock = Clock.System,
 ) {
     private val logger: Logger = KtorSimpleLogger(VehicleTripService::class.java.name)
     private val vehicleTripProperties = vehicleTripPropertiesHolder.vehicleTrip
     private val filePath = vehicleTripProperties.filePath
     private val syncEnabled = vehicleTripProperties.syncEnabled
-    private val username = vehicleTripProperties.username
-    private val password = vehicleTripProperties.password
     private val fullSyncFromDate = LocalDate.parse(vehicleTripProperties.syncFromDate)
-    private val loginUrl = vehicleTripProperties.loginUrl
-    private val tripsUrl = vehicleTripProperties.tripsUrl
-    private val userAgent = vehicleTripProperties.userAgent
-    private val referrer = vehicleTripProperties.referrer
-    private val localeKeyValue = vehicleTripProperties.locale
-    private val pageSize = vehicleTripProperties.pageSize
+
+    // Kept in memory: after a restart the first pass fetches. A failed fetch does not count, the next pass retries.
+    @Volatile
+    private var lastSuccessfulFetch: Instant? = null
 
     suspend fun insertVehicleTripsFromFile() {
         logger.info("Reading vehicle trips from file $filePath and updating database..")
@@ -70,138 +73,108 @@ class VehicleTripService(
         )
     }
 
+    /**
+     * True when no fetch has succeeded since startup, or the last one is [fetchInterval] old. Never due when the sync
+     * is disabled, so the background loop does not call a fetch that does nothing.
+     */
+    fun isFetchDue(now: Instant = clock.now()): Boolean =
+        syncEnabled && isFetchDue(lastSuccessfulFetch, now, fetchInterval)
+
+    /**
+     * Fetches the journeys from the JLR Data Hub since the checkpoint, links them to the trips of the archive or stores
+     * them as new trips, and looks up the places of trips that are missing them. Problems are reported through the
+     * [IssueReporter] and do not escape, so the background loop goes on.
+     */
+    @Suppress("TooGenericExceptionCaught")
     suspend fun fetchVehicleTrips() {
         if (!syncEnabled) {
             logger.info("Vehicle trip sync is disabled, skipping fetch of vehicle trips from external source.")
             return
         }
 
-        logger.info("Started fetching vehicle trips from external source")
-
-        val filterTimeRange: FilterTimeRange = createFilterTimeRange()
-
-        val vehicleTrips: List<VehicleTrip> = fetchVehicleTrips(
-            fromDate = filterTimeRange.fromDate,
-            toDate = filterTimeRange.toDate,
-        )
-
-        val persistenceResults: PersistenceResults = addOrUpdateVehicleTrips(vehicleTrips)
-
-        val latestDate: LocalDate? = vehicleTrips.maxByOrNull { it.endTime }?.endTime?.toOsloDate()
-
-        if (latestDate != null) {
-            syncCheckpointService.addOrUpdateCheckpointForVehicleTrips(latestDate)
+        try {
+            fetchAndStoreJourneys()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: JlrAuthException) {
+            report(IssueCode.JLR_AUTH_FAILED, e)
+        } catch (e: JlrRequestException) {
+            report(IssueCode.JLR_REQUEST_FAILED, e)
+        } catch (e: Exception) {
+            report(IssueCode.FETCH_FAILED, e)
         }
+    }
+
+    private suspend fun fetchAndStoreJourneys() {
+        // Trips that lack a city first, so the check-in/out step in the same pass sees them
+        val reResolved = tripPlaceService.reResolvePlaceMissing()
+
+        val from: Instant = fetchFrom()
+        val journeys: List<JlrJourneyResponse> = journeyClient.fetchJourneys(from)
+        val results: List<JourneyResult> = journeys.map { storeJourney(it) }
+
+        journeys.maxOfOrNull { it.endTime }?.let {
+            syncCheckpointService.addOrUpdateCheckpointForVehicleTrips(it.toOsloDate())
+        }
+        lastSuccessfulFetch = clock.now()
 
         logger.info(
-            "Fetching vehicle trips from external source complete. " +
-                "Total trips in response: ${vehicleTrips.size}, added: ${persistenceResults.addedCount}, " +
-                "updated: ${persistenceResults.updatedCount}, no actions: ${persistenceResults.noActionCount}",
+            "Vehicle trips fetched: from=$from journeys=${journeys.size} " +
+                "added=${results.count { it == JourneyResult.ADDED }} " +
+                "matched=${results.count { it == JourneyResult.MATCHED }} " +
+                "known=${results.count { it == JourneyResult.KNOWN }} " +
+                "places_healed=${reResolved.healed} places_still_missing=${reResolved.stillMissing}",
         )
     }
 
-    private suspend fun addOrUpdateVehicleTrips(trips: List<VehicleTrip>): PersistenceResults {
-        val results = PersistenceResults()
+    /** A journey that is stored already (second run) is left alone, a journey that is an archive trip is linked. */
+    private suspend fun storeJourney(journey: JlrJourneyResponse): JourneyResult {
+        val candidates = vehicleTripRepository.findByEndTimeBetween(
+            from = journey.endTime - MATCH_CANDIDATE_WINDOW,
+            to = journey.endTime + MATCH_CANDIDATE_WINDOW,
+        )
+        return when {
+            candidates.any { it.jlrJourneyId == journey.journeyId } -> JourneyResult.KNOWN
 
-        for (trip in trips) {
-            results.add(vehicleTripRepository.addOrUpdate(trip, SYSTEM_ACTOR))
-        }
-
-        return results
-    }
-
-    private suspend fun fetchVehicleTrips(fromDate: LocalDate, toDate: LocalDate): List<VehicleTrip> {
-        val vehicleTrips: MutableList<VehicleTrip> = mutableListOf()
-
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            // Perform login (assuming form-based login)
-            val loginResponse: HttpResponse = httpClient.submitForm(
-                url = loginUrl,
-                formParameters = parameters {
-                    append("loginName", username)
-                    append("password", password)
-                },
-            ) {
-                headers {
-                    append(HttpHeaders.Cookie, localeKeyValue)
-                    append(HttpHeaders.Referrer, referrer)
-                    append(HttpHeaders.UserAgent, userAgent)
-                }
+            else -> when (val archiveTrip = journey.findMatchIn(candidates)) {
+                null -> addNewTrip(journey)
+                else -> linkToArchiveTrip(archiveTrip, journey)
             }
-
-            if (loginResponse.status == HttpStatusCode.OK) {
-                var currentPage = 0
-                var totalNumberOfPages: Int
-
-                val loginCookies: List<Cookie> = httpClient.cookies(loginUrl)
-                val cookieHeader = loginCookies.joinToString("; ") { "${it.name}=${it.value}" }
-
-                do {
-                    currentPage = currentPage + 1
-
-                    val request = createRequest(
-                        fromDate = fromDate,
-                        toDate = toDate,
-                        currentPage = currentPage,
-                        pageSize = pageSize,
-                    )
-
-                    val response: GetVehicleTripsResponse = httpClient.post(tripsUrl) {
-                        setBody(request)
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
-                        headers {
-                            append(HttpHeaders.Cookie, cookieHeader)
-                            append(HttpHeaders.Referrer, referrer)
-                            append(HttpHeaders.UserAgent, userAgent)
-                        }
-                    }.body()
-
-                    vehicleTrips.addAll(response.journeys.map { it.toInternal() })
-
-                    totalNumberOfPages = response.totalNumberOfPages
-
-                    logger.info(
-                        "Fetched ${response.journeys.size} vehicle trips between $fromDate - $toDate " +
-                            "(page $currentPage of $totalNumberOfPages)",
-                    )
-                } while (currentPage < totalNumberOfPages)
-            } else {
-                logger.error("Authentication to the vehicle trip service failed with status: ${loginResponse.status}")
-            }
-        } catch (e: Exception) {
-            logger.error("Error occurred during fetching of vehicle trips from external service", e)
         }
-
-        return vehicleTrips
     }
 
-    private suspend fun createFilterTimeRange(): FilterTimeRange {
-        val lastTripDate: LocalDate? = syncCheckpointService.checkpointForVehicleTrips()
-
-        val filterTimeRange = if (lastTripDate == null) {
-            val range = FilterTimeRange(
-                fromDate = fullSyncFromDate,
-                toDate = osloDateNow(),
-            )
-            logger.info("Performing full fetch of vehicle trips between {}", range)
-
-            range
-        } else {
-            val range = FilterTimeRange(
-                fromDate = lastTripDate,
-                toDate = osloDateNow(),
-            )
-            logger.info("Performing incremental fetch of vehicle trips between {}", range)
-
-            range
-        }
-
-        return filterTimeRange
+    private suspend fun addNewTrip(journey: JlrJourneyResponse): JourneyResult {
+        val start = journey.startLocation.toGeoPoint()
+        val end = journey.endLocation.toGeoPoint()
+        val tripId = journey.endTime.toEpochMilliseconds().toString()
+        val places = tripPlaceService.resolvePlaces(tripId = tripId, start = start, end = end)
+        vehicleTripRepository.addOrUpdate(journey.toVehicleTrip(places), SYSTEM_ACTOR)
+        return JourneyResult.ADDED
     }
 
-    private data class FilterTimeRange(val fromDate: LocalDate, val toDate: LocalDate) {
-        override fun toString(): String = "$fromDate - $toDate"
+    /** Only the link and the coordinates are set: the archive row keeps its values and needs no place lookup. */
+    private suspend fun linkToArchiveTrip(archiveTrip: VehicleTrip, journey: JlrJourneyResponse): JourneyResult {
+        vehicleTripRepository.setJlrData(
+            id = archiveTrip.id,
+            jlrJourneyId = journey.journeyId,
+            startPoint = journey.startLocation.toGeoPoint(),
+            endPoint = journey.endLocation.toGeoPoint(),
+            actor = SYSTEM_ACTOR,
+        )
+        return JourneyResult.MATCHED
+    }
+
+    private suspend fun fetchFrom(): Instant {
+        val checkpoint: LocalDate? = syncCheckpointService.checkpointForVehicleTrips()
+        return (checkpoint ?: fullSyncFromDate).atStartOfDayIn(osloTimeZone)
+    }
+
+    private fun report(code: IssueCode, e: Exception) {
+        issueReporter.report(
+            code = code,
+            key = code.name,
+            message = "Fetching vehicle trips failed: ${e.message}",
+            cause = e,
+        )
     }
 }
