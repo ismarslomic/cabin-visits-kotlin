@@ -2817,6 +2817,66 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrTokenResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrTokenResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrTokenResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrDeviceAuthorizationResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrDeviceAuthorizationResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrDeviceAuthorizationResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrErrorResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrErrorResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.jlr.JlrErrorResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "org.HdrHistogram.AbstractHistogram"
     },
     {

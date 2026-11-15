@@ -12,6 +12,12 @@ erDiagram
         string next_attempt_time
     }
 
+    jlr_token {
+        integer id PK "always 1"
+        string refresh_token "secret, plain text, never logged"
+        string updated_time
+    }
+
     check_in_out_sensor {
         string id PK
         string created_time
@@ -118,6 +124,7 @@ erDiagram
 | **check_in_out_sensor** | Stores sensor data for check-in and check-out events, including timestamps and status.                           | raw           |
 | **guest**               | Stores unique guest profiles, including name, contact details, and external identifiers.                         | raw           |
 | **guest_avatar**        | Stores the JPEG avatar of a guest (at most one per guest, deleted with the guest).                               | raw           |
+| **jlr_token**           | The rotating refresh token of the JLR Data Hub login (one row, `id` = 1). A secret kept as plain text, so the DB file and its backups are as sensitive as the private key. Internal, no audit columns. | internal      |
 | **reservation**         | Stores cabin reservations, including planned start/end times and calculated actual check-in and check-out times. | raw + derived |
 | **reservation_guest**   | Links reservations with guests in a many-to-many relationship. `from_date`/`to_date` (ISO dates, both inclusive) are the guest's own stay when it is shorter than the reservation; null means the guest follows the reservation. | derived       |
 | **sync_checkpoint**     | Stores the last synchronization checkpoints for various data sources.                                            | raw           |
@@ -137,7 +144,7 @@ erDiagram
 
 ### Audit columns
 
-Every table except the internal `calendar_outbox` has the same audit columns and `version`:
+Every table except the internal `calendar_outbox` and `jlr_token` has the same audit columns and `version`:
 
 | Column         | Required | Set when                                          | Value                                                  |
 |:---------------|:---------|:--------------------------------------------------|:-------------------------------------------------------|
