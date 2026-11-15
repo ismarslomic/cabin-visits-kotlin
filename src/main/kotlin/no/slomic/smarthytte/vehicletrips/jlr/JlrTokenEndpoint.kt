@@ -17,8 +17,8 @@ internal const val AUTH_BASE_URL = "https://auth.jlr-vcdp.com/realms/public/prot
 internal const val TOKEN_URL = "$AUTH_BASE_URL/token"
 internal const val DEVICE_URL = "$AUTH_BASE_URL/auth/device"
 private const val CLIENT_ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-private const val DPOP_HEADER = "DPoP"
-private const val DPOP_NONCE_HEADER = "DPoP-Nonce"
+internal const val DPOP_HEADER = "DPoP"
+internal const val DPOP_NONCE_HEADER = "DPoP-Nonce"
 
 internal val jlrJson = Json { ignoreUnknownKeys = true }
 
@@ -83,4 +83,14 @@ internal class JlrTokenEndpoint(
 internal suspend fun HttpResponse.errorCode(): String? {
     val text = bodyAsText()
     return runCatching { jlrJson.decodeFromString<JlrErrorResponse>(text).error }.getOrNull()
+}
+
+/**
+ * Reads the body outside the `runCatching`, so a cancellation is not swallowed. A parse error does not become the cause
+ * of the exception: its message contains a piece of the body, which holds tokens.
+ */
+internal suspend inline fun <reified T> HttpResponse.decodeBody(what: String): T {
+    val text = bodyAsText()
+    return runCatching { jlrJson.decodeFromString<T>(text) }
+        .getOrElse { throw JlrRequestException("JLR $what response could not be read") }
 }

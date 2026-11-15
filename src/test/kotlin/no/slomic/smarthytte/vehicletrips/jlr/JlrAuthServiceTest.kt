@@ -24,9 +24,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import no.slomic.smarthytte.common.issues.IssueCode
 import no.slomic.smarthytte.common.issues.RecordingIssueReporter
 import no.slomic.smarthytte.plugins.installRetry
-import java.security.MessageDigest
-import java.util.Base64
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -34,38 +31,9 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private val START = Instant.parse("2026-11-15T10:00:00Z")
-private const val TOKEN_URL = "https://auth.jlr-vcdp.com/realms/public/protocol/openid-connect/token"
 private const val DEVICE_URL = "https://auth.jlr-vcdp.com/realms/public/protocol/openid-connect/auth/device"
 
-private class MutableClock(var current: Instant) : Clock {
-    override fun now(): Instant = current
-}
-
 private class RecordedRequest(val url: String, val form: Parameters, val dpop: String?)
-
-private class Reply(
-    val status: HttpStatusCode,
-    val body: String,
-    val headers: List<Pair<String, String>> = emptyList(),
-    val failure: Throwable? = null,
-)
-
-private fun ok(body: String) = Reply(HttpStatusCode.OK, body)
-
-private fun errorReply(error: String, status: HttpStatusCode = HttpStatusCode.BadRequest, nonce: String? = null) =
-    Reply(
-        status,
-        """{"error":"$error"}""",
-        listOfNotNull(nonce?.let { "DPoP-Nonce" to it }),
-    )
-
-private fun tokens(access: String, refresh: String? = null, expiresIn: Long = 300) = ok(
-    buildString {
-        append("""{"access_token":"$access","token_type":"DPoP","expires_in":$expiresIn,"refresh_expires_in":0""")
-        refresh?.let { append(""","refresh_token":"$it"""") }
-        append("}")
-    },
-)
 
 private fun deviceAuthorization(expiresIn: Long = 900, interval: Long = 5) = ok(
     """{"device_code":"device-secret","user_code":"ABCD-1234","verification_uri":"https://verify.example.test",""" +
@@ -73,11 +41,8 @@ private fun deviceAuthorization(expiresIn: Long = 900, interval: Long = 5) = ok(
         """"interval":$interval}""",
 )
 
-private fun sha256Base64Url(value: String) = Base64.getUrlEncoder().withoutPadding()
-    .encodeToString(MessageDigest.getInstance("SHA-256").digest(value.toByteArray()))
-
 /** Everything a test needs: the service, its fakes and the scripted answers of the auth server, in order. */
-private class Fixture(storedRefreshToken: String? = null, withRetry: Boolean = false) {
+private class AuthFixture(storedRefreshToken: String? = null, withRetry: Boolean = false) {
     val clock = MutableClock(START)
     val repository = FakeJlrTokenRepository(storedRefreshToken)
     val reporter = RecordingIssueReporter()
@@ -122,7 +87,7 @@ class JlrAuthServiceTest :
     ShouldSpec({
         context("device login, when no refresh token is stored") {
             should("report the link and code, poll until approved and store the refresh token") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += deviceAuthorization()
                 f.script += errorReply("authorization_pending")
                 f.script += tokens(access = "access-1", refresh = "refresh-1")
@@ -140,7 +105,7 @@ class JlrAuthServiceTest :
             }
 
             should("send a client assertion with the token URL as audience and no DPoP proof to the device endpoint") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += deviceAuthorization()
                 f.script += tokens("access-1", "refresh-1")
 
@@ -156,7 +121,7 @@ class JlrAuthServiceTest :
             }
 
             should("poll the token endpoint with the PKCE verifier, a DPoP proof and a client assertion") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += deviceAuthorization()
                 f.script += tokens("access-1", "refresh-1")
 
@@ -175,7 +140,7 @@ class JlrAuthServiceTest :
             }
 
             should("wait 5 seconds longer after slow_down") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += deviceAuthorization()
                 f.script += errorReply("slow_down")
                 f.script += tokens("access-1", "refresh-1")
@@ -186,7 +151,7 @@ class JlrAuthServiceTest :
             }
 
             should("fail when the owner denies, and not start another login for an hour") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += deviceAuthorization()
                 f.script += errorReply("access_denied")
 
@@ -203,7 +168,7 @@ class JlrAuthServiceTest :
             }
 
             should("fail when not approved before the code expires") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += deviceAuthorization(expiresIn = 12, interval = 5)
                 repeat(3) { f.script += errorReply("authorization_pending") }
 
@@ -212,7 +177,7 @@ class JlrAuthServiceTest :
             }
 
             should("fail with a request exception when the device endpoint is down") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += Reply(HttpStatusCode.InternalServerError, "oops")
 
                 shouldThrow<JlrRequestException> { f.service.accessToken() }
@@ -222,7 +187,7 @@ class JlrAuthServiceTest :
 
         context("renewing with the refresh token") {
             should("cache the access token until 60 seconds before it expires") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += tokens("access-1", "refresh-1", expiresIn = 300)
 
                 f.service.accessToken() shouldBe "access-1"
@@ -237,7 +202,7 @@ class JlrAuthServiceTest :
             }
 
             should("send the stored refresh token with a DPoP proof and persist the rotated one") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += tokens("access-1", "refresh-1")
 
                 f.service.accessToken()
@@ -251,7 +216,7 @@ class JlrAuthServiceTest :
             }
 
             should("keep the old refresh token when the answer has no new one") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += tokens("access-1", refresh = null)
 
                 f.service.accessToken()
@@ -264,7 +229,7 @@ class JlrAuthServiceTest :
             }
 
             should("use the rotated token from memory when storing it failed") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.repository.failNextSave = true
                 f.script += tokens("access-1", "refresh-1")
                 shouldThrow<IllegalStateException> { f.service.accessToken() }
@@ -277,7 +242,7 @@ class JlrAuthServiceTest :
             }
 
             should("renew once when two callers ask at the same time") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += tokens("access-1", "refresh-1")
 
                 val answers = coroutineScope { List(2) { async { f.service.accessToken() } }.awaitAll() }
@@ -287,7 +252,7 @@ class JlrAuthServiceTest :
             }
 
             should("forget a rejected refresh token (invalid_grant) and start a device login next time") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += errorReply("invalid_grant")
 
                 shouldThrow<JlrAuthException> { f.service.accessToken() }
@@ -302,7 +267,7 @@ class JlrAuthServiceTest :
 
             should("keep the refresh token when the client is rejected, it is a configuration problem") {
                 listOf("invalid_client", "unauthorized_client").forEach { code ->
-                    val f = Fixture(storedRefreshToken = "refresh-0")
+                    val f = AuthFixture(storedRefreshToken = "refresh-0")
                     f.script += errorReply(code, HttpStatusCode.Unauthorized)
 
                     shouldThrow<JlrAuthException> { f.service.accessToken() }.message shouldContain code
@@ -313,7 +278,7 @@ class JlrAuthServiceTest :
             }
 
             should("throw a request exception on a server error, without touching the stored token") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += Reply(HttpStatusCode.BadGateway, "bad gateway")
 
                 shouldThrow<JlrRequestException> { f.service.accessToken() }
@@ -322,7 +287,7 @@ class JlrAuthServiceTest :
             }
 
             should("never put tokens in an exception message") {
-                val f = Fixture(storedRefreshToken = "refresh-secret")
+                val f = AuthFixture(storedRefreshToken = "refresh-secret")
                 f.script += errorReply("invalid_grant")
 
                 val message = shouldThrow<JlrAuthException> { f.service.accessToken() }.message.orEmpty()
@@ -333,7 +298,7 @@ class JlrAuthServiceTest :
 
         context("failures that are not the owner's decision") {
             should("not start the one hour cooldown when the server fails while polling") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.script += deviceAuthorization()
                 f.script += Reply(HttpStatusCode.ServiceUnavailable, "down")
 
@@ -345,7 +310,7 @@ class JlrAuthServiceTest :
             }
 
             should("not put the response body in the exception when it cannot be read") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += ok("""{"access_token":"access-secret","refresh_token":"refresh-secret","expires_in":"x"}""")
 
                 val error = shouldThrow<JlrRequestException> { f.service.accessToken() }
@@ -355,7 +320,7 @@ class JlrAuthServiceTest :
             }
 
             should("not retry a refresh after a network failure, the token may be spent") {
-                val f = Fixture(storedRefreshToken = "refresh-0", withRetry = true)
+                val f = AuthFixture(storedRefreshToken = "refresh-0", withRetry = true)
                 f.script += Reply(HttpStatusCode.OK, "", failure = java.io.IOException("connection reset"))
 
                 shouldThrow<java.io.IOException> { f.service.accessToken() }
@@ -365,7 +330,7 @@ class JlrAuthServiceTest :
             }
 
             should("save the rotated token later when the first save failed and the next answer repeats it") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.repository.failNextSave = true
                 f.script += tokens("access-1", "refresh-1")
                 shouldThrow<IllegalStateException> { f.service.accessToken() }
@@ -379,7 +344,7 @@ class JlrAuthServiceTest :
 
         context("DPoP nonce") {
             should("retry once with the nonce, a new proof and a new client assertion") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += errorReply("use_dpop_nonce", nonce = "nonce-1")
                 f.script += tokens("access-1", "refresh-1")
 
@@ -393,7 +358,7 @@ class JlrAuthServiceTest :
             }
 
             should("retry only once, then report the failure") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += errorReply("use_dpop_nonce", nonce = "nonce-1")
                 f.script += errorReply("use_dpop_nonce", nonce = "nonce-2")
 
@@ -403,7 +368,7 @@ class JlrAuthServiceTest :
             }
 
             should("not retry on another error that carries a nonce header") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += errorReply("invalid_request", nonce = "nonce-1")
 
                 shouldThrow<JlrRequestException> { f.service.accessToken() }
@@ -412,7 +377,7 @@ class JlrAuthServiceTest :
             }
 
             should("add a remembered nonce and the token hash to API proofs") {
-                val f = Fixture()
+                val f = AuthFixture()
                 f.service.rememberDpopNonce("api-nonce")
 
                 val claims = jwtClaims(f.service.apiDpopProof("GET", "https://api.example.test/v1/x?page=0", "tok"))
@@ -425,7 +390,7 @@ class JlrAuthServiceTest :
 
         context("after the API rejected the access token") {
             should("renew, but only once for callers that were rejected with the same token") {
-                val f = Fixture(storedRefreshToken = "refresh-0")
+                val f = AuthFixture(storedRefreshToken = "refresh-0")
                 f.script += tokens("access-1", "refresh-1")
                 f.service.accessToken()
 
@@ -441,7 +406,7 @@ class JlrAuthServiceTest :
 
         context("with the retrying HTTP client") {
             should("sign every retry of a token request again, so no jti is sent twice") {
-                val f = Fixture(storedRefreshToken = "refresh-0", withRetry = true)
+                val f = AuthFixture(storedRefreshToken = "refresh-0", withRetry = true)
                 f.script += Reply(HttpStatusCode.InternalServerError, "oops")
                 f.script += tokens("access-1", "refresh-1")
 

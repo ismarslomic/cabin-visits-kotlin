@@ -2,7 +2,6 @@ package no.slomic.smarthytte.vehicletrips.jlr
 
 import io.ktor.client.HttpClient
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.util.logging.KtorSimpleLogger
 import kotlinx.coroutines.delay
@@ -13,7 +12,7 @@ import no.slomic.smarthytte.common.issues.IssueReporter
 import no.slomic.smarthytte.plugins.SignRequest
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.util.Base64
+import java.util.*
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -218,16 +217,6 @@ private fun pkceChallenge(verifier: String): String = Base64.getUrlEncoder().wit
     .encodeToString(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray()))
 
 private suspend fun HttpResponse.tokens(): JlrTokenResponse = decodeBody("token")
-
-/**
- * Reads the body outside the `runCatching`, so a cancellation is not swallowed. A parse error does not become the cause
- * of the exception: its message contains a piece of the body, which holds tokens.
- */
-private suspend inline fun <reified T> HttpResponse.decodeBody(what: String): T {
-    val text = bodyAsText()
-    return runCatching { jlrJson.decodeFromString<T>(text) }
-        .getOrElse { throw JlrRequestException("JLR $what response could not be read") }
-}
 
 private fun refreshFailure(error: String?, response: HttpResponse): RuntimeException = when (error) {
     "invalid_grant" -> JlrAuthException("The JLR refresh token was rejected ($error), a new device login is needed")
