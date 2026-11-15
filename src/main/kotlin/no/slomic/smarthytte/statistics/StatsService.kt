@@ -69,6 +69,7 @@ import no.slomic.smarthytte.statistics.model.YearStats
 import no.slomic.smarthytte.statistics.model.YearVisitsStats
 import no.slomic.smarthytte.statistics.model.toLive
 import no.slomic.smarthytte.statistics.model.toTopGuestByDays
+import no.slomic.smarthytte.vehicletrips.VehicleTrip
 
 private val BY_START_DATE_THEN_ID = compareBy<Reservation> { it.startDate }.thenBy { it.id }
 
@@ -407,31 +408,39 @@ class StatsService(
         )
     }
 
+    /**
+     * Only trips with energy values count: trips from the JLR Data Hub have none. The average is weighted by the
+     * distance of those trips only, and the result is null when no trip has energy values.
+     */
     private fun computeYearEvStats(yearReservations: List<Reservation>): YearEvStats? {
-        val allCabinTrips = yearReservations.flatMap { it.toCabinVehicleTrips + it.fromCabinVehicleTrips }
-        if (allCabinTrips.isEmpty()) return null
+        val energyTrips = yearReservations
+            .flatMap { it.toCabinVehicleTrips + it.fromCabinVehicleTrips }
+            .mapNotNull(::toEnergyTripOrNull)
+        if (energyTrips.isEmpty()) return null
         val totalKwh =
-            allCabinTrips
-                .sumOf { it.averageEnergyConsumption * it.distance / KWH_PER_100KM_FACTOR }
+            energyTrips
+                .sumOf { it.consumptionKwhPer100km * it.distanceKm / KWH_PER_100KM_FACTOR }
                 .takeIf { it > 0 }
                 ?.round1()
+        val totalDist = energyTrips.sumOf { it.distanceKm }
         val avgKwhPer100km =
-            allCabinTrips
-                .let { trips ->
-                    val totalDist = trips.sumOf { it.distance }
-                    if (totalDist > 0) {
-                        (trips.sumOf { it.averageEnergyConsumption * it.distance } / totalDist).round1()
-                    } else {
-                        null
-                    }
-                }
-        val totalRegeneratedKwh = allCabinTrips.sumOf { it.energyRegenerated }.takeIf { it > 0 }?.round1()
+            totalDist
+                .takeIf { it > 0 }
+                ?.let { (energyTrips.sumOf { trip -> trip.consumptionKwhPer100km * trip.distanceKm } / it).round1() }
+        val totalRegeneratedKwh = energyTrips.sumOf { it.regeneratedKwh ?: 0.0 }.takeIf { it > 0 }?.round1()
         return YearEvStats(
             totalEnergyConsumedKwh = totalKwh,
             avgEnergyConsumptionKwhPer100km = avgKwhPer100km,
             totalEnergyRegeneratedKwh = totalRegeneratedKwh,
         )
     }
+}
+
+/** A trip that has an energy consumption value, so the sums above can never see a null consumption. */
+private data class EnergyTrip(val consumptionKwhPer100km: Double, val distanceKm: Double, val regeneratedKwh: Double?)
+
+private fun toEnergyTripOrNull(trip: VehicleTrip): EnergyTrip? = trip.averageEnergyConsumption?.let {
+    EnergyTrip(consumptionKwhPer100km = it, distanceKm = trip.distance, regeneratedKwh = trip.energyRegenerated)
 }
 
 /** Order number (from 1) of each reservation when sorted ascending on start date, then id. */

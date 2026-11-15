@@ -6,22 +6,22 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 
 data class VehicleTrip(
-    val averageEnergyConsumption: Double,
-    val averageEnergyConsumptionUnit: String,
+    val averageEnergyConsumption: Double?,
+    val averageEnergyConsumptionUnit: String?,
     val averageSpeed: Double,
     val distance: Double,
     val distanceUnit: String,
     val duration: Duration,
     val durationUnit: String,
-    val endAddress: String,
-    val endCity: String,
+    val endAddress: String?,
+    val endCity: String?,
     val endTime: Instant,
-    val energyRegenerated: Double,
-    val energyRegeneratedUnit: String,
+    val energyRegenerated: Double?,
+    val energyRegeneratedUnit: String?,
     val id: String,
     val speedUnit: String,
-    val startAddress: String,
-    val startCity: String,
+    val startAddress: String?,
+    val startCity: String?,
     val startTime: Instant,
     val totalDistance: Double,
     /**
@@ -29,6 +29,12 @@ data class VehicleTrip(
      */
     val extraStops: List<String> = listOf(),
     val notionId: String? = null,
+    /** [DataQuality.PLACE_MISSING] when the place lookup failed, so city or address is null. */
+    val dataQuality: DataQuality = DataQuality.COMPLETE,
+    /** Id of the journey in the JLR Data Hub, null for trips that only exist in the archive file. */
+    val jlrJourneyId: String? = null,
+    val startPoint: GeoPoint? = null,
+    val endPoint: GeoPoint? = null,
 ) {
     val startDate: LocalDate
         get() = startTime.toUtcDate()

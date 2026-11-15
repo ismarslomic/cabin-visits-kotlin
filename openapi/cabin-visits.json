@@ -3197,7 +3197,7 @@
               "number",
               "null"
             ],
-            "description": "Total energy consumed (kWh) for all trips to and from the cabin this year, derived from average consumption × distance per trip. Null if no vehicle trip data exists.",
+            "description": "Total energy consumed (kWh) for all trips to and from the cabin this year, derived from average consumption × distance per trip. Counts only trips with energy data, so it is partial for a year with both old and new trips. Null if no trip has energy data.",
             "example": 245.6
           },
           "avgEnergyConsumptionKwhPer100km": {
@@ -3205,7 +3205,7 @@
               "number",
               "null"
             ],
-            "description": "Distance-weighted average energy consumption in kWh per 100 km across all trips to and from the cabin this year. Null if no vehicle trip data exists.",
+            "description": "Distance-weighted average energy consumption in kWh per 100 km across the trips to and from the cabin this year that have energy data (weighted by the distance of those trips only). Null if no trip has energy data.",
             "example": 19.8
           },
           "totalEnergyRegeneratedKwh": {
@@ -3213,7 +3213,7 @@
               "number",
               "null"
             ],
-            "description": "Total energy regenerated (kWh) through regenerative braking across all trips to and from the cabin this year. Null if no vehicle trip data exists.",
+            "description": "Total energy regenerated (kWh) through regenerative braking across the trips to and from the cabin this year that have energy data. Null if no trip has energy data.",
             "example": 38.2
           }
         }

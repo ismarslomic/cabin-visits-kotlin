@@ -84,9 +84,9 @@ class StatsServiceTest :
             date: LocalDate,
             type: ReservationVehicleTripType,
             durationMinutes: Int,
-            energyConsumption: Double = 0.0,
+            energyConsumption: Double? = 0.0,
             distanceKm: Double = 0.0,
-            energyRegeneratedKwh: Double = 0.0,
+            energyRegeneratedKwh: Double? = 0.0,
         ) {
             val (startCity, endCity) = when (type) {
                 ReservationVehicleTripType.FROM_CABIN -> CABIN_CITY_NAME to HOME_CITY_NAME
@@ -553,6 +553,51 @@ class StatsServiceTest :
                 stats.drivingDistance.shouldNotBeNull().totalToCabinKm shouldBe 100.0
                 stats.drivingTime.shouldNotBeNull().avgToCabinMinutes shouldBe 100
                 stats.drivingTime.shouldNotBeNull().avgFromCabinMinutes shouldBe 90
+            }
+
+            should("count only trips with energy data, weighted by the distance of those trips") {
+                val lastYear = utcDateNow().year - 1
+                val start = LocalDate(lastYear, 6, 10)
+                addGuests(anna)
+                addReservation("p1", start, start.plus(DatePeriod(days = 2)), anna)
+                addTrip("p1", start, ReservationVehicleTripType.TO_CABIN, 100, 20.0, 100.0, 3.0)
+                // A trip from the JLR Data Hub: distance but no energy values
+                addTrip(
+                    "p1",
+                    start.plus(DatePeriod(days = 2)),
+                    ReservationVehicleTripType.FROM_CABIN,
+                    90,
+                    energyConsumption = null,
+                    distanceKm = 300.0,
+                    energyRegeneratedKwh = null,
+                )
+
+                val ev = service.getYearStats(lastYear).ev.shouldNotBeNull()
+
+                ev.totalEnergyConsumedKwh shouldBe 20.0
+                ev.avgEnergyConsumptionKwhPer100km shouldBe 20.0
+                ev.totalEnergyRegeneratedKwh shouldBe 3.0
+            }
+
+            should("return no EV stats when no trip has energy data") {
+                val lastYear = utcDateNow().year - 1
+                val start = LocalDate(lastYear, 6, 10)
+                addGuests(anna)
+                addReservation("p1", start, start.plus(DatePeriod(days = 2)), anna)
+                addTrip(
+                    "p1",
+                    start,
+                    ReservationVehicleTripType.TO_CABIN,
+                    100,
+                    energyConsumption = null,
+                    distanceKm = 100.0,
+                    energyRegeneratedKwh = null,
+                )
+
+                val stats = service.getYearStats(lastYear)
+
+                stats.ev.shouldBeNull()
+                stats.drivingDistance.shouldNotBeNull().totalToCabinKm shouldBe 100.0
             }
         }
 

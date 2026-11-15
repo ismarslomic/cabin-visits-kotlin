@@ -12,24 +12,31 @@ import kotlin.time.Instant
 
 object VehicleTripTable : AuditedIdTable<String>(name = "vehicle_trip") {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).entityId()
-    val averageEnergyConsumption: Column<Double> = double(name = "avg_energy_consumption")
-    val averageEnergyConsumptionUnit: Column<String> = varchar(name = "avg_energy_consumption_unit", length = 10)
+    val averageEnergyConsumption: Column<Double?> = double(name = "avg_energy_consumption").nullable()
+    val averageEnergyConsumptionUnit: Column<String?> =
+        varchar(name = "avg_energy_consumption_unit", length = 10).nullable()
     val averageSpeed: Column<Double> = double("avg_speed")
     val distance: Column<Double> = double(name = "distance")
     val distanceUnit: Column<String> = varchar(name = "distance_unit", length = 5)
     val duration: Column<Duration> = duration(name = "duration")
     val durationUnit: Column<String> = varchar(name = "duration_unit", length = 5)
-    val endAddress: Column<String> = varchar(name = "end_address", length = 100)
-    val endCity: Column<String> = varchar(name = "end_city", length = 30)
+    val endAddress: Column<String?> = varchar(name = "end_address", length = 100).nullable()
+    val endCity: Column<String?> = varchar(name = "end_city", length = 30).nullable()
     val endTime: Column<Instant> = timestamp(name = "end_time")
-    val energyRegenerated: Column<Double> = double(name = "energy_regenerated")
-    val energyRegeneratedUnit: Column<String> = varchar(name = "energy_generated_unit", length = 5)
+    val energyRegenerated: Column<Double?> = double(name = "energy_regenerated").nullable()
+    val energyRegeneratedUnit: Column<String?> = varchar(name = "energy_generated_unit", length = 5).nullable()
     val speedUnit: Column<String> = varchar(name = "speed_unit", length = 5)
-    val startAddress: Column<String> = varchar(name = "start_address", length = 100)
-    val startCity: Column<String> = varchar(name = "start_city", length = 30)
+    val startAddress: Column<String?> = varchar(name = "start_address", length = 100).nullable()
+    val startCity: Column<String?> = varchar(name = "start_city", length = 30).nullable()
     val startTime: Column<Instant> = timestamp(name = "start_time")
     val totalDistance: Column<Double> = double(name = "total_distance")
     val notionId: Column<String?> = varchar(name = "notion_id", length = 50).nullable()
+    val dataQuality: Column<DataQuality> = enumerationByName("data_quality", length = 20, DataQuality::class)
+    val jlrJourneyId: Column<String?> = varchar(name = "jlr_journey_id", length = 50).nullable()
+    val startLatitude: Column<Double?> = double(name = "start_latitude").nullable()
+    val startLongitude: Column<Double?> = double(name = "start_longitude").nullable()
+    val endLatitude: Column<Double?> = double(name = "end_latitude").nullable()
+    val endLongitude: Column<Double?> = double(name = "end_longitude").nullable()
 
     override val primaryKey = PrimaryKey(id, name = "pk_vehicle_trip_id")
 }
@@ -37,24 +44,30 @@ object VehicleTripTable : AuditedIdTable<String>(name = "vehicle_trip") {
 class VehicleTripEntity(id: EntityID<String>) : AuditedEntity<String>(id, VehicleTripTable) {
     companion object : EntityClass<String, VehicleTripEntity>(VehicleTripTable)
 
-    var averageEnergyConsumption: Double by VehicleTripTable.averageEnergyConsumption
-    var averageEnergyConsumptionUnit: String by VehicleTripTable.averageEnergyConsumptionUnit
+    var averageEnergyConsumption: Double? by VehicleTripTable.averageEnergyConsumption
+    var averageEnergyConsumptionUnit: String? by VehicleTripTable.averageEnergyConsumptionUnit
     var averageSpeed: Double by VehicleTripTable.averageSpeed
     var distance: Double by VehicleTripTable.distance
     var distanceUnit: String by VehicleTripTable.distanceUnit
     var duration: Duration by VehicleTripTable.duration
     var durationUnit: String by VehicleTripTable.durationUnit
-    var endAddress: String by VehicleTripTable.endAddress
-    var endCity: String by VehicleTripTable.endCity
+    var endAddress: String? by VehicleTripTable.endAddress
+    var endCity: String? by VehicleTripTable.endCity
     var endTime: Instant by VehicleTripTable.endTime
-    var energyRegenerated: Double by VehicleTripTable.energyRegenerated
-    var energyRegeneratedUnit: String by VehicleTripTable.energyRegeneratedUnit
+    var energyRegenerated: Double? by VehicleTripTable.energyRegenerated
+    var energyRegeneratedUnit: String? by VehicleTripTable.energyRegeneratedUnit
     var notionId: String? by VehicleTripTable.notionId
     var speedUnit: String by VehicleTripTable.speedUnit
-    var startAddress: String by VehicleTripTable.startAddress
-    var startCity: String by VehicleTripTable.startCity
+    var startAddress: String? by VehicleTripTable.startAddress
+    var startCity: String? by VehicleTripTable.startCity
     var startTime: Instant by VehicleTripTable.startTime
     var totalDistance: Double by VehicleTripTable.totalDistance
+    var dataQuality: DataQuality by VehicleTripTable.dataQuality
+    var jlrJourneyId: String? by VehicleTripTable.jlrJourneyId
+    var startLatitude: Double? by VehicleTripTable.startLatitude
+    var startLongitude: Double? by VehicleTripTable.startLongitude
+    var endLatitude: Double? by VehicleTripTable.endLatitude
+    var endLongitude: Double? by VehicleTripTable.endLongitude
 }
 
 fun daoToModel(dao: VehicleTripEntity) = VehicleTrip(
@@ -77,4 +90,11 @@ fun daoToModel(dao: VehicleTripEntity) = VehicleTrip(
     startTime = dao.startTime,
     totalDistance = dao.totalDistance,
     notionId = dao.notionId,
+    dataQuality = dao.dataQuality,
+    jlrJourneyId = dao.jlrJourneyId,
+    startPoint = geoPointOrNull(dao.startLatitude, dao.startLongitude),
+    endPoint = geoPointOrNull(dao.endLatitude, dao.endLongitude),
 )
+
+private fun geoPointOrNull(latitude: Double?, longitude: Double?): GeoPoint? =
+    if (latitude != null && longitude != null) GeoPoint(latitude, longitude) else null

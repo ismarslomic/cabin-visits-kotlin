@@ -205,17 +205,17 @@ data class YearDrivingDistanceStats(
 @Serializable
 data class YearEvStats(
     @JsonSchema.Description(
-        "Total energy consumed (kWh) for all trips to and from the cabin this year, derived from average consumption × distance per trip. Null if no vehicle trip data exists.",
+        "Total energy consumed (kWh) for all trips to and from the cabin this year, derived from average consumption × distance per trip. Counts only trips with energy data, so it is partial for a year with both old and new trips. Null if no trip has energy data.",
     )
     @JsonSchema.Example("245.6")
     val totalEnergyConsumedKwh: Double?,
     @JsonSchema.Description(
-        "Distance-weighted average energy consumption in kWh per 100 km across all trips to and from the cabin this year. Null if no vehicle trip data exists.",
+        "Distance-weighted average energy consumption in kWh per 100 km across the trips to and from the cabin this year that have energy data (weighted by the distance of those trips only). Null if no trip has energy data.",
     )
     @JsonSchema.Example("19.8")
     val avgEnergyConsumptionKwhPer100km: Double?,
     @JsonSchema.Description(
-        "Total energy regenerated (kWh) through regenerative braking across all trips to and from the cabin this year. Null if no vehicle trip data exists.",
+        "Total energy regenerated (kWh) through regenerative braking across the trips to and from the cabin this year that have energy data. Null if no trip has energy data.",
     )
     @JsonSchema.Example("38.2")
     val totalEnergyRegeneratedKwh: Double?,

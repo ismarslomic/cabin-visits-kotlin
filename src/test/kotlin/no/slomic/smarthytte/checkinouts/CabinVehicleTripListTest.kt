@@ -35,6 +35,36 @@ class CabinVehicleTripListTest :
         val lillehammerCity = "Lillehammer"
         val sjusjoenCity = "Sjusjoen"
 
+        context("Trips without start or end city (failed place lookup)") {
+            should("ignore them and still find the cabin trip around them") {
+                val trips = listOf(
+                    createTrip(homeCity, cabinCity, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"),
+                    createTrip(null, cabinCity, "2025-01-01T16:00:00+01:00", "2025-01-01T16:10:00+01:00"),
+                    createTrip(cabinCity, null, "2025-01-01T17:00:00+01:00", "2025-01-01T17:10:00+01:00"),
+                    createTrip(null, null, "2025-01-01T18:00:00+01:00", "2025-01-01T18:10:00+01:00"),
+                )
+
+                val cabinTrips: List<CabinVehicleTrip> = CabinVehicleTripList(trips).cabinTrips
+
+                cabinTrips shouldHaveSize 1
+                assertCabinTrip(cabinTrips[0]) {
+                    toCabinTripsEndCities = listOf(cabinCity)
+                    atCabinTripsSize = 0
+                    fromCabinTripsSize = 0
+                    toCabinStart = Instant.parse("2025-01-01T12:00:00+01:00")
+                    toCabinEnd = Instant.parse("2025-01-01T15:00:00+01:00")
+                    fromCabinStart = null
+                    fromCabinEnd = null
+                }
+            }
+
+            should("return an empty list when every trip lacks a city") {
+                val trips = listOf(createTrip(null, null, "2025-01-01T12:00:00+01:00", "2025-01-01T15:00:00+01:00"))
+
+                CabinVehicleTripList(trips).cabinTrips shouldHaveSize 0
+            }
+        }
+
         context("Home to Cabin trip is a trip where startCity = homeCity and endCity = cabinCity") {
             should("should find Home to Cabin trip when correct startCity and endCity") {
                 val trips = listOf(
