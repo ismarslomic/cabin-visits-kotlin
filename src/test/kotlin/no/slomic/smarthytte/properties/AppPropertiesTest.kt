@@ -50,6 +50,12 @@ class AppPropertiesTest :
                 "VEHICLE_TRIP_REFERRER" to envVarVehicleTripReferrer,
                 "VEHICLE_TRIP_LOCALE" to envVarVehicleTripLocale,
                 "STATISTICS_DATA_START_DATE" to envVarStatisticsDataStartDate,
+                "HOME_LATITUDE" to "59.1",
+                "HOME_LONGITUDE" to "10.1",
+                "HOME_ADDRESS" to "Homestreet 1, 0100 Oslo",
+                "CABIN_LATITUDE" to "60.2",
+                "CABIN_LONGITUDE" to "8.2",
+                "CABIN_ADDRESS" to "Cabinroad 2, 3560 Hemsedal",
             )
             withTestEnvironment(requiredEnvVars) {
                 When("reading google properties") {
@@ -72,6 +78,15 @@ class AppPropertiesTest :
 
                     Then("database.filePath should be set to the default value") {
                         databaseFilePath shouldBe defaultDatabaseFilePath
+                    }
+                }
+
+                When("reading places properties") {
+                    val places = loadProperties<PlacesPropertiesHolder>().places
+
+                    Then("home and cabin come from the environment variables") {
+                        places.home shouldBe PlaceProperties(59.1, 10.1, "Homestreet 1, 0100 Oslo", 200.0)
+                        places.cabin shouldBe PlaceProperties(60.2, 8.2, "Cabinroad 2, 3560 Hemsedal", 200.0)
                     }
                 }
 
@@ -150,6 +165,8 @@ class AppPropertiesTest :
                     "INFLUXDB_CHECK_IN_RANGE_STOP" to envVarInfluxDbCheckInRangeStop,
                     "INFLUXDB_CHECK_IN_SYNC_ENABLED" to "false",
                     "VEHICLE_TRIP_SYNC_ENABLED" to "false",
+                    "HOME_RADIUS_METERS" to "150",
+                    "CABIN_RADIUS_METERS" to "250",
                 )
                 val requiredAndOptionalEnvVars = requiredEnvVars + optionalEnvVars
 
@@ -162,6 +179,15 @@ class AppPropertiesTest :
 
                         Then("database.filePath should use the data folder set from the environment variable value") {
                             databaseFilePath shouldBe expectedDatabaseFilePath
+                        }
+                    }
+
+                    When("reading places properties") {
+                        val places = loadProperties<PlacesPropertiesHolder>().places
+
+                        Then("the radii should be set to the environment variable values") {
+                            places.home.radiusMeters shouldBe 150.0
+                            places.cabin.radiusMeters shouldBe 250.0
                         }
                     }
 
@@ -199,7 +225,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CREDENTIALS_FILE_PATH}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CREDENTIALS_FILE_PATH}"
                     }
                 }
             }
@@ -216,7 +242,7 @@ class AppPropertiesTest :
                             loadProperties<GoogleCalendarPropertiesHolder>()
                         }
 
-                        exception.message shouldContain "Unresolved substitution \${GOOGLE_CALENDAR_ID}"
+                        exception.message shouldContain $$"Unresolved substitution ${GOOGLE_CALENDAR_ID}"
                     }
                 }
             }

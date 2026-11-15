@@ -4,6 +4,7 @@ import no.slomic.smarthytte.vehicletrips.DataQuality
 import no.slomic.smarthytte.vehicletrips.GeoPoint
 import no.slomic.smarthytte.vehicletrips.TripPlaces
 import no.slomic.smarthytte.vehicletrips.VehicleTrip
+import no.slomic.smarthytte.vehicletrips.dataQuality
 import kotlin.time.Duration.Companion.seconds
 
 // The JLR response has no unit for the duration, it is seconds. `duration` itself is a Duration (stored as
@@ -20,30 +21,27 @@ private const val DURATION_UNIT = "sec"
  * [places] is null when the place lookup failed. The trip is complete when it has a start and an end city, an address
  * is for display only.
  */
-fun JlrJourneyResponse.toVehicleTrip(places: TripPlaces?): VehicleTrip {
-    val hasCities = places?.startCity != null && places.endCity != null
-    return VehicleTrip(
-        averageEnergyConsumption = null,
-        averageEnergyConsumptionUnit = null,
-        averageSpeed = averageSpeed.value,
-        distance = distance.value,
-        distanceUnit = distance.unit,
-        duration = duration.seconds,
-        durationUnit = DURATION_UNIT,
-        endAddress = places?.endAddress,
-        endCity = places?.endCity,
-        endTime = endTime,
-        energyRegenerated = null,
-        energyRegeneratedUnit = null,
-        id = endTime.toEpochMilliseconds().toString(),
-        speedUnit = averageSpeed.unit,
-        startAddress = places?.startAddress,
-        startCity = places?.startCity,
-        startTime = startTime,
-        totalDistance = distance.value,
-        dataQuality = if (hasCities) DataQuality.COMPLETE else DataQuality.PLACE_MISSING,
-        jlrJourneyId = journeyId,
-        startPoint = GeoPoint(startLocation.latitude, startLocation.longitude),
-        endPoint = GeoPoint(endLocation.latitude, endLocation.longitude),
-    )
-}
+fun JlrJourneyResponse.toVehicleTrip(places: TripPlaces?): VehicleTrip = VehicleTrip(
+    averageEnergyConsumption = null,
+    averageEnergyConsumptionUnit = null,
+    averageSpeed = averageSpeed.value,
+    distance = distance.value,
+    distanceUnit = distance.unit,
+    duration = duration.seconds,
+    durationUnit = DURATION_UNIT,
+    endAddress = places?.endAddress,
+    endCity = places?.endCity,
+    endTime = endTime,
+    energyRegenerated = null,
+    energyRegeneratedUnit = null,
+    id = endTime.toEpochMilliseconds().toString(),
+    speedUnit = averageSpeed.unit,
+    startAddress = places?.startAddress,
+    startCity = places?.startCity,
+    startTime = startTime,
+    totalDistance = distance.value,
+    dataQuality = places?.dataQuality() ?: DataQuality.PLACE_MISSING,
+    jlrJourneyId = journeyId,
+    startPoint = GeoPoint(startLocation.latitude, startLocation.longitude),
+    endPoint = GeoPoint(endLocation.latitude, endLocation.longitude),
+)

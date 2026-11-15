@@ -2877,6 +2877,106 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketPlaceNamesResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketPlaceNamesResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketPlaceNamesResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketPlaceNameResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketPlaceNameResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketPlaceNameResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketSpellingResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketSpellingResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketSpellingResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketAddressesResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketAddressesResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketAddressesResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketAddressResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketAddressResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.vehicletrips.places.KartverketAddressResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "org.HdrHistogram.AbstractHistogram"
     },
     {

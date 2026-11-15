@@ -24,6 +24,12 @@ private val requiredEnv = mapOf(
     "VEHICLE_TRIP_REFERRER" to "https://app.example",
     "VEHICLE_TRIP_LOCALE" to "key=nb_NO",
     "STATISTICS_DATA_START_DATE" to "2020-09-01",
+    "HOME_LATITUDE" to "59.1",
+    "HOME_LONGITUDE" to "10.1",
+    "HOME_ADDRESS" to "Homestreet 1, 0100 Oslo",
+    "CABIN_LATITUDE" to "60.2",
+    "CABIN_LONGITUDE" to "8.2",
+    "CABIN_ADDRESS" to "Cabinroad 2, 3560 Hemsedal",
 )
 
 class CalendarOutboxPropertiesTest :

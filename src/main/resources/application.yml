@@ -55,6 +55,20 @@ vehicle-trip:
   locale: ${VEHICLE_TRIP_LOCALE}
   page-size: ${VEHICLE_TRIP_PAGE_SIZE:-200}
 
+# The home and the cabin need no place lookup: a point within radius-meters of them is that place. Positions are
+# personal data, so there is no default for them.
+places:
+  home:
+    latitude: ${HOME_LATITUDE}
+    longitude: ${HOME_LONGITUDE}
+    address: ${HOME_ADDRESS}
+    radius-meters: ${HOME_RADIUS_METERS:-200}
+  cabin:
+    latitude: ${CABIN_LATITUDE}
+    longitude: ${CABIN_LONGITUDE}
+    address: ${CABIN_ADDRESS}
+    radius-meters: ${CABIN_RADIUS_METERS:-200}
+
 cloudflare-access:
   team-domain: ${CLOUDFLARE_ACCESS_TEAM_DOMAIN:-}
   audience: ${CLOUDFLARE_ACCESS_AUD:-}

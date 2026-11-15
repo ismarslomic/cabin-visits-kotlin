@@ -10,6 +10,10 @@ collect all data belonging to a visit at Slomic Smarthytte and store it to a dat
 This project uses Oracle GraalVM Native Image, which is subject to
 the [Oracle GraalVM Free Terms and Conditions (GFTC)](https://www.oracle.com/downloads/licenses/graal-free-license.html).
 
+Place names and addresses of vehicle trips come from the open APIs of Kartverket:
+© [Kartverket](https://www.kartverket.no/), licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ## Run in Docker
 
 The changes to this app are automatically published to Docker Hub, and you can always find the latest release at
