@@ -104,12 +104,16 @@ fun main() {
     }
 }
 
+@Suppress("LongMethod") // wiring of the services, one line per service
 fun Application.module() {
     // Initialize database
     configureDatabases()
 
     // Initialize monitoring
     val meterRegistry = configureMonitoring()
+
+    // One reporter for every service that reports operational issues
+    val issueReporter = createIssueReporter()
 
     // Create the Http client
     val httpClient = HttpClientProvider.client
@@ -127,12 +131,14 @@ fun Application.module() {
 
     // Initialize services
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
-    val vehicleTripService = createVehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
-    val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
+    val vehicleTripService =
+        createVehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient, issueReporter)
+    val checkInOutSensorService =
+        CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService, issueReporter)
     val guestQueryService = GuestQueryService(guestRepository)
     val guestAvatarService = GuestAvatarService(guestRepository)
     val checkInOutService =
-        createCheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository)
+        createCheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository, issueReporter)
     val statsService =
         StatsService(ReservationSystemService(reservationRepository), guestQueryService, guestAvatarService)
     val reservationService =
@@ -161,6 +167,7 @@ fun Application.module() {
         checkInOutSensorService,
         checkInOutService,
         meterRegistry,
+        issueReporter,
     )
 
     // Configure Ktor routing (after the initial load is completed)
@@ -185,10 +192,12 @@ private fun createCheckInOutService(
     reservationRepository: ReservationRepository,
     checkInOutSensorRepository: CheckInOutSensorRepository,
     vehicleTripRepository: VehicleTripRepository,
+    issueReporter: IssueReporter,
 ) = CheckInOutService(
     ReservationSystemService(reservationRepository),
     CheckInOutSensorQueryService(checkInOutSensorRepository),
     VehicleTripQueryService(vehicleTripRepository),
+    issueReporter,
 )
 
 /** The reservation service with the calendar outbox depth and the derivation of check-in/out after a write. */
@@ -258,6 +267,7 @@ fun Application.startBackgroundSync(
     checkInOutSensorService: CheckInOutSensorService,
     checkInOutService: CheckInOutService,
     meterRegistry: MeterRegistry,
+    issueReporter: IssueReporter,
 ) {
     val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
     val checkInOutSensorProperties: CheckInProperties = influxdbProperties.checkIn
@@ -298,7 +308,7 @@ fun Application.startBackgroundSync(
     }
 
     // Push the reservation changes in the calendar outbox to Google Calendar
-    startCalendarOutboxDrain(reservationService, meterRegistry)
+    startCalendarOutboxDrain(reservationService, meterRegistry, issueReporter)
 }
 
 fun isDaytime(): Boolean {
@@ -311,14 +321,18 @@ fun isDaytime(): Boolean {
     return now in startTime..endTime
 }
 
+/** Logs every issue and stores it, so it can be shown to an admin. */
+private fun createIssueReporter(): IssueReporter =
+    PersistingIssueReporter(LoggingIssueReporter(), SqliteIssueRepository())
+
 private fun createVehicleTripService(
     vehicleTripRepository: VehicleTripRepository,
     syncCheckpointService: SyncCheckpointService,
     httpClient: HttpClient,
+    issueReporter: IssueReporter,
 ): VehicleTripService {
     val jlr = loadProperties<JlrPropertiesHolder>().jlr
     val knownPlaces = loadProperties<PlacesPropertiesHolder>().places.toKnownPlaces()
-    val issueReporter: IssueReporter = PersistingIssueReporter(LoggingIssueReporter(), SqliteIssueRepository())
 
     val signer = JlrJwtSigner(privateKeyPem = jlr.privateKey.value)
     val authService = JlrAuthService(

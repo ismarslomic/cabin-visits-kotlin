@@ -3,6 +3,8 @@ package no.slomic.smarthytte.calendar
 import io.ktor.util.logging.KtorSimpleLogger
 import kotlinx.coroutines.sync.Mutex
 import no.slomic.smarthytte.common.runCatchingLogged
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.properties.CalendarOutboxProperties
 import kotlin.math.pow
 import kotlin.time.Clock
@@ -12,6 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private val logger = KtorSimpleLogger("no.slomic.smarthytte.calendar.CalendarOutboxDrain")
+private const val OUTBOX_ISSUE_KEY = "outbox"
 
 /**
  * Pushes the pending rows of the outbox to Google Calendar. One run is single-flight (a second call while one runs
@@ -24,6 +27,7 @@ class CalendarOutboxDrain(
     private val outbox: CalendarOutbox,
     private val pusher: CalendarEventPusher,
     private val properties: CalendarOutboxProperties,
+    private val issueReporter: IssueReporter,
     private val metrics: CalendarOutboxMetrics = CalendarOutboxMetrics(),
     private val clock: Clock = Clock.System,
 ) {
@@ -54,7 +58,11 @@ class CalendarOutboxDrain(
         }
 
         when (outcome) {
-            PushOutcome.Done -> outbox.delete(ids)
+            PushOutcome.Done -> {
+                outbox.delete(ids)
+                // Done is also a give-up: then CALENDAR_EVENT_LOST or CALENDAR_EVENT_NOT_CREATABLE carries the problem
+                issueReporter.resolve(IssueCode.CALENDAR_PUSH_FAILED, reservationId)
+            }
 
             is PushOutcome.Retry -> {
                 val failure = outcome.failure
@@ -65,9 +73,11 @@ class CalendarOutboxDrain(
                     backoff(rows.maxOf { it.attempts } + 1)
                 }
                 if (action != FailureAction.RETRY) {
-                    logger.error(
-                        "The calendar push for reservation $reservationId needs attention (${action.name}): " +
-                            "${failure.status} ${failure.reason}",
+                    issueReporter.report(
+                        code = IssueCode.CALENDAR_PUSH_FAILED,
+                        key = reservationId,
+                        message = "The calendar push of reservation $reservationId needs attention " +
+                            "(${action.name}): ${failure.status} ${failure.reason}",
                     )
                 } else {
                     logger.warn(
@@ -92,9 +102,14 @@ class CalendarOutboxDrain(
         metrics.update(status.pending, oldestAge)
 
         if (oldestAge > properties.stuckThresholdMinutes.minutes.inWholeSeconds) {
-            logger.error(
-                "The calendar outbox has stuck rows: ${status.pending} pending, the oldest has waited $oldestAge s",
+            issueReporter.report(
+                code = IssueCode.CALENDAR_OUTBOX_STUCK,
+                key = OUTBOX_ISSUE_KEY,
+                message = "The calendar outbox has stuck rows: ${status.pending} pending, the oldest has waited " +
+                    "$oldestAge s",
             )
+        } else {
+            issueReporter.resolve(IssueCode.CALENDAR_OUTBOX_STUCK, OUTBOX_ISSUE_KEY)
         }
     }
 }

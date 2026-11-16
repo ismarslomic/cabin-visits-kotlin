@@ -5,11 +5,14 @@ import com.influxdb.client.kotlin.InfluxDBClientKotlinFactory
 import com.influxdb.query.FluxRecord
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.toList
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.nowIsoUtcString
 import no.slomic.smarthytte.common.toIsoUtcString
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
@@ -20,9 +23,12 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.time.toKotlinInstant
 
+private const val SENSOR_ISSUE_KEY = "sensor"
+
 class CheckInOutSensorService(
     val checkInOutSensorRepository: CheckInOutSensorRepository,
     val syncCheckpointService: SyncCheckpointService,
+    private val issueReporter: IssueReporter,
     influxDbPropertiesHolder: InfluxDbPropertiesHolder = loadProperties<InfluxDbPropertiesHolder>(),
 ) {
     private val logger: Logger = KtorSimpleLogger(CheckInOutSensorService::class.java.name)
@@ -50,12 +56,36 @@ class CheckInOutSensorService(
         }
     }
 
+    /** Fetches the sensor data. A failure is reported as an issue and does not escape, so the sync loop goes on. */
+    @Suppress("TooGenericExceptionCaught")
     suspend fun fetchCheckInOut() {
         if (!syncEnabled) {
             logger.info("Check in/out sensor sync is disabled, skipping fetch from InfluxDB.")
             return
         }
 
+        val failure = try {
+            fetchAndStore()
+            null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e
+        }
+
+        if (failure == null) {
+            issueReporter.resolve(IssueCode.SENSOR_FETCH_FAILED, SENSOR_ISSUE_KEY)
+        } else {
+            issueReporter.report(
+                code = IssueCode.SENSOR_FETCH_FAILED,
+                key = SENSOR_ISSUE_KEY,
+                message = "Could not fetch and store the check in/out sensor data",
+                cause = failure,
+            )
+        }
+    }
+
+    private suspend fun fetchAndStore() {
         val lastCheckInTimestamp: Instant? = syncCheckpointService.checkpointForCheckInOutSensor()
         val filterTimeRange = if (lastCheckInTimestamp == null) {
             val range = FilterTimeRange(

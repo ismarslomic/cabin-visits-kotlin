@@ -15,4 +15,10 @@ enum class IssueCode(val severity: IssueSeverity) {
     PLACE_LOOKUP_FAILED(IssueSeverity.WARN),
     PLACE_MISSING(IssueSeverity.WARN),
     FETCH_FAILED(IssueSeverity.ERROR),
+    CALENDAR_PUSH_FAILED(IssueSeverity.ERROR),
+    CALENDAR_EVENT_LOST(IssueSeverity.ERROR),
+    CALENDAR_EVENT_NOT_CREATABLE(IssueSeverity.WARN),
+    CALENDAR_OUTBOX_STUCK(IssueSeverity.ERROR),
+    SENSOR_FETCH_FAILED(IssueSeverity.ERROR),
+    CHECK_IN_OUT_FAILED(IssueSeverity.WARN),
 }
