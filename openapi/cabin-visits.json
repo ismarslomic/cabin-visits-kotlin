@@ -1450,6 +1450,238 @@
           }
         ]
       }
+    },
+    "/api/issues": {
+      "get": {
+        "operationId": "listIssues",
+        "tags": [
+          "Issues"
+        ],
+        "summary": "List issues",
+        "description": "Admin only. The operational problems that the application reported, with the latest occurrence first (lastOccurredTime, then id, both descending). A problem is one issue that counts its occurrences, and a resolved problem that comes back becomes OPEN and unread again. Resolved issues are deleted 30 days after they were resolved or read, whichever is later. The service user gets 403. Errors are JSON with a code and a message.",
+        "parameters": [
+          {
+            "name": "read",
+            "in": "query",
+            "description": "true for read issues only, false for unread issues only. Omit for both.",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "OPEN or RESOLVED. Omit for both.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "OPEN"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The most issues to return, from 1 to 500. Default 100.",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 100
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The issues that match the filters, as a plain list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IssueResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "read, status or limit is not valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The caller is not an admin, or is the service user."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/issues/unread-count": {
+      "get": {
+        "operationId": "countUnreadIssues",
+        "tags": [
+          "Issues"
+        ],
+        "summary": "Count unread issues",
+        "description": "Admin only. The number of issues that are not resolved and not read, for a badge in the application. A resolved issue is not counted, even when it is unread. The service user gets 403.",
+        "responses": {
+          "200": {
+            "description": "The number of unread issues that are not resolved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The caller is not an admin, or is the service user."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
+    },
+    "/api/issues/{id}": {
+      "put": {
+        "operationId": "updateIssue",
+        "tags": [
+          "Issues"
+        ],
+        "summary": "Mark an issue as read or unread",
+        "description": "Admin only. A full replace: the body must carry the version the client read and read. Marking an issue the way it already is changes nothing and keeps the version. Any issue can be marked, also a resolved one. Errors are JSON with a code and a message.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identifier of the issue, from GET /api/issues.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 42
+          }
+        ],
+        "requestBody": {
+          "description": "The version the client read and the wanted read state.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "The issue does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The Content-Type is not application/json.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON, or the version or read is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The updated issue.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueResponse"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "The issue has changed since the version in the body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The Cloudflare Access token is missing or invalid."
+          },
+          "403": {
+            "description": "The caller is not an admin, or is the service user."
+          },
+          "503": {
+            "description": "Cloudflare Access is not configured for the application."
+          }
+        },
+        "security": [
+          {
+            "cloudflare-access": []
+          },
+          {
+            "api-key": []
+          }
+        ]
+      }
     }
   },
   "webhooks": {},
@@ -4185,6 +4417,164 @@
             "items": {
               "$ref": "#/components/schemas/AgeGroup"
             }
+          }
+        }
+      },
+      "IssueResponse": {
+        "type": "object",
+        "title": "IssueResponse",
+        "required": [
+          "id",
+          "code",
+          "key",
+          "severity",
+          "status",
+          "message",
+          "occurrenceCount",
+          "firstOccurredTime",
+          "lastOccurredTime",
+          "read",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identifier of the issue. Use it in PUT /api/issues/{id}.",
+            "example": 42
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable code of the problem, for example JLR_APPROVAL_REQUIRED, JLR_AUTH_FAILED, JLR_REQUEST_FAILED, PLACE_LOOKUP_FAILED, PLACE_MISSING, FETCH_FAILED, CALENDAR_PUSH_FAILED, CALENDAR_EVENT_LOST, CALENDAR_EVENT_NOT_CREATABLE, CALENDAR_OUTBOX_STUCK, SENSOR_FETCH_FAILED or CHECK_IN_OUT_FAILED. Clients map it to their own texts.",
+            "example": "PLACE_MISSING",
+            "enum": [
+              "JLR_APPROVAL_REQUIRED",
+              "JLR_AUTH_FAILED",
+              "JLR_REQUEST_FAILED",
+              "PLACE_LOOKUP_FAILED",
+              "PLACE_MISSING",
+              "FETCH_FAILED",
+              "CALENDAR_PUSH_FAILED",
+              "CALENDAR_EVENT_LOST",
+              "CALENDAR_EVENT_NOT_CREATABLE",
+              "CALENDAR_OUTBOX_STUCK",
+              "SENSOR_FETCH_FAILED",
+              "CHECK_IN_OUT_FAILED"
+            ]
+          },
+          "key": {
+            "type": "string",
+            "description": "What the problem is about, unique together with the code: for example PLACE_MISSING:<tripId> or a reservation id. Use it to link to the object.",
+            "example": "PLACE_MISSING:1767225600000"
+          },
+          "severity": {
+            "type": "string",
+            "description": "The severity of the code: WARN or ERROR.",
+            "example": "WARN",
+            "enum": [
+              "WARN",
+              "ERROR"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "OPEN while the problem is there (or came back), RESOLVED when the code that reported it saw it was gone.",
+            "example": "OPEN",
+            "enum": [
+              "OPEN",
+              "RESOLVED"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "English description of the latest occurrence. Never holds a response body, a URL, a token or a key. The one exception is the JLR device login, which holds the approval link and code.",
+            "example": "The trip 1767225600000 has no start city"
+          },
+          "causeType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The type of the exception behind the latest occurrence, or null if there was none.",
+            "example": "JlrRequestException"
+          },
+          "occurrenceCount": {
+            "type": "integer",
+            "description": "How many times the problem has been reported, since it was first reported.",
+            "example": 3
+          },
+          "firstOccurredTime": {
+            "type": "string",
+            "description": "When the problem was first reported (UTC).",
+            "example": "2026-07-10T16:00:00Z",
+            "format": "date-time"
+          },
+          "lastOccurredTime": {
+            "type": "string",
+            "description": "When the problem was last reported (UTC).",
+            "example": "2026-07-10T18:30:00Z",
+            "format": "date-time"
+          },
+          "resolvedTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When the problem was resolved (UTC), or null while it is OPEN.",
+            "example": "2026-07-11T08:00:00Z",
+            "format": "date-time"
+          },
+          "read": {
+            "type": "boolean",
+            "description": "True when an admin has marked the issue as read, false when it is unread. Same as readTime being set. It is independent of status: a RESOLVED issue can be unread, but only OPEN unread issues are counted by GET /api/issues/unread-count.",
+            "example": true
+          },
+          "readTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When an admin marked the issue as read (UTC), or null if it is unread.",
+            "example": "2026-07-10T19:00:00Z",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "description": "The version of the issue. Send it back unchanged in PUT /api/issues/{id}, an outdated version gives 412.",
+            "example": 2
+          }
+        }
+      },
+      "UnreadCountResponse": {
+        "type": "object",
+        "title": "UnreadCountResponse",
+        "required": [
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "The number of issues that are not resolved and not read.",
+            "example": 2
+          }
+        }
+      },
+      "IssueUpdate": {
+        "type": "object",
+        "title": "IssueUpdate",
+        "required": [
+          "version",
+          "read"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "description": "The version of the issue that the client read, from GET /api/issues. An outdated version gives 412.",
+            "example": 2
+          },
+          "read": {
+            "type": "boolean",
+            "description": "True marks the issue as read, false marks it as unread.",
+            "example": true
           }
         }
       }

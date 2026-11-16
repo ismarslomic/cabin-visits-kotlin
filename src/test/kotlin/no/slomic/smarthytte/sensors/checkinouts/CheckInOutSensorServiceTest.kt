@@ -3,8 +3,10 @@ package no.slomic.smarthytte.sensors.checkinouts
 import com.influxdb.client.kotlin.InfluxDBClientKotlin
 import com.influxdb.client.kotlin.QueryKotlinApi
 import com.influxdb.query.FluxRecord
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -12,7 +14,10 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.RecordingIssueReporter
 import no.slomic.smarthytte.properties.CheckInProperties
 import no.slomic.smarthytte.properties.InfluxDbProperties
 import no.slomic.smarthytte.properties.InfluxDbPropertiesHolder
@@ -73,14 +78,18 @@ class CheckInOutSensorServiceTest :
         lateinit var checkInOutSensorRepository: CheckInOutSensorRepository
         lateinit var checkInOutSensorService: CheckInOutSensorService
         lateinit var mockQueryApi: QueryKotlinApi
+        val reporter = RecordingIssueReporter()
 
         beforeEach {
+            reporter.reports.clear()
+            reporter.resolved.clear()
             syncCheckpointService = SyncCheckpointService(SqliteSyncCheckpointRepository())
             checkInOutSensorRepository = SqliteCheckInOutSensorRepository()
             checkInOutSensorService = CheckInOutSensorService(
                 checkInOutSensorRepository = checkInOutSensorRepository,
                 influxDbPropertiesHolder = influxDbPropertiesHolder,
                 syncCheckpointService = syncCheckpointService,
+                issueReporter = reporter,
             )
 
             val mockClient: InfluxDBClientKotlin = mockk<InfluxDBClientKotlin>(relaxed = true)
@@ -176,11 +185,45 @@ class CheckInOutSensorServiceTest :
                     ),
                 ),
                 syncCheckpointService = syncCheckpointService,
+                issueReporter = reporter,
             )
 
             disabledService.fetchCheckInOut()
 
             verify(exactly = 0) { CheckInOutSensorService.InfluxDBClientProvider.client() }
             checkInOutSensorRepository.allCheckInOuts().shouldBeEmpty()
+            reporter.reports.shouldBeEmpty()
+            reporter.resolved.shouldBeEmpty()
+        }
+
+        "a successful fetch should resolve the sensor issue" {
+            coEvery { mockQueryApi.query(any<String>()) } returns emitMockRecords(listOf())
+
+            checkInOutSensorService.fetchCheckInOut()
+
+            reporter.resolved shouldBe listOf(IssueCode.SENSOR_FETCH_FAILED to "sensor")
+            reporter.reports.shouldBeEmpty()
+        }
+
+        "a cancellation should not be reported as a failed fetch" {
+            coEvery { mockQueryApi.query(any<String>()) } throws CancellationException("stop")
+
+            shouldThrow<CancellationException> { checkInOutSensorService.fetchCheckInOut() }
+
+            reporter.reports.shouldBeEmpty()
+            reporter.resolved.shouldBeEmpty()
+        }
+
+        "a failing fetch should be reported with the type of the cause and not escape" {
+            coEvery { mockQueryApi.query(any<String>()) } throws IllegalStateException("token secret")
+
+            checkInOutSensorService.fetchCheckInOut()
+
+            val report = reporter.reports.single()
+            report.code shouldBe IssueCode.SENSOR_FETCH_FAILED
+            report.key shouldBe "sensor"
+            report.message shouldBe "Could not fetch and store the check in/out sensor data"
+            report.cause?.let { it::class.simpleName } shouldBe "IllegalStateException"
+            reporter.resolved.shouldBeEmpty()
         }
     })

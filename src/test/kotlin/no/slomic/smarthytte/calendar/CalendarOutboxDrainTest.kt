@@ -1,6 +1,8 @@
 package no.slomic.smarthytte.calendar
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
@@ -13,6 +15,8 @@ import no.slomic.smarthytte.common.suspendReadTransaction
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
 import no.slomic.smarthytte.guests.SqliteGuestRepository
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.RecordingIssueReporter
 import no.slomic.smarthytte.properties.CalendarOutboxProperties
 import no.slomic.smarthytte.reservations.ReservationCreateOutcome
 import no.slomic.smarthytte.reservations.ReservationSystemService
@@ -47,6 +51,7 @@ class CalendarOutboxDrainTest :
         val reservations = SqliteReservationRepository()
         val outbox = CalendarOutbox()
         val gateway = FakeCalendarGateway()
+        val reporter = RecordingIssueReporter()
 
         // A bit after the rows were written, so they are due
         // The database keeps milliseconds
@@ -61,8 +66,9 @@ class CalendarOutboxDrainTest :
             metrics: CalendarOutboxMetrics = CalendarOutboxMetrics(),
         ) = CalendarOutboxDrain(
             outbox,
-            CalendarEventPusher(gateway, ReservationSystemService(reservations)),
+            CalendarEventPusher(gateway, ReservationSystemService(reservations), reporter),
             props,
+            reporter,
             metrics,
             clock,
         )
@@ -94,6 +100,8 @@ class CalendarOutboxDrainTest :
             gateway.onInsert = { _, _ -> CalendarCallResult.Success }
             gateway.onPatch = { _, _, _ -> CalendarCallResult.Success }
             gateway.onDelete = { CalendarCallResult.Success }
+            reporter.reports.clear()
+            reporter.resolved.clear()
             now = Clock.System.now().truncatedToMillis() + 1.seconds
         }
 
@@ -211,6 +219,54 @@ class CalendarOutboxDrainTest :
             rows().single().second shouldBe 2
         }
 
+        "a push that needs attention should report an issue per reservation and resolve it when it works" {
+            val id = create(10)
+            gateway.onInsert = { _, _ -> failure(403, "forbiddenForNonOrganizer") }
+            drain().drainOnce()
+
+            val report = reporter.reports.single { it.code == IssueCode.CALENDAR_PUSH_FAILED }
+            report.key shouldBe id
+            report.message shouldContain "KEEP_AND_ALERT"
+            report.message shouldContain "403 forbiddenForNonOrganizer"
+            reporter.resolved.filter { it.first == IssueCode.CALENDAR_PUSH_FAILED } shouldBe emptyList()
+
+            now += 1.hours
+            gateway.onInsert = { _, _ -> CalendarCallResult.Success }
+            drain().drainOnce()
+
+            reporter.resolved shouldContain (IssueCode.CALENDAR_PUSH_FAILED to id)
+        }
+
+        "a give-up should resolve the push issue and leave the lost event issue" {
+            val id = create(10)
+            gateway.onInsert = { _, _ -> failure(403, "forbiddenForNonOrganizer") }
+            drain().drainOnce()
+            now += 1.hours
+            gateway.onInsert = { _, _ -> failure(400) }
+
+            drain().drainOnce()
+
+            reporter.resolved shouldContain (IssueCode.CALENDAR_PUSH_FAILED to id)
+            reporter.reports.last().code shouldBe IssueCode.CALENDAR_EVENT_LOST
+            rows() shouldBe emptyList()
+        }
+
+        "a quota error should be reported and a temporary failure should not" {
+            val id = create(10)
+            gateway.onInsert = { _, _ -> failure(503) }
+            drain().drainOnce()
+            reporter.reports.filter { it.code == IssueCode.CALENDAR_PUSH_FAILED } shouldBe emptyList()
+
+            now += 1.hours
+            gateway.onInsert = { _, _ -> failure(403, "quotaExceeded") }
+            drain().drainOnce()
+            reporter.reports.single { it.code == IssueCode.CALENDAR_PUSH_FAILED }.also {
+                it.key shouldBe id
+                it.message shouldContain "RETRY_SLOWLY"
+                it.message shouldContain "403 quotaExceeded"
+            }
+        }
+
         "a change written while the push runs should keep its own row" {
             val id = create(10)
             gateway.onInsert = { _, _ ->
@@ -284,6 +340,25 @@ class CalendarOutboxDrainTest :
             drain(metrics = metrics).drainOnce()
             registry.get("calendar_outbox_pending").gauge().value() shouldBe 0.0
             registry.get("calendar_outbox_oldest_age_seconds").gauge().value() shouldBe 0.0
+        }
+
+        "stuck rows should report one issue for the outbox that is resolved when the rows are gone" {
+            create(10)
+            gateway.onInsert = { _, _ -> failure(503) }
+
+            now += 2.hours
+            drain().drainOnce()
+
+            val report = reporter.reports.single { it.code == IssueCode.CALENDAR_OUTBOX_STUCK }
+            report.key shouldBe "outbox"
+            report.message shouldContain "1 pending"
+            reporter.resolved shouldNotContain (IssueCode.CALENDAR_OUTBOX_STUCK to "outbox")
+
+            gateway.onInsert = { _, _ -> CalendarCallResult.Success }
+            now += 3.minutes
+            drain().drainOnce()
+
+            reporter.resolved shouldContain (IssueCode.CALENDAR_OUTBOX_STUCK to "outbox")
         }
 
         "the outbox status should be empty without rows" {

@@ -12,6 +12,25 @@ erDiagram
         string next_attempt_time
     }
 
+    issue {
+        integer id PK
+        string code "IssueCode name, stored data"
+        string issue_key "unique with code"
+        string status "OPEN or RESOLVED"
+        string message
+        string cause_type "class name only"
+        integer occurrence_count
+        string first_occurred_time
+        string last_occurred_time
+        string resolved_time
+        string read_time
+        string created_time
+        string updated_time
+        string created_by
+        string updated_by
+        smallint version
+    }
+
     jlr_token {
         integer id PK "always 1"
         string refresh_token "secret, plain text, never logged"
@@ -124,6 +143,7 @@ erDiagram
 | **check_in_out_sensor** | Stores sensor data for check-in and check-out events, including timestamps and status.                           | raw           |
 | **guest**               | Stores unique guest profiles, including name, contact details, and external identifiers.                         | raw           |
 | **guest_avatar**        | Stores the JPEG avatar of a guest (at most one per guest, deleted with the guest).                               | raw           |
+| **issue**               | Operational problems reported through `IssueReporter`, one row per `code` and `issue_key`. A repeat of an open problem updates the row (count, last time, message), a repeat of a resolved one reopens it as unread. `status` (set by the code) and `read_time` (set by the admin) are separate. The severity is not stored, it comes from the code, and `version` changes only when `status` or `read_time` changes. See [issue](#issue). | internal      |
 | **jlr_token**           | The rotating refresh token of the JLR Data Hub login (one row, `id` = 1). A secret kept as plain text, so the DB file and its backups are as sensitive as the private key. Internal, no audit columns. | internal      |
 | **reservation**         | Stores cabin reservations, including planned start/end times and calculated actual check-in and check-out times. | raw + derived |
 | **reservation_guest**   | Links reservations with guests in a many-to-many relationship. `from_date`/`to_date` (ISO dates, both inclusive) are the guest's own stay when it is shorter than the reservation; null means the guest follows the reservation. | derived       |
@@ -141,6 +161,19 @@ erDiagram
 - `jlr_journey_id` is the journey id in the JLR Data Hub (unique, null for trips that only exist in the archive file).
   The four coordinate columns are stored so places can be recomputed.
 - The archive import (`addOrUpdate`) never writes `data_quality`, `jlr_journey_id` or the coordinates on an existing row.
+
+### issue
+
+- `code` is the name of an `IssueCode`, so a code can not be renamed without a data migration.
+- `issue_key` is the dedupe key (`PLACE_MISSING:<tripId>`, `JLR_APPROVAL_REQUIRED`). `key` is a SQL keyword.
+- `cause_type` is the class name of the exception, the only data taken from it (no message, no stack trace). `message` is
+  the text passed to `IssueReporter.report`, written to be safe to store: status codes, error codes and class names, never a
+  response body, URL, token or key. The one exception is the JLR device approval link and user code, which expire after 15
+  minutes.
+- Retention: an hourly job deletes a `RESOLVED` row 30 days after the later of `resolved_time` and `read_time` (read or
+  not). An `OPEN` row is never deleted. The same job resolves an `OPEN` `JLR_APPROVAL_REQUIRED` row that was last reported
+  more than 15 minutes ago.
+- Time columns are ISO instants in UTC. Unique index on `(code, issue_key)`, index on `(status, read_time)`.
 
 ### Audit columns
 

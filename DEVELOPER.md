@@ -415,10 +415,20 @@ stored in the database or logged.
 - **`[JLR_REQUEST_FAILED]`:** the Data Hub did not answer or answered something unexpected. The fetch is tried again at the next pass.
 - **`[PLACE_MISSING]`:** a trip has no city (Kartverket failed, or knows nothing there). It is ignored by check-in/out until the
   re-resolve at the start of the next fetch finds one. `[PLACE_LOOKUP_FAILED]` names the failed lookup.
+- **Calendar, sensors and check-in/out:** `[CALENDAR_PUSH_FAILED]` (permission or quota problem, one issue per reservation; a network error is only retried and shows as `CALENDAR_OUTBOX_STUCK` if it lasts),
+  `[CALENDAR_EVENT_LOST]` (the push was given up, the calendar differs from the reservation), `[CALENDAR_EVENT_NOT_CREATABLE]` (an old
+  id Google cannot insert), `[CALENDAR_OUTBOX_STUCK]` (rows wait longer than the threshold), `[SENSOR_FETCH_FAILED]` (InfluxDB) and
+  `[CHECK_IN_OUT_FAILED]` (the derive of one reservation). Each resolves itself when the problem is gone.
 - Trips of the old archive are linked to their journey (the trip keeps its values). Find unlinked archive trips with
   `select id from vehicle_trip where jlr_journey_id is null`.
 - Place names and addresses are from Kartverket (CC BY 4.0, credited in the README). Positions and addresses of the home and the
   cabin come from `HOME_*` and `CABIN_*` and are personal data: keep them out of logs and test data.
+
+- **Issues in the app:** every `IssueReporter.report` is also stored in the `issue` table (one row per code and key, see `docs/database_schema.md`) and
+  shown to an admin through `GET /api/issues`, `GET /api/issues/unread-count` and `PUT /api/issues/{id}` (mark read). A problem that comes
+  back after it was resolved is unread again. An hourly `IssueCleanup` task (around the clock) deletes a resolved issue 30 days after the later of its resolve and read time,
+  never an open one, and resolves a `JLR_APPROVAL_REQUIRED` issue that is older than 15 minutes (the fallback for a cut-off login). Because the message is stored and returned, a message passed to `report` must be safe to
+  store: status codes, error codes and class names, never a response body, a URL, a token or a key (the JLR device login is the one exception).
 
 #### Logging and privacy
 

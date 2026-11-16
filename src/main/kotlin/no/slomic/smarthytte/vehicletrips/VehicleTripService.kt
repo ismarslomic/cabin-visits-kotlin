@@ -7,11 +7,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.atStartOfDayIn
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.SYSTEM_ACTOR
-import no.slomic.smarthytte.common.issues.IssueCode
-import no.slomic.smarthytte.common.issues.IssueReporter
 import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.readVehicleTripsFromJsonFile
 import no.slomic.smarthytte.common.toOsloDate
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
@@ -31,6 +31,9 @@ import kotlin.time.Instant
 
 /** What happened to one journey from the Data Hub. */
 private enum class JourneyResult { ADDED, MATCHED, KNOWN }
+
+/** The problems of a fetch that a successful fetch resolves. Each is reported with its code as key. */
+private val FETCH_ISSUE_CODES = listOf(IssueCode.JLR_AUTH_FAILED, IssueCode.JLR_REQUEST_FAILED, IssueCode.FETCH_FAILED)
 
 class VehicleTripService(
     private val vehicleTripRepository: VehicleTripRepository,
@@ -117,6 +120,7 @@ class VehicleTripService(
             syncCheckpointService.addOrUpdateCheckpointForVehicleTrips(it.toOsloDate())
         }
         lastSuccessfulFetch = clock.now()
+        FETCH_ISSUE_CODES.forEach { issueReporter.resolve(it, key = it.name) }
 
         logger.info(
             "Vehicle trips fetched: from=$from journeys=${journeys.size} " +
@@ -169,7 +173,7 @@ class VehicleTripService(
         return (checkpoint ?: fullSyncFromDate).atStartOfDayIn(osloTimeZone)
     }
 
-    private fun report(code: IssueCode, e: Exception) {
+    private suspend fun report(code: IssueCode, e: Exception) {
         issueReporter.report(
             code = code,
             key = code.name,

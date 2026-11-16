@@ -2,9 +2,13 @@ package no.slomic.smarthytte.calendar
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.RecordingIssueReporter
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.ReservationRepository
@@ -20,6 +24,11 @@ class CalendarEventPusherTest :
     StringSpec({
         val gateway = FakeCalendarGateway()
         val repository = mockk<ReservationRepository>()
+        val reporter = RecordingIssueReporter()
+        val resolvedBoth = listOf(
+            IssueCode.CALENDAR_EVENT_LOST to ID,
+            IssueCode.CALENDAR_EVENT_NOT_CREATABLE to ID,
+        )
 
         fun pusher(): CalendarEventPusher {
             listOf(ID, LEGACY_ID).forEach {
@@ -27,7 +36,7 @@ class CalendarEventPusherTest :
                     Reservation(it, start, end, listOf(ReservationGuest("a")))
             }
             coEvery { repository.reservationById("gone") } returns null
-            return CalendarEventPusher(gateway, ReservationSystemService(repository))
+            return CalendarEventPusher(gateway, ReservationSystemService(repository), reporter)
         }
 
         beforeEach {
@@ -35,6 +44,8 @@ class CalendarEventPusherTest :
             gateway.onInsert = { _, _ -> CalendarCallResult.Success }
             gateway.onPatch = { _, _, _ -> CalendarCallResult.Success }
             gateway.onDelete = { CalendarCallResult.Success }
+            reporter.reports.clear()
+            reporter.resolved.clear()
         }
 
         "delete should be done for success, for a missing event and for an event that is already gone" {
@@ -151,5 +162,70 @@ class CalendarEventPusherTest :
             pusher().upsert(LEGACY_ID, CalendarOperation.UPDATE) shouldBe PushOutcome.Done
 
             gateway.calls shouldBe listOf("patch $LEGACY_ID", "restore $LEGACY_ID")
+        }
+
+        "a give-up should report the lost event without the answer of Google" {
+            gateway.onInsert = { _, _ -> failure(400, "invalid") }
+
+            pusher().upsert(ID, CalendarOperation.INSERT) shouldBe PushOutcome.Done
+
+            val report = reporter.reports.single()
+            report.code shouldBe IssueCode.CALENDAR_EVENT_LOST
+            report.key shouldBe ID
+            report.message shouldContain "400 invalid"
+            report.message shouldNotContain "failure 400"
+            reporter.resolved shouldBe emptyList()
+        }
+
+        "an id that Google cannot insert should be reported as not creatable" {
+            pusher().upsert(LEGACY_ID, CalendarOperation.INSERT) shouldBe PushOutcome.Done
+            gateway.onPatch = { _, _, _ -> failure(404) }
+            pusher().upsert(LEGACY_ID, CalendarOperation.UPDATE) shouldBe PushOutcome.Done
+
+            reporter.reports.map { it.code to it.key } shouldBe
+                List(2) { IssueCode.CALENDAR_EVENT_NOT_CREATABLE to LEGACY_ID }
+            reporter.reports.first().message shouldContain "cannot be created"
+            reporter.resolved shouldBe emptyList()
+        }
+
+        "a give-up after a failed restore should report the lost event" {
+            gateway.onPatch = { _, _, _ -> failure(404) }
+            gateway.onInsert = { _, _ -> failure(409) }
+
+            pusher().upsert(ID, CalendarOperation.UPDATE) shouldBe PushOutcome.Done
+
+            reporter.reports.single().code shouldBe IssueCode.CALENDAR_EVENT_LOST
+            reporter.reports.single().key shouldBe ID
+        }
+
+        "a successful push, a delete and a reservation that is gone should resolve both issues" {
+            pusher().upsert(ID, CalendarOperation.INSERT) shouldBe PushOutcome.Done
+            reporter.resolved shouldBe resolvedBoth
+
+            reporter.resolved.clear()
+            pusher().upsert(ID, CalendarOperation.UPDATE) shouldBe PushOutcome.Done
+            reporter.resolved shouldBe resolvedBoth
+
+            reporter.resolved.clear()
+            pusher().delete(ID) shouldBe PushOutcome.Done
+            reporter.resolved shouldBe resolvedBoth
+
+            reporter.resolved.clear()
+            pusher().upsert("gone", CalendarOperation.UPDATE) shouldBe PushOutcome.Done
+            reporter.resolved shouldBe
+                listOf(
+                    IssueCode.CALENDAR_EVENT_LOST to "gone",
+                    IssueCode.CALENDAR_EVENT_NOT_CREATABLE to "gone",
+                )
+            reporter.reports shouldBe emptyList()
+        }
+
+        "a failed push to be retried should neither report nor resolve" {
+            gateway.onInsert = { _, _ -> failure(503) }
+
+            pusher().upsert(ID, CalendarOperation.INSERT).shouldBeInstanceOf<PushOutcome.Retry>()
+
+            reporter.reports shouldBe emptyList()
+            reporter.resolved shouldBe emptyList()
         }
     })

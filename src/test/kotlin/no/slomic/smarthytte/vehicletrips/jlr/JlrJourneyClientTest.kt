@@ -17,7 +17,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteChannel
 import kotlinx.serialization.json.jsonPrimitive
-import no.slomic.smarthytte.common.issues.RecordingIssueReporter
+import no.slomic.smarthytte.issues.RecordingIssueReporter
 import no.slomic.smarthytte.plugins.installRetry
 import java.io.IOException
 import kotlin.time.Instant

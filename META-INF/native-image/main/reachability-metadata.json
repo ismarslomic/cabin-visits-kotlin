@@ -2045,6 +2045,66 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.issues.IssueResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.IssueResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.IssueResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.IssueUpdate",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.IssueUpdate$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.IssueUpdate$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.UnreadCountResponse",
+      "fields": [
+        {
+          "name": "Companion"
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.UnreadCountResponse$$serializer"
+    },
+    {
+      "type": "no.slomic.smarthytte.issues.UnreadCountResponse$Companion",
+      "methods": [
+        {
+          "name": "serializer",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.common.ApiError",
       "fields": [
         {

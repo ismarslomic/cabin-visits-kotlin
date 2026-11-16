@@ -46,6 +46,8 @@ private val userOnlyRoutes = listOf(
     "/api/stats/years/2020/months/1",
     "/api/stats/guests",
     "/api/guests",
+    "/api/issues",
+    "/api/issues/unread-count",
 )
 
 class ApiKeyAuthenticationTest :
@@ -117,6 +119,11 @@ class ApiKeyAuthenticationTest :
                     header(API_KEY_HEADER, TEST_API_KEY)
                     contentType(ContentType.Application.Json)
                     setBody("""{"firstName":"X"}""")
+                }.status shouldBe HttpStatusCode.Forbidden
+                client.put("/api/issues/1") {
+                    header(API_KEY_HEADER, TEST_API_KEY)
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"version":1,"read":true}""")
                 }.status shouldBe HttpStatusCode.Forbidden
                 client.put("/api/guests/ola") {
                     header(API_KEY_HEADER, TEST_API_KEY)

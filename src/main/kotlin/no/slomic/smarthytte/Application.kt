@@ -3,6 +3,7 @@ package no.slomic.smarthytte
 import io.ktor.client.HttpClient
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.log
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
@@ -24,8 +25,6 @@ import no.slomic.smarthytte.auth.toConfig
 import no.slomic.smarthytte.calendar.pendingCalendarOperations
 import no.slomic.smarthytte.calendar.startCalendarOutboxDrain
 import no.slomic.smarthytte.checkinouts.CheckInOutService
-import no.slomic.smarthytte.common.issues.IssueReporter
-import no.slomic.smarthytte.common.issues.LoggingIssueReporter
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.BootstrapAdmin
 import no.slomic.smarthytte.guests.GuestAdminService
@@ -35,6 +34,13 @@ import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.guests.configureGuestRoutes
+import no.slomic.smarthytte.issues.IssueReporter
+import no.slomic.smarthytte.issues.IssueService
+import no.slomic.smarthytte.issues.LoggingIssueReporter
+import no.slomic.smarthytte.issues.PersistingIssueReporter
+import no.slomic.smarthytte.issues.SqliteIssueRepository
+import no.slomic.smarthytte.issues.configureIssueRoutes
+import no.slomic.smarthytte.issues.startIssueCleanup
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
@@ -70,6 +76,7 @@ import no.slomic.smarthytte.vehicletrips.VehicleTripQueryService
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripService
 import no.slomic.smarthytte.vehicletrips.backgroundSyncMode
+import no.slomic.smarthytte.vehicletrips.jlr.DEVICE_LOGIN_MAX_WAIT
 import no.slomic.smarthytte.vehicletrips.jlr.JlrAuthService
 import no.slomic.smarthytte.vehicletrips.jlr.JlrJourneyClient
 import no.slomic.smarthytte.vehicletrips.jlr.JlrJwtSigner
@@ -102,12 +109,16 @@ fun main() {
     }
 }
 
+@Suppress("LongMethod") // wiring of the services, one line per service
 fun Application.module() {
     // Initialize database
     configureDatabases()
 
     // Initialize monitoring
     val meterRegistry = configureMonitoring()
+
+    // One reporter for every service that reports operational issues
+    val issueReporter = createIssueReporter()
 
     // Create the Http client
     val httpClient = HttpClientProvider.client
@@ -125,12 +136,14 @@ fun Application.module() {
 
     // Initialize services
     val syncCheckpointService = SyncCheckpointService(syncCheckpointRepository)
-    val vehicleTripService = createVehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient)
-    val checkInOutSensorService = CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService)
+    val vehicleTripService =
+        createVehicleTripService(vehicleTripRepository, syncCheckpointService, httpClient, issueReporter)
+    val checkInOutSensorService =
+        CheckInOutSensorService(checkInOutSensorRepository, syncCheckpointService, issueReporter)
     val guestQueryService = GuestQueryService(guestRepository)
     val guestAvatarService = GuestAvatarService(guestRepository)
     val checkInOutService =
-        createCheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository)
+        createCheckInOutService(reservationRepository, checkInOutSensorRepository, vehicleTripRepository, issueReporter)
     val statsService =
         StatsService(ReservationSystemService(reservationRepository), guestQueryService, guestAvatarService)
     val reservationService =
@@ -159,6 +172,7 @@ fun Application.module() {
         checkInOutSensorService,
         checkInOutService,
         meterRegistry,
+        issueReporter,
     )
 
     // Configure Ktor routing (after the initial load is completed)
@@ -175,6 +189,7 @@ fun Application.module() {
             appUserService = appUserService,
             cloudflareAccess = cloudflareAccess,
             apiKeys = apiKeys,
+            issueService = IssueService(SqliteIssueRepository()),
         ),
     )
 }
@@ -183,10 +198,12 @@ private fun createCheckInOutService(
     reservationRepository: ReservationRepository,
     checkInOutSensorRepository: CheckInOutSensorRepository,
     vehicleTripRepository: VehicleTripRepository,
+    issueReporter: IssueReporter,
 ) = CheckInOutService(
     ReservationSystemService(reservationRepository),
     CheckInOutSensorQueryService(checkInOutSensorRepository),
     VehicleTripQueryService(vehicleTripRepository),
+    issueReporter,
 )
 
 /** The reservation service with the calendar outbox depth and the derivation of check-in/out after a write. */
@@ -221,6 +238,7 @@ fun Application.configureApiRoutes(dependencies: ApiDependencies) {
     )
     configureReservationRoutes(dependencies.reservationService)
     configureStatsRoutes(dependencies.statsService)
+    configureIssueRoutes(dependencies.issueService)
     configureOpenApi()
 }
 
@@ -256,6 +274,7 @@ fun Application.startBackgroundSync(
     checkInOutSensorService: CheckInOutSensorService,
     checkInOutService: CheckInOutService,
     meterRegistry: MeterRegistry,
+    issueReporter: IssueReporter,
 ) {
     val influxdbProperties: InfluxDbProperties = loadProperties<InfluxDbPropertiesHolder>().influxDb
     val checkInOutSensorProperties: CheckInProperties = influxdbProperties.checkIn
@@ -265,7 +284,7 @@ fun Application.startBackgroundSync(
 
     log.info("Launching background sync tasks.")
 
-    monitor.subscribe(ApplicationStopped) {
+    monitor.subscribe(ApplicationStopping) {
         log.info("Stopping background sync tasks.")
         schedulerScope.cancel()
     }
@@ -296,7 +315,10 @@ fun Application.startBackgroundSync(
     }
 
     // Push the reservation changes in the calendar outbox to Google Calendar
-    startCalendarOutboxDrain(reservationService, meterRegistry)
+    startCalendarOutboxDrain(reservationService, meterRegistry, issueReporter)
+
+    // Resolve an expired JLR approval issue and delete old resolved issues
+    startIssueCleanup(SqliteIssueRepository(), approvalExpiry = DEVICE_LOGIN_MAX_WAIT)
 }
 
 fun isDaytime(): Boolean {
@@ -309,14 +331,18 @@ fun isDaytime(): Boolean {
     return now in startTime..endTime
 }
 
+/** Logs every issue and stores it, so it can be shown to an admin. */
+private fun createIssueReporter(): IssueReporter =
+    PersistingIssueReporter(LoggingIssueReporter(), SqliteIssueRepository())
+
 private fun createVehicleTripService(
     vehicleTripRepository: VehicleTripRepository,
     syncCheckpointService: SyncCheckpointService,
     httpClient: HttpClient,
+    issueReporter: IssueReporter,
 ): VehicleTripService {
     val jlr = loadProperties<JlrPropertiesHolder>().jlr
     val knownPlaces = loadProperties<PlacesPropertiesHolder>().places.toKnownPlaces()
-    val issueReporter: IssueReporter = LoggingIssueReporter()
 
     val signer = JlrJwtSigner(privateKeyPem = jlr.privateKey.value)
     val authService = JlrAuthService(

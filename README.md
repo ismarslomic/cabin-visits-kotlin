@@ -116,6 +116,7 @@ Overview of the endpoints:
 | `GET /api/stats/guests`                      | Statistics for all guests: top lists, gender and age groups.                                                                                   |
 | `GET /api/stats/guests/{guestId}`            | Profile of one guest: statistics, all visits (completed, ongoing and upcoming) and fun facts. See [Guest profile](#guest-profile).             |
 | `GET /api/guests/{guestId}/avatar`           | The guest's avatar image (JPEG), see `avatarUrl` in the guest statistics.                                                                      |
+| `GET /api/issues`                            | Admin only: operational problems the application reported (filters `read`, `status`, `limit`). Also `GET /api/issues/unread-count` and `PUT /api/issues/{id}` to mark one read. |
 | `GET /metrics`                               | Application metrics, see [Metrics](#metrics).                                                                                                  |
 
 # Cabin Usage Metrics

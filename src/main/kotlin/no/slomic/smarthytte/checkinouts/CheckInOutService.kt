@@ -2,9 +2,12 @@ package no.slomic.smarthytte.checkinouts
 
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.LocalDate
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.runCatchingLogged
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationSystemService
 import no.slomic.smarthytte.reservations.ReservationVehicleTripType
@@ -18,6 +21,7 @@ class CheckInOutService(
     private val reservationService: ReservationSystemService,
     private val checkInOutSensorQueryService: CheckInOutSensorQueryService,
     private val vehicleTripQueryService: VehicleTripQueryService,
+    private val issueReporter: IssueReporter,
 ) {
     private val logger: Logger = KtorSimpleLogger(CheckInOutService::class.java.name)
 
@@ -52,8 +56,9 @@ class CheckInOutService(
         allReservations.forEach { reservation ->
             // One failing reservation must not abort the rest of the run
             runCatchingLogged("Updating check in/out status of reservation ${reservation.id}", logger) {
-                val (checkInResult, checkOutResult) =
+                val (checkInResult, checkOutResult) = issueReporter.reportFailureOf(reservation.id) {
                     updateReservation(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
+                }
                 checkInPersistenceResults.add(checkInResult)
                 checkOutPersistenceResults.add(checkOutResult)
             }
@@ -77,11 +82,18 @@ class CheckInOutService(
      * reservation does not exist.
      */
     suspend fun updateCheckInOutStatusForReservation(reservationId: String) {
-        val reservation: Reservation = reservationService.byId(reservationId) ?: return
-        val checkInOutSensorsByDate = checkInOutSensorQueryService.allCheckInOuts().groupBy { it.date }
-        val cabinVehicleTripList = CabinVehicleTripList(vehicleTripQueryService.allVehicleTrips()).cabinTrips
+        val reservation: Reservation? = reservationService.byId(reservationId)
+        if (reservation == null) {
+            // A deleted reservation has nothing left to derive
+            issueReporter.resolve(IssueCode.CHECK_IN_OUT_FAILED, reservationId)
+        } else {
+            issueReporter.reportFailureOf(reservationId) {
+                val checkInOutSensorsByDate = checkInOutSensorQueryService.allCheckInOuts().groupBy { it.date }
+                val cabinVehicleTripList = CabinVehicleTripList(vehicleTripQueryService.allVehicleTrips()).cabinTrips
 
-        updateReservation(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
+                updateReservation(reservation, checkInOutSensorsByDate, cabinVehicleTripList)
+            }
+        }
     }
 
     /** Links the trips and sets check-in and check-out of one reservation; returns the two persistence results. */
@@ -248,4 +260,20 @@ class CheckInOutService(
 
         return endCheckInOutSensors?.firstOrNull { it.isCheckedOut }
     }
+}
+
+/** A failure is reported as an issue (keyed by reservation) and rethrown, a success resolves the issue. */
+@Suppress("TooGenericExceptionCaught")
+private suspend fun <T> IssueReporter.reportFailureOf(reservationId: String, block: suspend () -> T): T = try {
+    block().also { resolve(IssueCode.CHECK_IN_OUT_FAILED, reservationId) }
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    report(
+        code = IssueCode.CHECK_IN_OUT_FAILED,
+        key = reservationId,
+        message = "Could not derive the check-in/out of reservation $reservationId",
+        cause = e,
+    )
+    throw e
 }

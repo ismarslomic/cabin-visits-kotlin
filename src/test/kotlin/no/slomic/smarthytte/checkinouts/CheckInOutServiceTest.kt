@@ -9,6 +9,7 @@ import no.slomic.smarthytte.common.SYSTEM_ACTOR
 import no.slomic.smarthytte.common.toIsoUtcString
 import no.slomic.smarthytte.common.utcDateNow
 import no.slomic.smarthytte.common.utcTimeZone
+import no.slomic.smarthytte.issues.RecordingIssueReporter
 import no.slomic.smarthytte.reservations.Reservation
 import no.slomic.smarthytte.reservations.ReservationGuest
 import no.slomic.smarthytte.reservations.ReservationRepository
@@ -49,6 +50,7 @@ class CheckInOutServiceTest :
                 ReservationSystemService(reservationRepository),
                 CheckInOutSensorQueryService(checkInOutSensorRepository),
                 VehicleTripQueryService(vehicleTripRepository),
+                RecordingIssueReporter(),
             )
         }
 

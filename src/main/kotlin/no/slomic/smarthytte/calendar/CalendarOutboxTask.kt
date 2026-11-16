@@ -1,7 +1,8 @@
 package no.slomic.smarthytte.calendar
 
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.log
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import no.slomic.smarthytte.common.runCatchingLogged
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.properties.CalendarOutboxPropertiesHolder
 import no.slomic.smarthytte.properties.GoogleCalendarPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
@@ -22,7 +24,11 @@ import kotlin.time.Duration.Companion.seconds
  * app: the Google client is created inside the first push, so a missing or invalid credentials file only makes the
  * pushes fail and retry while reservation writes go on and the outbox fills up.
  */
-fun Application.startCalendarOutboxDrain(reservationService: ReservationSystemService, registry: MeterRegistry) {
+fun Application.startCalendarOutboxDrain(
+    reservationService: ReservationSystemService,
+    registry: MeterRegistry,
+    issueReporter: IssueReporter,
+) {
     val properties = loadProperties<CalendarOutboxPropertiesHolder>().calendarOutbox
     val gateway = GoogleCalendarGateway(
         clientProvider = { createCalendarClient(loadProperties<GoogleCalendarPropertiesHolder>().googleCalendar) },
@@ -31,13 +37,17 @@ fun Application.startCalendarOutboxDrain(reservationService: ReservationSystemSe
     val metrics = CalendarOutboxMetrics().also { it.bind(registry) }
     val drain = CalendarOutboxDrain(
         CalendarOutbox(),
-        CalendarEventPusher(gateway, reservationService),
+        CalendarEventPusher(gateway, reservationService, issueReporter),
         properties,
+        issueReporter,
         metrics,
     )
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    monitor.subscribe(ApplicationStopped) { scope.cancel() }
+    monitor.subscribe(ApplicationStopping) {
+        log.info("Stopping the calendar outbox drain since Application is stopping.")
+        scope.cancel()
+    }
     scope.launch {
         while (isActive) {
             runCatchingLogged("Calendar outbox drain") { drain.drainOnce() }

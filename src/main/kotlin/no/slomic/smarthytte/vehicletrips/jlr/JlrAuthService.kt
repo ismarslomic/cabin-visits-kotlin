@@ -7,8 +7,8 @@ import io.ktor.util.logging.KtorSimpleLogger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import no.slomic.smarthytte.common.issues.IssueCode
-import no.slomic.smarthytte.common.issues.IssueReporter
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.plugins.SignRequest
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -28,8 +28,11 @@ private const val APPROVAL_ISSUE_KEY = "JLR_APPROVAL_REQUIRED"
 /** The access token is renewed this long before it expires, so a call never starts with a token about to expire. */
 private val TOKEN_MARGIN = 60.seconds
 
-/** The owner approves the device login within this time (the server says 900 s, this is a ceiling). */
-private val DEVICE_LOGIN_MAX_WAIT = 15.minutes
+/**
+ * The owner approves the device login within this time (the server says 900 s, this is a ceiling). `IssueCleanup` gets
+ * it as the time after which `JLR_APPROVAL_REQUIRED` is resolved, so the two can not drift apart.
+ */
+internal val DEVICE_LOGIN_MAX_WAIT = 15.minutes
 
 /** After a failed or expired device login the next one starts at the earliest this much later. */
 private val DEVICE_LOGIN_COOLDOWN = 1.hours
@@ -152,9 +155,15 @@ class JlrAuthService(
                 "within ${authorization.expiresIn / SECONDS_PER_MINUTE} minutes",
         )
         return try {
-            pollForApproval(authorization, verifier).also { nextDeviceLoginAllowedAt = null }
+            pollForApproval(authorization, verifier).also {
+                nextDeviceLoginAllowedAt = null
+                issueReporter.resolve(IssueCode.JLR_APPROVAL_REQUIRED, APPROVAL_ISSUE_KEY)
+            }
         } catch (e: JlrAuthException) {
             nextDeviceLoginAllowedAt = clock.now() + DEVICE_LOGIN_COOLDOWN
+            // Denied or expired: nobody is asked to approve this code any more. A failing server (JlrRequestException)
+            // or a cancellation leaves the issue open, the next login or the issue cleanup closes it.
+            issueReporter.resolve(IssueCode.JLR_APPROVAL_REQUIRED, APPROVAL_ISSUE_KEY)
             throw e
         }
     }
