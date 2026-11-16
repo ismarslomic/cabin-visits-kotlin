@@ -34,9 +34,11 @@ import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.guests.configureGuestRoutes
 import no.slomic.smarthytte.issues.IssueReporter
+import no.slomic.smarthytte.issues.IssueService
 import no.slomic.smarthytte.issues.LoggingIssueReporter
 import no.slomic.smarthytte.issues.PersistingIssueReporter
 import no.slomic.smarthytte.issues.SqliteIssueRepository
+import no.slomic.smarthytte.issues.configureIssueRoutes
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
@@ -184,6 +186,7 @@ fun Application.module() {
             appUserService = appUserService,
             cloudflareAccess = cloudflareAccess,
             apiKeys = apiKeys,
+            issueService = IssueService(SqliteIssueRepository()),
         ),
     )
 }
@@ -232,6 +235,7 @@ fun Application.configureApiRoutes(dependencies: ApiDependencies) {
     )
     configureReservationRoutes(dependencies.reservationService)
     configureStatsRoutes(dependencies.statsService)
+    configureIssueRoutes(dependencies.issueService)
     configureOpenApi()
 }
 

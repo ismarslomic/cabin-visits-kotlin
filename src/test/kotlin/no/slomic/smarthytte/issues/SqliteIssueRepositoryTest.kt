@@ -8,7 +8,9 @@ import no.slomic.smarthytte.vehicletrips.jlr.MutableClock
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private val START = Instant.parse("2026-11-16T10:00:00Z")
@@ -170,6 +172,112 @@ class SqliteIssueRepositoryTest :
 
         "find: return null when the issue does not exist" {
             find().shouldBeNull()
+            repository.findById(1).shouldBeNull()
+        }
+
+        "list: sort by last occurrence and then id, both descending, and apply the limit" {
+            record(key = "a")
+            record(key = "b")
+            clock.current = START + 5.minutes
+            record(key = "c")
+            record(key = "a")
+
+            // c and a occurred at the same time, so the higher id comes first
+            repository.list(null, null, 10).map { it.key } shouldBe listOf("c", "a", "b")
+            repository.list(null, null, 2).map { it.key } shouldBe listOf("c", "a")
+        }
+
+        "list: sort occurrences that differ by milliseconds within the same second" {
+            record(key = "first")
+            clock.current = START + 500.milliseconds
+            record(key = "second")
+            clock.current = START + 1.seconds
+            record(key = "third")
+            clock.current = START + 1500.milliseconds
+            record(key = "fourth")
+
+            repository.list(null, null, 10).map { it.key } shouldBe listOf("fourth", "third", "second", "first")
+        }
+
+        "list: filter on read state and status, and combine the filters" {
+            record(key = "unread")
+            record(key = "read")
+            record(key = "resolved")
+            val read = checkNotNull(find("read")).id
+            repository.setRead(read, 1, true, ACTOR)
+            repository.resolve(CODE, "resolved", ACTOR)
+
+            repository.list(true, null, 10).map { it.key } shouldBe listOf("read")
+            repository.list(false, null, 10).map { it.key }.toSet() shouldBe setOf("unread", "resolved")
+            repository.list(null, IssueStatus.RESOLVED, 10).map { it.key } shouldBe listOf("resolved")
+            repository.list(false, IssueStatus.OPEN, 10).map { it.key } shouldBe listOf("unread")
+            repository.list(true, IssueStatus.RESOLVED, 10) shouldBe emptyList()
+        }
+
+        "unread count: count only open issues that are not read" {
+            record(key = "unread")
+            record(key = "read")
+            record(key = "resolved")
+            repository.setRead(checkNotNull(find("read")).id, 1, true, ACTOR)
+            repository.resolve(CODE, "resolved", ACTOR)
+
+            repository.unreadCount() shouldBe 1
+        }
+
+        "set read: mark read, bump the version and write the actor" {
+            record()
+            val id = checkNotNull(find()).id
+            clock.current = START + 1.minutes
+
+            repository.setRead(id, 1, true, "admin") shouldBe IssueReadOutcome.Updated
+
+            val issue = checkNotNull(repository.findById(id))
+            issue.readTime shouldBe START + 1.minutes
+            issue.version shouldBe 2
+            transaction { IssueTable.selectAll().single()[IssueTable.updatedBy] } shouldBe "admin"
+        }
+
+        "set read: mark unread again" {
+            record()
+            val id = checkNotNull(find()).id
+            repository.setRead(id, 1, true, ACTOR)
+
+            repository.setRead(id, 2, false, ACTOR) shouldBe IssueReadOutcome.Updated
+
+            val issue = checkNotNull(repository.findById(id))
+            issue.readTime.shouldBeNull()
+            issue.version shouldBe 3
+        }
+
+        "set read: a request for the state the issue has changes nothing and keeps the version" {
+            record()
+            val id = checkNotNull(find()).id
+
+            repository.setRead(id, 1, false, ACTOR) shouldBe IssueReadOutcome.Unchanged
+            repository.setRead(id, 1, true, ACTOR) shouldBe IssueReadOutcome.Updated
+            repository.setRead(id, 2, true, ACTOR) shouldBe IssueReadOutcome.Unchanged
+
+            checkNotNull(repository.findById(id)).version shouldBe 2
+        }
+
+        "set read: reject an outdated version and an unknown issue" {
+            record()
+            val id = checkNotNull(find()).id
+
+            repository.setRead(id, 7, true, ACTOR) shouldBe IssueReadOutcome.VersionMismatch
+            repository.setRead(id + 1, 1, true, ACTOR) shouldBe IssueReadOutcome.NotFound
+
+            checkNotNull(repository.findById(id)).readTime.shouldBeNull()
+        }
+
+        "set read: a resolved issue can be marked read" {
+            record()
+            repository.resolve(CODE, KEY, ACTOR)
+            val issue = checkNotNull(find())
+
+            repository.setRead(issue.id, issue.version, true, ACTOR) shouldBe IssueReadOutcome.Updated
+
+            checkNotNull(repository.findById(issue.id)).status shouldBe IssueStatus.RESOLVED
         }
     })
 

@@ -99,7 +99,7 @@ flowchart LR
     google -->|"status + reason"| gateway
 
     drain -->|"calendar_outbox_pending<br/>calendar_outbox_oldest_age_seconds"| prom["/metrics (Prometheus)"]
-    drain -->|"stuck rows, config errors: ERROR log"| logs["Application log"]
+    drain -->|"CALENDAR_PUSH_FAILED, CALENDAR_OUTBOX_STUCK,<br/>CALENDAR_EVENT_LOST, CALENDAR_EVENT_NOT_CREATABLE"| issues["IssueReporter<br/>(log + issue table)"]
 ```
 
 ### One push, step by step
@@ -141,15 +141,21 @@ sequenceDiagram
 
 ### What happens on failure
 
-| Result from Google | Action | Wait before next try |
-|--------------------|--------|----------------------|
-| Network error, timeout, 5xx, 429, 403 rate limit | Retry, WARN log | `start x factor^(attempts-1)`, at most the cap (default 30 s, x2, 1 h) |
-| 403 `quotaExceeded` | Keep the row, ERROR log | The cap |
-| 401, other 403, other 4xx (credentials, sharing, bad request) | Keep the row, ERROR log | Backoff |
-| 400 on insert, 409 after a failed restore | Terminal: the row is dropped | None |
-| Legacy reservation id (not `a-v0-9`, 5+ chars, e.g. starts with `_`) | Never inserted, ERROR log, the row is dropped | None |
+| Result from Google | Action | Reported as | Wait before next try |
+|--------------------|--------|-------------|----------------------|
+| Network error, timeout, 5xx, 429, 403 rate limit | Retry, WARN log | Not reported (temporary) | `start x factor^(attempts-1)`, at most the cap (default 30 s, x2, 1 h) |
+| 403 `quotaExceeded` | Keep the row | `CALENDAR_PUSH_FAILED` (ERROR) | The cap |
+| 401, other 403, other 4xx (credentials, sharing, bad request) | Keep the row | `CALENDAR_PUSH_FAILED` (ERROR) | Backoff |
+| 400 on insert, 409 after a failed restore | Terminal: the row is dropped | `CALENDAR_EVENT_LOST` (ERROR): the calendar differs from the reservation | None |
+| Legacy reservation id (not `a-v0-9`, 5+ chars, e.g. starts with `_`) | Never inserted, the row is dropped | `CALENDAR_EVENT_NOT_CREATABLE` (WARN) | None |
 
-When the oldest row has waited longer than the stuck threshold (default 60 min), the drain logs an ERROR on every run.
+All issues are keyed by reservation id, except `CALENDAR_OUTBOX_STUCK` (one for the whole outbox). When the oldest row has
+waited longer than the stuck threshold (default 60 min), the drain reports `CALENDAR_OUTBOX_STUCK` on every run.
+
+An issue resolves itself: `CALENDAR_PUSH_FAILED` when a push of the reservation ends (pushed or given up, a give-up then
+carries its own issue), `CALENDAR_EVENT_LOST` and `CALENDAR_EVENT_NOT_CREATABLE` when the calendar matches the reservation
+again (a later push or delete succeeds, or the reservation is gone), `CALENDAR_OUTBOX_STUCK` when the oldest row is below
+the threshold. See "Issues (admin notifications)".
 See "Google Calendar notifications (outbox)" in `DEVELOPER.md` for the settings (`CALENDAR_*`) and operations.
 
 ### Metrics
@@ -361,6 +367,12 @@ sequenceDiagram
     deactivate CheckInOutSensorService
 ```
 
+### What happens on failure (sensor)
+
+A fetch that fails (InfluxDB down, bad query, storing fails) is reported as `SENSOR_FETCH_FAILED` (ERROR, key `sensor`)
+and does not escape: the background loop goes on, the checkpoint stays, and the next pass tries again. A fetch that works
+resolves the issue. A cancellation is not a failure and is not reported.
+
 ## Check In/Out Service
 
 The `CheckInOutService` orchestrates the detection and recording of guests’ check-in and check-out times for cabin
@@ -456,6 +468,68 @@ choose the most accurate and relevant timestamp:
 
 This logic ensures that the system always records the check-out time using the **best available evidence**, giving
 priority to real-world events and falling back on the original reservation details when necessary.
+
+### What happens on failure (check-in/out)
+
+A reservation whose check-in/out can not be derived or stored is reported as `CHECK_IN_OUT_FAILED` (WARN, key
+reservation id, with the type of the exception as cause) and the loop goes on with the other reservations. The issue
+resolves when the reservation succeeds on a later pass, or when it no longer exists. A cancellation is not reported.
+
+## Issues (admin notifications)
+
+Problems that need an admin (a login to approve, a place that could not be found, a calendar event that differs from the
+reservation) are reported through `IssueReporter`, not only logged. `PersistingIssueReporter` logs the problem first and
+then stores it in the `issue` table, so a caller never logs the same event itself. Storing never fails the caller. The
+cabin-app shows the issues as notifications that an admin can mark as read.
+
+```mermaid
+flowchart LR
+    services["Services and background jobs"] -->|"report / resolve<br/>(code, key, message, cause)"| reporter["PersistingIssueReporter"]
+    reporter -->|"log"| logs["Application log"]
+    reporter -->|"record / resolve"| table[("issue")]
+    table --> service["IssueService"]
+    service --> routes["GET /api/issues<br/>GET /api/issues/unread-count<br/>PUT /api/issues/{id}"]
+    routes -->|"ADMIN only"| app["cabin-app notifications"]
+```
+
+There is one row per (`code`, `key`): the code says what kind of problem it is, the key what it is about (a trip id, a
+reservation id, or a fixed key for a problem that has no object). The message is English text for humans and never holds a
+response body, a URL, a token or a key (the JLR device approval link and code are the one exception). Only the type of
+the exception is stored, as `causeType`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> OPEN_UNREAD: report
+    OPEN_UNREAD --> OPEN_UNREAD: report again (count + 1, new message and last time)
+    OPEN_UNREAD --> OPEN_READ: PUT read = true
+    OPEN_READ --> OPEN_UNREAD: PUT read = false
+    OPEN_READ --> OPEN_READ: report again (stays read)
+    OPEN_UNREAD --> RESOLVED: resolve
+    OPEN_READ --> RESOLVED: resolve (keeps readTime)
+    RESOLVED --> OPEN_UNREAD: report again (reopened, readTime and resolvedTime cleared)
+```
+
+`version` goes up when the status or the read state changes, not when the problem repeats, so `PUT /api/issues/{id}` with
+an old `version` gives 412. A resolved issue can still be unread; only `OPEN` unread issues count in
+`GET /api/issues/unread-count`. In the response `read` is `readTime != null`.
+
+| Code | Severity | Key | Reported when |
+|------|----------|-----|---------------|
+| `JLR_APPROVAL_REQUIRED` | WARN | `JLR_APPROVAL_REQUIRED` | The JLR login needs the owner to approve a device login (link and code in the message) |
+| `JLR_AUTH_FAILED` | ERROR | `JLR_AUTH_FAILED` | The JLR login was rejected, or the device login was denied or expired |
+| `JLR_REQUEST_FAILED` | ERROR | `JLR_REQUEST_FAILED` | The Data Hub is down, answers 429 or something unreadable |
+| `FETCH_FAILED` | ERROR | `FETCH_FAILED` | Any other failure while fetching vehicle trips |
+| `PLACE_LOOKUP_FAILED` | WARN | `PLACE_LOOKUP_FAILED:<tripId>` | The Kartverket lookup failed for a point of a trip |
+| `PLACE_MISSING` | WARN | `PLACE_MISSING:<tripId>` | A trip has no city for its start or end |
+| `CALENDAR_PUSH_FAILED` | ERROR | reservation id | A calendar push fails in a way that needs attention (see the calendar failure table) |
+| `CALENDAR_EVENT_LOST` | ERROR | reservation id | The push was given up, so the calendar event differs from the reservation |
+| `CALENDAR_EVENT_NOT_CREATABLE` | WARN | reservation id | The reservation id is not accepted by Google Calendar |
+| `CALENDAR_OUTBOX_STUCK` | ERROR | `outbox` | The oldest outbox row has waited longer than the stuck threshold |
+| `SENSOR_FETCH_FAILED` | ERROR | `sensor` | Fetching the check-in/out sensor data fails |
+| `CHECK_IN_OUT_FAILED` | WARN | reservation id | Check-in/out can not be derived or stored for a reservation |
+
+The severity is read from `IssueCode` and is not stored. Code names are stored in the `issue` table, so a name can not be
+changed without a data migration. See "Issues in the app" in `DEVELOPER.md` for what a message may hold.
 
 ## Reservation period vs guest stay
 

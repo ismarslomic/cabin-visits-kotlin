@@ -424,6 +424,11 @@ stored in the database or logged.
 - Place names and addresses are from Kartverket (CC BY 4.0, credited in the README). Positions and addresses of the home and the
   cabin come from `HOME_*` and `CABIN_*` and are personal data: keep them out of logs and test data.
 
+- **Issues in the app:** every `IssueReporter.report` is also stored in the `issue` table (one row per code and key, see `docs/database_schema.md`) and
+  shown to an admin through `GET /api/issues`, `GET /api/issues/unread-count` and `PUT /api/issues/{id}` (mark read). A problem that comes
+  back after it was resolved is unread again. Because the message is stored and returned, a message passed to `report` must be safe to
+  store: status codes, error codes and class names, never a response body, a URL, a token or a key (the JLR device login is the one exception).
+
 #### Logging and privacy
 
 - `logback.xml` only has a console appender, so rotation is the container runtime's job. Set a size-limited Docker logging driver on the host, for example

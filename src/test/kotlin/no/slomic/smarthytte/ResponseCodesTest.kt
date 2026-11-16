@@ -106,6 +106,9 @@ class ResponseCodesTest :
                     "put" to "/api/guests/admin",
                     "get" to "/api/guests/admin/avatar",
                     "get" to "/api/stats",
+                    "get" to "/api/issues",
+                    "get" to "/api/issues/unread-count",
+                    "put" to "/api/issues/1",
                 ).forEach { (method, path) ->
                     withClue("$method $path") {
                         call(method, path, token).status shouldBe HttpStatusCode.ServiceUnavailable

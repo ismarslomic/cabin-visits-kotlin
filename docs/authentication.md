@@ -63,6 +63,7 @@ before.
 | `GET /api/stats`, `GET /api/stats/guests/{guestId}`, `GET /api/guests/{id}/avatar` | yes, **also API key (service)** | yes                     | yes                      | yes                      |
 | `GET /api/reservations`, `GET /api/reservations/{id}`                              | yes, **also API key (service)** | all                     | all                      | only those they are a guest of |
 | `POST /api/reservations`, `PUT /api/reservations/{id}`, `DELETE /api/reservations/{id}` | yes                        | yes                     | yes                      | no                       |
+| `GET /api/issues`, `GET /api/issues/unread-count`, `PUT /api/issues/{id}`              | yes                             | yes                     | no                       | no                       |
 | Other `GET /api/stats/**`                                                          | yes                             | yes                     | yes                      | yes                      |
 | `/`, `/metrics`, `/openapi.json`                                                   | no (unchanged)                  |                         |                          |                          |
 
@@ -99,6 +100,17 @@ no owner concept). A guest without a role has no access.
 | Upload or replace own avatar                                           | yes   | yes         | yes        | no                |
 | Read avatar (`GET /api/guests/{id}/avatar`)                            | yes   | yes         | yes        | yes               |
 | Delete a guest                                                         | not supported | not supported | not supported | not supported |
+
+**Issues** (operational problems that the application reports, see `docs/database_schema.md`)
+
+| Operation                                                              | ADMIN | FAMILY_USER | GUEST_USER | Service (API key) |
+|:-----------------------------------------------------------------------|:------|:------------|:-----------|:------------------|
+| List issues (`GET /api/issues`), count unread (`GET /api/issues/unread-count`) | yes   | no          | no         | no                |
+| Mark an issue read or unread (`PUT /api/issues/{id}`, `version` + `read`) | yes   | no          | no         | no                |
+
+The messages can hold technical details (the JLR device login link and code), so the routes are `authorized(AppRole.ADMIN)` with the default
+`allowService = false`: the MagicMirror API key gets `403`. `PUT` records the admin's `guest.id` in `issue.updated_by`. An unknown or non-numeric id is `404`
+(`NOT_FOUND`), a stale `version` is `412` (`VERSION_MISMATCH`), an invalid `read`, `status` or `limit` filter is `400` (`INVALID_REQUEST`).
 
 Only `ADMIN` may change `email`, `isFamily` and `role`.
 

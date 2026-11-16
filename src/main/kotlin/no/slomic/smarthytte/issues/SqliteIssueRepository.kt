@@ -3,9 +3,13 @@ package no.slomic.smarthytte.issues
 import no.slomic.smarthytte.common.suspendReadTransaction
 import no.slomic.smarthytte.common.suspendTransaction
 import no.slomic.smarthytte.common.truncatedToMillis
+import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -40,6 +44,56 @@ class SqliteIssueRepository(private val clock: Clock = Clock.System) : IssueRepo
         }
         updatedRows > 0
     }
+
+    override suspend fun findById(id: Long): Issue? = suspendReadTransaction {
+        IssueTable.selectAll().where(IssueTable.id eq id).singleOrNull()?.toIssue()
+    }
+
+    override suspend fun list(isRead: Boolean?, status: IssueStatus?, limit: Int): List<Issue> =
+        suspendReadTransaction {
+            val conditions = listOfNotNull(
+                isRead?.let { if (it) IssueTable.readTime.isNotNull() else IssueTable.readTime.isNull() },
+                status?.let { IssueTable.status eq it },
+            )
+
+            IssueTable.selectAll()
+                .where(conditions.reduceOrNull { all, next -> all and next } ?: Op.TRUE)
+                .orderBy(IssueTable.lastOccurredTime to SortOrder.DESC, IssueTable.id to SortOrder.DESC)
+                .limit(limit)
+                .map { it.toIssue() }
+        }
+
+    override suspend fun unreadCount(): Int = suspendReadTransaction {
+        IssueTable.selectAll()
+            .where((IssueTable.status eq IssueStatus.OPEN) and IssueTable.readTime.isNull())
+            .count()
+            .toInt()
+    }
+
+    // The find, the version check and the update are one write transaction, so a concurrent change gives a mismatch
+    override suspend fun setRead(id: Long, expectedVersion: Short, read: Boolean, actor: String): IssueReadOutcome =
+        suspendTransaction {
+            val now = clock.now().truncatedToMillis()
+            val stored = IssueTable.selectAll().where(IssueTable.id eq id).singleOrNull()?.toIssue()
+
+            when {
+                stored == null -> IssueReadOutcome.NotFound
+
+                stored.version != expectedVersion -> IssueReadOutcome.VersionMismatch
+
+                (stored.readTime != null) == read -> IssueReadOutcome.Unchanged
+
+                else -> {
+                    IssueTable.update(where = { IssueTable.id eq id }) {
+                        it[readTime] = if (read) now else null
+                        it[version] = version + 1.toShort()
+                        it[updatedTime] = now
+                        it[updatedBy] = actor
+                    }
+                    IssueReadOutcome.Updated
+                }
+            }
+        }
 
     override suspend fun findByCodeAndKey(code: IssueCode, key: String): Issue? = suspendReadTransaction {
         IssueTable.selectAll().where(matches(code, key)).singleOrNull()?.toIssue()

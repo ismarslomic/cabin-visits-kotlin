@@ -34,6 +34,16 @@ private class FakeIssueRepository : IssueRepository {
     }
 
     override suspend fun findByCodeAndKey(code: IssueCode, key: String): Issue? = null
+
+    // The reporter does not use the admin API of the repository
+    override suspend fun findById(id: Long): Issue = error("not used")
+
+    override suspend fun list(isRead: Boolean?, status: IssueStatus?, limit: Int): List<Issue> = error("not used")
+
+    override suspend fun unreadCount(): Int = error("not used")
+
+    override suspend fun setRead(id: Long, expectedVersion: Short, read: Boolean, actor: String): IssueReadOutcome =
+        error("not used")
 }
 
 class PersistingIssueReporterTest :
