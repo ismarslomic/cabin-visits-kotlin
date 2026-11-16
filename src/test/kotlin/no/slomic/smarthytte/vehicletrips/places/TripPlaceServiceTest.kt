@@ -32,7 +32,10 @@ class TripPlaceServiceTest :
         val repository: VehicleTripRepository = SqliteVehicleTripRepository()
         val reporter = RecordingIssueReporter()
 
-        beforeTest { reporter.reports.clear() }
+        beforeTest {
+            reporter.reports.clear()
+            reporter.resolved.clear()
+        }
 
         fun service(resolver: PlaceResolver) = TripPlaceService(resolver, repository, reporter)
 
@@ -63,6 +66,11 @@ class TripPlaceServiceTest :
 
             places shouldBe TripPlaces("Oslo", "Storgata 1, 0184 Oslo", "Ullsåk", "Cabinroad 2, 3560 Hemsedal")
             reporter.reports.shouldBeEmpty()
+            // Complete places close both problems of the trip, a missing city and a failed lookup
+            reporter.resolved shouldContainExactly listOf(
+                IssueCode.PLACE_MISSING to "PLACE_MISSING:t1",
+                IssueCode.PLACE_LOOKUP_FAILED to "PLACE_LOOKUP_FAILED:t1",
+            )
         }
 
         "resolve places reports the lookup failure and PLACE_MISSING, and keeps the side that worked" {
@@ -76,6 +84,7 @@ class TripPlaceServiceTest :
                 IssueCode.PLACE_MISSING to "PLACE_MISSING:t1",
             )
             reporter.reports[1].message shouldBe "Trip t1 has no end city"
+            reporter.resolved.shouldBeEmpty()
         }
 
         "resolve places names both sides when neither has a city" {
@@ -114,6 +123,10 @@ class TripPlaceServiceTest :
             val result = service(FakePlaceResolver(mapOf(START to OSLO, END to ULLSAK))).reResolvePlaceMissing()
 
             result shouldBe ReResolveResult(healed = 1, stillMissing = 0)
+            reporter.resolved shouldContainExactly listOf(
+                IssueCode.PLACE_MISSING to "PLACE_MISSING:t1",
+                IssueCode.PLACE_LOOKUP_FAILED to "PLACE_LOOKUP_FAILED:t1",
+            )
             transaction {
                 val row = VehicleTripEntity.findById("t1")!!
                 row.dataQuality shouldBe DataQuality.COMPLETE

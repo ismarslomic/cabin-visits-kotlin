@@ -41,12 +41,17 @@ class TripPlaceService(
             endCity = endPlace?.city ?: current.endCity,
             endAddress = endPlace?.address ?: current.endAddress,
         )
-        if (places.dataQuality() == DataQuality.PLACE_MISSING) {
-            issueReporter.report(
+        when (places.dataQuality()) {
+            DataQuality.PLACE_MISSING -> issueReporter.report(
                 code = IssueCode.PLACE_MISSING,
-                key = "${IssueCode.PLACE_MISSING}:$tripId",
+                key = issueKey(IssueCode.PLACE_MISSING, tripId),
                 message = "Trip $tripId has no ${missingSides(places)} city",
             )
+
+            // Complete places: neither the missing city nor an earlier failed lookup is a problem any more
+            DataQuality.COMPLETE -> listOf(IssueCode.PLACE_MISSING, IssueCode.PLACE_LOOKUP_FAILED).forEach {
+                issueReporter.resolve(it, issueKey(it, tripId))
+            }
         }
         return places
     }
@@ -89,7 +94,7 @@ class TripPlaceService(
     } catch (e: PlaceLookupException) {
         issueReporter.report(
             code = IssueCode.PLACE_LOOKUP_FAILED,
-            key = "${IssueCode.PLACE_LOOKUP_FAILED}:$tripId",
+            key = issueKey(IssueCode.PLACE_LOOKUP_FAILED, tripId),
             message = "Place lookup failed for trip $tripId: ${e.message}",
             cause = e,
         )
@@ -107,3 +112,6 @@ private fun missingSides(places: TripPlaces): String = listOfNotNull(
     "start".takeIf { places.startCity == null },
     "end".takeIf { places.endCity == null },
 ).joinToString(" and ")
+
+/** The dedupe key of a problem of one trip, e.g. `PLACE_MISSING:1765000000000`. */
+private fun issueKey(code: IssueCode, tripId: String) = "$code:$tripId"

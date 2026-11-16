@@ -152,9 +152,15 @@ class JlrAuthService(
                 "within ${authorization.expiresIn / SECONDS_PER_MINUTE} minutes",
         )
         return try {
-            pollForApproval(authorization, verifier).also { nextDeviceLoginAllowedAt = null }
+            pollForApproval(authorization, verifier).also {
+                nextDeviceLoginAllowedAt = null
+                issueReporter.resolve(IssueCode.JLR_APPROVAL_REQUIRED, APPROVAL_ISSUE_KEY)
+            }
         } catch (e: JlrAuthException) {
             nextDeviceLoginAllowedAt = clock.now() + DEVICE_LOGIN_COOLDOWN
+            // Denied or expired: nobody is asked to approve this code any more. A failing server (JlrRequestException)
+            // or a cancellation leaves the issue open, the next login or the issue cleanup closes it.
+            issueReporter.resolve(IssueCode.JLR_APPROVAL_REQUIRED, APPROVAL_ISSUE_KEY)
             throw e
         }
     }

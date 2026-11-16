@@ -3,6 +3,7 @@ package no.slomic.smarthytte.vehicletrips
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -411,6 +412,29 @@ class VehicleTripServiceTest :
             trip.startCity shouldBe "Oslo"
         }
 
+        "a successful fetch resolves the problems of an earlier failed fetch" {
+            val f = Fixture()
+            f.apiScript += page(journeyJson("j1"))
+
+            f.service.fetchVehicleTrips()
+
+            f.reporter.resolved shouldContainAll listOf(
+                IssueCode.JLR_AUTH_FAILED to "JLR_AUTH_FAILED",
+                IssueCode.JLR_REQUEST_FAILED to "JLR_REQUEST_FAILED",
+                IssueCode.FETCH_FAILED to "FETCH_FAILED",
+            )
+        }
+
+        "a successful fetch without journeys resolves them too" {
+            val f = Fixture()
+            f.apiScript += page()
+
+            f.service.fetchVehicleTrips()
+
+            f.reporter.resolved.map { it.first } shouldContainExactly
+                listOf(IssueCode.JLR_AUTH_FAILED, IssueCode.JLR_REQUEST_FAILED, IssueCode.FETCH_FAILED)
+        }
+
         "a rejected login is reported as JLR_AUTH_FAILED and does not escape" {
             val f = Fixture()
             f.authScript.clear()
@@ -419,6 +443,7 @@ class VehicleTripServiceTest :
             f.service.fetchVehicleTrips()
 
             f.reporter.reports.map { it.code } shouldContainExactly listOf(IssueCode.JLR_AUTH_FAILED)
+            f.reporter.resolved.shouldBeEmpty()
             f.service.isFetchDue(NOW) shouldBe true
         }
 
@@ -429,6 +454,7 @@ class VehicleTripServiceTest :
             f.service.fetchVehicleTrips()
 
             f.reporter.reports.map { it.code } shouldContainExactly listOf(IssueCode.JLR_REQUEST_FAILED)
+            f.reporter.resolved.shouldBeEmpty()
             f.service.isFetchDue(NOW) shouldBe true
         }
 
@@ -477,6 +503,7 @@ class VehicleTripServiceTest :
             f.repository.allVehicleTrips().shouldBeEmpty()
             f.checkpoints.checkpointForVehicleTrips().shouldBeNull()
             f.service.isFetchDue(NOW) shouldBe false
+            f.reporter.resolved.shouldBeEmpty()
         }
 
         "trips from the archive file are added without touching the checkpoint" {

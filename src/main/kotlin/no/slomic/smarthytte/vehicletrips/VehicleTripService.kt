@@ -32,6 +32,9 @@ import kotlin.time.Instant
 /** What happened to one journey from the Data Hub. */
 private enum class JourneyResult { ADDED, MATCHED, KNOWN }
 
+/** The problems of a fetch that a successful fetch resolves. Each is reported with its code as key. */
+private val FETCH_ISSUE_CODES = listOf(IssueCode.JLR_AUTH_FAILED, IssueCode.JLR_REQUEST_FAILED, IssueCode.FETCH_FAILED)
+
 class VehicleTripService(
     private val vehicleTripRepository: VehicleTripRepository,
     private val syncCheckpointService: SyncCheckpointService,
@@ -117,6 +120,7 @@ class VehicleTripService(
             syncCheckpointService.addOrUpdateCheckpointForVehicleTrips(it.toOsloDate())
         }
         lastSuccessfulFetch = clock.now()
+        FETCH_ISSUE_CODES.forEach { issueReporter.resolve(it, key = it.name) }
 
         logger.info(
             "Vehicle trips fetched: from=$from journeys=${journeys.size} " +

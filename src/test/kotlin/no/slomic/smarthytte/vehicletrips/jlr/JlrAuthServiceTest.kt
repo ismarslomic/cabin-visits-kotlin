@@ -102,6 +102,9 @@ class JlrAuthServiceTest :
                 report.message shouldContain "https://verify.example.test?code=ABCD-1234"
                 report.message shouldContain "ABCD-1234"
                 report.message shouldNotContain "device-secret"
+                // Approved: nobody has to approve any more
+                f.reporter.resolved shouldContainExactly
+                    listOf(IssueCode.JLR_APPROVAL_REQUIRED to "JLR_APPROVAL_REQUIRED")
             }
 
             should("send a client assertion with the token URL as audience and no DPoP proof to the device endpoint") {
@@ -157,9 +160,14 @@ class JlrAuthServiceTest :
 
                 shouldThrow<JlrAuthException> { f.service.accessToken() }
                 val requestsAfterFirst = f.requests.size
+                f.reporter.resolved shouldContainExactly
+                    listOf(IssueCode.JLR_APPROVAL_REQUIRED to "JLR_APPROVAL_REQUIRED")
 
                 shouldThrow<JlrAuthException> { f.service.accessToken() }.message shouldContain "next one starts at"
                 f.requests shouldHaveSize requestsAfterFirst
+                // The cooldown asks nobody to approve, so nothing is reported or resolved again
+                f.reporter.reports shouldHaveSize 1
+                f.reporter.resolved shouldHaveSize 1
 
                 f.clock.current += 1.hours + 1.seconds
                 f.script += deviceAuthorization()
@@ -174,6 +182,19 @@ class JlrAuthServiceTest :
 
                 shouldThrow<JlrAuthException> { f.service.accessToken() }.message shouldContain "not approved in time"
                 f.requests shouldHaveSize 4
+                f.reporter.resolved shouldContainExactly
+                    listOf(IssueCode.JLR_APPROVAL_REQUIRED to "JLR_APPROVAL_REQUIRED")
+            }
+
+            should("keep the approval issue open when the server fails while polling") {
+                val f = AuthFixture()
+                f.script += deviceAuthorization()
+                f.script += Reply(HttpStatusCode.InternalServerError, "oops")
+
+                shouldThrow<JlrRequestException> { f.service.accessToken() }
+
+                f.reporter.reports.single().code shouldBe IssueCode.JLR_APPROVAL_REQUIRED
+                f.reporter.resolved.shouldBeEmpty()
             }
 
             should("fail with a request exception when the device endpoint is down") {
@@ -213,6 +234,7 @@ class JlrAuthServiceTest :
                 request.dpop.orEmpty().isNotEmpty() shouldBe true
                 f.repository.saved shouldContainExactly listOf("refresh-1")
                 f.reporter.reports.shouldBeEmpty()
+                f.reporter.resolved.shouldBeEmpty()
             }
 
             should("keep the old refresh token when the answer has no new one") {
