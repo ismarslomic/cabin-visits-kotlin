@@ -39,6 +39,7 @@ import no.slomic.smarthytte.issues.LoggingIssueReporter
 import no.slomic.smarthytte.issues.PersistingIssueReporter
 import no.slomic.smarthytte.issues.SqliteIssueRepository
 import no.slomic.smarthytte.issues.configureIssueRoutes
+import no.slomic.smarthytte.issues.startIssueCleanup
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
@@ -74,6 +75,7 @@ import no.slomic.smarthytte.vehicletrips.VehicleTripQueryService
 import no.slomic.smarthytte.vehicletrips.VehicleTripRepository
 import no.slomic.smarthytte.vehicletrips.VehicleTripService
 import no.slomic.smarthytte.vehicletrips.backgroundSyncMode
+import no.slomic.smarthytte.vehicletrips.jlr.DEVICE_LOGIN_MAX_WAIT
 import no.slomic.smarthytte.vehicletrips.jlr.JlrAuthService
 import no.slomic.smarthytte.vehicletrips.jlr.JlrJourneyClient
 import no.slomic.smarthytte.vehicletrips.jlr.JlrJwtSigner
@@ -313,6 +315,9 @@ fun Application.startBackgroundSync(
 
     // Push the reservation changes in the calendar outbox to Google Calendar
     startCalendarOutboxDrain(reservationService, meterRegistry, issueReporter)
+
+    // Resolve an expired JLR approval issue and delete old resolved issues
+    startIssueCleanup(SqliteIssueRepository(), approvalExpiry = DEVICE_LOGIN_MAX_WAIT)
 }
 
 fun isDaytime(): Boolean {

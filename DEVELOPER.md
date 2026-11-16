@@ -426,7 +426,8 @@ stored in the database or logged.
 
 - **Issues in the app:** every `IssueReporter.report` is also stored in the `issue` table (one row per code and key, see `docs/database_schema.md`) and
   shown to an admin through `GET /api/issues`, `GET /api/issues/unread-count` and `PUT /api/issues/{id}` (mark read). A problem that comes
-  back after it was resolved is unread again. Because the message is stored and returned, a message passed to `report` must be safe to
+  back after it was resolved is unread again. An hourly `IssueCleanup` task (around the clock) deletes a resolved issue 30 days after the later of its resolve and read time,
+  never an open one, and resolves a `JLR_APPROVAL_REQUIRED` issue that is older than 15 minutes (the fallback for a cut-off login). Because the message is stored and returned, a message passed to `report` must be safe to
   store: status codes, error codes and class names, never a response body, a URL, a token or a key (the JLR device login is the one exception).
 
 #### Logging and privacy

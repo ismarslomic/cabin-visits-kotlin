@@ -38,9 +38,14 @@ private class AdminFakeIssueRepository(var outcome: IssueReadOutcome, var stored
 
     override suspend fun resolve(code: IssueCode, key: String, actor: String): Boolean = error("not used")
 
-    override suspend fun findByCodeAndKey(code: IssueCode, key: String): Issue? = error("not used")
+    override suspend fun findByCodeAndKey(code: IssueCode, key: String): Issue = error("not used")
 
     override suspend fun unreadCount(): Int = 7
+
+    override suspend fun resolveOpenBefore(code: IssueCode, occurredBefore: Instant, actor: String): Int =
+        error("not used")
+
+    override suspend fun deleteResolvedBefore(cutoff: Instant): Int = error("not used")
 }
 
 class IssueServiceTest :

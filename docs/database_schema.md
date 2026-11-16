@@ -170,6 +170,9 @@ erDiagram
   the text passed to `IssueReporter.report`, written to be safe to store: status codes, error codes and class names, never a
   response body, URL, token or key. The one exception is the JLR device approval link and user code, which expire after 15
   minutes.
+- Retention: an hourly job deletes a `RESOLVED` row 30 days after the later of `resolved_time` and `read_time` (read or
+  not). An `OPEN` row is never deleted. The same job resolves an `OPEN` `JLR_APPROVAL_REQUIRED` row that was last reported
+  more than 15 minutes ago.
 - Time columns are ISO instants in UTC. Unique index on `(code, issue_key)`, index on `(status, read_time)`.
 
 ### Audit columns

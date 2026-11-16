@@ -28,8 +28,11 @@ private const val APPROVAL_ISSUE_KEY = "JLR_APPROVAL_REQUIRED"
 /** The access token is renewed this long before it expires, so a call never starts with a token about to expire. */
 private val TOKEN_MARGIN = 60.seconds
 
-/** The owner approves the device login within this time (the server says 900 s, this is a ceiling). */
-private val DEVICE_LOGIN_MAX_WAIT = 15.minutes
+/**
+ * The owner approves the device login within this time (the server says 900 s, this is a ceiling). `IssueCleanup` gets
+ * it as the time after which `JLR_APPROVAL_REQUIRED` is resolved, so the two can not drift apart.
+ */
+internal val DEVICE_LOGIN_MAX_WAIT = 15.minutes
 
 /** After a failed or expired device login the next one starts at the earliest this much later. */
 private val DEVICE_LOGIN_COOLDOWN = 1.hours

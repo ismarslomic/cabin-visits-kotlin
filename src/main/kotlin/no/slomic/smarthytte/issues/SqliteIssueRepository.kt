@@ -10,7 +10,10 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.core.plus
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
@@ -94,6 +97,31 @@ class SqliteIssueRepository(private val clock: Clock = Clock.System) : IssueRepo
                 }
             }
         }
+
+    override suspend fun resolveOpenBefore(code: IssueCode, occurredBefore: Instant, actor: String): Int =
+        suspendTransaction {
+            val now = clock.now().truncatedToMillis()
+            IssueTable.update(where = {
+                (IssueTable.code eq code) and
+                    (IssueTable.status eq IssueStatus.OPEN) and
+                    (IssueTable.lastOccurredTime less occurredBefore.truncatedToMillis())
+            }) {
+                it[status] = IssueStatus.RESOLVED
+                it[resolvedTime] = now
+                it[version] = version + 1.toShort()
+                it[updatedTime] = now
+                it[updatedBy] = actor
+            }
+        }
+
+    override suspend fun deleteResolvedBefore(cutoff: Instant): Int = suspendTransaction {
+        val limit = cutoff.truncatedToMillis()
+        IssueTable.deleteWhere {
+            (status eq IssueStatus.RESOLVED) and
+                (resolvedTime less limit) and
+                (readTime.isNull() or (readTime less limit))
+        }
+    }
 
     override suspend fun findByCodeAndKey(code: IssueCode, key: String): Issue? = suspendReadTransaction {
         IssueTable.selectAll().where(matches(code, key)).singleOrNull()?.toIssue()

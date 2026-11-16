@@ -5,9 +5,11 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import no.slomic.smarthytte.utils.TestDbSetup
 import no.slomic.smarthytte.vehicletrips.jlr.MutableClock
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -278,6 +280,60 @@ class SqliteIssueRepositoryTest :
             repository.setRead(issue.id, issue.version, true, ACTOR) shouldBe IssueReadOutcome.Updated
 
             checkNotNull(repository.findById(issue.id)).status shouldBe IssueStatus.RESOLVED
+        }
+
+        "resolve open before: resolve only open issues of the code that were last reported before the time" {
+            val approval = IssueCode.JLR_APPROVAL_REQUIRED
+            repository.record(approval, "old", "m", null, ACTOR)
+            repository.record(approval, "done", "m", null, ACTOR)
+            repository.resolve(approval, "done", ACTOR)
+            repository.record(IssueCode.JLR_AUTH_FAILED, "other", "m", null, ACTOR)
+            clock.current = START + 10.minutes
+            repository.record(approval, "recent", "m", null, ACTOR)
+            val cutoff = START + 5.minutes
+
+            repository.resolveOpenBefore(approval, cutoff, ACTOR) shouldBe 1
+
+            repository.findByCodeAndKey(approval, "old")?.status shouldBe IssueStatus.RESOLVED
+            repository.findByCodeAndKey(approval, "old")?.version shouldBe 2
+            repository.findByCodeAndKey(approval, "done")?.version shouldBe 2
+            repository.findByCodeAndKey(approval, "recent")?.status shouldBe IssueStatus.OPEN
+            repository.findByCodeAndKey(IssueCode.JLR_AUTH_FAILED, "other")?.status shouldBe IssueStatus.OPEN
+            repository.resolveOpenBefore(approval, cutoff, ACTOR) shouldBe 0
+        }
+
+        "resolve open before: keep an issue that was last reported exactly at the time" {
+            record()
+
+            repository.resolveOpenBefore(CODE, START, ACTOR) shouldBe 0
+            repository.resolveOpenBefore(CODE, START + 1.milliseconds, ACTOR) shouldBe 1
+        }
+
+        "delete resolved before: delete only resolved issues whose resolve and read time are before the time" {
+            record(key = "open")
+            record(key = "resolved")
+            record(key = "read later")
+            repository.resolve(CODE, "resolved", ACTOR)
+            repository.resolve(CODE, "read later", ACTOR)
+            transaction {
+                IssueTable.update({ IssueTable.issueKey eq "read later" }) { it[readTime] = START + 1.hours }
+            }
+
+            // "resolved" was resolved at START and never read, "read later" was read an hour after the resolve
+            repository.deleteResolvedBefore(START + 1.minutes) shouldBe 1
+            repository.deleteResolvedBefore(START + 1.hours) shouldBe 0
+            repository.deleteResolvedBefore(START + 1.hours + 1.milliseconds) shouldBe 1
+            find("open").shouldNotBeNullIssue()
+            find("resolved").shouldBeNull()
+            find("read later").shouldBeNull()
+        }
+
+        "delete resolved before: an unread issue resolved exactly at the time is kept" {
+            record()
+            repository.resolve(CODE, KEY, ACTOR)
+
+            repository.deleteResolvedBefore(START) shouldBe 0
+            repository.deleteResolvedBefore(START + 1.milliseconds) shouldBe 1
         }
     })
 

@@ -1,5 +1,7 @@
 package no.slomic.smarthytte.issues
 
+import kotlin.time.Instant
+
 /** What [IssueRepository.setRead] did. */
 sealed interface IssueReadOutcome {
     data object Updated : IssueReadOutcome
@@ -35,4 +37,13 @@ interface IssueRepository {
      * version, a request for the state it already has does not.
      */
     suspend fun setRead(id: Long, expectedVersion: Short, read: Boolean, actor: String): IssueReadOutcome
+
+    /** Resolves the OPEN issues of [code] whose latest occurrence is before [occurredBefore]. Returns how many. */
+    suspend fun resolveOpenBefore(code: IssueCode, occurredBefore: Instant, actor: String): Int
+
+    /**
+     * Deletes the RESOLVED issues whose resolve time and read time are both before [cutoff], that is, the later of the
+     * two is before it. An OPEN issue is never deleted. Returns how many.
+     */
+    suspend fun deleteResolvedBefore(cutoff: Instant): Int
 }

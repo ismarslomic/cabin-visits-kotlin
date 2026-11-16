@@ -528,6 +528,13 @@ an old `version` gives 412. A resolved issue can still be unread; only `OPEN` un
 | `SENSOR_FETCH_FAILED` | ERROR | `sensor` | Fetching the check-in/out sensor data fails |
 | `CHECK_IN_OUT_FAILED` | WARN | reservation id | Check-in/out can not be derived or stored for a reservation |
 
+`IssueCleanup` runs once an hour, around the clock, as a separate background task (like the calendar drain):
+
+- It resolves an `OPEN` `JLR_APPROVAL_REQUIRED` issue that was last reported more than 15 minutes ago. `JlrAuthService`
+  resolves it when the login ends, this is the fallback for a login that was cut off, for example by a restart.
+- It deletes a `RESOLVED` issue 30 days after the later of `resolvedTime` and `readTime`, read or not, so a read after
+  the resolve restarts the 30 days. An `OPEN` issue is never deleted.
+
 The severity is read from `IssueCode` and is not stored. Code names are stored in the `issue` table, so a name can not be
 changed without a data migration. See "Issues in the app" in `DEVELOPER.md` for what a message may hold.
 

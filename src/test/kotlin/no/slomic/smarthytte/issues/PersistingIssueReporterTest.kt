@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import kotlinx.coroutines.CancellationException
 import no.slomic.smarthytte.common.SYSTEM_ACTOR
+import kotlin.time.Instant
 
 private class FakeIssueRepository : IssueRepository {
     data class Recorded(
@@ -44,6 +45,11 @@ private class FakeIssueRepository : IssueRepository {
 
     override suspend fun setRead(id: Long, expectedVersion: Short, read: Boolean, actor: String): IssueReadOutcome =
         error("not used")
+
+    override suspend fun resolveOpenBefore(code: IssueCode, occurredBefore: Instant, actor: String): Int =
+        error("not used")
+
+    override suspend fun deleteResolvedBefore(cutoff: Instant): Int = error("not used")
 }
 
 class PersistingIssueReporterTest :
