@@ -16,7 +16,11 @@ import kotlin.time.Duration.Companion.hours
 private val CLEANUP_INTERVAL = 1.hours
 
 /** Starts the hourly [IssueCleanup]. It runs around the clock, apart from the sync loop that is daytime only. */
-fun Application.startIssueCleanup(repository: IssueRepository, approvalExpiry: Duration) {
+fun Application.startIssueCleanup(
+    repository: IssueRepository,
+    approvalExpiry: Duration,
+    interval: Duration = CLEANUP_INTERVAL,
+) {
     val cleanup = IssueCleanup(repository, approvalExpiry)
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -24,7 +28,7 @@ fun Application.startIssueCleanup(repository: IssueRepository, approvalExpiry: D
     scope.launch {
         while (isActive) {
             runCatchingLogged("Issue cleanup") { cleanup.cleanOnce() }
-            delay(CLEANUP_INTERVAL)
+            delay(interval)
         }
     }
 }
