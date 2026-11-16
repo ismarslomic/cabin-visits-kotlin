@@ -21,8 +21,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.jsonPrimitive
-import no.slomic.smarthytte.common.issues.IssueCode
-import no.slomic.smarthytte.common.issues.RecordingIssueReporter
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.RecordingIssueReporter
 import no.slomic.smarthytte.plugins.installRetry
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours

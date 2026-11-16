@@ -1,8 +1,13 @@
-package no.slomic.smarthytte.common.issues
+package no.slomic.smarthytte.issues
 
 enum class IssueSeverity { WARN, ERROR }
 
-/** Stable codes for operational problems. The code and the dedupe key are the contract, the message is for humans. */
+/**
+ * Stable codes for operational problems. The code and the dedupe key are the contract, the message is for humans.
+ *
+ * The names are stored in `issue.code`, so a name can not be changed without a data migration. The severity is not
+ * stored, it is always read from here.
+ */
 enum class IssueCode(val severity: IssueSeverity) {
     JLR_APPROVAL_REQUIRED(IssueSeverity.WARN),
     JLR_AUTH_FAILED(IssueSeverity.ERROR),

@@ -1,4 +1,4 @@
-package no.slomic.smarthytte.common.issues
+package no.slomic.smarthytte.issues
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
@@ -13,9 +13,10 @@ private const val LOGGER_NAME = "test.LoggingIssueReporter"
 
 class LoggingIssueReporterTest :
     ShouldSpec({
-        fun withCapturedLog(block: (LoggingIssueReporter) -> Unit): List<ILoggingEvent> {
+        suspend fun withCapturedLog(block: suspend (LoggingIssueReporter) -> Unit): List<ILoggingEvent> {
             val appender = ListAppender<ILoggingEvent>().apply { start() }
             val logbackLogger = LoggerFactory.getLogger(LOGGER_NAME) as Logger
+            logbackLogger.level = Level.DEBUG
             logbackLogger.addAppender(appender)
             try {
                 block(LoggingIssueReporter(KtorSimpleLogger(LOGGER_NAME)))
@@ -61,6 +62,15 @@ class LoggingIssueReporterTest :
                 }
 
                 events.single().throwableProxy shouldBe null
+            }
+        }
+
+        context("resolve") {
+            should("log at debug, because a healthy run resolves codes that never failed") {
+                val events = withCapturedLog { it.resolve(IssueCode.JLR_AUTH_FAILED, key = "JLR_AUTH_FAILED") }
+
+                events.single().level shouldBe Level.DEBUG
+                events.single().formattedMessage shouldBe "[JLR_AUTH_FAILED] key=JLR_AUTH_FAILED resolved"
             }
         }
     })

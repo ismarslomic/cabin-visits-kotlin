@@ -24,8 +24,6 @@ import no.slomic.smarthytte.auth.toConfig
 import no.slomic.smarthytte.calendar.pendingCalendarOperations
 import no.slomic.smarthytte.calendar.startCalendarOutboxDrain
 import no.slomic.smarthytte.checkinouts.CheckInOutService
-import no.slomic.smarthytte.common.issues.IssueReporter
-import no.slomic.smarthytte.common.issues.LoggingIssueReporter
 import no.slomic.smarthytte.common.runCatchingLogged
 import no.slomic.smarthytte.guests.BootstrapAdmin
 import no.slomic.smarthytte.guests.GuestAdminService
@@ -35,6 +33,10 @@ import no.slomic.smarthytte.guests.GuestQueryService
 import no.slomic.smarthytte.guests.GuestRepository
 import no.slomic.smarthytte.guests.SqliteGuestRepository
 import no.slomic.smarthytte.guests.configureGuestRoutes
+import no.slomic.smarthytte.issues.IssueReporter
+import no.slomic.smarthytte.issues.LoggingIssueReporter
+import no.slomic.smarthytte.issues.PersistingIssueReporter
+import no.slomic.smarthytte.issues.SqliteIssueRepository
 import no.slomic.smarthytte.plugins.HttpClientProvider
 import no.slomic.smarthytte.plugins.configureDatabases
 import no.slomic.smarthytte.plugins.configureMonitoring
@@ -316,7 +318,7 @@ private fun createVehicleTripService(
 ): VehicleTripService {
     val jlr = loadProperties<JlrPropertiesHolder>().jlr
     val knownPlaces = loadProperties<PlacesPropertiesHolder>().places.toKnownPlaces()
-    val issueReporter: IssueReporter = LoggingIssueReporter()
+    val issueReporter: IssueReporter = PersistingIssueReporter(LoggingIssueReporter(), SqliteIssueRepository())
 
     val signer = JlrJwtSigner(privateKeyPem = jlr.privateKey.value)
     val authService = JlrAuthService(

@@ -15,8 +15,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.LocalDate
-import no.slomic.smarthytte.common.issues.IssueCode
-import no.slomic.smarthytte.common.issues.RecordingIssueReporter
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.RecordingIssueReporter
 import no.slomic.smarthytte.properties.VehicleTripProperties
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.sync.checkpoint.SqliteSyncCheckpointRepository

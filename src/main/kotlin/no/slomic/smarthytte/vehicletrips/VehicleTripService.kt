@@ -7,11 +7,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.atStartOfDayIn
 import no.slomic.smarthytte.common.PersistenceResult
 import no.slomic.smarthytte.common.SYSTEM_ACTOR
-import no.slomic.smarthytte.common.issues.IssueCode
-import no.slomic.smarthytte.common.issues.IssueReporter
 import no.slomic.smarthytte.common.osloTimeZone
 import no.slomic.smarthytte.common.readVehicleTripsFromJsonFile
 import no.slomic.smarthytte.common.toOsloDate
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.properties.VehicleTripPropertiesHolder
 import no.slomic.smarthytte.properties.loadProperties
 import no.slomic.smarthytte.sync.checkpoint.SyncCheckpointService
@@ -169,7 +169,7 @@ class VehicleTripService(
         return (checkpoint ?: fullSyncFromDate).atStartOfDayIn(osloTimeZone)
     }
 
-    private fun report(code: IssueCode, e: Exception) {
+    private suspend fun report(code: IssueCode, e: Exception) {
         issueReporter.report(
             code = code,
             key = code.name,

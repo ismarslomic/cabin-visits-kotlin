@@ -7,8 +7,8 @@ import io.ktor.util.logging.KtorSimpleLogger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import no.slomic.smarthytte.common.issues.IssueCode
-import no.slomic.smarthytte.common.issues.IssueReporter
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.plugins.SignRequest
 import java.security.MessageDigest
 import java.security.SecureRandom

@@ -1,8 +1,8 @@
 package no.slomic.smarthytte.vehicletrips.places
 
 import no.slomic.smarthytte.common.SYSTEM_ACTOR
-import no.slomic.smarthytte.common.issues.IssueCode
-import no.slomic.smarthytte.common.issues.IssueReporter
+import no.slomic.smarthytte.issues.IssueCode
+import no.slomic.smarthytte.issues.IssueReporter
 import no.slomic.smarthytte.vehicletrips.DataQuality
 import no.slomic.smarthytte.vehicletrips.GeoPoint
 import no.slomic.smarthytte.vehicletrips.TripPlaces
