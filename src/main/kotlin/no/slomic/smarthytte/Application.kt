@@ -3,6 +3,7 @@ package no.slomic.smarthytte
 import io.ktor.client.HttpClient
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.log
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
@@ -283,7 +284,7 @@ fun Application.startBackgroundSync(
 
     log.info("Launching background sync tasks.")
 
-    monitor.subscribe(ApplicationStopped) {
+    monitor.subscribe(ApplicationStopping) {
         log.info("Stopping background sync tasks.")
         schedulerScope.cancel()
     }

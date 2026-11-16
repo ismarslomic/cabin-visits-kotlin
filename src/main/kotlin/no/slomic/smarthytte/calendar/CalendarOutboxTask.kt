@@ -1,7 +1,8 @@
 package no.slomic.smarthytte.calendar
 
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.log
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +44,10 @@ fun Application.startCalendarOutboxDrain(
     )
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    monitor.subscribe(ApplicationStopped) { scope.cancel() }
+    monitor.subscribe(ApplicationStopping) {
+        log.info("Stopping the calendar outbox drain since Application is stopping.")
+        scope.cancel()
+    }
     scope.launch {
         while (isActive) {
             runCatchingLogged("Calendar outbox drain") { drain.drainOnce() }

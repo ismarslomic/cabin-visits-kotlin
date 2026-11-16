@@ -1,7 +1,8 @@
 package no.slomic.smarthytte.issues
 
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,7 +25,10 @@ fun Application.startIssueCleanup(
     val cleanup = IssueCleanup(repository, approvalExpiry)
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    monitor.subscribe(ApplicationStopped) { scope.cancel() }
+    monitor.subscribe(ApplicationStopping) {
+        log.info("Stopping the issue cleanup task since Application is stopping.")
+        scope.cancel()
+    }
     scope.launch {
         while (isActive) {
             runCatchingLogged("Issue cleanup") { cleanup.cleanOnce() }
