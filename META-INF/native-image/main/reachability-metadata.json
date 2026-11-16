@@ -2442,6 +2442,31 @@
       ]
     },
     {
+      "type": "no.slomic.smarthytte.properties.JlrProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "com.sksamuel.hoplite.Secret",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.JlrPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.JlrProperties"
+          ]
+        }
+      ]
+    },
+    {
       "type": "no.slomic.smarthytte.properties.KtorProperties",
       "methods": [
         {
@@ -2459,6 +2484,43 @@
           "name": "<init>",
           "parameterTypes": [
             "no.slomic.smarthytte.properties.KtorProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.PlaceProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "double",
+            "double",
+            "java.lang.String",
+            "double"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.PlacesProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.PlaceProperties",
+            "no.slomic.smarthytte.properties.PlaceProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "no.slomic.smarthytte.properties.PlacesPropertiesHolder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "no.slomic.smarthytte.properties.PlacesProperties"
           ]
         }
       ]
@@ -2492,16 +2554,8 @@
           "name": "<init>",
           "parameterTypes": [
             "java.lang.String",
-            "java.lang.String",
-            "java.lang.String",
-            "java.lang.String",
-            "java.lang.String",
             "boolean",
-            "java.lang.String",
-            "java.lang.String",
-            "java.lang.String",
-            "java.lang.String",
-            "int"
+            "java.lang.String"
           ]
         }
       ]
@@ -3120,6 +3174,60 @@
     },
     {
       "type": "org.flywaydb.core.internal.database.sqlite.SQLiteDatabaseType"
+    },
+    {
+      "type": "org.flywaydb.core.internal.exception.sqlExceptions.FlywaySqlNoDriversForInteractiveAuthException",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.sql.SQLException",
+            "javax.sql.DataSource"
+          ]
+        },
+        {
+          "name": "isFlywaySpecificVersionOf",
+          "parameterTypes": [
+            "java.sql.SQLException"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.exception.sqlExceptions.FlywaySqlNoIntegratedAuthException",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.sql.SQLException",
+            "javax.sql.DataSource"
+          ]
+        },
+        {
+          "name": "isFlywaySpecificVersionOf",
+          "parameterTypes": [
+            "java.sql.SQLException"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.exception.sqlExceptions.FlywaySqlServerUntrustedCertificateSqlException",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.sql.SQLException",
+            "javax.sql.DataSource"
+          ]
+        },
+        {
+          "name": "isFlywaySpecificVersionOf",
+          "parameterTypes": [
+            "java.sql.SQLException"
+          ]
+        }
+      ]
     },
     {
       "type": "org.flywaydb.core.internal.logging.slf4j.Slf4jLogCreator",
