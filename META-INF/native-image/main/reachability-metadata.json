@@ -120,6 +120,18 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "setErrors",
+          "parameterTypes": [
+            "java.util.List"
+          ]
+        },
+        {
+          "name": "setMessage",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -169,6 +181,24 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "setDomain",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setMessage",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setReason",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -651,6 +681,38 @@
         },
         {
           "name": "updatedMin"
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.Calendar$Events$Patch",
+      "fields": [
+        {
+          "name": "alwaysIncludeEmail"
+        },
+        {
+          "name": "calendarId"
+        },
+        {
+          "name": "conferenceDataVersion"
+        },
+        {
+          "name": "eventId"
+        },
+        {
+          "name": "eventLabelVersion"
+        },
+        {
+          "name": "maxAttendees"
+        },
+        {
+          "name": "sendNotifications"
+        },
+        {
+          "name": "sendUpdates"
+        },
+        {
+          "name": "supportsAttachments"
         }
       ]
     },
@@ -2834,6 +2896,17 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.io.IOException",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
