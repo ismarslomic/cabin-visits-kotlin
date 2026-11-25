@@ -567,6 +567,32 @@
       ]
     },
     {
+      "type": "com.google.api.services.calendar.Calendar$Events$Insert",
+      "fields": [
+        {
+          "name": "calendarId"
+        },
+        {
+          "name": "conferenceDataVersion"
+        },
+        {
+          "name": "eventLabelVersion"
+        },
+        {
+          "name": "maxAttendees"
+        },
+        {
+          "name": "sendNotifications"
+        },
+        {
+          "name": "sendUpdates"
+        },
+        {
+          "name": "supportsAttachments"
+        }
+      ]
+    },
+    {
       "type": "com.google.api.services.calendar.Calendar$Events$List",
       "fields": [
         {
@@ -1221,120 +1247,6 @@
     },
     {
       "type": "com.google.api.services.calendar.model.Event",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "setCreated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        },
-        {
-          "name": "setCreator",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Creator"
-          ]
-        },
-        {
-          "name": "setDescription",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEnd",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setEtag",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setEventType",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setHtmlLink",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setICalUID",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setId",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setKind",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setLocation",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setOrganizer",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Organizer"
-          ]
-        },
-        {
-          "name": "setReminders",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.Event$Reminders"
-          ]
-        },
-        {
-          "name": "setSequence",
-          "parameterTypes": [
-            "java.lang.Integer"
-          ]
-        },
-        {
-          "name": "setStart",
-          "parameterTypes": [
-            "com.google.api.services.calendar.model.EventDateTime"
-          ]
-        },
-        {
-          "name": "setStatus",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setSummary",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "setUpdated",
-          "parameterTypes": [
-            "com.google.api.client.util.DateTime"
-          ]
-        }
-      ],
       "fields": [
         {
           "name": "anyoneCanAddSelf"
@@ -1468,22 +1380,124 @@
         {
           "name": "workingLocationProperties"
         }
-      ]
-    },
-    {
-      "type": "com.google.api.services.calendar.model.Event$Creator",
+      ],
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": []
         },
         {
-          "name": "setEmail",
+          "name": "setCreated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
+        },
+        {
+          "name": "setCreator",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Creator"
+          ]
+        },
+        {
+          "name": "setDescription",
           "parameterTypes": [
             "java.lang.String"
           ]
+        },
+        {
+          "name": "setEnd",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setEtag",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setEventType",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setHtmlLink",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setICalUID",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setId",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setKind",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setLocation",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setOrganizer",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Organizer"
+          ]
+        },
+        {
+          "name": "setReminders",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.Event$Reminders"
+          ]
+        },
+        {
+          "name": "setSequence",
+          "parameterTypes": [
+            "java.lang.Integer"
+          ]
+        },
+        {
+          "name": "setStart",
+          "parameterTypes": [
+            "com.google.api.services.calendar.model.EventDateTime"
+          ]
+        },
+        {
+          "name": "setStatus",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setSummary",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setUpdated",
+          "parameterTypes": [
+            "com.google.api.client.util.DateTime"
+          ]
         }
-      ],
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Creator",
       "fields": [
         {
           "name": "displayName"
@@ -1496,6 +1510,18 @@
         },
         {
           "name": "self"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setEmail",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -1553,6 +1579,20 @@
     },
     {
       "type": "com.google.api.services.calendar.model.Event$Organizer",
+      "fields": [
+        {
+          "name": "displayName"
+        },
+        {
+          "name": "email"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "self"
+        }
+      ],
       "methods": [
         {
           "name": "<init>",
@@ -1576,24 +1616,18 @@
             "java.lang.Boolean"
           ]
         }
-      ],
-      "fields": [
-        {
-          "name": "displayName"
-        },
-        {
-          "name": "email"
-        },
-        {
-          "name": "id"
-        },
-        {
-          "name": "self"
-        }
       ]
     },
     {
       "type": "com.google.api.services.calendar.model.Event$Reminders",
+      "fields": [
+        {
+          "name": "overrides"
+        },
+        {
+          "name": "useDefault"
+        }
+      ],
       "methods": [
         {
           "name": "<init>",
@@ -1604,14 +1638,6 @@
           "parameterTypes": [
             "java.lang.Boolean"
           ]
-        }
-      ],
-      "fields": [
-        {
-          "name": "overrides"
-        },
-        {
-          "name": "useDefault"
         }
       ]
     },
@@ -1724,6 +1750,17 @@
     },
     {
       "type": "com.google.api.services.calendar.model.EventDateTime",
+      "fields": [
+        {
+          "name": "date"
+        },
+        {
+          "name": "dateTime"
+        },
+        {
+          "name": "timeZone"
+        }
+      ],
       "methods": [
         {
           "name": "<init>",
@@ -1740,17 +1777,6 @@
           "parameterTypes": [
             "java.lang.String"
           ]
-        }
-      ],
-      "fields": [
-        {
-          "name": "date"
-        },
-        {
-          "name": "dateTime"
-        },
-        {
-          "name": "timeZone"
         }
       ]
     },
@@ -1813,18 +1839,18 @@
     },
     {
       "type": "com.google.api.services.calendar.model.EventReminder",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ],
       "fields": [
         {
           "name": "method"
         },
         {
           "name": "minutes"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
         }
       ]
     },
@@ -1893,6 +1919,41 @@
     },
     {
       "type": "com.google.api.services.calendar.model.Events",
+      "fields": [
+        {
+          "name": "accessRole"
+        },
+        {
+          "name": "defaultReminders"
+        },
+        {
+          "name": "description"
+        },
+        {
+          "name": "etag"
+        },
+        {
+          "name": "items"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "nextPageToken"
+        },
+        {
+          "name": "nextSyncToken"
+        },
+        {
+          "name": "summary"
+        },
+        {
+          "name": "timeZone"
+        },
+        {
+          "name": "updated"
+        }
+      ],
       "methods": [
         {
           "name": "<init>",
@@ -1957,41 +2018,6 @@
           "parameterTypes": [
             "com.google.api.client.util.DateTime"
           ]
-        }
-      ],
-      "fields": [
-        {
-          "name": "accessRole"
-        },
-        {
-          "name": "defaultReminders"
-        },
-        {
-          "name": "description"
-        },
-        {
-          "name": "etag"
-        },
-        {
-          "name": "items"
-        },
-        {
-          "name": "kind"
-        },
-        {
-          "name": "nextPageToken"
-        },
-        {
-          "name": "nextSyncToken"
-        },
-        {
-          "name": "summary"
-        },
-        {
-          "name": "timeZone"
-        },
-        {
-          "name": "updated"
         }
       ]
     },
@@ -2317,6 +2343,9 @@
     },
     {
       "type": "com.influxdb.client.domain.StringLiteral"
+    },
+    {
+      "type": "com.sksamuel.hoplite.Secret"
     },
     {
       "type": "com.sksamuel.hoplite.decoder.Base64Decoder"
@@ -2662,6 +2691,15 @@
       "type": "io.ktor.client.engine.HttpClientEngineBase"
     },
     {
+      "type": "io.ktor.client.plugins.HttpRetryDelayContext"
+    },
+    {
+      "type": "io.ktor.client.plugins.HttpRetryModifyRequestContext"
+    },
+    {
+      "type": "io.ktor.client.plugins.HttpRetryShouldRetryContext"
+    },
+    {
       "type": "io.ktor.client.plugins.HttpSend"
     },
     {
@@ -2672,6 +2710,15 @@
     },
     {
       "type": "io.ktor.client.plugins.cookies.HttpCookies"
+    },
+    {
+      "type": "io.ktor.client.request.HttpRequest"
+    },
+    {
+      "type": "io.ktor.client.request.HttpRequestBuilder"
+    },
+    {
+      "type": "io.ktor.client.statement.HttpResponse"
     },
     {
       "type": "io.ktor.http.ContentType"
@@ -3008,13 +3055,25 @@
       "type": "kotlin.Comparable"
     },
     {
+      "type": "kotlin.Double"
+    },
+    {
       "type": "kotlin.Function0"
     },
     {
       "type": "kotlin.Function1"
     },
     {
+      "type": "kotlin.Function2"
+    },
+    {
+      "type": "kotlin.Function3"
+    },
+    {
       "type": "kotlin.Int"
+    },
+    {
+      "type": "kotlin.Long"
     },
     {
       "type": "kotlin.Metadata",
@@ -3064,6 +3123,9 @@
     },
     {
       "type": "kotlin.String"
+    },
+    {
+      "type": "kotlin.Throwable"
     },
     {
       "type": "kotlin.Unit"
@@ -5507,6 +5569,18 @@
       "glob": "db/migration/V1.0__initial_schema.sql"
     },
     {
+      "glob": "db/migration/V1.10__reservation_guest_stay.sql"
+    },
+    {
+      "glob": "db/migration/V1.11__vehicle_trip_nullable_energy_and_places.sql"
+    },
+    {
+      "glob": "db/migration/V1.12__jlr_token.sql"
+    },
+    {
+      "glob": "db/migration/V1.13__issue.sql"
+    },
+    {
       "glob": "db/migration/V1.1__new_table_reservation_vehicle_trip.sql"
     },
     {
@@ -5514,6 +5588,24 @@
     },
     {
       "glob": "db/migration/V1.3__guest_app_role.sql"
+    },
+    {
+      "glob": "db/migration/V1.4__guest_unique_email.sql"
+    },
+    {
+      "glob": "db/migration/V1.5__guest_rename_app_role_to_role.sql"
+    },
+    {
+      "glob": "db/migration/V1.6__remove_guest_import_and_calendar_sync.sql"
+    },
+    {
+      "glob": "db/migration/V1.7__audit_columns.sql"
+    },
+    {
+      "glob": "db/migration/V1.8__guest_id_first_dot_last.sql"
+    },
+    {
+      "glob": "db/migration/V1.9__calendar_outbox.sql"
     },
     {
       "glob": "kotlin/collections/collections.kotlin_builtins"
