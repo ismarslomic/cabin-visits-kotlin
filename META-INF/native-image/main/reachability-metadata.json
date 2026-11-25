@@ -649,6 +649,140 @@
             "com.google.api.client.util.DateTime"
           ]
         }
+      ],
+      "fields": [
+        {
+          "name": "anyoneCanAddSelf"
+        },
+        {
+          "name": "attachments"
+        },
+        {
+          "name": "attendees"
+        },
+        {
+          "name": "attendeesOmitted"
+        },
+        {
+          "name": "birthdayProperties"
+        },
+        {
+          "name": "colorId"
+        },
+        {
+          "name": "conferenceData"
+        },
+        {
+          "name": "created"
+        },
+        {
+          "name": "creator"
+        },
+        {
+          "name": "description"
+        },
+        {
+          "name": "end"
+        },
+        {
+          "name": "endTimeUnspecified"
+        },
+        {
+          "name": "etag"
+        },
+        {
+          "name": "eventLabelId"
+        },
+        {
+          "name": "eventType"
+        },
+        {
+          "name": "extendedProperties"
+        },
+        {
+          "name": "focusTimeProperties"
+        },
+        {
+          "name": "gadget"
+        },
+        {
+          "name": "guestsCanInviteOthers"
+        },
+        {
+          "name": "guestsCanModify"
+        },
+        {
+          "name": "guestsCanSeeOtherGuests"
+        },
+        {
+          "name": "hangoutLink"
+        },
+        {
+          "name": "htmlLink"
+        },
+        {
+          "name": "iCalUID"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "location"
+        },
+        {
+          "name": "locked"
+        },
+        {
+          "name": "organizer"
+        },
+        {
+          "name": "originalStartTime"
+        },
+        {
+          "name": "outOfOfficeProperties"
+        },
+        {
+          "name": "privateCopy"
+        },
+        {
+          "name": "recurrence"
+        },
+        {
+          "name": "recurringEventId"
+        },
+        {
+          "name": "reminders"
+        },
+        {
+          "name": "sequence"
+        },
+        {
+          "name": "source"
+        },
+        {
+          "name": "start"
+        },
+        {
+          "name": "status"
+        },
+        {
+          "name": "summary"
+        },
+        {
+          "name": "transparency"
+        },
+        {
+          "name": "updated"
+        },
+        {
+          "name": "visibility"
+        },
+        {
+          "name": "workingLocationProperties"
+        }
       ]
     },
     {
@@ -663,6 +797,20 @@
           "parameterTypes": [
             "java.lang.String"
           ]
+        }
+      ],
+      "fields": [
+        {
+          "name": "displayName"
+        },
+        {
+          "name": "email"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "self"
         }
       ]
     },
@@ -691,6 +839,20 @@
             "java.lang.Boolean"
           ]
         }
+      ],
+      "fields": [
+        {
+          "name": "displayName"
+        },
+        {
+          "name": "email"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "self"
+        }
       ]
     },
     {
@@ -705,6 +867,14 @@
           "parameterTypes": [
             "java.lang.Boolean"
           ]
+        }
+      ],
+      "fields": [
+        {
+          "name": "overrides"
+        },
+        {
+          "name": "useDefault"
         }
       ]
     },
@@ -727,6 +897,17 @@
             "java.lang.String"
           ]
         }
+      ],
+      "fields": [
+        {
+          "name": "date"
+        },
+        {
+          "name": "dateTime"
+        },
+        {
+          "name": "timeZone"
+        }
       ]
     },
     {
@@ -735,6 +916,14 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        }
+      ],
+      "fields": [
+        {
+          "name": "method"
+        },
+        {
+          "name": "minutes"
         }
       ]
     },
@@ -804,6 +993,41 @@
           "parameterTypes": [
             "com.google.api.client.util.DateTime"
           ]
+        }
+      ],
+      "fields": [
+        {
+          "name": "accessRole"
+        },
+        {
+          "name": "defaultReminders"
+        },
+        {
+          "name": "description"
+        },
+        {
+          "name": "etag"
+        },
+        {
+          "name": "items"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "nextPageToken"
+        },
+        {
+          "name": "nextSyncToken"
+        },
+        {
+          "name": "summary"
+        },
+        {
+          "name": "timeZone"
+        },
+        {
+          "name": "updated"
         }
       ]
     },
@@ -4036,6 +4260,1033 @@
           "com.influxdb.client.service.QueryService"
         ]
       }
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Calendar$WorkingHours$AvailableTimes",
+      "fields": [
+        {
+          "name": "dayOfWeek"
+        },
+        {
+          "name": "periodEnd"
+        },
+        {
+          "name": "periodStart"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.LabelProperties",
+      "fields": [
+        {
+          "name": "eventLabels"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Calendar",
+      "fields": [
+        {
+          "name": "autoAcceptInvitations"
+        },
+        {
+          "name": "conferenceProperties"
+        },
+        {
+          "name": "dataOwner"
+        },
+        {
+          "name": "description"
+        },
+        {
+          "name": "etag"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "labelProperties"
+        },
+        {
+          "name": "location"
+        },
+        {
+          "name": "summary"
+        },
+        {
+          "name": "timeZone"
+        },
+        {
+          "name": "workingHours"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Setting",
+      "fields": [
+        {
+          "name": "etag"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "value"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventLabel",
+      "fields": [
+        {
+          "name": "backgroundColor"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "name"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ConferenceRequestStatus",
+      "fields": [
+        {
+          "name": "statusCode"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.CalendarListEntry",
+      "fields": [
+        {
+          "name": "accessRole"
+        },
+        {
+          "name": "autoAcceptInvitations"
+        },
+        {
+          "name": "backgroundColor"
+        },
+        {
+          "name": "colorId"
+        },
+        {
+          "name": "conferenceProperties"
+        },
+        {
+          "name": "dataOwner"
+        },
+        {
+          "name": "defaultReminders"
+        },
+        {
+          "name": "deleted"
+        },
+        {
+          "name": "description"
+        },
+        {
+          "name": "etag"
+        },
+        {
+          "name": "foregroundColor"
+        },
+        {
+          "name": "hidden"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "location"
+        },
+        {
+          "name": "notificationSettings"
+        },
+        {
+          "name": "primary"
+        },
+        {
+          "name": "selected"
+        },
+        {
+          "name": "summary"
+        },
+        {
+          "name": "summaryOverride"
+        },
+        {
+          "name": "timeZone"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.CalendarList",
+      "fields": [
+        {
+          "name": "etag"
+        },
+        {
+          "name": "items"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "nextPageToken"
+        },
+        {
+          "name": "nextSyncToken"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventAttendee",
+      "fields": [
+        {
+          "name": "additionalGuests"
+        },
+        {
+          "name": "asyncOperation"
+        },
+        {
+          "name": "comment"
+        },
+        {
+          "name": "displayName"
+        },
+        {
+          "name": "email"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "optional"
+        },
+        {
+          "name": "organizer"
+        },
+        {
+          "name": "resource"
+        },
+        {
+          "name": "responseStatus"
+        },
+        {
+          "name": "self"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ConferenceProperties",
+      "fields": [
+        {
+          "name": "allowedConferenceSolutionTypes"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventBirthdayProperties",
+      "fields": [
+        {
+          "name": "contact"
+        },
+        {
+          "name": "customTypeName"
+        },
+        {
+          "name": "type"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventWorkingLocationProperties$CustomLocation",
+      "fields": [
+        {
+          "name": "label"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.CalendarListEntry$NotificationSettings",
+      "fields": [
+        {
+          "name": "notifications"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Colors",
+      "fields": [
+        {
+          "name": "calendar"
+        },
+        {
+          "name": "event"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "updated"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$ExtendedProperties",
+      "fields": [
+        {
+          "name": "private__"
+        },
+        {
+          "name": "shared"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventAttachment",
+      "fields": [
+        {
+          "name": "fileId"
+        },
+        {
+          "name": "fileUrl"
+        },
+        {
+          "name": "iconLink"
+        },
+        {
+          "name": "mimeType"
+        },
+        {
+          "name": "title"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.CreateConferenceRequest",
+      "fields": [
+        {
+          "name": "conferenceSolutionKey"
+        },
+        {
+          "name": "requestId"
+        },
+        {
+          "name": "status"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.AclRule$Scope",
+      "fields": [
+        {
+          "name": "type"
+        },
+        {
+          "name": "value"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Source",
+      "fields": [
+        {
+          "name": "title"
+        },
+        {
+          "name": "url"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Settings",
+      "fields": [
+        {
+          "name": "etag"
+        },
+        {
+          "name": "items"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "nextPageToken"
+        },
+        {
+          "name": "nextSyncToken"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ConferenceSolution",
+      "fields": [
+        {
+          "name": "iconUri"
+        },
+        {
+          "name": "key"
+        },
+        {
+          "name": "name"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.TimePeriod",
+      "fields": [
+        {
+          "name": "end"
+        },
+        {
+          "name": "start"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.FreeBusyRequest",
+      "fields": [
+        {
+          "name": "calendarExpansionMax"
+        },
+        {
+          "name": "groupExpansionMax"
+        },
+        {
+          "name": "items"
+        },
+        {
+          "name": "timeMax"
+        },
+        {
+          "name": "timeMin"
+        },
+        {
+          "name": "timeZone"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.CalendarNotification",
+      "fields": [
+        {
+          "name": "method"
+        },
+        {
+          "name": "type"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventWorkingLocationProperties$OfficeLocation",
+      "fields": [
+        {
+          "name": "buildingId"
+        },
+        {
+          "name": "deskId"
+        },
+        {
+          "name": "floorId"
+        },
+        {
+          "name": "floorSectionId"
+        },
+        {
+          "name": "label"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.FreeBusyGroup",
+      "fields": [
+        {
+          "name": "calendars"
+        },
+        {
+          "name": "errors"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ConferenceData",
+      "fields": [
+        {
+          "name": "conferenceId"
+        },
+        {
+          "name": "conferenceSolution"
+        },
+        {
+          "name": "createRequest"
+        },
+        {
+          "name": "entryPoints"
+        },
+        {
+          "name": "notes"
+        },
+        {
+          "name": "parameters"
+        },
+        {
+          "name": "signature"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.AclRule",
+      "fields": [
+        {
+          "name": "etag"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "role"
+        },
+        {
+          "name": "scope"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Event$Gadget",
+      "fields": [
+        {
+          "name": "display"
+        },
+        {
+          "name": "height"
+        },
+        {
+          "name": "iconLink"
+        },
+        {
+          "name": "link"
+        },
+        {
+          "name": "preferences"
+        },
+        {
+          "name": "title"
+        },
+        {
+          "name": "type"
+        },
+        {
+          "name": "width"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventWorkingLocationProperties",
+      "fields": [
+        {
+          "name": "customLocation"
+        },
+        {
+          "name": "homeOffice"
+        },
+        {
+          "name": "officeLocation"
+        },
+        {
+          "name": "type"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.FreeBusyResponse",
+      "fields": [
+        {
+          "name": "calendars"
+        },
+        {
+          "name": "groups"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "timeMax"
+        },
+        {
+          "name": "timeMin"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ConferenceSolutionKey",
+      "fields": [
+        {
+          "name": "type"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EntryPoint",
+      "fields": [
+        {
+          "name": "accessCode"
+        },
+        {
+          "name": "entryPointFeatures"
+        },
+        {
+          "name": "entryPointType"
+        },
+        {
+          "name": "label"
+        },
+        {
+          "name": "meetingCode"
+        },
+        {
+          "name": "passcode"
+        },
+        {
+          "name": "password"
+        },
+        {
+          "name": "pin"
+        },
+        {
+          "name": "regionCode"
+        },
+        {
+          "name": "uri"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ConferenceParameters",
+      "fields": [
+        {
+          "name": "addOnParameters"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Channel",
+      "fields": [
+        {
+          "name": "address"
+        },
+        {
+          "name": "expiration"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "params"
+        },
+        {
+          "name": "payload"
+        },
+        {
+          "name": "resourceId"
+        },
+        {
+          "name": "resourceUri"
+        },
+        {
+          "name": "token"
+        },
+        {
+          "name": "type"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Error",
+      "fields": [
+        {
+          "name": "domain"
+        },
+        {
+          "name": "reason"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventFocusTimeProperties",
+      "fields": [
+        {
+          "name": "autoDeclineMode"
+        },
+        {
+          "name": "chatStatus"
+        },
+        {
+          "name": "declineMessage"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.FreeBusyCalendar",
+      "fields": [
+        {
+          "name": "busy"
+        },
+        {
+          "name": "errors"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.FreeBusyRequestItem",
+      "fields": [
+        {
+          "name": "id"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Acl",
+      "fields": [
+        {
+          "name": "etag"
+        },
+        {
+          "name": "items"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "nextPageToken"
+        },
+        {
+          "name": "nextSyncToken"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.Calendar$WorkingHours",
+      "fields": [
+        {
+          "name": "availableTimes"
+        },
+        {
+          "name": "workingHoursEnabled"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ConferenceParametersAddOnParameters",
+      "fields": [
+        {
+          "name": "parameters"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.ColorDefinition",
+      "fields": [
+        {
+          "name": "background"
+        },
+        {
+          "name": "foreground"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.services.calendar.model.EventOutOfOfficeProperties",
+      "fields": [
+        {
+          "name": "autoDeclineMode"
+        },
+        {
+          "name": "declineMessage"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
     }
   ],
   "resources": [
