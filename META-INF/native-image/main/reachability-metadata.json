@@ -5287,6 +5287,126 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonError$ParameterViolations",
+      "fields": [
+        {
+          "name": "parameter"
+        },
+        {
+          "name": "description"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonErrorContainer",
+      "fields": [
+        {
+          "name": "error"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonError$Details",
+      "fields": [
+        {
+          "name": "type"
+        },
+        {
+          "name": "detail"
+        },
+        {
+          "name": "reason"
+        },
+        {
+          "name": "parameterViolations"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonError$ErrorInfo",
+      "fields": [
+        {
+          "name": "domain"
+        },
+        {
+          "name": "reason"
+        },
+        {
+          "name": "message"
+        },
+        {
+          "name": "location"
+        },
+        {
+          "name": "locationType"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonResponseException",
+      "fields": [
+        {
+          "name": "serialVersionUID"
+        },
+        {
+          "name": "details"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.google.api.client.googleapis.json.GoogleJsonError",
+      "fields": [
+        {
+          "name": "errors"
+        },
+        {
+          "name": "code"
+        },
+        {
+          "name": "message"
+        },
+        {
+          "name": "details"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
     }
   ],
   "resources": [
