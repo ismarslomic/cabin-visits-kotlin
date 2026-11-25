@@ -226,6 +226,10 @@ The agent **merges** into the existing
 sync jobs run (possibly in several runs), then review the diff before committing. Entries are never pruned
 automatically; to start clean, delete the file and rerun.
 
+The agent re-sorts the whole file, which makes a plain `git diff` show many entries as removed and re-added.
+`collectNativeMetadata` therefore finishes with `./gradlew sortNativeMetadata` (`scripts/sort-reachability-metadata.py`),
+which uses the agent's sort order. Run it after editing the file by hand.
+
 ### Build GraalVM native image
 
 Build the GraalVm native image as an executable file, with use

@@ -234,6 +234,14 @@ tasks.register<JavaExec>("collectNativeMetadata") {
     mainClass.set("no.slomic.smarthytte.ApplicationKt")
     jvmArgs("-agentlib:native-image-agent=config-merge-dir=$projectDir/META-INF/native-image/main")
     (project.findProperty("args") as String?)?.let { args(it.split(" ")) }
+    finalizedBy("sortNativeMetadata")
+}
+
+// Sorts the metadata like the agent does, so a diff only shows real changes. Also runs after collectNativeMetadata.
+tasks.register<Exec>("sortNativeMetadata") {
+    group = "graalvm"
+    description = "Sorts META-INF/native-image/main/reachability-metadata.json in the Tracing Agent's order"
+    commandLine("python3", "$projectDir/scripts/sort-reachability-metadata.py")
 }
 
 jacoco {
